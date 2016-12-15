@@ -127,7 +127,18 @@ def get_conditions(filters):
 
 def get_stock_ledger_entries(filters):
         conditions = get_conditions(filters)
-        return frappe.db.sql("""select bi.item_code, warehouse, posting_date, bi.qty as bi_qty, actual_qty, valuation_rate,
+
+	if filters.get("include_exploded_items") == "Y":
+	      
+	        return frappe.db.sql("""select bi.item_code, warehouse, posting_date, bi.qty as bi_qty, actual_qty, valuation_rate,
+                        company, voucher_type, qty_after_transaction, stock_value_difference
+                from `tabStock Ledger Entry` sl, `tabBOM Explosion Item` bi
+                where sl.docstatus < 2 and sl.item_code = bi.item_code %s order by posting_date, posting_time, sl.name""" %
+                conditions, as_dict=1)
+	
+	else:
+
+		return frappe.db.sql("""select bi.item_code, warehouse, posting_date, bi.qty as bi_qty, actual_qty, valuation_rate,
                         company, voucher_type, qty_after_transaction, stock_value_difference
                 from `tabStock Ledger Entry` sl, `tabBOM Item` bi
                 where sl.docstatus < 2 and sl.item_code = bi.item_code %s order by posting_date, posting_time, sl.name""" %

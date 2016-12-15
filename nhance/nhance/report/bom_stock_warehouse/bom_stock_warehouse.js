@@ -36,7 +36,15 @@ frappe.query_reports["BOM Stock Warehouse"] = {
                         "label": __("Item"),
                         "fieldtype": "Link",
                         "options": "Item"
-                }
+                },
+		
+		{
+			"fieldname":"include_exploded_items",
+			"label": __("Include Exploded Items"),
+			"fieldtype": "Data",
+                        "default": "Y"
+			
+		},  
                                   
                 
         ]
