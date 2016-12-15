@@ -16,7 +16,8 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         "fieldname":"company",
                         "label": __("Company"),
                         "fieldtype": "Link",
-                        "options": "Company"
+                        "options": "Company",
+			"reqd": 1
                         
                 },
                 {      "fieldname":"from_date",
