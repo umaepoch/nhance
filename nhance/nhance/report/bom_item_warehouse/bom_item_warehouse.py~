@@ -151,13 +151,13 @@ def get_item_warehouse_map(filters):
 
         sle = get_stock_ledger_entries(filters)
 	company = filters.get("company")
-	msgprint(_(company))
+	
 	if filters.get("warehouse"):
 		whse = filters.get("warehouse")
 	else:
 		whse = get_warehouses(company)
 	
-	msgprint(_(whse))
+	
         for d in sle:
 		if filters.get("warehouse"):
 			key = (d.company, d.name, d.item_code, whse)

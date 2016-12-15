@@ -9,8 +9,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         "label": __("BOM"),
                         "fieldtype": "Link",
                         "options": "BOM",
-			"reqd": 1
-                        
+			                        
                 },
                 
 		{
@@ -39,8 +38,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         "label": __("Warehouse"),
                         "fieldtype": "Link",
                         "options": "Warehouse",
-			"reqd": 1
-                },
+		},
                 {
                         "fieldname":"item_code",
                         "label": __("Item"),

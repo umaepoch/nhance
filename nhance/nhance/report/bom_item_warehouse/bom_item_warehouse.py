@@ -151,7 +151,7 @@ def get_item_warehouse_map(filters):
 
         sle = get_stock_ledger_entries(filters)
 	company = filters.get("company")
-	
+	total_stock = 0
 	if filters.get("warehouse"):
 		whse = filters.get("warehouse")
 	else:
@@ -177,9 +177,39 @@ def get_item_warehouse_map(filters):
 			qty_dict.bal_qty = get_stock(d.item_code, d.company, whse)
 		
         	        qty_dict.bi_qty = d.bi_qty
+
 		else:
-			for w in whse:
-		                key = (d.company, d.name, d.item_code, w)
+
+			total_stock = get_total_stock(d.item_code, d.company)
+			if total_stock > 0:
+
+				for w in whse:
+
+					whse_stock = get_stock(d.item_code, d.company, w)
+
+					if whse_stock > 0:
+			                	key = (d.company, d.name, d.item_code, w)
+					
+        		        		if key not in iwb_map:
+        		                		iwb_map[key] = frappe._dict({
+        		                        		"opening_qty": 0.0, "opening_val": 0.0,
+        		                        		"in_qty": 0.0, "in_val": 0.0,
+        		                        		"out_qty": 0.0, "out_val": 0.0,
+        		                        		"bal_qty": 0.0, 
+        		                        		"bi_qty": 0.0,
+        		                        		"val_rate": 0.0, "uom": None
+        		                		})
+
+			                	qty_dict = iwb_map[(d.company, d.name, d.item_code, w)]
+			
+						qty_dict.bal_qty = whse_stock
+		
+        			        	qty_dict.bi_qty = d.bi_qty
+	
+			
+			else:
+
+				key = (d.company, d.name, d.item_code, " ")
 					
         	        	if key not in iwb_map:
         	                	iwb_map[key] = frappe._dict({
@@ -191,32 +221,49 @@ def get_item_warehouse_map(filters):
         	                        	"val_rate": 0.0, "uom": None
         	                	})
 
-		                qty_dict = iwb_map[(d.company, d.name, d.item_code, w)]
+		                qty_dict = iwb_map[(d.company, d.name, d.item_code, " ")]
 		
-				qty_dict.bal_qty = get_stock(d.item_code, d.company, w)
+				qty_dict.bal_qty = 0
 		
         		        qty_dict.bi_qty = d.bi_qty
+				
+				
+	return iwb_map
 
-        return iwb_map
-
+	      
 def get_warehouses(company):
 		whse = frappe.db.sql("""select name from `tabWarehouse` where company = %s""", company)
 		return whse
 
 def get_stock(item_code, company, warehouse):
 		
-                item_stock = flt(frappe.db.sql("""select sum(actual_qty)
+                item_whse_stock = flt(frappe.db.sql("""select sum(actual_qty)
 			from `tabStock Ledger Entry`
 			where item_code=%s and company = %s and warehouse = %s""",
 			(item_code, company, warehouse))[0][0])
-		stock_recon = flt(frappe.db.sql("""select sum(qty_after_transaction)
+		stock_whse_recon = flt(frappe.db.sql("""select sum(qty_after_transaction)
 			from `tabStock Ledger Entry`
 			where item_code=%s and company = %s and warehouse = %s and voucher_type = 'Stock Reconciliation'""",
 			(item_code, company, warehouse))[0][0])
 
-		tot_stock = item_stock + stock_recon
+		tot_whse_stock = item_whse_stock + stock_whse_recon
 		
-       	        return tot_stock
+       	        return tot_whse_stock
+
+def get_total_stock(item_code, company):
+		
+                item_stock = flt(frappe.db.sql("""select sum(actual_qty)
+			from `tabStock Ledger Entry`
+			where item_code=%s and company = %s""",
+			(item_code, company))[0][0])
+		
+		stock_recon = flt(frappe.db.sql("""select sum(qty_after_transaction)
+			from `tabStock Ledger Entry`
+			where item_code=%s and company = %s and voucher_type = 'Stock Reconciliation'""",
+			(item_code, company))[0][0])
+
+		tot_stock = item_stock + stock_recon
+		return tot_stock
 
 def get_stock_val(item_code, company, warehouse):
 		
