@@ -18,102 +18,64 @@ def execute(filters=None):
 
         data = []
         summ_data = [] 
-        order_prev = "" 
-        order_work = "" 
+        opp_prev = "" 
+        opp_work = "" 
         item_prev = ""
         item_work = ""
-        order_count = 0 
+        opp_count = 0 
 	item_count = 0
-        tot_bal_qty = 0 
-	tot_si_qty = 0
-	tot_del_qty = 0
-	tot_pend_qty = 0
-	item_pend_qty = 0
-	item_del_qty = 0
+        tot_qty = 0 
+	tot_val = 0
 	temp_date = getdate("0001-01-01")
 	diff_days = 0
 
-        for (sales_order, item, delivery_date, del_note) in sorted(iwb_map):
-                qty_dict = iwb_map[(sales_order, item, delivery_date, del_note)]
+
+        for (opportunity, item, sales_cycle, communication_date) in sorted(iwb_map):
+                qty_dict = iwb_map[(opportunity, item, sales_cycle, communication_date)]
                 data.append([
-                        sales_order, qty_dict.so_date, qty_dict.so_del_date, delivery_date, qty_dict.customer, item, 
-			item_map[item]["item_group"], item_map[item]["description"], item_map[item]["brand"],                    
-                        qty_dict.si_qty, del_note, qty_dict.del_qty, qty_dict.pend_qty
+                        opportunity, qty_dict.customer, item, qty_dict.item_group, qty_dict.qty, sales_cycle, qty_dict.stage_date, qty_dict.value, qty_dict.closing_date, qty_dict.stage, qty_dict.opportunity_purpose, qty_dict.buying_status, qty_dict.support_needed, qty_dict.subject, communication_date, qty_dict.reference_name, qty_dict.status
                         
                     ])
 	for rows in data: 
-       		if order_count == 0: 
-       			order_prev = rows[0] 
- 			item_prev = rows[5]
-			tot_si_qty = tot_si_qty + rows[9]
-                        tot_del_qty = tot_del_qty + rows[11] 
-			item_pend_qty = rows[9] - rows[11] 
-			item_del_qty = rows[11]
-			tot_pend_qty = tot_si_qty - tot_del_qty
+       		if opp_count == 0: 
+       			opp_prev = rows[0] 
+ 			item_prev = rows[2]
+			tot_qty = tot_qty + rows[4]
+                        			
 			
-			if rows[3] == temp_date:
-				diff_days = 0
-			else:
-				diff_days = rows[3] - rows[2]
-			summ_data.append([order_prev, rows[1], rows[2],
-			 	rows[3], diff_days, rows[4], rows[5], rows[6], 
-				rows[7], rows[8], rows[9], rows[10], rows[11], item_pend_qty
+			summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], rows[7], 
+				rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16]
  				]) 
                 else: 
-			order_work = rows[0]
-                        item_work = rows[5]
+			opp_work = rows[0]
+                        item_work = rows[2]
 			
-			if rows[3] == temp_date:
-				diff_days = 0
-			else:
-				diff_days = rows[3] - rows[2]
-			
-			if order_prev == order_work: 
-				tot_del_qty = tot_del_qty + rows[11]
-				item_del_qty = item_del_qty + rows[11]
-				
-                                if item_prev == item_work:
 					
-					item_pend_qty = rows[9] - item_del_qty
+			if opp_prev == opp_work: 
+				tot_qty = tot_qty + rows[4]
 								
-				else:
-					item_prev = item_work
-					item_del_qty = rows[11]
-					item_pend_qty = 0
-					tot_si_qty = tot_si_qty + rows[9]
-					item_pend_qty = rows[9] - item_del_qty	
-				
-				tot_pend_qty = tot_si_qty - tot_del_qty
-				summ_data.append([order_prev, rows[1], rows[2],
-			 	rows[3], diff_days, rows[4], rows[5], rows[6], 
-				rows[7], rows[8], rows[9], rows[10], rows[11], item_pend_qty,
+                                summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], 
+				rows[7], rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16]
  				]) 
 			else: 
-				summ_data.append([order_prev, " ", 
-			 	" ", " ", " ", " ", " ", " ", " ", " ", tot_si_qty, " ", tot_del_qty, tot_pend_qty
+				summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", " ", " ", " ", " ",
+					" ", " ", " ", " ", " ", " ", " " 
 				
  				])	
-				item_pend_qty = 0
-				item_del_qty = rows[11]		 	 
-				item_pend_qty = rows[9] - rows[11] - item_pend_qty
+				
 
-				summ_data.append([order_work, rows[1], rows[2],
-			 	rows[3], diff_days, rows[4], rows[5], rows[6], 
-				rows[7], rows[8], rows[9], rows[10], rows[11], item_pend_qty
+				summ_data.append([opp_work,  rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], rows[7], 
+				rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16]
  				]) 
                                 
-				tot_si_qty = 0
-				tot_del_qty = 0
-				tot_pend_qty = 0
-                                tot_si_qty = tot_si_qty + rows[9]
-                        	tot_del_qty = tot_del_qty + rows[11] 
-				tot_pend_qty = tot_si_qty - tot_del_qty
-				order_prev = order_work 
+				tot_qty = tot_qty + rows[4] 
+
+				opp_prev = opp_work 
                                 item_prev = item_work
 
-		order_count = order_count + 1 
-	summ_data.append([order_prev, " ", 
-			 	" ", " ", " ", " ", " ", " ", " ", " ", tot_si_qty, " ", tot_del_qty, tot_pend_qty
+		opp_count = opp_count + 1 
+	summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", " ", " ", " ", " ",
+					" ", " ", " ", " ", " ", " ", " "
  				])		 
 	
 		 
@@ -126,21 +88,27 @@ def get_columns():
         """return columns"""
                
         columns = [
-		_("SO Sales Order Number")+":Link/Sales Order:150",
-		_("SO Posting Date")+":Date:150",
-		_("SO Committed Delivery Date")+":Date:150",
-		_("DN Actual Delivery Date")+":Date:100",
-		_("Days Actual - Committed")+":Int:100",
-                _("SO Customer")+"::150",
-                _("SO Item")+":Link/Item:100",
-		_("Item Group")+"::100",
-	        _("Description")+"::140",
-       	        _("Brand")+":Link/UOM:90",   
-		_("SO Ordered Qty")+":Float:100",    
-               	_("DN Delivery Note")+":Link/Delivery Note:100",
-		_("DN Delivered Qty")+":Float:100",
-		_("DN Balance Qty")+":Float:100"   
-         ]
+
+		_("Opportunity")+":Link/Opportunity:150",
+		_("Customer")+":Link/Customer:150",
+		_("Item Code")+":Link/Item:150",
+		_("Item Group")+":Link/Item Group:100",
+		_("Qty")+":Float:100", 
+		_("Sales Cycle")+"::100",
+                _("Stage Date")+":Date:100",
+		_("Value")+":Float:100",
+		_("Closing Date")+":Date:100",
+	        _("Stage")+"::140",
+       	        _("Opportunity Purpose")+"::90",   
+		_("Buying Status")+"::90", 
+               	_("Support Needed")+"::100",
+		_("Subject")+"::100",
+		_("Communication Date")+":Date:100",
+		_("Reference Name")+"::100",
+		_("Status")+"::100"
+
+
+          ]
 
         return columns
 
@@ -150,91 +118,185 @@ def get_conditions(filters):
                 frappe.throw(_("'From Date' is required"))
 
         if filters.get("to_date"):
-                conditions += " and so.transaction_date <= '%s'" % frappe.db.escape(filters["to_date"])
+                conditions += " and op.transaction_date <= '%s'" % frappe.db.escape(filters["to_date"])
         else:
                 frappe.throw(_("'To Date' is required"))
 
         if filters.get("item_code"):
-                conditions += " and si.item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
+                conditions += " and opi.item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
      
         if filters.get("name"):
-                conditions += " and si.parent = '%s'" % frappe.db.escape(filters.get("name"), percent=False)
+                conditions += " and op.name = '%s'" % frappe.db.escape(filters.get("name"), percent=False)
 
-        if filters.get("warehouse"):
-                conditions += " and si.warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
         return conditions
 
-def get_sales_details(filters):
+def get_opp_details(filters):
         conditions = get_conditions(filters)
 	
-        return frappe.db.sql("""select so.name as sales_order, so.transaction_date as date, so.customer, so.delivery_date as sodel_date, si.item_code, si.warehouse, si.qty as si_qty, si.delivered_qty as delivered_qty, dni.qty as del_qty, dn.posting_date as delivery_date, dni.parent as del_note
-                from `tabDelivery Note Item` dni, `tabDelivery Note` dn, `tabSales Order Item` si, `tabSales Order` so
-                where dni.item_code = si.item_code and so.status != "Cancelled" and dn.status in ("Completed", "To Bill") and so.name = si.parent and dn.name = dni.parent and dni.against_sales_order = so.name %s order by so.name, si.item_code, dn.posting_date asc, si.warehouse""" % conditions, as_dict=1)
+        return frappe.db.sql("""select sc.reference_name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, sc.name as sales_cycle, sc.stage_date as stage_date, sc.value as value, sc.closing_date as closing_date, sc.stage as stage, sc.opportunity_purpose as opportunity_purpose, sc.buying_status as buying_status, sc.support_needed as support_needed, co.subject as subject, co.communication_date as communication_date, co.reference_name as reference_name, co.status as status
 
-def get_sales_details_wn_dn(filters):
+from `tabOpportunity` op, `tabOpportunity Item` opi, `tabSales Cycle` sc, `tabCommunication` co
+where op.name = opi.parent and op.name = sc.reference_name and op.name = co.reference_name %s 
+and sc.stage_date in (select co1.communication_date from `tabCommunication` co1, `tabSales Cycle` sc1 where co1.reference_name = sc1.reference_name and sc1.reference_name = sc.reference_name)
+""" % conditions, as_dict=1)
+
+def get_opp_details_1(filters):
         conditions = get_conditions(filters)
-		
-        return frappe.db.sql("""select so.name as sales_order, so.transaction_date as date, so.customer, so.delivery_date as sodel_date, si.item_code, si.warehouse, si.qty as si_qty, si.delivered_qty as delivered_qty, 0 as del_qty, date("2001-01-01") as delivery_date, " " as del_note
-                from `tabSales Order Item` si, `tabSales Order` so where so.name = si.parent and so.status != "Cancelled" and not exists (
-                select 1 from `tabDelivery Note Item` dni where dni.against_sales_order = so.name) order by so.name, si.item_code""", as_dict=1)
+	
+        return frappe.db.sql("""select op.name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, " " as sales_cycle, " " as stage_date, 0 as value, " " as closing_date, " " as stage, " " as opportunity_purpose, " " as buying_status, " " as support_needed, " " as subject, " " as communication_date, " " as reference_name, " " as status
+
+from `tabOpportunity` op, `tabOpportunity Item` opi
+where op.name = opi.parent %s and not exists (select 1 from `tabCommunication` co where op.name = co.reference_name)
+and not exists (select 1 from `tabSales Cycle` sc where op.name = sc.reference_name)
+""" % conditions, as_dict=1)
+
+def get_opp_details_2(filters):
+        conditions = get_conditions(filters)
+	
+        return frappe.db.sql("""select sc.reference_name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, sc.name as sales_cycle, sc.stage_date as stage_date, sc.value as value, sc.closing_date as closing_date, sc.stage as stage, sc.opportunity_purpose as opportunity_purpose, sc.buying_status as buying_status, sc.support_needed as support_needed, " " as subject, " " as communication_date, " " as reference_name, " " as status
+
+from `tabOpportunity` op, `tabOpportunity Item` opi, `tabSales Cycle` sc
+where op.name = opi.parent and  op.name = sc.reference_name %s and not exists (select 1 from `tabCommunication` co where op.name = co.reference_name)
+""" % conditions, as_dict=1)
+
+
+def get_opp_details_3(filters):
+        conditions = get_conditions(filters)
+	
+        return frappe.db.sql("""select op.name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, " " as sales_cycle, " " as stage_date, 0 as value, " " as closing_date, " " as stage, " " as opportunity_purpose, " " as buying_status, " " as support_needed, co.subject as subject, co.communication_date as communication_date, co.reference_name as reference_name, co.status as status
+
+from `tabOpportunity` op, `tabOpportunity Item` opi, `tabCommunication` co
+where op.name = opi.parent and op.name = co.reference_name %s
+and not exists (select 1 from `tabSales Cycle` sc where op.name = sc.reference_name)
+""" % conditions, as_dict=1)
+
+
+
 
 def get_item_map(filters):
         iwb_map = {}
         from_date = getdate(filters["from_date"])
         to_date = getdate(filters["to_date"])
 	
-        sle = get_sales_details(filters)
-        
-	dle = get_sales_details_wn_dn(filters)
+        sle = get_opp_details(filters)
+
+	dle = get_opp_details_1(filters)
+	kle = get_opp_details_2(filters)
+	mle = []
+	mle = get_opp_details_3(filters)
         
              	
         for d in sle:
                 
-                key = (d.sales_order, d.item_code, d.delivery_date, d.del_note)
+                key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
                 if key not in iwb_map:
                         iwb_map[key] = frappe._dict({
-                                "si_qty": 0.0, "del_qty": 0.0,
-				"pend_qty": 0.0,
-                                "val_rate": 0.0, "uom": None
+                                "qty": 0.0, "value": 0.0,
+				
                         })
 
-                qty_dict = iwb_map[(d.sales_order, d.item_code, d.delivery_date, d.del_note)]
+                qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
 
                 
-                qty_dict.si_qty = d.si_qty
-                qty_dict.del_qty = d.del_qty
-                qty_dict.delivered_qty = d.delivered_qty
-                qty_dict.so_date = d.date
-		qty_dict.so_del_date = d.sodel_date
-        #        qty_dict.del_date = d.delivery_date
+                qty_dict.qty = d.qty
+                qty_dict.value = d.value
                 qty_dict.customer = d.customer
-                if qty_dict.si_qty > qty_dict.del_qty:
-              		qty_dict.pend_qty = qty_dict.si_qty - qty_dict.del_qty - qty_dict.delivered_qty
+		qty_dict.stage_date = d.stage_date
+		qty_dict.stage = d.stage
+		qty_dict.item_group = d.item_group
+		qty_dict.closing_date = d.closing_date
+		qty_dict.opportunity_purpose = d.opportunity_purpose
+		qty_dict.buying_status = d.buying_status
+		qty_dict.support_needed = d.support_needed
+		qty_dict.subject = d.subject
+	        qty_dict.communication_date = d.communication_date
+		qty_dict.reference_name = d.reference_name
+		qty_dict.status = d.status
 
-	for d in dle:
+        if dle:      
+		for d in dle:
 
-                key = (d.sales_order, d.item_code, d.delivery_date, d.del_note)
-                if key not in iwb_map:
-                        iwb_map[key] = frappe._dict({
-                                "si_qty": 0.0, "del_qty": 0.0,
-				"pend_qty": 0.0,
-                                "val_rate": 0.0, "uom": None
-                        })
+ 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+	                if key not in iwb_map:
+        	                iwb_map[key] = frappe._dict({
+        	                        "qty": 0.0, "value": 0.0,
+					
+        	                })
 
-                qty_dict = iwb_map[(d.sales_order, d.item_code, d.delivery_date, d.del_note)]
+                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
 
                 
-                qty_dict.si_qty = d.si_qty
-                qty_dict.del_qty = d.del_qty
-                qty_dict.delivered_qty = d.delivered_qty
-                qty_dict.so_date = d.date
-		qty_dict.so_del_date = d.sodel_date
-        #        qty_dict.del_date = d.delivery_date
-                qty_dict.customer = d.customer
-                if qty_dict.si_qty > qty_dict.del_qty:
-              		qty_dict.pend_qty = qty_dict.si_qty - qty_dict.del_qty - qty_dict.delivered_qty
+	                qty_dict.qty = d.qty
+        	        qty_dict.value = d.value
+        	        qty_dict.customer = d.customer
+			qty_dict.stage_date = d.stage_date
+			qty_dict.stage = d.stage
+			qty_dict.item_group = d.item_group
+			qty_dict.closing_date = d.closing_date
+			qty_dict.opportunity_purpose = d.opportunity_purpose
+			qty_dict.buying_status = d.buying_status
+			qty_dict.support_needed = d.support_needed
+			qty_dict.subject = d.subject
+		        qty_dict.communication_date = d.communication_date
+			qty_dict.reference_name = d.reference_name
+			qty_dict.status = d.status
+               
 
+ 	if kle:      
+		for d in kle:
 
+ 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+	                if key not in iwb_map:
+        	                iwb_map[key] = frappe._dict({
+        	                        "qty": 0.0, "value": 0.0,
+					
+        	                })
+
+                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+
+                
+	                qty_dict.qty = d.qty
+        	        qty_dict.value = d.value
+        	        qty_dict.customer = d.customer
+			qty_dict.stage_date = d.stage_date
+			qty_dict.stage = d.stage
+			qty_dict.item_group = d.item_group
+			qty_dict.closing_date = d.closing_date
+			qty_dict.opportunity_purpose = d.opportunity_purpose
+			qty_dict.buying_status = d.buying_status
+			qty_dict.support_needed = d.support_needed
+			qty_dict.subject = d.subject
+		        qty_dict.communication_date = d.communication_date
+			qty_dict.reference_name = d.reference_name
+			qty_dict.status = d.status
+
+	if mle:      
+		for d in mle:
+
+ 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+	                if key not in iwb_map:
+        	                iwb_map[key] = frappe._dict({
+        	                        "qty": 0.0, "value": 0.0,
+					
+        	                })
+
+                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+
+                
+	                qty_dict.qty = d.qty
+        	        qty_dict.value = d.value
+        	        qty_dict.customer = d.customer
+			qty_dict.stage_date = d.stage_date
+			qty_dict.stage = d.stage
+			qty_dict.item_group = d.item_group
+			qty_dict.closing_date = d.closing_date
+			qty_dict.opportunity_purpose = d.opportunity_purpose
+			qty_dict.buying_status = d.buying_status
+			qty_dict.support_needed = d.support_needed
+			qty_dict.subject = d.subject
+		        qty_dict.communication_date = d.communication_date
+			qty_dict.reference_name = d.reference_name
+			qty_dict.status = d.status
                
         return iwb_map
 

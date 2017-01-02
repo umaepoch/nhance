@@ -7,9 +7,9 @@ frappe.query_reports["Opportunity Full with Stage and Communication"] = {
 
 	    {
                         "fieldname":"name",
-                        "label": __("Sales Order"),
+                        "label": __("Opportunity"),
                         "fieldtype": "Link",
-                        "options": "Sales Order",
+                        "options": "Opportunity",
                         "reqd": 0
                 },
                 
@@ -26,12 +26,7 @@ frappe.query_reports["Opportunity Full with Stage and Communication"] = {
                         "width": "80",
                         "default": frappe.datetime.get_today()
                 },
-                {
-                        "fieldname":"warehouse",
-                        "label": __("Warehouse"),
-                        "fieldtype": "Link",
-                        "options": "Warehouse"
-                },
+                
                 {
                         "fieldname":"item_code",
                         "label": __("Item"),
