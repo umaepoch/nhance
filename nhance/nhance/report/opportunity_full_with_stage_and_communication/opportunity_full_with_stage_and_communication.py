@@ -142,7 +142,7 @@ def get_opp_details(filters):
 	
         return frappe.db.sql("""select sc.reference_name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, sc.name as sales_cycle, sc.stage_date as stage_date, sc.value as value, sc.closing_date as closing_date, sc.stage as stage, sc.opportunity_purpose as opportunity_purpose, sc.buying_status as buying_status, sc.support_needed as support_needed, co.subject as subject, co.communication_date as communication_date, co.reference_name as reference_name, co.recipients as recipients, co.phone_no as phone, co.content as content
 
-from `tabOpportunity` op, `tabOpportunity Item` opi, `tabSales Cycle` sc, `tabCommunication` co
+from `tabOpportunity` op, `tabOpportunity Item` opi, `tabProposal Stage` sc, `tabCommunication` co
 where op.name = opi.parent and op.name = sc.reference_name and op.name = co.reference_name %s 
 and sc.stage_date in (select co1.communication_date from `tabCommunication` co1, `tabSales Cycle` sc1 where co1.reference_name = sc1.reference_name and sc1.reference_name = sc.reference_name)
 """ % conditions, as_dict=1)
@@ -154,7 +154,7 @@ def get_opp_details_1(filters):
 
 from `tabOpportunity` op, `tabOpportunity Item` opi
 where op.name = opi.parent %s and not exists (select 1 from `tabCommunication` co where op.name = co.reference_name)
-and not exists (select 1 from `tabSales Cycle` sc where op.name = sc.reference_name)
+and not exists (select 1 from `tabProposal Stage` sc where op.name = sc.reference_name)
 """ % conditions, as_dict=1)
 
 def get_opp_details_2(filters):
@@ -162,7 +162,7 @@ def get_opp_details_2(filters):
 	
         return frappe.db.sql("""select sc.reference_name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, sc.name as sales_cycle, sc.stage_date as stage_date, sc.value as value, sc.closing_date as closing_date, sc.stage as stage, sc.opportunity_purpose as opportunity_purpose, sc.buying_status as buying_status, sc.support_needed as support_needed, " " as subject, " " as communication_date, " " as reference_name, " " as recipients, " " as phone, " " as content
 
-from `tabOpportunity` op, `tabOpportunity Item` opi, `tabSales Cycle` sc
+from `tabOpportunity` op, `tabOpportunity Item` opi, `tabProposal Stage` sc
 where op.name = opi.parent and  op.name = sc.reference_name %s and not exists (select 1 from `tabCommunication` co where op.name = co.reference_name)
 """ % conditions, as_dict=1)
 
@@ -174,7 +174,7 @@ def get_opp_details_3(filters):
 
 from `tabOpportunity` op, `tabOpportunity Item` opi, `tabCommunication` co
 where op.name = opi.parent and op.name = co.reference_name %s
-and not exists (select 1 from `tabSales Cycle` sc where op.name = sc.reference_name)
+and not exists (select 1 from `tabProposal Stage` sc where op.name = sc.reference_name)
 """ % conditions, as_dict=1)
 
 

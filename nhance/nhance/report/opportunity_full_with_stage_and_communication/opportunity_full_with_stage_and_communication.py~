@@ -44,7 +44,7 @@ def execute(filters=None):
 			tot_val = tot_val + rows[7]
                         			
 			
-			summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], rows[7], 
+			summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[7], 
 				rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
  				]) 
                 else: 
@@ -56,17 +56,16 @@ def execute(filters=None):
 				tot_qty = tot_qty + rows[4]
 				tot_val = tot_val + rows[7]
 		
-                                summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], 
-				rows[7], rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
+                                summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[7], rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
  				]) 
 			else: 
-				summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", " ", tot_val, " ", " ", " ", " "
+				summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", tot_val, " ", " ", " ", " "
 					" ", " ", " ", " ", " ", " ", " " 
 				
  				])	
 				
 
-				summ_data.append([opp_work,  rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], rows[7], 
+				summ_data.append([opp_work,  rows[1], rows[2], rows[3], rows[4], rows[5], rows[7], 
 				rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
  				]) 
 		
@@ -80,7 +79,7 @@ def execute(filters=None):
                                 item_prev = item_work
 
 		opp_count = opp_count + 1 
-	summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", " ", tot_val, " ", " ",
+	summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", tot_val, " ", " ",
 					" ", " ", " ", " ", " ", " ", " ", " ", " "
  				])		 
 	
@@ -101,7 +100,7 @@ def get_columns():
 		_("Item Group")+":Link/Item Group:100",
 		_("Qty")+":Float:100", 
 		_("Sales Cycle")+"::100",
-                _("Stage Date")+":Date:100",
+ #               _("Stage Date")+":Date:100",
 		_("Value")+":Float:100",
 		_("Closing Date")+":Date:100",
 	        _("Stage")+"::140",
