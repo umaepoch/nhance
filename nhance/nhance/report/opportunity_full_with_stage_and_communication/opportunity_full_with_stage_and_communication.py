@@ -144,7 +144,7 @@ def get_opp_details(filters):
 
 from `tabOpportunity` op, `tabOpportunity Item` opi, `tabProposal Stage` sc, `tabCommunication` co
 where op.name = opi.parent and op.name = sc.reference_name and op.name = co.reference_name %s 
-and sc.stage_date in (select co1.communication_date from `tabCommunication` co1, `tabSales Cycle` sc1 where co1.reference_name = sc1.reference_name and sc1.reference_name = sc.reference_name)
+and sc.stage_date in (select co1.communication_date from `tabCommunication` co1, `tabProposal Stage` sc1 where co1.reference_name = sc1.reference_name and sc1.reference_name = sc.reference_name)
 """ % conditions, as_dict=1)
 
 def get_opp_details_1(filters):
