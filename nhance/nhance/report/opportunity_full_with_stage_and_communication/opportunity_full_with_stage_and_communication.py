@@ -177,6 +177,16 @@ where op.name = opi.parent and op.name = co.reference_name %s
 and not exists (select 1 from `tabProposal Stage` sc where op.name = sc.reference_name)
 """ % conditions, as_dict=1)
 
+def get_opp_details_4(filters):
+        conditions = get_conditions(filters)
+	
+        return frappe.db.sql("""select sc.reference_name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, sc.name as sales_cycle, sc.stage_date as stage_date, sc.value as value, sc.closing_date as closing_date, sc.stage as stage, sc.opportunity_purpose as opportunity_purpose, sc.buying_status as buying_status, sc.support_needed as support_needed, co.subject as subject, co.communication_date as communication_date, co.reference_name as reference_name, co.recipients as recipients, co.phone_no as phone, co.content as content
+
+from `tabOpportunity` op, `tabOpportunity Item` opi, `tabProposal Stage` sc, `tabCommunication` co
+where op.name = opi.parent and op.name = sc.reference_name and op.name = co.reference_name %s 
+and sc.stage_date not in (select co1.communication_date from `tabCommunication` co1, `tabProposal Stage` sc1 where co1.reference_name = sc1.reference_name and sc1.reference_name = sc.reference_name)
+""" % conditions, as_dict=1)
+
 
 
 
@@ -191,6 +201,7 @@ def get_item_map(filters):
 	kle = get_opp_details_2(filters)
 	mle = []
 	mle = get_opp_details_3(filters)
+	ple = get_opp_details_4(filters)
         
              	
         for d in sle:
@@ -313,6 +324,36 @@ def get_item_map(filters):
 			qty_dict.phone_no = d.phone
 			qty_dict.content = d.content
                
+	if ple:      
+		for d in ple:
+
+ 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+	                if key not in iwb_map:
+        	                iwb_map[key] = frappe._dict({
+        	                        "qty": 0.0, "value": 0.0,
+					
+        	                })
+
+                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+
+                
+	                qty_dict.qty = d.qty
+        	        qty_dict.value = d.value
+        	        qty_dict.customer = d.customer
+			qty_dict.stage_date = d.stage_date
+			qty_dict.stage = d.stage
+			qty_dict.item_group = d.item_group
+			qty_dict.closing_date = d.closing_date
+			qty_dict.opportunity_purpose = d.opportunity_purpose
+			qty_dict.buying_status = d.buying_status
+			qty_dict.support_needed = d.support_needed
+			qty_dict.subject = d.subject
+		        qty_dict.communication_date = d.communication_date
+			qty_dict.reference_name = d.reference_name
+			qty_dict.recipients = d.recipients
+			qty_dict.phone_no = d.phone
+			qty_dict.content = d.content
+
         return iwb_map
 
 def get_item_details(filters):
