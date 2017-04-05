@@ -147,7 +147,7 @@ def get_stock_ledger_entries(filters):
 def get_item_warehouse_map(filters):
         iwb_map = {}
         from_date = getdate(filters["from_date"])
-        to_date = getdate(filters["to_date"])
+	to_date = getdate(filters["to_date"])
 
         sle = get_stock_ledger_entries(filters)
 	company = filters.get("company")
@@ -174,18 +174,18 @@ def get_item_warehouse_map(filters):
 
 	                qty_dict = iwb_map[(d.company, d.name, d.item_code, whse)]
 		
-			qty_dict.bal_qty = get_stock(d.item_code, d.company, whse)
+			qty_dict.bal_qty = get_stock(d.item_code, d.company, whse, from_date, to_date)
 		
         	        qty_dict.bi_qty = d.bi_qty
 
 		else:
 
-			total_stock = get_total_stock(d.item_code, d.company)
+			total_stock = get_total_stock(d.item_code, d.company, from_date, to_date)
 			if total_stock > 0:
 
 				for w in whse:
 
-					whse_stock = get_stock(d.item_code, d.company, w)
+					whse_stock = get_stock(d.item_code, d.company, w, from_date, to_date)
 
 					if whse_stock > 0:
 			                	key = (d.company, d.name, d.item_code, w)
@@ -235,7 +235,8 @@ def get_warehouses(company):
 		whse = frappe.db.sql("""select name from `tabWarehouse` where company = %s""", company)
 		return whse
 
-def get_stock(item_code, company, warehouse):
+def get_stock(item_code, company, warehouse, from_date, to_date):
+		
 		
                 item_whse_stock = flt(frappe.db.sql("""select sum(actual_qty)
 			from `tabStock Ledger Entry`
@@ -243,14 +244,14 @@ def get_stock(item_code, company, warehouse):
 			(item_code, company, warehouse))[0][0])
 		stock_whse_recon = flt(frappe.db.sql("""select sum(qty_after_transaction)
 			from `tabStock Ledger Entry`
-			where item_code=%s and company = %s and warehouse = %s and voucher_type = 'Stock Reconciliation'""",
-			(item_code, company, warehouse))[0][0])
+			where item_code=%s and company = %s and warehouse = %s and posting_date >= %s and posting_date <= %s and voucher_type = 'Stock Reconciliation'""",
+			(item_code, company, warehouse, from_date, to_date))[0][0])
 
 		tot_whse_stock = item_whse_stock + stock_whse_recon
 		
        	        return tot_whse_stock
 
-def get_total_stock(item_code, company):
+def get_total_stock(item_code, company, from_date, to_date):
 		
                 item_stock = flt(frappe.db.sql("""select sum(actual_qty)
 			from `tabStock Ledger Entry`
@@ -261,7 +262,7 @@ def get_total_stock(item_code, company):
 			from `tabStock Ledger Entry`
 			where item_code=%s and company = %s and voucher_type = 'Stock Reconciliation'""",
 			(item_code, company))[0][0])
-
+		
 		tot_stock = item_stock + stock_recon
 		return tot_stock
 
