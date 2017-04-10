@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.utils import cint, flt, cstr, comma_or, getdate
-from erpnext.setup.utils import get_company_currency
 from frappe import _, throw, msgprint
 from frappe.model.mapper import get_mapped_doc
 
