@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _, msgprint
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, datetime
 
 def execute(filters=None):
         if not filters: filters = {}
@@ -180,7 +180,7 @@ def get_item_warehouse_map(filters):
 
 		else:
 
-			total_stock = get_total_stock(d.item_code, d.company, from_date, to_date)
+			total_stock = get_total_stock(d.item_code, d.company)
 			if total_stock > 0:
 
 				for w in whse:
@@ -237,50 +237,51 @@ def get_warehouses(company):
 
 def get_stock(item_code, company, warehouse, from_date, to_date):
 		
-		
-                item_whse_stock = flt(frappe.db.sql("""select sum(actual_qty)
-			from `tabStock Ledger Entry`
-			where item_code=%s and company = %s and warehouse = %s""",
-			(item_code, company, warehouse))[0][0])
-		stock_whse_recon = flt(frappe.db.sql("""select sum(qty_after_transaction)
-			from `tabStock Ledger Entry`
-			where item_code=%s and company = %s and warehouse = %s and posting_date >= %s and posting_date <= %s and voucher_type = 'Stock Reconciliation'""",
-			(item_code, company, warehouse, from_date, to_date))[0][0])
+	max_posting_date = frappe.db.sql("""select max(posting_date) from `tabStock Ledger Entry`
+		where item_code=%s and company = %s and warehouse = %s""",
+		(item_code, company, warehouse))[0][0]
+	max_posting_date = getdate(max_posting_date)
+	max_posting_date1 = datetime.datetime.strftime(max_posting_date, "%Y-%m-%d")
+	
+	max_posting_time = frappe.db.sql("""select max(posting_time) from `tabStock Ledger Entry`
+		where item_code=%s and company = %s and warehouse = %s and posting_date = %s""",
+		(item_code, company, warehouse, max_posting_date))[0][0]
+	
+#	max_posting_time = gettime(max_posting_time)
+#	max_posting_time1 = datetime.datetime.strftime(max_posting_time, "%H:%M:%S")
 
-		tot_whse_stock = item_whse_stock + stock_whse_recon
-		
-       	        return tot_whse_stock
+	ssle = frappe.db.sql("""select voucher_no, voucher_type, actual_qty, qty_after_transaction
+		from `tabStock Ledger Entry` sle
+		where item_code=%s and company = %s and warehouse = %s and posting_date = %s and posting_time = %s""",
+		(item_code, company, warehouse, getdate(max_posting_date1), max_posting_time))
 
-def get_total_stock(item_code, company, from_date, to_date):
-		
-                item_stock = flt(frappe.db.sql("""select sum(actual_qty)
-			from `tabStock Ledger Entry`
-			where item_code=%s and company = %s""",
-			(item_code, company))[0][0])
-		
-		stock_recon = flt(frappe.db.sql("""select sum(qty_after_transaction)
-			from `tabStock Ledger Entry`
-			where item_code=%s and company = %s and voucher_type = 'Stock Reconciliation'""",
-			(item_code, company))[0][0])
-		
-		tot_stock = item_stock + stock_recon
-		return tot_stock
+	if ssle:
 
-def get_stock_val(item_code, company, warehouse):
-		
-                item_stock_val = flt(frappe.db.sql("""select sum(stock_value)
-			from `tabStock Ledger Entry`
-			where item_code=%s and company = %s and warehouse = %s""",
-			(item_code, company, warehouse))[0][0])
+		item_stock = ssle[0][3]
+	else:
+		item_stock = 0
+	
+				
+	return item_stock
+	
+                
 
-		stock_recon_val = flt(frappe.db.sql("""select sum(stock_value_difference)
-			from `tabStock Ledger Entry`
-			where item_code=%s and company = %s and voucher_type = 'Stock Reconciliation'""",
-			(item_code, company))[0][0])
-
-		tot_stock_val = item_stock_val + stock_recon_val
+def get_total_stock(item_code, company):
 		
-       	        return tot_stock_val
+	item_stock = flt(frappe.db.sql("""select sum(actual_qty)
+		from `tabStock Ledger Entry`
+		where item_code=%s and company = %s""",
+		(item_code, company))[0][0])
+		
+	stock_recon = flt(frappe.db.sql("""select sum(qty_after_transaction)
+		from `tabStock Ledger Entry`
+		where item_code=%s and company = %s and voucher_type = 'Stock Reconciliation'""",
+		(item_code, company))[0][0])
+		
+	tot_stock = item_stock + stock_recon
+	return tot_stock
+
+
 
 def get_item_details(filters):
         condition = ''
