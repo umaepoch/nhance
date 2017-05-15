@@ -32,8 +32,6 @@ def set_proposal_stage_values(opportunity):
 		from `tabProposal Stage`
 		where reference_name=%s and closing_date = %s""",
 		(opportunity, max_closing_date))
-        
-                
         return sc_rec
 
 def set_missing_values(source, target_doc):

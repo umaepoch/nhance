@@ -32,7 +32,7 @@ def execute(filters=None):
                         item_map[item]["item_name"], 
                         item_map[item]["stock_uom"], 
                         qty_dict.bal_qty, qty_dict.bi_qty, whse,                                              
-                        item_map[item]["brand"], company
+                        item_map[item]["brand"], company, qty_dict.bom_qty
                     ])
 
        		
@@ -44,7 +44,7 @@ def execute(filters=None):
 
 	                tot_bal_qty = tot_bal_qty + rows[6] 
 			tot_bi_qty = tot_bi_qty + rows[7]
-                        summ_data.append([bom_prev, rows[1], rows[2],
+                        summ_data.append([bom_prev, rows[11], rows[1], rows[2],
 		 	rows[3], rows[4], rows[5], rows[7],
 			rows[6], rows[8], rows[9], rows[10]
  			]) 
@@ -56,22 +56,22 @@ def execute(filters=None):
 				tot_bal_qty = tot_bal_qty + rows[6] 
 				
 				tot_bi_qty = tot_bi_qty + rows[7]
-        	                summ_data.append([bom_prev, rows[1], rows[2],
+        	                summ_data.append([bom_prev, rows[11], rows[1], rows[2],
 			 	rows[3], rows[4], rows[5], rows[7],
 				rows[6], rows[8], 
-				rows[9], rows[10]				 
+				rows[9], rows[10]			 
  				]) 
 			else: 
 
-				summ_data.append([bom_prev, " ", " ", 
+				summ_data.append([bom_prev, " ", " ", " ", 
 			 	" ", " ", " ", tot_bi_qty,
 				tot_bal_qty, " ", " ", " "
  				])				 
 
-				summ_data.append([bom_work, rows[1], rows[2], 
+				summ_data.append([bom_work, rows[11], rows[1], rows[2], 
 			 	rows[3], rows[4], rows[5], rows[7], 
 				rows[6], rows[8], 
-				rows[9], rows[10] 
+				rows[9], rows[10]
  				]) 
         	                        
 				tot_bal_qty = 0 
@@ -83,7 +83,7 @@ def execute(filters=None):
 				bom_prev = bom_work 
                                
 		bom_count = bom_count + 1 
-	summ_data.append([bom_prev, " ", " ", 
+	summ_data.append([bom_prev, " ", " ", " "
 		" ", " ", " ", tot_bi_qty,
 		tot_bal_qty, " ", " ", " "
  		])	 
@@ -97,6 +97,7 @@ def get_columns():
         """return columns"""
         columns = [
 		_("BOM")+":Link/BOM:100",
+		_("Quantity to Make")+"::100",
                 _("Item")+":Link/Item:100",
                 _("Description")+"::140",
                 _("Item Group")+"::100",
@@ -123,7 +124,7 @@ def get_conditions(filters):
                 conditions += " and item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
      
         if filters.get("bom"):
-                conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
+                conditions += " and bo.name = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
 
 #       if filters.get("warehouse"):
   #             conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
@@ -135,12 +136,12 @@ def get_stock_ledger_entries(filters):
 
 	if filters.get("include_exploded_items") == "Y":
 	        
-        	return frappe.db.sql("""select bo.name, bo.company, bi.item_code, bi.qty as bi_qty
+        	return frappe.db.sql("""select bo.name, bo.company, bo.quantity as bo_qty, bi.item_code, bi.qty as bi_qty
                 	from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent %s
                 	order by bo.company, bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
 
-        	return frappe.db.sql("""select bo.name, bo.company, bi.item_code, bi.qty as bi_qty
+        	return frappe.db.sql("""select bo.name, bo.company, bo.quantity as bo_qty, bi.item_code, bi.qty as bi_qty
                 	from `tabBOM` bo, `tabBOM Item` bi where bo.name = bi.parent %s
        	        	order by bo.company, bo.name, bi.item_code""" % conditions, as_dict=1)
 
@@ -167,7 +168,7 @@ def get_item_warehouse_map(filters):
                                 	"opening_qty": 0.0, "opening_val": 0.0,
                                 	"in_qty": 0.0, "in_val": 0.0,
                                 	"out_qty": 0.0, "out_val": 0.0,
-                                	"bal_qty": 0.0, 
+                                	"bal_qty": 0.0, "bom_qty": 0.0,
                                 	"bi_qty": 0.0,
                                 	"val_rate": 0.0, "uom": None
                         	})
@@ -175,6 +176,7 @@ def get_item_warehouse_map(filters):
 	                qty_dict = iwb_map[(d.company, d.name, d.item_code, whse)]
 		
 			qty_dict.bal_qty = get_stock(d.item_code, d.company, whse, from_date, to_date)
+			qty_dict.bom_qty = d.bo_qty
 		
         	        qty_dict.bi_qty = d.bi_qty
 
@@ -195,7 +197,7 @@ def get_item_warehouse_map(filters):
         		                        		"opening_qty": 0.0, "opening_val": 0.0,
         		                        		"in_qty": 0.0, "in_val": 0.0,
         		                        		"out_qty": 0.0, "out_val": 0.0,
-        		                        		"bal_qty": 0.0, 
+        		                        		"bal_qty": 0.0, "bom_qty": 0.0,
         		                        		"bi_qty": 0.0,
         		                        		"val_rate": 0.0, "uom": None
         		                		})
@@ -203,7 +205,7 @@ def get_item_warehouse_map(filters):
 			                	qty_dict = iwb_map[(d.company, d.name, d.item_code, w)]
 			
 						qty_dict.bal_qty = whse_stock
-		
+						qty_dict.bom_qty = d.bo_qty
         			        	qty_dict.bi_qty = d.bi_qty
 	
 			
@@ -216,7 +218,7 @@ def get_item_warehouse_map(filters):
         	                        	"opening_qty": 0.0, "opening_val": 0.0,
         	                        	"in_qty": 0.0, "in_val": 0.0,
         	                        	"out_qty": 0.0, "out_val": 0.0,
-        	                        	"bal_qty": 0.0, 
+        	                        	"bal_qty": 0.0, "bom_qty": 0.0,
         	                        	"bi_qty": 0.0,
         	                        	"val_rate": 0.0, "uom": None
         	                	})
@@ -224,7 +226,7 @@ def get_item_warehouse_map(filters):
 		                qty_dict = iwb_map[(d.company, d.name, d.item_code, " ")]
 		
 				qty_dict.bal_qty = 0
-		
+				qty_dict.bom_qty = d.bo_qty
         		        qty_dict.bi_qty = d.bi_qty
 				
 				
