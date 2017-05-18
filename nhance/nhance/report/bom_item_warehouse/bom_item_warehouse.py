@@ -41,11 +41,12 @@ def execute(filters=None):
 		if bom_count == 0: 
 
        			bom_prev = rows[0] 
+			bi_qty = rows[7] * rows[11]
 
 	                tot_bal_qty = tot_bal_qty + rows[6] 
-			tot_bi_qty = tot_bi_qty + rows[7]
+			tot_bi_qty = tot_bi_qty + bi_qty
                         summ_data.append([bom_prev, rows[11], rows[1], rows[2],
-		 	rows[3], rows[4], rows[5], rows[7],
+		 	rows[3], rows[4], rows[5], bi_qty,
 			rows[6], rows[8], rows[9], rows[10]
  			]) 
                 else: 
@@ -54,10 +55,10 @@ def execute(filters=None):
 			if bom_prev == bom_work: 
 
 				tot_bal_qty = tot_bal_qty + rows[6] 
-				
-				tot_bi_qty = tot_bi_qty + rows[7]
+				bi_qty = rows[7] * rows[11]
+				tot_bi_qty = tot_bi_qty + bi_qty
         	                summ_data.append([bom_prev, rows[11], rows[1], rows[2],
-			 	rows[3], rows[4], rows[5], rows[7],
+			 	rows[3], rows[4], rows[5], bi_qty,
 				rows[6], rows[8], 
 				rows[9], rows[10]			 
  				]) 
@@ -69,7 +70,7 @@ def execute(filters=None):
  				])				 
 
 				summ_data.append([bom_work, rows[11], rows[1], rows[2], 
-			 	rows[3], rows[4], rows[5], rows[7], 
+			 	rows[3], rows[4], rows[5], bi_qty, 
 				rows[6], rows[8], 
 				rows[9], rows[10]
  				]) 
@@ -79,7 +80,7 @@ def execute(filters=None):
  				tot_bi_qty = 0
         	                tot_bal_qty = tot_bal_qty + rows[6] 
 				
-				tot_bi_qty = tot_bi_qty + rows[7] 
+				tot_bi_qty = tot_bi_qty + bi_qty 
 				bom_prev = bom_work 
                                
 		bom_count = bom_count + 1 
@@ -115,43 +116,35 @@ def get_columns():
         return columns
 
 def get_conditions(filters):
-        conditions = ""
+	conditions = ""
 	
+	 	
 	if filters.get("company"):
-                conditions += " and bo.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
-
-        if filters.get("item_code"):
-                conditions += " and item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
-     
-        if filters.get("bom"):
-                conditions += " and bo.name = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
-
-#       if filters.get("warehouse"):
-  #             conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
+        	conditions += " and company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
         return conditions
 
 
 def get_stock_ledger_entries(filters):
-	conditions = get_conditions(filters)
 
+	conditions = get_conditions(filters)
+	
 	if filters.get("include_exploded_items") == "Y":
 	        
-        	return frappe.db.sql("""select bo.name, bo.company, bo.quantity as bo_qty, bi.item_code, bi.qty as bi_qty
+        	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.quantity as bo_qty, bi.item_code, bi.qty as bi_qty
                 	from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent %s
                 	order by bo.company, bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
 
-        	return frappe.db.sql("""select bo.name, bo.company, bo.quantity as bo_qty, bi.item_code, bi.qty as bi_qty
+        	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.quantity as bo_qty, bi.item_code, bi.qty as bi_qty
                 	from `tabBOM` bo, `tabBOM Item` bi where bo.name = bi.parent %s
        	        	order by bo.company, bo.name, bi.item_code""" % conditions, as_dict=1)
 
 def get_item_warehouse_map(filters):
         iwb_map = {}
-        from_date = getdate(filters["from_date"])
-	to_date = getdate(filters["to_date"])
-
-        sle = get_stock_ledger_entries(filters)
 	company = filters.get("company")
+	
+        sle = get_stock_ledger_entries(filters)
+	
 	total_stock = 0
 	if filters.get("warehouse"):
 		whse = filters.get("warehouse")
@@ -161,7 +154,8 @@ def get_item_warehouse_map(filters):
 	
         for d in sle:
 		if filters.get("warehouse"):
-			key = (d.company, d.name, d.item_code, whse)
+			
+			key = (d.company, d.bom_name, d.item_code, whse)
 				
                 	if key not in iwb_map:
                         	iwb_map[key] = frappe._dict({
@@ -173,24 +167,24 @@ def get_item_warehouse_map(filters):
                                 	"val_rate": 0.0, "uom": None
                         	})
 
-	                qty_dict = iwb_map[(d.company, d.name, d.item_code, whse)]
+	                qty_dict = iwb_map[(d.company, d.bom_name, d.item_code, whse)]
 		
-			qty_dict.bal_qty = get_stock(d.item_code, d.company, whse, from_date, to_date)
+			qty_dict.bal_qty = get_stock(d.item_code, d.company, whse)
 			qty_dict.bom_qty = d.bo_qty
 		
         	        qty_dict.bi_qty = d.bi_qty
 
 		else:
-
+		
 			total_stock = get_total_stock(d.item_code, d.company)
 			if total_stock > 0:
 
 				for w in whse:
 
-					whse_stock = get_stock(d.item_code, d.company, w, from_date, to_date)
+					whse_stock = get_stock(d.item_code, d.company, w)
 
 					if whse_stock > 0:
-			                	key = (d.company, d.name, d.item_code, w)
+			                	key = (d.company, d.bom_name, d.item_code, w)
 					
         		        		if key not in iwb_map:
         		                		iwb_map[key] = frappe._dict({
@@ -202,7 +196,7 @@ def get_item_warehouse_map(filters):
         		                        		"val_rate": 0.0, "uom": None
         		                		})
 
-			                	qty_dict = iwb_map[(d.company, d.name, d.item_code, w)]
+			                	qty_dict = iwb_map[(d.company, d.bom_name, d.item_code, w)]
 			
 						qty_dict.bal_qty = whse_stock
 						qty_dict.bom_qty = d.bo_qty
@@ -211,7 +205,7 @@ def get_item_warehouse_map(filters):
 			
 			else:
 
-				key = (d.company, d.name, d.item_code, " ")
+				key = (d.company, d.bom_name, d.item_code, " ")
 					
         	        	if key not in iwb_map:
         	                	iwb_map[key] = frappe._dict({
@@ -223,7 +217,7 @@ def get_item_warehouse_map(filters):
         	                        	"val_rate": 0.0, "uom": None
         	                	})
 
-		                qty_dict = iwb_map[(d.company, d.name, d.item_code, " ")]
+		                qty_dict = iwb_map[(d.company, d.bom_name, d.item_code, " ")]
 		
 				qty_dict.bal_qty = 0
 				qty_dict.bom_qty = d.bo_qty
@@ -237,7 +231,7 @@ def get_warehouses(company):
 		whse = frappe.db.sql("""select name from `tabWarehouse` where company = %s""", company)
 		return whse
 
-def get_stock(item_code, company, warehouse, from_date, to_date):
+def get_stock(item_code, company, warehouse):
 		
 	max_posting_date = frappe.db.sql("""select max(posting_date) from `tabStock Ledger Entry`
 		where item_code=%s and company = %s and warehouse = %s""",
