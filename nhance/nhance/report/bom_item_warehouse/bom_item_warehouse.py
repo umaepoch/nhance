@@ -118,7 +118,8 @@ def get_columns():
 def get_conditions(filters):
 	conditions = ""
 	
-	 	
+	if filters.get("item_code"):
+        	conditions += " and bi.item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False) 	
 	if filters.get("company"):
         	conditions += " and company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
         return conditions
