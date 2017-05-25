@@ -93,9 +93,9 @@ def execute(filters=None):
 				tot_bal_qty = 0 
  
  				tot_bi_qty = 0
-        	                tot_bal_qty = tot_bal_qty + rows[9] 
+        	                tot_bal_qty = tot_bal_qty + rows[6] 
 				
-				tot_bi_qty = tot_bi_qty + rows[10] 
+				tot_bi_qty = tot_bi_qty + bomi_qty 
 				bom_prev = bom_work 
                                
 		bom_count = bom_count + 1 
@@ -127,8 +127,7 @@ def get_columns():
 		_("Purchase Order Item")+"::100",
 		_("Delivery Date")+"::100"
 
-
-              
+             
          ]
 
         return columns
