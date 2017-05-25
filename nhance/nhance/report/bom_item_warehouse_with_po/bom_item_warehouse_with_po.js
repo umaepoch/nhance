@@ -41,7 +41,16 @@ frappe.query_reports["BOM Item Warehouse with PO"] = {
 			"fieldtype": "Data",
                         "default": "Y"
 			
+		},
+
+		{
+			"fieldname":"qty_to_make",
+			"label": __("Qty to Make"),
+			"fieldtype": "Data",
+                        "default": "1"
+			
 		}          
+                          
                 
         ]
 }

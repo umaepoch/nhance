@@ -57,7 +57,8 @@ def execute(filters=None):
 		if bom_count == 0: 
 
        			bom_prev = rows[0]
-			bomi_qty = rows[7] * rows[13]
+			
+			bomi_qty = rows[7] * flt(rows[13])
 
 	                tot_bal_qty = tot_bal_qty + rows[6] 
 			tot_bi_qty = tot_bi_qty + bomi_qty
@@ -71,7 +72,7 @@ def execute(filters=None):
 			if bom_prev == bom_work: 
 
 				tot_bal_qty = tot_bal_qty + rows[6] 
-				bomi_qty = rows[7] * rows[13]
+				bomi_qty = rows[7] * flt(rows[13])
 				tot_bi_qty = tot_bi_qty + bomi_qty
         	                summ_data.append([bom_prev, rows[1], rows[13], rows[2], 
 		 	rows[3], rows[4], rows[5], rows[14], bomi_qty, rows[6], rows[8], 
@@ -187,6 +188,8 @@ def get_item_warehouse_map(filters):
 	dle = get_sales_order_entries_2(filters)
 	company = filters.get("company")
 	total_stock = 0
+	qty_to_make = filters.get("qty_to_make")
+	
 	if filters.get("warehouse"):
 		whse = filters.get("warehouse")
 	else:
@@ -212,7 +215,7 @@ def get_item_warehouse_map(filters):
 			qty_dict.bal_qty = get_stock(d.bi_item, whse)
 		
         	        qty_dict.bi_qty = d.bi_qty
-			qty_dict.bom_qty = d.bo_qty
+			qty_dict.bom_qty = qty_to_make
 			qty_dict.purchase_order = d.purchase_order
 			qty_dict.project = d.project
 			qty_dict.delivery_date = d.delivery_date
@@ -245,7 +248,7 @@ def get_item_warehouse_map(filters):
 						qty_dict.bal_qty = whse_stock
 		
         			        	qty_dict.bi_qty = d.bi_qty
-						qty_dict.bom_qty = d.bo_qty
+						qty_dict.bom_qty = qty_to_make
 						qty_dict.purchase_order = d.purchase_order
 						qty_dict.project = d.project
 						qty_dict.delivery_date = d.delivery_date
@@ -271,7 +274,7 @@ def get_item_warehouse_map(filters):
 				qty_dict.bal_qty = 0
 		
         		        qty_dict.bi_qty = d.bi_qty
-				qty_dict.bom_qty = d.bo_qty
+				qty_dict.bom_qty = qty_to_make
 				qty_dict.purchase_order = d.purchase_order
 				qty_dict.project = d.project
 				qty_dict.delivery_date = d.delivery_date
@@ -298,7 +301,7 @@ def get_item_warehouse_map(filters):
 				qty_dict.bal_qty = get_stock(d.bi_item, whse)
 			
         		        qty_dict.bi_qty = d.bi_qty
-				qty_dict.bom_qty = d.bo_qty
+				qty_dict.bom_qty = qty_to_make
 				qty_dict.purchase_order = d.purchase_order
 				qty_dict.project = d.project
 				qty_dict.delivery_date = d.delivery_date
@@ -331,7 +334,7 @@ def get_item_warehouse_map(filters):
 							qty_dict.bal_qty = whse_stock
 		
         				        	qty_dict.bi_qty = d.bi_qty
-							qty_dict.bom_qty = d.bo_qty
+							qty_dict.bom_qty = qty_to_make
 							qty_dict.purchase_order = d.purchase_order
 							qty_dict.project = d.project
 							qty_dict.delivery_date = d.delivery_date
@@ -356,7 +359,7 @@ def get_item_warehouse_map(filters):
 					qty_dict.bal_qty = 0
 		
         			        qty_dict.bi_qty = d.bi_qty
-					qty_dict.bom_qty = d.bo_qty
+					qty_dict.bom_qty = qty_to_make
 					qty_dict.purchase_order = d.purchase_order
 					qty_dict.project = d.project
 					qty_dict.delivery_date = d.delivery_date
