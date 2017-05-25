@@ -7,17 +7,16 @@ from frappe import _, msgprint
 from frappe.utils import flt, getdate, datetime
 
 def execute(filters=None):
-	msgprint(_("Inside 1"))
-        if not filters: filters = {}
-	msgprint(_("Inside 2"))
+	if not filters: filters = {}
+	
         validate_filters(filters)
-	msgprint(_("Inside 3"))
+	
         columns = get_columns()
-	msgprint(_("Before item map"))
+	
         item_map = get_item_details(filters)
-	msgprint(_("After item map"))
+	
         iwb_map = get_item_warehouse_map(filters)
-	msgprint(_("After item_warehouse_map"))
+	
 
         data = []
         summ_data = [] 
@@ -185,9 +184,7 @@ def get_item_warehouse_map(filters):
         iwb_map = {}
        
         sle = get_sales_order_entries(filters)
-	msgprint(_("After sle"))
 	dle = get_sales_order_entries_2(filters)
-	msgprint(_("After dle"))
 	company = filters.get("company")
 	total_stock = 0
 	if filters.get("warehouse"):
