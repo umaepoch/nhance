@@ -5,10 +5,12 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _, msgprint
 from frappe.utils import flt, getdate, datetime
+from erpnext.stock.stock_balance import get_balance_qty_from_sle
 
 def execute(filters=None):
+
 	if not filters: filters = {}
-	
+
         validate_filters(filters)
 	
         columns = get_columns()
@@ -24,9 +26,9 @@ def execute(filters=None):
         bom_work = "" 
         bom_count = 0 
         tot_bal_qty = 0 
-	bomi_qty = 0
+	reqd_qty = 0
         tot_bi_qty = 0
-	tot_si_qty = 0
+	tot_reqd_qty = 0
         
 	for (bom, item, bi_item, whse) in sorted(iwb_map):
                 qty_dict = iwb_map[(bom, item, bi_item, whse)]
@@ -38,7 +40,7 @@ def execute(filters=None):
 	                        item_map[bi_item]["item_name"], 
 	                        item_map[bi_item]["stock_uom"], 
 	                        qty_dict.bal_qty, qty_dict.bi_qty, whse,                                              
-	                        qty_dict.purchase_order, qty_dict.pi_item, qty_dict.delivery_date, qty_dict.project, qty_dict.bom_qty, bi_item,
+	                        qty_dict.purchase_order, qty_dict.pi_item, qty_dict.delivery_date, qty_dict.project, qty_dict.bom_qty, bi_item, qty_dict.qty_to_make
 	                    ])
 		else:
 
@@ -48,7 +50,7 @@ def execute(filters=None):
 	                        item_map[item]["item_name"], 
 	                        item_map[item]["stock_uom"], 
 	                        qty_dict.bal_qty, qty_dict.bi_qty, whse,                                              
-	                        qty_dict.purchase_order, qty_dict.pi_item, qty_dict.delivery_date, qty_dict.project, qty_dict.bom_qty, bi_item,
+	                        qty_dict.purchase_order, qty_dict.pi_item, qty_dict.delivery_date, qty_dict.project, qty_dict.bom_qty, bi_item, qty_dict.qty_to_make
 	                    ])
 
        		
@@ -58,12 +60,13 @@ def execute(filters=None):
 
        			bom_prev = rows[0]
 			
-			bomi_qty = rows[7] * flt(rows[13])
+			reqd_qty = (rows[7] / rows[13]) * flt(rows[15])
 
 	                tot_bal_qty = tot_bal_qty + rows[6] 
-			tot_bi_qty = tot_bi_qty + bomi_qty
+			tot_bi_qty = tot_bi_qty + rows[7]
+			tot_reqd_qty = tot_reqd_qty + reqd_qty
                         summ_data.append([bom_prev, rows[1], rows[13], rows[2], 
-		 	rows[3], rows[4], rows[5], rows[14], bomi_qty, rows[6], rows[8], 
+		 	rows[3], rows[4], rows[5], rows[14], rows[7], reqd_qty, rows[6], rows[8], 
 			rows[9], rows[10], rows[11]
  			]) 
                 else: 
@@ -72,35 +75,38 @@ def execute(filters=None):
 			if bom_prev == bom_work: 
 
 				tot_bal_qty = tot_bal_qty + rows[6] 
-				bomi_qty = rows[7] * flt(rows[13])
-				tot_bi_qty = tot_bi_qty + bomi_qty
+				reqd_qty = (rows[7] / rows[13]) * flt(rows[15])
+				tot_bi_qty = tot_bi_qty + rows[7]
+				tot_reqd_qty = tot_reqd_qty + reqd_qty
         	                summ_data.append([bom_prev, rows[1], rows[13], rows[2], 
-		 	rows[3], rows[4], rows[5], rows[14], bomi_qty, rows[6], rows[8], 
+		 	rows[3], rows[4], rows[5], rows[14], rows[7], reqd_qty, rows[6], rows[8], 
 			rows[9], rows[10], rows[11]		 
  				]) 
 			else: 
 
 				summ_data.append([bom_prev, " ", " ", " ", " ", " ", " ", " ",
-			 	tot_bi_qty,
+			 	tot_bi_qty, tot_reqd_qty,
 				tot_bal_qty, " ", " ", " ", " "
  				])				 
 
 				summ_data.append([bom_work, rows[1], rows[13], rows[2], 
-		 	rows[3], rows[4], rows[5], rows[14], bomi_qty, rows[6], rows[8], 
+		 	rows[3], rows[4], rows[5], rows[14], rows[7], reqd_qty, rows[6], rows[8], 
 			rows[9], rows[10], rows[11]
  				]) 
         	                        
 				tot_bal_qty = 0 
  
  				tot_bi_qty = 0
+				tot_reqd_qty = 0
         	                tot_bal_qty = tot_bal_qty + rows[6] 
-				
-				tot_bi_qty = tot_bi_qty + bomi_qty 
+				reqd_qty = (rows[7] / rows[13]) * flt(rows[15])
+				tot_bi_qty = tot_bi_qty + rows[7]
+				tot_reqd_qty = tot_reqd_qty + reqd_qty
 				bom_prev = bom_work 
                                
 		bom_count = bom_count + 1 
 	summ_data.append([bom_prev, " ", " ", " ", " ", " ", " ", " ",
-			 	tot_bi_qty,
+			 	tot_bi_qty, tot_reqd_qty,
 				tot_bal_qty, " ", " ", " ", " "
  		])	 
 
@@ -114,13 +120,14 @@ def get_columns():
         columns = [
 		_("BOM")+":Link/BOM:100",
                 _("Item")+":Link/Item:100",
-		_("Quantity to Make")+"::100",
+		_("BOM Qty")+"::100",
                 _("Description")+"::140",
                 _("Item Group")+"::100",
                 _("Item Name")+"::150",           
                 _("Stock UOM")+":Link/UOM:90",
 		_("BOM Item")+":Link/Item:100",
-		_("BoM Qty")+":Float:100",
+		_("BoM Item Qty")+":Float:100",
+		_("Required Qty")+":Float:100",
                 _("Balance Qty")+":Float:100",
                 _("Warehouse")+"::100",
                 _("Purchase Order")+":Link/Purchase Order:100",
@@ -144,7 +151,7 @@ def get_conditions(filters):
         if filters.get("bom"):
                 conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
 		
-
+	
 #       if filters.get("warehouse"):
   #             conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
         return conditions
@@ -156,12 +163,12 @@ def get_sales_order_entries(filters):
 	if filters.get("include_exploded_items") == "Y":
 	        
         	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
-                	from `tabBOM` bo, `tabBOM Explosion Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` pi where bo.name = bi.parent and pi.item_code = bi.item_code and po.name = pi.parent %s
+                	from `tabBOM` bo, `tabBOM Explosion Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` pi where bo.name = bi.parent and pi.item_code = bi.item_code and po.name = pi.parent and bo.docstatus = "1" %s
                 	order by bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
 
         	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
-                	from `tabBOM` bo, `tabBOM Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` as pi where bo.name = bi.parent and pi.item_code = bi.item_code and po.name = pi.parent %s
+                	from `tabBOM` bo, `tabBOM Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` as pi where bo.name = bi.parent and pi.item_code = bi.item_code and po.name = pi.parent and bo.docstatus = "1" %s
                 	order by bo.name, bi.item_code""" % conditions, as_dict=1)
 
 
@@ -172,19 +179,20 @@ def get_sales_order_entries_2(filters):
 	        
         	return frappe.db.sql("""select bo.name as bom_name, bo.company as company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
                 	from `tabBOM` bo, `tabBOM Explosion Item` bi
-                	where bo.name = bi.parent %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
+                	where bo.name = bi.parent and bo.docstatus = "1" %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
 
 	else:
 
         	return frappe.db.sql("""select bo.name as bom_name, bo.company as company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
                 	from `tabBOM` bo, `tabBOM Item` bi
-                	where bo.name = bi.parent %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
+                	where bo.name = bi.parent and bo.docstatus = "1" %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
 
 
 def get_item_warehouse_map(filters):
         iwb_map = {}
        
         sle = get_sales_order_entries(filters)
+	
 	dle = get_sales_order_entries_2(filters)
 	company = filters.get("company")
 	total_stock = 0
@@ -206,7 +214,7 @@ def get_item_warehouse_map(filters):
                                 	"in_qty": 0.0, "in_val": 0.0,
                                 	"out_qty": 0.0, "out_val": 0.0,
 					"bal_qty": 0.0, "bom_qty": 0.0,
-                                	"bi_qty": 0.0,
+                                	"bi_qty": 0.0, "qty_to_make": 0.0,
                                 	"val_rate": 0.0, "uom": None
                         	})
 
@@ -215,7 +223,8 @@ def get_item_warehouse_map(filters):
 			qty_dict.bal_qty = get_stock(d.bi_item, whse)
 		
         	        qty_dict.bi_qty = d.bi_qty
-			qty_dict.bom_qty = qty_to_make
+			qty_dict.bom_qty = d.bo_qty
+			qty_dict.qty_to_make = qty_to_make
 			qty_dict.purchase_order = d.purchase_order
 			qty_dict.project = d.project
 			qty_dict.delivery_date = d.delivery_date
@@ -239,7 +248,7 @@ def get_item_warehouse_map(filters):
         		                        		"in_qty": 0.0, "in_val": 0.0,
         		                        		"out_qty": 0.0, "out_val": 0.0,
 								"bal_qty": 0.0, "bom_qty": 0.0, 
-        		                        		"bi_qty": 0.0,
+        		                        		"bi_qty": 0.0, "qty_to_make": 0.0,
         		                        		"val_rate": 0.0, "uom": None
         		                		})
 
@@ -248,7 +257,8 @@ def get_item_warehouse_map(filters):
 						qty_dict.bal_qty = whse_stock
 		
         			        	qty_dict.bi_qty = d.bi_qty
-						qty_dict.bom_qty = qty_to_make
+						qty_dict.bom_qty = d.bo_qty
+						qty_dict.qty_to_make = qty_to_make
 						qty_dict.purchase_order = d.purchase_order
 						qty_dict.project = d.project
 						qty_dict.delivery_date = d.delivery_date
@@ -265,7 +275,7 @@ def get_item_warehouse_map(filters):
         	                        	"in_qty": 0.0, "in_val": 0.0,
         	                        	"out_qty": 0.0, "out_val": 0.0,
         	                        	"bal_qty": 0.0, "bom_qty": 0.0,
-        	                        	"bi_qty": 0.0,
+        	                        	"bi_qty": 0.0, "qty_to_make": 0.0,
         	                        	"val_rate": 0.0, "uom": None
         	                	})
 
@@ -274,7 +284,8 @@ def get_item_warehouse_map(filters):
 				qty_dict.bal_qty = 0
 		
         		        qty_dict.bi_qty = d.bi_qty
-				qty_dict.bom_qty = qty_to_make
+				qty_dict.bom_qty = d.bo_qty
+				qty_dict.qty_to_make = qty_to_make
 				qty_dict.purchase_order = d.purchase_order
 				qty_dict.project = d.project
 				qty_dict.delivery_date = d.delivery_date
@@ -292,7 +303,7 @@ def get_item_warehouse_map(filters):
                                 	"in_qty": 0.0, "in_val": 0.0,
                                 	"out_qty": 0.0, "out_val": 0.0,
 					"bal_qty": 0.0, "bom_qty": 0.0,
-                                	"bi_qty": 0.0,
+                                	"bi_qty": 0.0, "qty_to_make": 0.0,
                                 	"val_rate": 0.0, "uom": None
                 	        	})
 
@@ -301,7 +312,8 @@ def get_item_warehouse_map(filters):
 				qty_dict.bal_qty = get_stock(d.bi_item, whse)
 			
         		        qty_dict.bi_qty = d.bi_qty
-				qty_dict.bom_qty = qty_to_make
+				qty_dict.bom_qty = d.bo_qty
+				qty_dict.qty_to_make = qty_to_make
 				qty_dict.purchase_order = d.purchase_order
 				qty_dict.project = d.project
 				qty_dict.delivery_date = d.delivery_date
@@ -325,7 +337,7 @@ def get_item_warehouse_map(filters):
         		                        		"in_qty": 0.0, "in_val": 0.0,
         		                        		"out_qty": 0.0, "out_val": 0.0,
 								"bal_qty": 0.0, "bom_qty": 0.0,
-        		                        		"bi_qty": 0.0,
+        		                        		"bi_qty": 0.0, "qty_to_make": 0.0,
         		                        		"val_rate": 0.0, "uom": None
         			                		})
 
@@ -334,7 +346,8 @@ def get_item_warehouse_map(filters):
 							qty_dict.bal_qty = whse_stock
 		
         				        	qty_dict.bi_qty = d.bi_qty
-							qty_dict.bom_qty = qty_to_make
+							qty_dict.bom_qty = d.bo_qty
+							qty_dict.qty_to_make = qty_to_make
 							qty_dict.purchase_order = d.purchase_order
 							qty_dict.project = d.project
 							qty_dict.delivery_date = d.delivery_date
@@ -350,7 +363,7 @@ def get_item_warehouse_map(filters):
         	                        	"in_qty": 0.0, "in_val": 0.0,
         	                        	"out_qty": 0.0, "out_val": 0.0,
         	                        	"bal_qty": 0.0, "bom_qty": 0.0,
-        	                        	"bi_qty": 0.0,
+        	                        	"bi_qty": 0.0, "qty_to_make": 0.0,
         	                        	"val_rate": 0.0, "uom": None
         		                	})
 
@@ -359,7 +372,8 @@ def get_item_warehouse_map(filters):
 					qty_dict.bal_qty = 0
 		
         			        qty_dict.bi_qty = d.bi_qty
-					qty_dict.bom_qty = qty_to_make
+					qty_dict.bom_qty = d.bo_qty
+					qty_dict.qty_to_make = qty_to_make
 					qty_dict.purchase_order = d.purchase_order
 					qty_dict.project = d.project
 					qty_dict.delivery_date = d.delivery_date
@@ -375,30 +389,30 @@ def get_warehouses(company):
 
 def get_stock(bi_item, warehouse):
 		
-	max_posting_date = frappe.db.sql("""select max(posting_date) from `tabStock Ledger Entry`
-		where item_code=%s and warehouse = %s""",
-		(bi_item, warehouse))[0][0]
-	max_posting_date = getdate(max_posting_date)
-	max_posting_date1 = datetime.datetime.strftime(max_posting_date, "%Y-%m-%d")
+#	max_posting_date = frappe.db.sql("""select max(posting_date) from `tabStock Ledger Entry`
+#		where item_code=%s and warehouse = %s""",
+#		(bi_item, warehouse))[0][0]
+#	max_posting_date = getdate(max_posting_date)
+#	max_posting_date1 = datetime.datetime.strftime(max_posting_date, "%Y-%m-%d")
 	
-	max_posting_time = frappe.db.sql("""select max(posting_time) from `tabStock Ledger Entry`
-		where item_code=%s and warehouse = %s and posting_date = %s""",
-		(bi_item, warehouse, max_posting_date))[0][0]
+#	max_posting_time = frappe.db.sql("""select max(posting_time) from `tabStock Ledger Entry`
+#		where item_code=%s and warehouse = %s and posting_date = %s""",
+#		(bi_item, warehouse, max_posting_date))[0][0]
 	
 #	max_posting_time = gettime(max_posting_time)
 #	max_posting_time1 = datetime.datetime.strftime(max_posting_time, "%H:%M:%S")
 
-	ssle = frappe.db.sql("""select voucher_no, voucher_type, actual_qty, qty_after_transaction
-		from `tabStock Ledger Entry` sle
-		where item_code=%s and warehouse = %s and posting_date = %s and posting_time = %s""",
-		(bi_item, warehouse, getdate(max_posting_date1), max_posting_time))
+#	ssle = frappe.db.sql("""select voucher_no, voucher_type, actual_qty, qty_after_transaction
+#		from `tabStock Ledger Entry` sle
+#		where item_code=%s and warehouse = %s and posting_date = %s and posting_time = %s""",
+#		(bi_item, warehouse, getdate(max_posting_date1), max_posting_time))
 
-	if ssle:
+#	if ssle:
 
-		item_stock = ssle[0][3]
-	else:
-		item_stock = 0
-	
+#		item_stock = ssle[0][3]
+#	else:
+#		item_stock = 0
+	item_stock = get_balance_qty_from_sle(bi_item, warehouse)	
 				
 	return item_stock
 
