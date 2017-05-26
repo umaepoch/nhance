@@ -9,6 +9,8 @@ frappe.query_reports["BOM Item Warehouse with PO"] = {
                         "label": __("BOM"),
                         "fieldtype": "Link",
                         "options": "BOM",
+			"reqd": 1,
+			"get_query": function(){ return {'filters': [['BOM', 'docstatus', '=', '1']]}}
 						                        
                 },
                 
