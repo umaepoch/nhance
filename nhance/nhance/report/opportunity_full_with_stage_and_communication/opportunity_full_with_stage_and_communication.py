@@ -121,10 +121,12 @@ def get_columns():
 
 def get_conditions(filters):
         conditions = ""
-        if not filters.get("from_date"):
-                frappe.throw(_("'From Date' is required"))
+        if filters.get("from_date"):
 
+          	conditions += " and op.transaction_date >= '%s'" % frappe.db.escape(filters["from_date"])
+	
         if filters.get("to_date"):
+
                 conditions += " and op.transaction_date <= '%s'" % frappe.db.escape(filters["to_date"])
         else:
                 frappe.throw(_("'To Date' is required"))
@@ -201,6 +203,7 @@ def get_item_map(filters):
 	kle = get_opp_details_2(filters)
 	mle = []
 	mle = get_opp_details_3(filters)
+	ple = []
 	ple = get_opp_details_4(filters)
         
              	
@@ -262,14 +265,13 @@ def get_item_map(filters):
 			qty_dict.recipients = d.recipients
 			qty_dict.phone_no = d.phone
 			qty_dict.content = d.content
-               
-
+              
  	if kle:      
 		for d in kle:
 
- 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
 	                if key not in iwb_map:
-        	                iwb_map[key] = frappe._dict({
+	      	                iwb_map[key] = frappe._dict({
         	                        "qty": 0.0, "value": 0.0,
 					
         	                })
