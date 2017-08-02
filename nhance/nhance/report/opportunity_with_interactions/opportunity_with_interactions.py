@@ -145,8 +145,8 @@ where op.name = opi.parent %s and not exists (select 1 from `tabInteractions` in
 
 def get_item_map(filters):
         iwb_map = {}
-        from_date = getdate(filters["from_date"])
-        to_date = getdate(filters["to_date"])
+#        from_date = getdate(filters["from_date"])
+#        to_date = getdate(filters["to_date"])
 	
         sle = get_opp_details(filters)
 

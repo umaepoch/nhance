@@ -18,6 +18,7 @@ frappe.query_reports["Opportunity with Interactions"] = {
                         "fieldtype": "Date",
                         "width": "80",
                         "default": sys_defaults.year_start_date,
+			
                 },
                 {
                         "fieldname":"to_date",
