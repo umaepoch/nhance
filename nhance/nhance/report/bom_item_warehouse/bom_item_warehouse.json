@@ -7,20 +7,13 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2017-05-29 19:16:47.723882", 
+ "modified": "2017-08-02 11:24:06.349227", 
  "modified_by": "Administrator", 
- "module": "Nhance", 
+ "module": "nhance", 
  "name": "BOM Item Warehouse", 
  "owner": "Administrator", 
  "ref_doctype": "Stock Ledger Entry", 
  "report_name": "BOM Item Warehouse", 
  "report_type": "Script Report", 
- "roles": [
-  {
-   "role": "Accounts Manager"
-  }, 
-  {
-   "role": "Stock User"
-  }
- ]
+ "roles": []
 }
