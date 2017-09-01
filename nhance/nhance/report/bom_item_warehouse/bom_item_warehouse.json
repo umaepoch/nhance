@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2017-08-02 11:31:43.096465", 
+ "modified": "2017-08-28 11:39:49.570920", 
  "modified_by": "Administrator", 
  "module": "Nhance", 
  "name": "BOM Item Warehouse", 
@@ -15,5 +15,18 @@
  "ref_doctype": "Stock Ledger Entry", 
  "report_name": "BOM Item Warehouse", 
  "report_type": "Script Report", 
- "roles": []
+ "roles": [
+  {
+   "role": "Manufacturing User"
+  }, 
+  {
+   "role": "Manufacturing Manager"
+  }, 
+  {
+   "role": "Purchase Manager"
+  }, 
+  {
+   "role": "Purchase User"
+  }
+ ]
 }
