@@ -146,9 +146,6 @@ def get_conditions(filters):
 	conditions = ""
 	to_date = utils.today()
 	from_date = getdate(to_date) - timedelta(days=300)
-	msgprint(_(from_date))
-	msgprint(_(to_date))
-
 	conditions += " and sle.posting_date <= '%s'" % frappe.db.escape(to_date)
 
 	if not filters.get("cutoff_date"):
