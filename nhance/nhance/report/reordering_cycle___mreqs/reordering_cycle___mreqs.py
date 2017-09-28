@@ -27,7 +27,7 @@ def execute(filters=None):
 
 	columns = get_columns()
 	item_map = get_item_details(filters)
-	frappe.msgprint(_("Inside 1")
+
 	mat_req_map = get_material_request(filters)
 
 	if filters.get("cutoff_date"):
@@ -46,7 +46,6 @@ def execute(filters=None):
 	iwb_map = get_item_warehouse_map(filters)
 
 	data = []
-	frappe.msgprint(_("Inside 2")
 	for (company, item, warehouse) in sorted(iwb_map):
 		qty_dict = iwb_map[(company, item, warehouse)]
 		item_reorder_level = 0
@@ -116,7 +115,7 @@ def execute(filters=None):
 				item_reorder_qty, mat_tot_pend_qty, mat_pend_qty, pur_tot_pend_qty, pur_pend_qty, ord_cs_qty, ord_ig_qty
 			
 			])
-	frappe.msgprint(_("Inside 3")
+
 	return columns, data
 
 def get_columns():
