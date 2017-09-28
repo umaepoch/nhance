@@ -303,10 +303,10 @@ def get_material_sel_request(filters):
 	if filters.get("item_code"):
 		condition += "and mri.item_code='%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
 
-		pending_sel_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status not in ("Stopped", "Cancelled") and mr.docstatus != "2" %s""" % condition,  as_dict=1)
+		pending_sel_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status = "Submitted" and mr.docstatus not in ("2", "0") %s""" % condition,  as_dict=1)
 
 	else:
-		pending_sel_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status not in ("Stopped", "Cancelled") and mr.docstatus != "2" %s group by mri.item_code""" % condition, as_dict=1)
+		pending_sel_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status = "Submitted" and mr.docstatus not in ("2", "0") %s group by mri.item_code""" % condition, as_dict=1)
 
 #	pending_mat_com_qty = flt(frappe.db.sql("""select sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status not in ("Stopped", "Cancelled") and mri.item_code = %s""", (item_code))[0][0])
 #	pending_mat_req_qty = pending_mat_tot_qty - pending_mat_com_qty
@@ -323,10 +323,10 @@ def get_material_request(filters):
 	if filters.get("item_code"):
 		condition += "and mri.item_code='%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
 
-		pending_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status not in ("Stopped", "Cancelled") and mr.docstatus != "2" %s""" % condition,  as_dict=1)
+		pending_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status= "Submitted" and mr.docstatus = "1" %s""" % condition,  as_dict=1)
 
 	else:
-		pending_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status not in ("Stopped", "Cancelled") and mr.docstatus != "2" %s group by mri.item_code""" % condition, as_dict=1)
+		pending_materials = frappe.db.sql("""select mri.item_code, sum(qty), sum(ordered_qty) from `tabMaterial Request Item` mri, `tabMaterial Request` mr where mri.parent = mr.name and mr.status = "Submitted" and mr.docstatus = "1" %s group by mri.item_code""" % condition, as_dict=1)
 
 	return dict((d.item_code , d) for d in pending_materials)
 
@@ -351,10 +351,10 @@ def get_purchase_sel_orders(filters):
 		condition += " and poi.item_code='%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
 
 
-		pending_purchase_sel_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus != "2"  %s""" % condition, as_dict=1)
+		pending_purchase_sel_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus = "1"  %s""" % condition, as_dict=1)
 
 	else:
-		pending_purchase_sel_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus != "2" %s group by poi.item_code"""  % condition, as_dict=1)
+		pending_purchase_sel_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus = "1" %s group by poi.item_code"""  % condition, as_dict=1)
 
 	
 	return dict((d.item_code , d) for d in pending_purchase_sel_orders)
@@ -372,10 +372,10 @@ def get_purchase_orders(filters):
 		condition += " and poi.item_code='%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
 
 
-		pending_purchase_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus != "2"  %s""" % condition, as_dict=1)
+		pending_purchase_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus = "1"  %s""" % condition, as_dict=1)
 
 	else:
-		pending_purchase_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus != "2" %s group by poi.item_code"""  % condition, as_dict=1)
+		pending_purchase_orders = frappe.db.sql("""select poi.item_code, sum(qty), sum(received_qty) from `tabPurchase Order Item` poi, `tabPurchase Order` po where poi.parent = po.name and po.status not in ("Closed", "Delivered" "Cancelled") and po.docstatus = "1" %s group by poi.item_code"""  % condition, as_dict=1)
 
 	
 	return dict((d.item_code , d) for d in pending_purchase_orders)
