@@ -9,9 +9,9 @@ from erpnext.stock.stock_balance import get_balance_qty_from_sle
 from datetime import datetime
 import time
 import math
-
-
-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 def execute(filters=None):
 	global item_map
@@ -176,11 +176,11 @@ def get_sales_order_entries(filters):
 	conditions = get_conditions(filters)
 
 	if filters.get("include_exploded_items") == "Y":
-		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty
+		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty
 					from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.docstatus = "1" %s
 					order by bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
-		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty
+		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty
 					from `tabBOM` bo, `tabBOM Item` bi where bo.name = bi.parent and bo.docstatus = "1" %s
 					order by bo.name, bi.item_code""" % conditions, as_dict=1)
 
@@ -200,6 +200,7 @@ def get_item_warehouse_map(filters):
 
 	if filters.get("warehouse"):
 		temp_whse = filters.get("warehouse")
+
 
 		if temp_whse == 'All':
 			whse, whs_flag = get_warehouses(company)
@@ -400,9 +401,11 @@ def check_for_whole_number_itemwise(item):
 
 
 @frappe.whitelist()
-def make_stock_requisition(args):
+def make_stock_requisition(args, planning_warehouse, required_date, reference_no):
+
 	global required_date_count
-	if getdate(required_date) == getdate(datetime.now().strftime('%Y-%m-%d')):
+#	if getdate(required_date) == getdate(datetime.now().strftime('%Y-%m-%d')):
+	if required_date == getdate(datetime.now().strftime('%Y-%m-%d')):
 		if required_date_count == False:
 			required_date_count = True
 			frappe.throw(_("Required Date is set to today's date, if you still want to proceed click on 'Stock Requisition' again"))

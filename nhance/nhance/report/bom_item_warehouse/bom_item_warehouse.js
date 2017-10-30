@@ -51,35 +51,35 @@ frappe.query_reports["BOM Item Warehouse"] = {
 
         },
 
-        {
-            "fieldname": "planning_warehouse",
-            "label": __("Planning Warehouse"),
-            "fieldtype": "Link",
-            "reqd": 1,
-            "options": "Warehouse",
-            "get_query": function() {
-                return {
-                    'filters': [
-                        ['Warehouse', 'is_group', '=', '0']
-                    ]
-                }
-            }
-        },
-        {
-          "fieldname":"required_on",
-          "label": __("Required Date"),
-          "fieldtype": "Date",
-          "default": get_today(),
-          "on_change": function(query_report) {
-            query_report.trigger_refresh();
-	    var filters = query_report.get_values();
-            var required_date = filters.required_on;
-            if (required_date < get_today()){
-              frappe.msgprint("Required Date cannot be an Earlier Date than today")
-              frappe.query_report_filters_by_name.required_on.set_input(get_today());
-            }
-          }
-        },
+ //       {
+//            "fieldname": "planning_warehouse",
+  //          "label": __("Planning Warehouse"),
+    //        "fieldtype": "Link",
+      //      "reqd": 1,
+//            "options": "Warehouse",
+  //          "get_query": function() {
+    //            return {
+      //              'filters': [
+        //                ['Warehouse', 'is_group', '=', '0']
+          //          ]
+//            //    }
+  //          }
+    //    },
+//        {
+  //        "fieldname":"required_on",
+//          "label": __("Required Date"),
+  //        "fieldtype": "Date",
+    //      "default": get_today(),
+//          "on_change": function(query_report) {
+//            query_report.trigger_refresh();
+//	    var filters = query_report.get_values();
+  //          var required_date = filters.required_on;
+    ////        if (required_date < get_today()){
+        //      frappe.msgprint("Required Date cannot be an Earlier Date than today")
+          //    frappe.query_report_filters_by_name.required_on.set_input(get_today());
+//            }
+  //        }
+    //    },
 
         {
             "fieldname": "qty_to_make",
@@ -110,7 +110,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         if (r.message && qty % 1 != 0) {
                             frappe.msgprint(__("Quantity to Make should be whole number"));
                             frappe.query_report_filters_by_name.qty_to_make.set_input("1");
-														query_report.trigger_refresh();
+			    query_report.trigger_refresh();
 
                         } else {
                             query_report.trigger_refresh();
@@ -118,11 +118,12 @@ frappe.query_reports["BOM Item Warehouse"] = {
                     }
                 })
             }
-        },{
-            "fieldname": "reference_no",
-            "label": __("Reference Number"),
-            "fieldtype": "Data",
         },
+//	{
+//            "fieldname": "reference_no",
+//            "label": __("Reference Number"),
+//            "fieldtype": "Data",
+//        },
 
 
     ],
@@ -143,23 +144,62 @@ frappe.query_reports["BOM Item Warehouse"] = {
     return !jQuery.isArray( obj ) && (obj - parseFloat( obj ) + 1) >= 0;
   },
    makeStockRequisition: function(report,status){
-    var filters = report.get_values();
-     if (filters.company && filters.warehouse && filters.bom) {
-         return frappe.call({
-             method: "nhance.nhance.report.bom_item_warehouse.bom_item_warehouse.make_stock_requisition",
-             args: {
-                 "args": status
-             },
-             callback: function(r) {
-               if(r.message) {
-                 frappe.set_route('List',r.message );
-             }
-             }
-         })
-     } else {
-         frappe.msgprint("Please select all three filters For Stock Requisition")
-     }
+    
+     var dialog = new frappe.ui.Dialog({
+		title: __("Enter information for Stock Requisition"),
+		fields: [
+			{"fieldname": "planning_warehouse", "label": __("Planning Warehouse"), "fieldtype": "Link", "reqd": 1, "options": "Warehouse", "get_query": function() {
+                return {
+                    'filters': [
+                        ['Warehouse', 'is_group', '=', '0']
+                    ]
+                }
+            }},
+			
+//			{"fieldtype": "Date", "label": __("Required Date"), "fieldname": "required_on", "reqd": 1},
+			{"fieldname":"required_on", "label": __("Required Date"), "fieldtype": "Date", "default": get_today()},
+	                
+			{"fieldname": "reference_no", "label": __("Reference Number"), "fieldtype": "Data"}
+		],
 
+		primary_action: function(){
+        	dialog.hide();
+        	show_alert(dialog.get_values());
+		var filters = report.get_values();
+		if (filters.company && filters.warehouse && filters.bom) {
+
+		var planning_warehouse = dialog.fields_dict.planning_warehouse.get_value();
+		var required_on = dialog.fields_dict.required_on.get_value();
+		
+		var reference_no = dialog.fields_dict.reference_no.get_value();
+		
+
+	         return frappe.call({
+        	     method: "nhance.nhance.report.bom_item_warehouse.bom_item_warehouse.make_stock_requisition",
+        	     args: {
+        	         "args": status,
+			 "planning_warehouse": planning_warehouse,
+			 "required_date": required_on,
+			 "reference_no": reference_no
+			
+        	     },
+        	     callback: function(r) {
+        	       if(r.message) {
+        	         frappe.set_route('List',r.message );
+        	     }
+        	     }
+        	 })
+	     } else {
+        	 frappe.msgprint("Please select all three filters For Stock Requisition")
+	     }
+
+
+	}
+	});
+	dialog.show();
+	
+
+     
    }
 }
 
