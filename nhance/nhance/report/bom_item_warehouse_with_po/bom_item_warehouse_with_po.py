@@ -162,12 +162,12 @@ def get_sales_order_entries(filters):
 
 	if filters.get("include_exploded_items") == "Y":
 	        
-        	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
+        	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
                 	from `tabBOM` bo, `tabBOM Explosion Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` pi where bo.name = bi.parent and pi.item_code = bi.item_code and po.name = pi.parent and po.per_received < 100 and bo.docstatus = "1" %s
                 	order by bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
 
-        	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
+        	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
                 	from `tabBOM` bo, `tabBOM Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` as pi where bo.name = bi.parent and pi.item_code = bi.item_code and po.name = pi.parent and po.per_received < 100 and bo.docstatus = "1" %s
                 	order by bo.name, bi.item_code""" % conditions, as_dict=1)
 
@@ -177,13 +177,13 @@ def get_sales_order_entries_2(filters):
 
 	if filters.get("include_exploded_items") == "Y":
 	        
-        	return frappe.db.sql("""select bo.name as bom_name, bo.company as company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
+        	return frappe.db.sql("""select bo.name as bom_name, bo.company as company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
                 	from `tabBOM` bo, `tabBOM Explosion Item` bi
                 	where bo.name = bi.parent and bo.docstatus = "1" %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
 
 	else:
 
-        	return frappe.db.sql("""select bo.name as bom_name, bo.company as company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
+        	return frappe.db.sql("""select bo.name as bom_name, bo.company as company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
                 	from `tabBOM` bo, `tabBOM Item` bi
                 	where bo.name = bi.parent and bo.docstatus = "1" %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
 

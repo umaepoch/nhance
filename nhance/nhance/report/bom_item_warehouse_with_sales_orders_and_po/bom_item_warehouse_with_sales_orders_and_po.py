@@ -158,12 +158,12 @@ def get_sales_order_entries(filters):
 
 	if filters.get("include_exploded_items") == "Y":
 	        
-        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
+        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
                 	from `tabSales Order` so, `tabSales Order Item` si, `tabBOM` bo, `tabBOM Explosion Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` pi where bo.name = bi.parent and so.name = si.parent and si.item_code = bo.item and so.status != "Cancelled" and si.delivered_qty < si.qty and pi.item_code = bi.item_code and po.name = pi.parent %s
                 	order by so.name, si.item_code, bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
 
-        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
+        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, po.name as purchase_order, pi.item_code as pi_item, pi.schedule_date as delivery_date
                 	from `tabSales Order` so, `tabSales Order Item` si, `tabBOM` bo, `tabBOM Item` bi, `tabPurchase Order` po, `tabPurchase Order Item` as pi where bo.name = bi.parent and so.name = si.parent and si.item_code = bo.item and so.status != "Cancelled" and si.delivered_qty < si.qty and pi.item_code = bi.item_code and po.name = pi.parent %s
                 	order by so.name, si.item_code, bo.name, bi.item_code""" % conditions, as_dict=1)
 
@@ -180,13 +180,13 @@ def get_sales_order_entries_3(filters):
 
 	if filters.get("include_exploded_items") == "Y":
 	        
-        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company as company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
+        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company as company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
                 	from `tabSales Order` so, `tabSales Order Item` si, `tabBOM` bo, `tabBOM Explosion Item` bi
                 	where so.name = si.parent and so.status != "Cancelled" and si.delivered_qty < si.qty and bo.item = si.item_code and bo.name = bi.parent %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
 
 	else:
 
-        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company as company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
+        	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, bo.name as bom_name, bo.company as company, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
                 	from `tabSales Order` so, `tabSales Order Item` si, `tabBOM` bo, `tabBOM Item` bi
                 	where so.name = si.parent and so.status != "Cancelled" and si.delivered_qty < si.qty and bo.item = si.item_code and bo.name = bi.parent %s and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = bi.item_code)""" % conditions, as_dict=1)
 
