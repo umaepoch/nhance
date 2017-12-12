@@ -135,6 +135,7 @@ def get_columns():
 
 def get_conditions(filters):
         conditions = ""
+	conditions2 = ""
 	
 	if filters.get("company"):
                 conditions += " and so.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
@@ -143,7 +144,7 @@ def get_conditions(filters):
                 conditions += " and si.item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
      
         if filters.get("bom"):
-                conditions += " and bo.name = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
+                conditions2 += " and bo.name = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
 	if filters.get("sales_order"):
                 conditions += " and so.name = '%s'" % frappe.db.escape(filters.get("sales_order"), percent=False)
 		
@@ -173,7 +174,7 @@ def get_sales_order_entries_2(filters):
 
 	return frappe.db.sql("""select so.name as sales_order, si.item_code as item_code, si.qty as si_qty, si.delivered_qty, " " as bom_name, " " as company, " " as project, 0 as bo_qty, " " as bi_item, 0 as bi_qty, " " as purchase_order, " " as pi_item, " " as delivery_date
                 	from `tabSales Order` so, `tabSales Order Item` si
-                	where so.name = si.parent and so.status != "Cancelled" and si.delivered_qty < si.qty %s and not exists ( select 1 from `tabBOM` bo where bo.item = si.item_code) and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = si.item_code)""" % conditions, as_dict=1)
+                	where so.name = si.parent and so.status != "Cancelled" and si.delivered_qty < si.qty and not exists ( select 1 from `tabBOM` bo where bo.item = si.item_code) and not exists (select 1 from `tabPurchase Order Item` pi where pi.item_code = si.item_code) %s""" % conditions, as_dict=1)
 
 def get_sales_order_entries_3(filters):
 	conditions = get_conditions(filters)

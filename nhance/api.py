@@ -117,7 +117,7 @@ def make_quotation(source_name, target_doc=None):
 	
 	company = boq_record.company
 
-	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boq.customer as customer, boqi.qty as qty, boqi.price as price, boqi.selling_price as amount, boqi.markup as markup from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and boqi.print_in_quotation = 1 """ , (boq_record.name), as_dict=1)
+	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boq.customer as customer, boqi.qty as qty, boqi.price as price, boqi.selling_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and boqi.print_in_quotation = 1 """ , (boq_record.name), as_dict=1)
 
 	if boq_record_items:
 		newJson = {
@@ -131,6 +131,10 @@ def make_quotation(source_name, target_doc=None):
 		for record in boq_record_items:
 			item = record.boq_item
 			qty = record.qty
+			piq = record.piq
+			lib = record.list_in_boq
+			next_exploded = record.next_exploded
+			markup = record.markup
 			if item:
 				item_record = frappe.get_doc("Item", item)
 
@@ -140,7 +144,11 @@ def make_quotation(source_name, target_doc=None):
 					"description": item_record.description,
 					"uom": item_record.stock_uom,
 					"qty": qty,
-					"rate": record.amount
+					"rate": record.amount,
+					"display_in_quotation": piq,
+					"list_in_boq": lib,
+					"next_exploded": next_exploded,
+					"markup": markup
 
 					}
 		
@@ -192,6 +200,7 @@ def make_bom(source_name, target_doc=None):
 						item = record.qi_item
 						qty = record.qty
 						pod_list = record.pod
+
 						if item:
 							item_record = frappe.get_doc("Item", item)
 		
@@ -202,6 +211,7 @@ def make_bom(source_name, target_doc=None):
 								"uom": item_record.stock_uom,
 								"qty": qty,
 								"part_of_despatch_list": pod_list
+								
 				
 								}
 		
@@ -329,3 +339,9 @@ def get_free_workbenches():
 			return whse_record["name"]
 
 
+@frappe.whitelist()
+def get_price(item, price_list):
+	item_price_list = frappe.db.sql("""select price_list_rate as item_price from `tabItem Price` where price_list = %s and item_code = %s""", (price_list, item), as_dict = 1)
+	return item_price_list[0]["item_price"]
+
+	

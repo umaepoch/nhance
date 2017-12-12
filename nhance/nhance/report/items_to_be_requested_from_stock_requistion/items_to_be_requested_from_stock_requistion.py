@@ -292,7 +292,7 @@ def get_stock(item_code, warehouse):
 
 def getPurchase_OrderItem_Details(item_code):
 
-	return frappe.db.sql("""select qty, received_qty, excess_order, warehouse from 				`tabPurchase Order Item` where item_code = %s""", item_code, as_dict=1)
+	return frappe.db.sql("""select qty, received_qty, excess_order, warehouse from `tabPurchase Order Item` where item_code = %s""", item_code, as_dict=1)
 
 
 
