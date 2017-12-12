@@ -117,7 +117,7 @@ def make_quotation(source_name, target_doc=None):
 	
 	company = boq_record.company
 
-	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boq.customer as customer, boqi.qty as qty, boqi.price as price, boqi.selling_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and boqi.print_in_quotation = 1 """ , (boq_record.name), as_dict=1)
+	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boqi.immediate_parent_item, boq.customer as customer, boqi.qty as qty, boqi.price as price, boqi.selling_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent""" , (boq_record.name), as_dict=1)
 
 	if boq_record_items:
 		newJson = {
@@ -148,7 +148,8 @@ def make_quotation(source_name, target_doc=None):
 					"display_in_quotation": piq,
 					"list_in_boq": lib,
 					"next_exploded": next_exploded,
-					"markup": markup
+					"markup": markup,
+					"grouping": record.immediate_parent_item
 
 					}
 		
