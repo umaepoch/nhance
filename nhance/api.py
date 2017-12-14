@@ -33,8 +33,8 @@ def make_interactions(source_name, target_doc=None):
 		"Opportunity": {
 			"doctype": "Interactions",
 			"field_map": {
-				"name": "opportunity",
-				"doctype": "reference_doctype"
+				"name": "opportunity"
+
 				}
 		}
 		
@@ -49,8 +49,7 @@ def make_interactions_quot(source_name, target_doc=None):
 		"Quotation": {
 			"doctype": "Interactions",
 			"field_map": {
-				"name": "quotation",
-				"doctype": "reference_doctype"
+				"name": "quotation"
 				}
 		}
 		
@@ -65,8 +64,8 @@ def make_interactions_so(source_name, target_doc=None):
 		"Sales Order": {
 			"doctype": "Interactions",
 			"field_map": {
-				"name": "sales_order",
-				"doctype": "reference_doctype"
+				"name": "sales_order"
+
 				}
 		}
 		
@@ -81,8 +80,7 @@ def make_interactions_si(source_name, target_doc=None):
 		"Sales Invoice": {
 			"doctype": "Interactions",
 			"field_map": {
-				"name": "reference_document",
-				"doctype": "reference_doctype"
+				"name": "sales_invoice",
 				}
 		}
 		
@@ -345,4 +343,16 @@ def get_price(item, price_list):
 	item_price_list = frappe.db.sql("""select price_list_rate as item_price from `tabItem Price` where price_list = %s and item_code = %s""", (price_list, item), as_dict = 1)
 	return item_price_list[0]["item_price"]
 
+@frappe.whitelist()
+def get_contact(customer):
+	contact = frappe.db.sql("""select con.name from `tabContact` con, `tabDynamic Link` dy where dy.link_name = %s and dy.parent = con.name""", (customer))
+	
+	return contact
+
+
+@frappe.whitelist()
+def get_address(customer):
+	address = frappe.db.sql("""select ad.name from `tabAddress` ad, `tabDynamic Link` dy where dy.link_name = %s and dy.parent = ad.name""", (customer))
+
+	return address
 	

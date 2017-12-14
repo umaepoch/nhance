@@ -32,9 +32,9 @@ def execute(filters=None):
 	
 
         for (inter_name, item) in sorted(iwb_map):
-                qty_dict = iwb_map[(reference, item)]
+                qty_dict = iwb_map[(inter_name, item)]
                 data.append([
-                        qty_dict.date, inter_name, qty_dict.customer, qty_dict.short_description, qty_dict.first_name, qty_dict.last_name, qty_dict.city, qty_dict.mobile_no, qty_dict.email_id, qty_dict.doctype, qty_dict.reference, item, qty_dict.item_name, qty_dict.qty, qty_dict.complete_description
+                        qty_dict.date, inter_name, qty_dict.customer, qty_dict.short_description, qty_dict.first_name, qty_dict.last_name, qty_dict.city, qty_dict.mobile_no, qty_dict.email_id, qty_dict.reference, item, qty_dict.item_name, qty_dict.qty, qty_dict.complete_description
                         
                     ])
 	
@@ -56,11 +56,10 @@ def get_columns():
 		_("City")+"::150",
 		_("Mobile Number")+"::100",
 		_("Email ID")+"::100",
-		_("Reference Document")+"::100",
                 _("Reference Number")+"::100",
 		_("Item Code")+"::100",
 		_("Item Name")+"::100",
-	        _("Qty")+":Float:100",
+	        _("Qty")+"::100",
 		_("Complete Description")+"::140"
        	       
           ]
@@ -87,27 +86,32 @@ def get_conditions(filters):
 def get_int_details_so(filters):
         conditions = get_conditions(filters)
 	
-        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.sales_order as reference, so.item_code as item, so.item_name as item_name, so.qty as qty, inter.short_description, inter.complete_description, inter.reference_doctype as doctype from `tabInteractions` inter, `tabDynamic Link` dy, `tabSales Order Item` so where inter.customer = dy.link_name and inter.sales_order = so.parent and inter.reference_doctype = "Sales Order" %s """ % conditions, as_dict=1)
+        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.sales_order as reference, so.item_code as item, so.item_name as item_name, so.qty as qty, inter.short_description, inter.complete_description from `tabInteractions` inter, `tabSales Order Item` so where inter.sales_order = so.parent and inter.docstatus != "2" %s """ % conditions, as_dict=1)
 
 def get_int_details_si(filters):
         conditions = get_conditions(filters)
 	
-        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.sales_invoice as reference, si.item_code as item, si.item_name as item_name, si.qty as qty, inter.short_description, inter.complete_description, inter.reference_doctype as doctype from `tabInteractions` inter, `tabDynamic Link` dy, `tabSales Invoice Item` si where inter.customer = dy.link_name and inter.sales_invoice = si.parent and inter.reference_doctype = "Sales Invoice" %s """ % conditions, as_dict=1)
+        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.sales_invoice as reference, si.item_code as item, si.item_name as item_name, si.qty as qty, inter.short_description, inter.complete_description from `tabInteractions` inter, `tabSales Invoice Item` si where inter.sales_invoice = si.parent and inter.docstatus != "2" %s """ % conditions, as_dict=1)
 
 def get_int_details_quo(filters):
         conditions = get_conditions(filters)
 	
-        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.quotation as reference, qi.item_code as item, qi.item_name as item_name, qi.qty as qty, inter.short_description, inter.complete_description, inter.reference_doctype as doctype from `tabInteractions` inter, `tabDynamic Link` dy, `tabQuotation Item` qi where inter.customer = dy.link_name and inter.quotation = qi.parent and inter.reference_doctype = "Quotation" %s """ % conditions, as_dict=1)
+        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.quotation as reference, qi.item_code as item, qi.item_name as item_name, qi.qty as qty, inter.short_description, inter.complete_description from `tabInteractions` inter, `tabQuotation Item` qi where inter.quotation = qi.parent and inter.docstatus != "2" %s """ % conditions, as_dict=1)
 
 def get_int_details_opp(filters):
         conditions = get_conditions(filters)
 	
-        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.opportunity as reference, op.item_code as item,  op.item_name as item_name, op.qty as qty, inter.short_description, inter.complete_description, inter.reference_doctype as doctype from `tabInteractions` inter, `tabDynamic Link` dy, `tabOpportunity Item` op where inter.customer = dy.link_name and inter.opportunity = op.parent and inter.reference_doctype = "Opportunity" %s """ % conditions, as_dict=1)
+        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.opportunity as reference, op.item_code as item,  op.item_name as item_name, op.qty as qty, inter.short_description, inter.complete_description from `tabInteractions` inter, `tabOpportunity Item` op where inter.opportunity = op.parent and inter.docstatus != "2" %s """ % conditions, as_dict=1)
+
+def get_int_details_opp2(filters):
+	conditions = get_conditions(filters)
+	
+        return frappe.db.sql("""Select inter.name as inter_name, inter.date as date, inter.customer as customer, inter.city as city, first_name as first_name, last_name as last_name, mobile_no as mobile, inter.email_id as email, inter.opportunity as reference, " " as item, " " as item_name, " " as qty, inter.short_description, inter.complete_description from `tabInteractions` inter, `tabOpportunity` op where  inter.opportunity = op.name and inter.docstatus != "2" and op.with_items = "0"  %s """ % conditions, as_dict=1)
 
 def get_int_details(filters):
         conditions = get_conditions(filters)
 	
-        return frappe.db.sql("""Select inter.name as inter_name, inter.date, inter.customer, inter.city, first_name, last_name, mobile_no as mobile, inter.email_id as email, " " as reference, " " as item, " " as item_name, 0 as qty, inter.short_description, inter.complete_description, "" as doctype from `tabInteractions` inter, `tabDynamic Link` dy where inter.customer = dy.link_name and inter.opportunity is NULL and inter.quotation is NULL and inter.sales_order is NULL and inter.sales_invoice is NULL %s """ % conditions, as_dict=1)
+        return frappe.db.sql("""Select inter.name as inter_name, inter.date, inter.customer, inter.city, first_name, last_name, mobile_no as mobile, inter.email_id as email, " " as reference, " " as item, " " as item_name, " " as qty, inter.short_description, inter.complete_description from `tabInteractions` inter where inter.opportunity is NULL and inter.quotation is NULL and inter.sales_order is NULL and inter.sales_invoice is NULL and inter.docstatus != "2" %s order by inter_name """ % conditions, as_dict=1)
 
 
 
@@ -120,6 +124,7 @@ def get_item_map(filters):
 	sile = get_int_details_si(filters)
 	qle = get_int_details_quo(filters)
 	ole = get_int_details_opp(filters)
+	ple = get_int_details_opp2(filters)
 	ile = get_int_details(filters)
 	
         if sle:     	
@@ -132,7 +137,7 @@ def get_item_map(filters):
 				
         	                })
 
-        	        qty_dict = iwb_map[(d.inter.name, d.item)]
+        	        qty_dict = iwb_map[(d.inter_name, d.item)]
 			qty_dict.reference = d.reference
                		qty_dict.item_name = d.item_name
         	        qty_dict.qty = d.qty
@@ -145,7 +150,6 @@ def get_item_map(filters):
 			qty_dict.email_id = d.email
 			qty_dict.short_description = d.short_description
 			qty_dict.complete_description = d.complete_description
-			qty_dict.doctype = d.doctype
 
 	if sile:     	
 	        for d in sile:
@@ -157,7 +161,7 @@ def get_item_map(filters):
 				
         	                })
 
-        	        qty_dict = iwb_map[(d.inter.name, d.item)]
+        	        qty_dict = iwb_map[(d.inter_name, d.item)]
 			qty_dict.reference = d.reference
 
              		qty_dict.item_name = d.item_name
@@ -171,7 +175,6 @@ def get_item_map(filters):
 			qty_dict.email_id = d.email
 			qty_dict.short_description = d.short_description
 			qty_dict.complete_description = d.complete_description
-			qty_dict.doctype = d.doctype
 
 	if qle:     	
 	        for d in qle:
@@ -183,7 +186,7 @@ def get_item_map(filters):
 				
         	                })
 
-        	        qty_dict = iwb_map[(d.inter.name, d.item)]
+        	        qty_dict = iwb_map[(d.inter_name, d.item)]
 			qty_dict.reference = d.reference
 
                         qty_dict.item_name = d.item_name
@@ -197,7 +200,6 @@ def get_item_map(filters):
 			qty_dict.email_id = d.email
 			qty_dict.short_description = d.short_description
 			qty_dict.complete_description = d.complete_description
-			qty_dict.doctype = d.doctype
 
  	if ole:     	
 	        for d in ole:
@@ -209,7 +211,7 @@ def get_item_map(filters):
 				
         	                })
 
-        	        qty_dict = iwb_map[(d.inter.name, d.item)]
+        	        qty_dict = iwb_map[(d.inter_name, d.item)]
 			qty_dict.reference = d.reference
 
                         qty_dict.item_name = d.item_name        
@@ -223,10 +225,9 @@ def get_item_map(filters):
 			qty_dict.email_id = d.email
 			qty_dict.short_description = d.short_description
 			qty_dict.complete_description = d.complete_description
-			qty_dict.doctype = d.doctype
 
-	if ile:     	
-	        for d in ile:
+ 	if ple:     	
+	        for d in ple:
                 
         	        key = (d.inter_name, d.item)
         	        if key not in iwb_map:
@@ -235,7 +236,34 @@ def get_item_map(filters):
 				
         	                })
 
-        	        qty_dict = iwb_map[(d.inter.name, d.item)]
+        	        qty_dict = iwb_map[(d.inter_name, d.item)]
+			qty_dict.reference = d.reference
+
+                        qty_dict.item_name = d.item_name        
+        	        qty_dict.qty = d.qty
+	                qty_dict.date = d.date
+	                qty_dict.customer = d.customer
+			qty_dict.city = d.city
+			qty_dict.first_name = d.first_name
+			qty_dict.last_name = d.last_name
+			qty_dict.mobile_no = d.mobile
+			qty_dict.email_id = d.email
+			qty_dict.short_description = d.short_description
+			qty_dict.complete_description = d.complete_description
+
+
+	if ile:     	
+	        for d in ile:
+                
+        	        key = (d.inter_name, d.item)
+
+        	        if key not in iwb_map:
+        	                iwb_map[key] = frappe._dict({
+        	                        "qty": 0.0, "value": 0.0,
+				
+        	                })
+
+        	        qty_dict = iwb_map[(d.inter_name, d.item)]
 			qty_dict.reference = d.reference
 
                		qty_dict.item_name = d.item_name               
@@ -249,8 +277,6 @@ def get_item_map(filters):
 			qty_dict.email_id = d.email
 			qty_dict.short_description = d.short_description
 			qty_dict.complete_description = d.complete_description
-			qty_dict.doctype = d.doctype
-
 
         return iwb_map
 
