@@ -131,7 +131,7 @@ def get_opp_details(filters):
 	
         return frappe.db.sql("""select op.name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, intr.name as interaction, intr.date as in_date, intr.mode as mode, intr.inbound_or_outbound as inbound, intr.short_description as short_desc, intr.complete_description as comp_desc, intr.todo as todo 
 from `tabOpportunity` op, `tabOpportunity Item` opi, `tabInteractions` intr 
-where op.name = opi.parent and op.name = intr.reference_document %s """ % conditions, as_dict=1)
+where op.name = opi.parent and op.name = intr.opportunity %s """ % conditions, as_dict=1)
 
 def get_opp_details_1(filters):
         conditions = get_conditions(filters)
@@ -139,7 +139,7 @@ def get_opp_details_1(filters):
         return frappe.db.sql("""select op.name as opportunity, op.customer as customer, opi.item_code as item_code, opi.item_group as item_group, opi.qty as qty, " " as interaction, " " as in_date, " " as mode, " " as inbound, " " as short_desc, " " as comp_desc, " " as todo
 
 from `tabOpportunity` op, `tabOpportunity Item` opi
-where op.name = opi.parent %s and not exists (select 1 from `tabInteractions` intr where op.name = intr.reference_document)""" % conditions, as_dict=1)
+where op.name = opi.parent %s and not exists (select 1 from `tabInteractions` intr where op.name = intr.opportunity)""" % conditions, as_dict=1)
 
 
 

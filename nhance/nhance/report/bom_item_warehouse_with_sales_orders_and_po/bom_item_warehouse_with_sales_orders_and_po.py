@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _, msgprint
 from frappe.utils import flt, getdate, datetime
+from erpnext.stock.stock_balance import get_balance_qty_from_sle
 
 def execute(filters=None):
         if not filters: filters = {}
@@ -584,33 +585,8 @@ def get_warehouses(company):
 		return whse
 
 def get_stock(bi_item, warehouse):
-		
-	max_posting_date = frappe.db.sql("""select max(posting_date) from `tabStock Ledger Entry`
-		where item_code=%s and warehouse = %s""",
-		(bi_item, warehouse))[0][0]
-	max_posting_date = getdate(max_posting_date)
-	max_posting_date1 = datetime.datetime.strftime(max_posting_date, "%Y-%m-%d")
-	
-	max_posting_time = frappe.db.sql("""select max(posting_time) from `tabStock Ledger Entry`
-		where item_code=%s and warehouse = %s and posting_date = %s""",
-		(bi_item, warehouse, max_posting_date))[0][0]
-	
-#	max_posting_time = gettime(max_posting_time)
-#	max_posting_time1 = datetime.datetime.strftime(max_posting_time, "%H:%M:%S")
-
-	ssle = frappe.db.sql("""select voucher_no, voucher_type, actual_qty, qty_after_transaction
-		from `tabStock Ledger Entry` sle
-		where item_code=%s and warehouse = %s and posting_date = %s and posting_time = %s""",
-		(bi_item, warehouse, getdate(max_posting_date1), max_posting_time))
-
-	if ssle:
-
-		item_stock = ssle[0][3]
-	else:
-		item_stock = 0
-	
-				
-	return item_stock
+	item_stock = get_balance_qty_from_sle(bi_item, warehouse)
+	return item_stock	
 
 def get_total_stock(item_code):
 		
