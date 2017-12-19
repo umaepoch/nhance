@@ -415,6 +415,7 @@ def make_PurchaseOrder(args,tax_template):
 	print "###########- under make_PurchaseOrder", args
 	print "template::"
 	print "###########- tax_template", tax_template
+	account_head_List = get_AccountHead()
 	#account_head = tax_template + " " + "-" + " MSPL"
 	#account_head = tax_template.replace(tax_template[:3], '')
 	if tax_template is not None and len(tax_template)!=0 and tax_template is not "":
@@ -434,7 +435,7 @@ def make_PurchaseOrder(args,tax_template):
 	creation_Date = getdate(datetime.now().strftime('%Y-%m-%d'))
 	#print "creation_Date", creation_Date
 
-	account_head_List = get_AccountHead()
+	
 	#print "account_head_List::", account_head_List
 	
 
