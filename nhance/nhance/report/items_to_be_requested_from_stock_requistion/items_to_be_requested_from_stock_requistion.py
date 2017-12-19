@@ -409,12 +409,25 @@ def get_AccountHead():
 def make_PurchaseOrder(args,tax_template):
 
 	ret = ""
+	global tax_Rate_List 
+	global account_head
+	tax_Rate_List = {}
 	print "###########- under make_PurchaseOrder", args
-	#print "###########- tax_template", tax_template
+	print "template::"
+	print "###########- tax_template", tax_template
 	#account_head = tax_template + " " + "-" + " MSPL"
 	#account_head = tax_template.replace(tax_template[:3], '')
-	acc, account_head = tax_template.split(" ", 1)
-	print "###########- account_head", account_head
+	if tax_template is not None and len(tax_template)!=0 and tax_template is not "":
+		acc, account_head = tax_template.split(" ", 1)
+		for acc_head in account_head_List:
+		#print "===>", account_head, acc_head.name
+			if account_head in acc_head.name:
+				print "##acc_head::", acc_head.name
+				print "##tax_template ", tax_template, acc_head.name
+				account_head = acc_head.name
+		if account_head:
+			tax_Rate_List = get_Sales_Taxes_and_Charges(account_head)
+			print "###########- account_head", account_head
 	order_List = json.loads(args)
 	items_List = json.dumps(order_List)
 	items_List = ast.literal_eval(items_List)
@@ -423,20 +436,7 @@ def make_PurchaseOrder(args,tax_template):
 
 	account_head_List = get_AccountHead()
 	#print "account_head_List::", account_head_List
-	for acc_head in account_head_List:
-		#print "===>", account_head, acc_head.name
-		if account_head in acc_head.name:
-			print "##acc_head::", acc_head.name
-			print "##tax_template ", tax_template, acc_head.name
-			account_head = acc_head.name
-
-	tax_Rate_List = get_Sales_Taxes_and_Charges(account_head)
-	if tax_Rate_List is not None and len(tax_Rate_List) != 0:
-		#print "tax_Rate_List::", tax_Rate_List
-		#print "tax_Rate_List::", tax_Rate_List[0]['charge_type']
-		charge_type = tax_Rate_List[0]['charge_type']
-		rate = tax_Rate_List[0]['rate']
-		description = tax_Rate_List[0]['description']
+	
 
 	outerJson_Transfer = {
 					"doctype": "Purchase Order",
@@ -448,19 +448,27 @@ def make_PurchaseOrder(args,tax_template):
 					"docstatus": 0,
 					"items": [
 					],
-					"taxes": [{			 
-        				"owner": "Administrator",
+					"taxes": [			 
+        				],
+					}
+
+	i = 0
+	print "items_List::", items_List
+
+	if tax_Rate_List is not None and len(tax_Rate_List) != 0:
+		charge_type = tax_Rate_List[0]['charge_type']
+		rate = tax_Rate_List[0]['rate']
+		description = tax_Rate_List[0]['description']
+		taxes_Json_Transfer = {"owner": "Administrator",
         				"charge_type": charge_type,
         				"account_head": account_head,
         				"rate": rate,
         				"parenttype": "Purchase Order",
         				"description": description,
         				"parentfield": "taxes"
-					}],
 					}
-
-	i = 0
-	print "items_List::", items_List
+		outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
+		
 
 	for items in items_List:
 
@@ -490,3 +498,12 @@ def make_PurchaseOrder(args,tax_template):
 	if ret:
 		return ret
 		
+
+
+
+	
+
+
+
+
+
