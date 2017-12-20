@@ -28,6 +28,7 @@ def execute(filters=None):
 	global summ_data
 
 	planning_warehouse = filters.get("planning_warehouse")
+	company = filters.get("company")
 
 
 	if not filters: filters = {}
@@ -348,6 +349,7 @@ def get_TaxList():
 def make_Purchase_Items(args):
 
 	supplier_List = get_SupplierList()
+
 	print "######-supplier_List::", supplier_List
 
 	tax_List = get_TaxList()
@@ -407,7 +409,7 @@ def get_AccountHead():
 
 @frappe.whitelist()
 def make_PurchaseOrder(args,tax_template):
-
+	
 	ret = ""
 	global tax_Rate_List 
 	global account_head
@@ -419,7 +421,10 @@ def make_PurchaseOrder(args,tax_template):
 	#account_head = tax_template + " " + "-" + " MSPL"
 	#account_head = tax_template.replace(tax_template[:3], '')
 	if tax_template is not None and len(tax_template)!=0 and tax_template is not "":
-		acc, account_head = tax_template.split(" ", 1)
+
+#		acc,account_head = tax_template.split(" ", 1)
+		account_head = tax_template
+		
 		for acc_head in account_head_List:
 		#print "===>", account_head, acc_head.name
 			if account_head in acc_head.name:
@@ -429,6 +434,7 @@ def make_PurchaseOrder(args,tax_template):
 		if account_head:
 			tax_Rate_List = get_Sales_Taxes_and_Charges(account_head)
 			print "###########- account_head", account_head
+
 	order_List = json.loads(args)
 	items_List = json.dumps(order_List)
 	items_List = ast.literal_eval(items_List)
@@ -445,8 +451,10 @@ def make_PurchaseOrder(args,tax_template):
 					"creation": creation_Date,
 					"owner": "Administrator",
 					"taxes_and_charges": tax_template,
-					"company": "Merit Systems Pvt Ltd",
+					"company": company,
 					"docstatus": 0,
+					"supplier":"",
+					"due_date": creation_Date,
 					"items": [
 					],
 					"taxes": [			 
@@ -466,15 +474,15 @@ def make_PurchaseOrder(args,tax_template):
         				"rate": rate,
         				"parenttype": "Purchase Order",
         				"description": description,
-        				"parentfield": "taxes"
+					"parentfield": "taxes"
 					}
 		outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
 		
 
 	for items in items_List:
 
-		#print "#######-item_code",  items_List[i]['item_code']
-		#print "########-qty",  items_List[i]['qty']
+		print "#######-item_code",  items_List[i]['item_code']
+		print "########-qty",  items_List[i]['qty']
 		outerJson_Transfer['supplier'] = items_List[i]['supplier']
 		innerJson_Transfer =	{
 					"creation": creation_Date,
@@ -491,6 +499,7 @@ def make_PurchaseOrder(args,tax_template):
 		#outerJson_Transfer['taxes_and_charges'] = items_List['tax_template']
 		outerJson_Transfer["items"].append(innerJson_Transfer)
 		#print "####-outerJson_Transfer::", outerJson_Transfer
+	print "########-outerJson_Transfer::", outerJson_Transfer
 	doc = frappe.new_doc("Purchase Order")
 	doc.update(outerJson_Transfer)
 	doc.save()

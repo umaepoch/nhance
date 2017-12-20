@@ -4,6 +4,13 @@
 
 frappe.query_reports["Items To Be Requested From Stock Requistion"] = {
 	"filters": [
+	  {
+            "fieldname": "company",
+            "label": __("company"),
+            "fieldtype": "Link",
+            "options": "Company",
+            "reqd": 1
+        },
 	 {
             "fieldname": "warehouse",
             "label": __("Warehouse"),
