@@ -356,3 +356,8 @@ def get_address(customer):
 
 	return address
 	
+
+@frappe.whitelist()
+def get_assembly_price(frm):
+	frappe.msgprint(_("Inside"))
+	frappe.msgprint(_(frm))
