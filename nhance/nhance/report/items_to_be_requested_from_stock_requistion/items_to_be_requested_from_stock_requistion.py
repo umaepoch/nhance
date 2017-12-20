@@ -503,6 +503,7 @@ def make_PurchaseOrder(args,tax_template):
 	doc = frappe.new_doc("Purchase Order")
 	doc.update(outerJson_Transfer)
 	doc.save()
+	frappe.msgprint(_("PO Created - " + doc.name))
 	ret = doc.doctype
 	ret = "Purchase Order is Done!!!"
 	if ret:
