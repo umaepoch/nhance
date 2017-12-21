@@ -123,6 +123,7 @@ def make_quotation(source_name, target_doc=None):
 				"company": company,
 				"doctype": "Quotation",
 				"customer": boq_record.customer,
+				"boq": source_name,
 				"items": [
 				]
 				}
