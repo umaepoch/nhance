@@ -110,12 +110,13 @@ def set_missing_values(source, target_doc):
 @frappe.whitelist()
 
 def make_quotation(source_name, target_doc=None):
-
+	
+	get_assembly_price(source_name)
 	boq_record = frappe.get_doc("Bill of Quantity", source_name)
 	
 	company = boq_record.company
 
-	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boqi.immediate_parent_item, boq.customer as customer, boqi.qty as qty, boqi.price as price, boqi.selling_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent""" , (boq_record.name), as_dict=1)
+	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boqi.immediate_parent_item, boq.customer as customer, boqi.qty as qty, boqi.sub_assembly_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and bom_level = '1'""" , (boq_record.name), as_dict=1)
 
 	if boq_record_items:
 		newJson = {
@@ -146,7 +147,6 @@ def make_quotation(source_name, target_doc=None):
 					"display_in_quotation": piq,
 					"list_in_boq": lib,
 					"next_exploded": next_exploded,
-					"markup": markup,
 					"grouping": record.immediate_parent_item
 
 					}
@@ -341,7 +341,10 @@ def get_free_workbenches():
 @frappe.whitelist()
 def get_price(item, price_list):
 	item_price_list = frappe.db.sql("""select price_list_rate as item_price from `tabItem Price` where price_list = %s and item_code = %s""", (price_list, item), as_dict = 1)
-	return item_price_list[0]["item_price"]
+	if item_price_list:
+		return item_price_list[0]["item_price"]
+	else:	
+		return 0
 
 @frappe.whitelist()
 def get_contact(customer):
@@ -359,5 +362,53 @@ def get_address(customer):
 
 @frappe.whitelist()
 def get_assembly_price(frm):
-	frappe.msgprint(_("Inside"))
-	frappe.msgprint(_(frm))
+	boq_record = frappe.get_doc("Bill of Quantity", frm)
+	company = boq_record.company
+	max_bom_level = frappe.db.sql("""select max(bom_level) from `tabBill of Quantity Item` where parent = %s""", frm)
+	x = 1
+	sub_ass_price = 0
+	markup_per = 1
+	bom_level = int(max_bom_level[0][0])
+	for x in xrange(bom_level, 0, -1):
+		boq_record_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.bom_level = %s order by boqi.immediate_parent_item""" , (boq_record.name, x), as_dict=1)
+		if boq_record_items:
+			
+			for boq_record_item in boq_record_items:
+
+				bom_main_item = boq_record_item.bom_item
+				markup_rec = frappe.db.sql("""select boqi.markup as markup from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.item_code = %s""" , (boq_record.name, bom_main_item))
+#				markup = markup_rec.markup
+				if markup_rec:
+					markup = markup_rec[0][0]
+				else:
+					markup = 0
+
+				bom_qty = 1
+				sub_ass_price = 0
+
+				boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.qty as qty, boqi.selling_price as selling_price, boqi.sub_assembly_price as sap from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s and boqi.bom_level = %s order by boqi.item_code""" , (boq_record.name, bom_main_item, x), as_dict=1)
+			
+				if boq_record_bom_items:
+										
+					for record in boq_record_bom_items:
+						item = record.qi_item
+						qty = record.qty
+						selling_price = record.selling_price
+						sap = flt(record.sap)
+						if sap != 0.0:
+
+							sub_ass_price = sub_ass_price + flt(sap)
+
+						else:
+
+							sub_ass_price = sub_ass_price + selling_price
+
+				markup_per = flt(markup) + 1
+
+				sub_ass_price = (sub_ass_price * markup_per)
+
+				frappe.db.sql("""update `tabBill of Quantity Item` boqi set boqi.sub_assembly_price = %s where boqi.parent = %s and boqi.item_code = %s""", (sub_ass_price, boq_record.name, bom_main_item))
+						
+
+
+
