@@ -26,6 +26,7 @@ def execute(filters=None):
 	global summ_data
 	global required_date
 	global required_date_count
+	global curr_stock_balance
 
 	reference_no = filters.get("reference_no")
 	qty_to_make = filters.get("qty_to_make")
@@ -33,6 +34,7 @@ def execute(filters=None):
 	company = filters.get("company")
 	planning_warehouse = filters.get("planning_warehouse")
 	required_date = filters.get("required_on")
+	curr_stock_balance = filters.get("current_stock_balance")
 
 	if not filters: filters = {}
 	validate_filters(filters)
@@ -416,6 +418,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	innerJson_requisition = " "
 	innerJson_transfer = " "
 	ret = ""
+
 	newJson_transfer = {
 	"company": company,
 	"doctype": "Stock Requisition",
@@ -518,7 +521,11 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 
 
 	for rows in summ_data:
-		delta_qty = str(rows[11]).strip()
+
+		if curr_stock_balance == 1:
+			delta_qty = str(rows[11]).strip()
+		else:
+			delta_qty = str(rows[9]).strip()
 
 		if (delta_qty and float(delta_qty) != 0.0):
 			if rows[3] == "<br>" or rows[3] == "<div><br></div>" or str(rows[3]) == "":
@@ -529,7 +536,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 			innerJson_requisition =	{
 		"doctype": "Stock Requisition Item",
 		"item_code": rows[7],
-		"qty": float(rows[11]),
+		"qty": float(delta_qty),
 		"schedule_date": required_date,
 		"warehouse":planning_warehouse,
 		"uom":rows[6],

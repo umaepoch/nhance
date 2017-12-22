@@ -50,6 +50,12 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "default": "Y"
 
         },
+	{
+	    "fieldname": "current_stock_balance",
+            "label": __("Current Stock Balance to be considered?"),
+            "fieldtype": "Check",
+            "default": "0"
+	},
 
  //       {
 //            "fieldname": "planning_warehouse",
