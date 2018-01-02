@@ -216,6 +216,8 @@ def make_bom(source_name, target_doc=None):
 								}
 		
 							newJson["items"].append(innerJson)
+							frappe.msgprint(_(item))
+							frappe.msgprint(_(item_record.stock_uom))
 
 					doc = frappe.new_doc("BOM")
 					doc.update(newJson)
