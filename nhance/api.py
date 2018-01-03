@@ -116,7 +116,7 @@ def make_quotation(source_name, target_doc=None):
 	
 	company = boq_record.company
 
-	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boqi.immediate_parent_item, boq.customer as customer, boqi.qty as qty, boqi.sub_assembly_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and bom_level = '1'""" , (boq_record.name), as_dict=1)
+	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boqi.immediate_parent_item, boq.customer as customer, boqi.qty as qty, boqi.sub_assembly_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and bom_level = '1' and boqi.print_in_quotation = '1'""" , (boq_record.name), as_dict=1)
 
 	if boq_record_items:
 		newJson = {
@@ -161,9 +161,53 @@ def make_quotation(source_name, target_doc=None):
 		docname = doc.name
 		frappe.msgprint(_("Quotation Created - " + docname))
 			
-	else:				
-		frappe.throw(_("There are no Quotations to be created."))
+	else:	
+		boq_main_item = frappe.db.sql("""select boq.item as boq_item, boq.customer as customer from `tabBill of Quantity` boq where boq.name = %s""" , (boq_record.name), as_dict=1)
+
+		if boq_main_item:
+			newJson = {
+				"company": company,
+				"doctype": "Quotation",
+				"customer": boq_record.customer,
+				"boq": source_name,
+				"items": [
+				]
+			}
+	
+			for record in boq_main_item:
+				item = record.boq_item
+				qty = 1
+				piq = 1
+				lib = 1
+
+				if item:
+					item_record = frappe.get_doc("Item", item)
+
+					innerJson =	{
+						"doctype": "Quotation Item",
+						"item_code": item,
+						"description": item_record.description,
+						"uom": item_record.stock_uom,
+						"qty": qty,
+#						"rate": record.amount,
+						"display_in_quotation": piq,
+						"list_in_boq": lib,
+#						"next_exploded": next_exploded,
+#						"grouping": record.immediate_parent_item
+	
+						}
 		
+					newJson["items"].append(innerJson)
+
+			doc = frappe.new_doc("Quotation")
+			doc.update(newJson)
+			doc.save()
+			frappe.db.commit()
+			docname = doc.name
+			frappe.msgprint(_("Quotation Created - " + docname))
+
+					
+	
 
 @frappe.whitelist()
 def make_bom(source_name, target_doc=None):
