@@ -132,7 +132,7 @@ def make_quotation(source_name, target_doc=None):
 			item = record.boq_item
 			qty = record.qty
 			piq = record.piq
-			lib = record.list_in_boq
+	 		lib = record.list_in_boq
 			next_exploded = record.next_exploded
 			markup = record.markup
 			if item:
@@ -174,6 +174,11 @@ def make_quotation(source_name, target_doc=None):
 				]
 			}
 	
+			tot_ass_price = flt(frappe.db.sql("""select sum(sub_assembly_price)
+				from `tabBill of Quantity Item` boqi
+				where boqi.parent=%s""",
+				(boq_record.name))[0][0])
+
 			for record in boq_main_item:
 				item = record.boq_item
 				qty = 1
@@ -189,7 +194,7 @@ def make_quotation(source_name, target_doc=None):
 						"description": item_record.description,
 						"uom": item_record.stock_uom,
 						"qty": qty,
-#						"rate": record.amount,
+						"rate": tot_ass_price,
 						"display_in_quotation": piq,
 						"list_in_boq": lib,
 #						"next_exploded": next_exploded,
@@ -214,7 +219,7 @@ def make_bom(source_name, target_doc=None):
 
 	boq_record = frappe.get_doc("Bill of Quantity", source_name)
 	set_bom_level(boq_record)
-	company = boq_record.company
+	company = boq_record.companyS
 	max_bom_level = frappe.db.sql("""select max(bom_level) from `tabBill of Quantity Item`""")
 	x = 1
 	bom_level = int(max_bom_level[0][0])
