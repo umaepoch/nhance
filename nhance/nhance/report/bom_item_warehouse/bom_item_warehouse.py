@@ -40,7 +40,6 @@ def execute(filters=None):
 	validate_filters(filters)
 	columns = get_columns()
 	item_map = get_item_details(filters)
-	# print "item_map===>>",item_map
 	iwb_map = get_item_warehouse_map(filters)
 	#print "iwb_map==>>",iwb_map
 
@@ -67,7 +66,7 @@ def execute(filters=None):
 							item_map[bi_item]["stock_uom"],
 							qty_dict.bal_qty, qty_dict.bi_qty, whse,
 							qty_dict.project, qty_dict.bom_qty, bi_item, qty_dict.qty_to_make,
-							item_map[item]["conversion_factor"],
+							item_map[item]["conversion_factor"], #this one i addd
 						])
 		else:
 
@@ -78,7 +77,7 @@ def execute(filters=None):
 							item_map[item]["stock_uom"],
 							qty_dict.bal_qty, qty_dict.bi_qty, whse,
 							qty_dict.project, qty_dict.bom_qty, bi_item, qty_dict.qty_to_make,
-							item_map[item]["conversion_factor"],
+							item_map[item]["conversion_factor"],#this one i addd
 						])
 
 
@@ -375,11 +374,11 @@ def get_item_details(filters):
 		condition = ''
 		value = ()
 		if filters.get("item_code"):
-				condition = "where t1.item_code = t2.parent AND item_code=%s"
+				condition = "AND item_code=%s"
 				value = (filters["item_code"],)
 
 		items = frappe.db.sql("""select item_group, item_name, stock_uom,t1.name,conversion_factor, brand, description
-				from tabItem t1 JOIN `tabUOM Conversion Detail` t2 {condition}""".format(condition=condition), value, as_dict=1)
+				from tabItem t1 JOIN `tabUOM Conversion Detail` t2 where t1.item_code = t2.parent {condition}""".format(condition=condition), value, as_dict=1)
 
 		return dict((d.name, d) for d in items)
 
