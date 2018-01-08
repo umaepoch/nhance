@@ -409,7 +409,7 @@ def get_AccountHead():
 
 @frappe.whitelist()
 def make_PurchaseOrder(args,tax_template):
-	
+	frappe.msgprint(_("Inside Make Purchase Order"))
 	ret = ""
 	global tax_Rate_List 
 	global account_head
@@ -439,7 +439,7 @@ def make_PurchaseOrder(args,tax_template):
 	items_List = json.dumps(order_List)
 	items_List = ast.literal_eval(items_List)
 	creation_Date = getdate(datetime.now().strftime('%Y-%m-%d'))
-	#print "creation_Date", creation_Date
+	print "creation_Date", creation_Date
 
 	
 	#print "account_head_List::", account_head_List
@@ -488,6 +488,7 @@ def make_PurchaseOrder(args,tax_template):
 					"creation": creation_Date,
 					"qty": items_List[i]['qty'],
 					"item_code": items_List[i]['item_code'],
+					"warehouse": planning_warehouse,
 					"amount": items_List[i]['price'],
 					"excess_order": items_List[i]['excess_ordered'],
 					"doctype": "Purchase Order Item",
