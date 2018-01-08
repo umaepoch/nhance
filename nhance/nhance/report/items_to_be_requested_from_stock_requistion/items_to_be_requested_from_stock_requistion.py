@@ -409,7 +409,6 @@ def get_AccountHead():
 
 @frappe.whitelist()
 def make_PurchaseOrder(args,tax_template):
-	frappe.msgprint(_("Inside Make Purchase Order"))
 	ret = ""
 	global tax_Rate_List 
 	global account_head
