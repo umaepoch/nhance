@@ -219,7 +219,7 @@ def make_bom(source_name, target_doc=None):
 
 	boq_record = frappe.get_doc("Bill of Quantity", source_name)
 	set_bom_level(boq_record)
-	company = boq_record.companyS
+	company = boq_record.company
 	max_bom_level = frappe.db.sql("""select max(bom_level) from `tabBill of Quantity Item`""")
 	x = 1
 	bom_level = int(max_bom_level[0][0])
