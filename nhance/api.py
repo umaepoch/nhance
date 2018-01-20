@@ -454,7 +454,7 @@ def get_assembly_price(frm):
 
 							sub_ass_price = sub_ass_price + selling_price
 
-				markup_per = flt(markup) + 1
+				markup_per = flt(markup/100) + 1
 
 				sub_ass_price = (sub_ass_price * markup_per)
 
