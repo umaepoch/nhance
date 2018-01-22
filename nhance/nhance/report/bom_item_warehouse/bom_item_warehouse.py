@@ -487,6 +487,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 				"schedule_date": required_date,
 				"warehouse":planning_warehouse,
 				"uom": rows[6],
+				"stock_uom": rows[6],
 				"conversion_factor":rows[13],
 				"description": rows[3]
 				   }
@@ -499,6 +500,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 				"schedule_date": required_date,
 				"warehouse":planning_warehouse,
 				"uom":rows[6],
+				"stock_uom": rows[6],
 				"conversion_factor":rows[13],
 				"description": rows[3]
 				   }
