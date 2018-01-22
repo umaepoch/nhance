@@ -41,16 +41,18 @@ frappe.query_reports["Items To Be Requested From Stock Requistion"] = {
                     reporter.makePurchaseOrder(report,args);},'Make Purchase Order'),
                     report.page.add_inner_button(__("As final"),
                         function() {
-                          var args = "submit"
+                          var args = "as final"
+			 var filters = report.get_values();
                           var reporter = frappe.query_reports["Items To Be Requested From Stock Requistion"];
                           reporter.makePurchaseOrder(report,args);},'Make Purchase Order');
+
               },
     isNumeric: function( obj ) {
     return !jQuery.isArray( obj ) && (obj - parseFloat( obj ) + 1) >= 0;
   },
    makePurchaseOrder: function(report,status){
     var filters = report.get_values();
-	console.log("### makePurchaseOrder::");
+	//alert("### makePurchaseOrder::");
      if (filters.warehouse) {
          return frappe.call({
              method: "nhance.nhance.report.items_to_be_requested_from_stock_requistion.items_to_be_requested_from_stock_requistion.make_Purchase_Items",
@@ -59,7 +61,6 @@ frappe.query_reports["Items To Be Requested From Stock Requistion"] = {
              },
              callback: function(r) {
                if(r.message) {
-		 console.log(r);
 		 frappe.set_route("Form", "Pre Purchase Order", r.message);
              }
              }
