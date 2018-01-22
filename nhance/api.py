@@ -485,31 +485,32 @@ def get_assembly_price(frm):
 	boq_record = frappe.get_doc("Bill of Quantity", frm)
 	company = boq_record.company
 	max_bom_level = frappe.db.sql("""select max(bom_level) from `tabBill of Quantity Item` where parent = %s""", frm)
+
 	x = 1
 	sub_ass_price = 0
 	markup_per = 1
 	bom_level = int(max_bom_level[0][0])
 	for x in xrange(bom_level, 0, -1):
+
 		boq_record_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.bom_level = %s order by boqi.immediate_parent_item""" , (boq_record.name, x), as_dict=1)
+
 		if boq_record_items:
 			
 			for boq_record_item in boq_record_items:
-
 				bom_main_item = boq_record_item.bom_item
-				markup_rec = frappe.db.sql("""select boqi.markup as markup, boqi.qty as qty from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.item_code = %s""" , (boq_record.name, bom_main_item))
+				markup_rec = frappe.db.sql("""select boqi.markup as markup, boqi.discount as discount, boqi.qty as qty from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.item_code = %s""" , (boq_record.name, bom_main_item))
 #				markup = markup_rec.markup
 				if markup_rec:
 					markup = markup_rec[0][0]
-					bom_main_qty = markup_rec[0][1]
+					discount = markup_rec[0][1]
+					bom_main_qty = markup_rec[0][2]
 				else:
 					markup = 0
 					bom_main_qty = 1
-
 				bom_qty = 1
 				sub_ass_price = 0
 
 				boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.qty as qty, boqi.selling_price as selling_price, boqi.sub_assembly_price as sap from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s and boqi.bom_level = %s order by boqi.item_code""" , (boq_record.name, bom_main_item, x), as_dict=1)
-			
 				if boq_record_bom_items:
 										
 					for record in boq_record_bom_items:
@@ -519,15 +520,15 @@ def get_assembly_price(frm):
 						sap = flt(record.sap)
 						if sap != 0.0:
 
-							sub_ass_price = sub_ass_price + flt(sap)
+							sub_ass_price = sub_ass_price + flt(sap * qty)
 
 						else:
 
-							sub_ass_price = sub_ass_price + selling_price
+							sub_ass_price = sub_ass_price + (selling_price * qty)
 
 				markup_per = flt(markup/100) + 1
-
-				sub_ass_price = (sub_ass_price * markup_per) * bom_main_qty
+				disc_per = 1 - flt(discount/100)
+				sub_ass_price = (sub_ass_price * markup_per * disc_per)
 
 				frappe.db.sql("""update `tabBill of Quantity Item` boqi set boqi.sub_assembly_price = %s where boqi.parent = %s and boqi.item_code = %s""", (sub_ass_price, boq_record.name, bom_main_item))
 						
