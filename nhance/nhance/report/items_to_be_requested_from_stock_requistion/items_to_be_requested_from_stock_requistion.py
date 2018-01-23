@@ -123,7 +123,7 @@ def get_item_details(filters):
 				value = (filters["item_code"],)
 
 		items = frappe.db.sql("""select item_group, item_name, name, brand, description
-				from `tabMaterial Request Item` {condition}""".format(condition=condition), 				value, as_dict=1)
+				from `tabStock Requisition Item` {condition}""".format(condition=condition), 				value, as_dict=1)
 
 		return dict((d.name, d) for d in items)
 
@@ -362,7 +362,7 @@ def get_sales_order_entries():
 
 	#return frappe.db.sql("""select item_name, item_group, item_code, ordered_qty, min_order_qty from  `tabMaterial Request Item` where docstatus = "1" %s  order by item_code """ % conditions, as_dict=1)
 
-	return frappe.db.sql("""select item_name, item_group, item_code, qty-ordered_qty as req_qty, min_order_qty from  `tabMaterial Request Item` where docstatus = "1"  and qty > ordered_qty order by item_code """, as_dict=1)	
+	return frappe.db.sql("""select item_name, item_group, item_code, qty-ordered_qty as req_qty, min_order_qty from  `tabStock Requisition Item` where docstatus = "1"  and qty > ordered_qty order by item_code """, as_dict=1)	
 
 
 def get_SupplierList():
