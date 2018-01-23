@@ -476,8 +476,8 @@ def make_Purchase_Items(args):
 		return docid
 	
 @frappe.whitelist()
-def get_Sales_Taxes_and_Charges(account_head):
-	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabPurchase Taxes and Charges` where account_head = %s""", account_head, as_dict=1)
+def get_Sales_Taxes_and_Charges(account_head, tax_name):
+	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", account_head, tax_name, as_dict=1)
 	return tax_List
 
 @frappe.whitelist()
@@ -532,7 +532,7 @@ def make_PurchaseOrder(args,tax_template):
 		for taxes in tax_Name.taxes:
 			account_Name = taxes.account_head
 			if account_Name:
-				tax_Rate_List = get_Sales_Taxes_and_Charges(account_Name)
+				tax_Rate_List = get_Sales_Taxes_and_Charges(account_Name, tax_Name)
 				if tax_Rate_List is not None and len(tax_Rate_List) != 0:
 					charge_type = tax_Rate_List[0]['charge_type']
 					rate = tax_Rate_List[0]['rate']
