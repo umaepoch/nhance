@@ -127,7 +127,7 @@ def execute(filters=None):
 				total_delta_qty = tot_reqd_qty - tot_bal_qty
 				if total_delta_qty < 0:
 					total_delta_qty = 0
-				summ_data.append([rows[0], " ", " ", data_array[3], " ", data_array[5], data_array[7], data_array[8],
+				summ_data.append([rows[0], " ", " ", data_array[3], " ", data_array[5], data_array[6], data_array[7], data_array[8],
 				tot_bi_qty, round(tot_reqd_qty,2),
 				tot_bal_qty, round(total_delta_qty,2), " ", rows[14]
 				])
@@ -170,7 +170,8 @@ def get_columns():
 		_("Required Qty")+"::100",
 		_("Balance Qty")+":Float:100",
 		_("Delta Qty")+"::100",
-		_("Warehouse")+"::100"
+		_("Warehouse")+"::100",
+		_("Conversion Factor")+"::100"
 
 
 		 ]
@@ -188,6 +189,12 @@ def get_conditions(filters):
 		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
 
 	return conditions
+
+
+#       if filters.get("warehouse"):
+#             conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
+
+
 
 def get_sales_order_entries(filters):
 	conditions = get_conditions(filters)
