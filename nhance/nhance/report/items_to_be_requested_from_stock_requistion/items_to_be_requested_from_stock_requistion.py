@@ -477,7 +477,7 @@ def make_Purchase_Items(args):
 	
 @frappe.whitelist()
 def get_Sales_Taxes_and_Charges(account_head, tax_name):
-	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", account_head, tax_name, as_dict=1)
+	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", (account_head, tax_name), as_dict=1)
 	return tax_List
 
 @frappe.whitelist()
