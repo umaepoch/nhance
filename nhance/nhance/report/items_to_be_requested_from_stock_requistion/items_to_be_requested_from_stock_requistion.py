@@ -26,9 +26,11 @@ def execute(filters=None):
 	global company
 	global planning_warehouse
 	global summ_data
+	global company_Name
 
 	planning_warehouse = filters.get("planning_warehouse")
-
+	company_Name = filters.get("company")
+	#company_Name = "Merit Systems Pvt Ltd"
 
 	if not filters: filters = {}
 	validate_filters(filters)
@@ -237,10 +239,8 @@ def get_item_warehouse_map(filters):
 				qty_temp = item_entry["required_qty"]
 				item_entry["required_qty"] = item_entry["required_qty"] + d.req_qty
 				req_Qty = item_entry["required_qty"]
-
 				#print "###-req_Qty", req_Qty
 				#print "###-wh_stock", wh_stock
-
 				delta = item_entry["required_qty"] - wh_stock - excess_from_planning_cycle
 				print "###-delta::", delta
 				print "###-min_Order_Quantity::", min_Order_Quantity
@@ -379,6 +379,7 @@ def get_item_price_details(item_code):
 	po_Number = item_price_details[0]['parent']
 
 	last_purchase_price = frappe.db.sql("""select rate as last_purchase_price from `tabPurchase Order Item` where item_code = %s order by creation desc limit 1""", item_code, as_dict=1)
+	print "####-last_purchase_price::", last_purchase_price
 
 	supplier = frappe.db.sql("""select supplier from `tabPurchase Order` where name = %s""", po_Number, as_dict=1)
 
@@ -422,15 +423,29 @@ def make_Purchase_Items(args):
 		item_code = rows[0]
 		item_price_details = get_item_price_details(item_code)
 		print "---------->item_price_details::", item_price_details
+		#print "---------->length of item_price_details::", len(item_price_details)
 		if item_price_details is not None and len(item_price_details)!=0:
-			if item_price_details[1]['last_purchase_price']:
+			if len(item_price_details) == 3:
 				last_purchase_rate = item_price_details[1]['last_purchase_price']
+				#print "last_purchase_rate---------->", last_purchase_rate
+
+				if item_price_details[0]['max_price_rate'] is not None:
+					max_price_rate = item_price_details[0]['max_price_rate']
+				else:
+					max_price_rate = 0
+				if item_price_details[0]['min_price_rate'] is not None:
+					min_price_rate = item_price_details[0]['min_price_rate']
+				else:
+					min_price_rate = 0
+				if item_price_details[0]['parent'] is not None:
+					po_Number = item_price_details[0]['parent']
+				if item_price_details[2]['supplier'] is not None:
+					supplier = item_price_details[2]['supplier']
 			else:
+				min_price_rate = 0
 				last_purchase_rate = 0
- 			max_price_rate = item_price_details[0]['max_price_rate']
-			min_price_rate = item_price_details[0]['min_price_rate']
-			po_Number = item_price_details[0]['parent']
-			supplier = item_price_details[2]['supplier']
+				max_price_rate = 0
+
 		innerJson_Transfer = {
 					"item_code": rows[0],
 					"qty": rows[8],
@@ -442,17 +457,13 @@ def make_Purchase_Items(args):
 					"parentfield": "Item"
 				  	}
 		outerJson_Transfer["item"].append(innerJson_Transfer)
-
-
 	doc = frappe.new_doc("Pre Purchase Order")
 	print "outerJson_Transfer::", outerJson_Transfer
 	doc.update(outerJson_Transfer)
-
 	if args == "as a draft":
 		doc.save()
 	else:
 	  	doc.save()
-		
 		print "###-Document is saved."
 
 	#doc.submit()
@@ -466,7 +477,7 @@ def make_Purchase_Items(args):
 	
 @frappe.whitelist()
 def get_Sales_Taxes_and_Charges(account_head):
-	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabSales Taxes and Charges` 		where 	account_head = %s""", account_head, as_dict=1)
+	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabPurchase Taxes and Charges` where account_head = %s""", account_head, as_dict=1)
 	return tax_List
 
 @frappe.whitelist()
@@ -474,50 +485,34 @@ def get_AccountHead():
 	account_head_List = frappe.db.sql("""select name  from `tabAccount` where account_type = 'Tax' """, as_dict=1)
 	return account_head_List
 
-def get_Company_Name():
-	company_Name = frappe.db.sql("""select name  from `tabCompany`""", as_dict=1)
-	return company_Name
-	
 
 @frappe.whitelist()
 def make_PurchaseOrder(args,tax_template):
 
 	ret = ""
 	global tax_Rate_List 
-	global account_head
+	#global account_head
 	tax_Rate_List = {}
 	print "###########- under make_PurchaseOrder", args
 	print "template::"
 	print "###########- tax_template", tax_template
-	account_head_List = get_AccountHead()
-	#account_head = tax_template + " " + "-" + " MSPL"
-	account_head = tax_template.replace(tax_template[:3], '')
-	if tax_template is not None and len(tax_template)!=0 and tax_template is not "":
-#		acc, account_head = tax_template.split(" ", 1)
-		for acc_head in account_head_List:
-		#print "===>", account_head, acc_head.name
-			if account_head in acc_head.name:
-				print "##acc_head::", acc_head.name
-				print "##tax_template ", tax_template, acc_head.name
-				account_head = acc_head.name
-		if account_head:
-			tax_Rate_List = get_Sales_Taxes_and_Charges(account_head)
-			print "###########- account_head", account_head
 	order_List = json.loads(args)
 	items_List = json.dumps(order_List)
 	items_List = ast.literal_eval(items_List)
 	creation_Date = datetime.datetime.now()
 	#print "################-creation_Date", creation_Date
+	"""
 	company_Name = get_Company_Name()
 	if len(company_Name)!=0:
 		company_Name = company_Name[0]['name']
 		print "company_Name::", company_Name
-	
+	"""
 	#print "account_head_List::", account_head_List
 	outerJson_Transfer = {
 					"doctype": "Purchase Order",
 					"title": "Purchase Order",
 					"creation": creation_Date,
+					"due_date": creation_Date,
 					"owner": "Administrator",
 					"taxes_and_charges": tax_template,
 					"company": company_Name,
@@ -532,20 +527,37 @@ def make_PurchaseOrder(args,tax_template):
 	i = 0
 	print "items_List::", items_List
 
-	if tax_Rate_List is not None and len(tax_Rate_List) != 0:
-		charge_type = tax_Rate_List[0]['charge_type']
-		rate = tax_Rate_List[0]['rate']
-		description = tax_Rate_List[0]['description']
+	if tax_template is not None and tax_template is not "":
+		tax_Name = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
+		for taxes in tax_Name.taxes:
+			account_Name = taxes.account_head
+			if account_Name:
+				tax_Rate_List = get_Sales_Taxes_and_Charges(account_Name)
+				if tax_Rate_List is not None and len(tax_Rate_List) != 0:
+					charge_type = tax_Rate_List[0]['charge_type']
+					rate = tax_Rate_List[0]['rate']
+					description = tax_Rate_List[0]['description']
+					taxes_Json_Transfer = {"owner": "Administrator",
+        						       "charge_type": charge_type,
+        				                       "account_head": account_Name,
+        						       "rate": rate,
+        						       "parenttype": "Purchase Order",
+        						       "description": description,
+        						       "parentfield": "taxes"
+								}
+					outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
+	"""
+	else:
 		taxes_Json_Transfer = {"owner": "Administrator",
-        				"charge_type": charge_type,
-        				"account_head": account_head,
-        				"rate": rate,
-        				"parenttype": "Purchase Order",
-        				"description": description,
-        				"parentfield": "taxes"
-					
+        			       "charge_type": "",
+        			       "account_head": "",
+        			       "rate": "",
+        			       "parenttype": "Purchase Order",
+        			       "description": "",
+        			       "parentfield": "taxes"
 					}
 		outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
+	"""
 		
 
 	for items in items_List:
@@ -574,13 +586,8 @@ def make_PurchaseOrder(args,tax_template):
 	doc.save()
 	ret = doc.doctype
 	if ret:
-		frappe.msgprint("Purchase Order is Done!!!")
-
-
-
-	
-
-
+		frappe.msgprint("Purchase Order created - " + doc.name)
+		
 
 
 
