@@ -55,8 +55,6 @@ def execute(filters=None):
 	tot_bi_qty = 0
 	tot_reqd_qty = 0
 	loop_count = 1
-
-
 	for (bom, item, bi_item, whse) in sorted(iwb_map):
 		qty_dict = iwb_map[(bom, item, bi_item, whse)]
 		if item_map[bi_item]["purchase_uom"] is None or item_map[bi_item]["purchase_uom"] is "":
@@ -107,7 +105,7 @@ def execute(filters=None):
 
 		if item_prev == item_work:
 			item_count = item_count + 1
-			tot_bal_qty =float(tot_bal_qty + rows[6])
+			tot_bal_qty =float(tot_bal_qty + rows[7])
 			reqd_qty = (rows[8] / rows[11]) * flt(rows[13])
 			tot_bi_qty = rows[8]
 			tot_reqd_qty = reqd_qty
@@ -190,12 +188,6 @@ def get_conditions(filters):
 		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
 
 	return conditions
-
-
-#       if filters.get("warehouse"):
-#             conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
-
-
 
 def get_sales_order_entries(filters):
 	conditions = get_conditions(filters)
