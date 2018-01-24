@@ -54,13 +54,23 @@ def execute(filters=None):
 	reqd_qty = 0
 	tot_bi_qty = 0
 	tot_reqd_qty = 0
+	conv_factor = 1
 	loop_count = 1
 	for (bom, item, bi_item, whse) in sorted(iwb_map):
 		qty_dict = iwb_map[(bom, item, bi_item, whse)]
+
 		if item_map[bi_item]["purchase_uom"] is None or item_map[bi_item]["purchase_uom"] is "":
 			print "purchase_uom is empty....."
 			purchase_UOM = item_map[bi_item]["stock_uom"]
 			item_map[bi_item]["purchase_uom"] = purchase_UOM
+			conv_factor = 1
+		else:
+			convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (bi_item, item_map[bi_item]["purchase_uom"]))
+			if convert_factor:
+				conv_factor = convert_factor[0][0]
+			else:
+				conv_factor = 1
+
 		if bi_item != " ":
 			data.append([
 							bom,
@@ -77,7 +87,7 @@ def execute(filters=None):
 							qty_dict.bom_qty,
  							bi_item,
 							qty_dict.qty_to_make,
-							item_map[item]["conversion_factor"],
+							conv_factor,
 						])
 		else:
 
@@ -96,7 +106,7 @@ def execute(filters=None):
 							qty_dict.bom_qty, 
 							bi_item, 
 							qty_dict.qty_to_make,
-							item_map[item]["conversion_factor"],
+							conv_factor,
 						])
 
 
@@ -397,6 +407,8 @@ def get_item_details(filters):
 		if filters.get("item_code"):
 				condition = "AND item_code=%s"
 				value = (filters["item_code"],)
+
+
 
 		items = frappe.db.sql("""select item_group, item_name, stock_uom, purchase_uom, t1.name,conversion_factor, brand, description
 				from tabItem t1 JOIN `tabUOM Conversion Detail` t2 where t1.item_code = t2.parent {condition}""".format(condition=condition), value, as_dict=1)
