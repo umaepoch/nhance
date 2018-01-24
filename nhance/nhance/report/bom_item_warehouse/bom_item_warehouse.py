@@ -52,8 +52,11 @@ def execute(filters=None):
 	total_delta_qty = 0
 	tot_bal_qty = 0
 	reqd_qty = 0
+	p_reqd_qty = 0
 	tot_bi_qty = 0
 	tot_reqd_qty = 0
+	tot_p_reqd_qty = 0
+	total_p_delta_qty = 0
 	conv_factor = 1
 	loop_count = 1
 	for (bom, item, bi_item, whse) in sorted(iwb_map):
@@ -117,13 +120,16 @@ def execute(filters=None):
 			item_count = item_count + 1
 			tot_bal_qty =float(tot_bal_qty + rows[7])
 			reqd_qty = (rows[8] / rows[11]) * flt(rows[13])
+			p_reqd_qty = reqd_qty * rows[14]
 			tot_bi_qty = rows[8]
 			tot_reqd_qty = reqd_qty
+			tot_p_reqd_qty = p_reqd_qty
 			if check_for_whole_number_itemwise(item_work):
 				tot_reqd_qty = math.ceil(tot_reqd_qty)
+				tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
 
 			summ_data.append([rows[0], rows[1], rows[11], rows[2],
-		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", rows[9], rows[14]
+		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", " ", rows[9], rows[14]
 			])
 		if (item_prev != item_work or loop_count == len(data)):
 			if item_count > 1:
@@ -135,25 +141,31 @@ def execute(filters=None):
 				data_array[12] = " "
 				#tot_bal_qty = tot_bal_qty + rows[6]
 				total_delta_qty = tot_reqd_qty - tot_bal_qty
+				total_p_delta_qty = tot_p_reqd_qty - (tot_bal_qty * rows[14])
 				if total_delta_qty < 0:
 					total_delta_qty = 0
+					total_p_delta_qty = 0
 				summ_data.append([rows[0], " ", " ", data_array[3], " ", data_array[5], data_array[6], data_array[7], data_array[8],
 				tot_bi_qty, round(tot_reqd_qty,2),
-				tot_bal_qty, round(total_delta_qty,2), " ", rows[14]
+				tot_bal_qty, round(total_delta_qty,2), round(tot_p_reqd_qty,2), round(total_p_delta_qty,2), " ", rows[14]
 				])
 			if item_prev != item_work:
 				item_count = 1
 				reqd_qty = (rows[8] / rows[11]) * flt(rows[13])
+				p_reqd_qty = reqd_qty * rows[14]
 				if check_for_whole_number_itemwise(item_work):
 					reqd_qty = math.ceil(reqd_qty)
+					p_reqd_qty = math.ceil(p_reqd_qty)
 				tot_bal_qty = rows[7]
 				total_delta_qty = reqd_qty - tot_bal_qty
+				total_p_delta_qty = p_reqd_qty - (tot_bal_qty * rows[14])
 				if total_delta_qty < 0:
 					total_delta_qty = 0
+					total_p_delta_qty = 0
 
 				summ_data.append([rows[0], rows[1], rows[11], rows[2],
 				rows[3], rows[4],
-				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), rows[9],rows[14]
+				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), round(p_reqd_qty,2), round(total_p_delta_qty,2), rows[9],rows[14]
 				])
 		item_prev = item_work
 		loop_count = loop_count + 1
@@ -180,6 +192,8 @@ def get_columns():
 		_("Required Qty")+"::100",
 		_("Balance Qty")+":Float:100",
 		_("Delta Qty")+"::100",
+		_("Required Qty(P UoM)")+"::100",
+		_("Delta Qty(P UoM)")+"::100",
 		_("Warehouse")+"::100",
 		_("Conversion Factor")+"::100"
 
