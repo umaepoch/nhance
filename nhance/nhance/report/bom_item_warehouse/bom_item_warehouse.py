@@ -503,7 +503,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 
 	for rows in summ_data:
 		required = str(rows[10]).strip()
-		if required and rows[11] and planning_warehouse != (rows[13]) :
+		if required and rows[11] and planning_warehouse != (rows[15]) :
 
 			if whse_map:
 				if whse_map.get(planning_warehouse):
@@ -534,7 +534,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 				"warehouse":planning_warehouse,
 				"uom": rows[7],
 				"stock_uom": rows[6],
-				"conversion_factor":rows[14],
+				"conversion_factor":rows[16],
 				"description": rows[3]
 				   }
 
@@ -547,13 +547,13 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 				"warehouse":planning_warehouse,
 				"uom":rows[7],
 				"stock_uom": rows[6],
-				"conversion_factor":rows[14],
+				"conversion_factor":rows[16],
 				"description": rows[3]
 				   }
 				newJson_transfer["items"].append(innerJson_transfer)
 		else:
-			if str(rows[13]).strip():
-				whse_map[(rows[13])] = rows[11]
+			if str(rows[15]).strip():
+				whse_map[(rows[15])] = rows[11]
 
 	if no_transfer == 0:
 		frappe.msgprint("Planning Warehouse has all the item !! Stock transfer is not required")
@@ -592,7 +592,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 		"schedule_date": required_date,
 		"warehouse":planning_warehouse,
 		"uom":rows[7],
-		"conversion_factor":rows[14],
+		"conversion_factor":rows[16],
 		"description": rows[3]
 		   }
 
