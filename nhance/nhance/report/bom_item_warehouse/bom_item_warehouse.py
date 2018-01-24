@@ -120,7 +120,7 @@ def execute(filters=None):
 			item_count = item_count + 1
 			tot_bal_qty =float(tot_bal_qty + rows[7])
 			reqd_qty = (rows[8] / rows[11]) * flt(rows[13])
-			p_reqd_qty = reqd_qty * rows[14]
+			p_reqd_qty = reqd_qty / rows[14]
 			tot_bi_qty = rows[8]
 			tot_reqd_qty = reqd_qty
 			tot_p_reqd_qty = p_reqd_qty
@@ -141,7 +141,7 @@ def execute(filters=None):
 				data_array[12] = " "
 				#tot_bal_qty = tot_bal_qty + rows[6]
 				total_delta_qty = tot_reqd_qty - tot_bal_qty
-				total_p_delta_qty = tot_p_reqd_qty - (tot_bal_qty * rows[14])
+				total_p_delta_qty = tot_p_reqd_qty - (tot_bal_qty / rows[14])
 				if total_delta_qty < 0:
 					total_delta_qty = 0
 					total_p_delta_qty = 0
@@ -152,13 +152,13 @@ def execute(filters=None):
 			if item_prev != item_work:
 				item_count = 1
 				reqd_qty = (rows[8] / rows[11]) * flt(rows[13])
-				p_reqd_qty = reqd_qty * rows[14]
+				p_reqd_qty = reqd_qty / rows[14]
 				if check_for_whole_number_itemwise(item_work):
 					reqd_qty = math.ceil(reqd_qty)
 					p_reqd_qty = math.ceil(p_reqd_qty)
 				tot_bal_qty = rows[7]
 				total_delta_qty = reqd_qty - tot_bal_qty
-				total_p_delta_qty = p_reqd_qty - (tot_bal_qty * rows[14])
+				total_p_delta_qty = p_reqd_qty - (tot_bal_qty / rows[14])
 				if total_delta_qty < 0:
 					total_delta_qty = 0
 					total_p_delta_qty = 0
