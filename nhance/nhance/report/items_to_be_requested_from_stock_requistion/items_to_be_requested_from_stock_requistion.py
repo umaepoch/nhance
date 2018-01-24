@@ -532,7 +532,7 @@ def make_PurchaseOrder(args,tax_template):
 		for taxes in tax_Name.taxes:
 			account_Name = taxes.account_head
 			if account_Name:
-				tax_Rate_List = get_Sales_Taxes_and_Charges(account_Name, tax_Name)
+				tax_Rate_List = get_Sales_Taxes_and_Charges(account_Name, tax_Name.name)
 				if tax_Rate_List is not None and len(tax_Rate_List) != 0:
 					charge_type = tax_Rate_List[0]['charge_type']
 					rate = tax_Rate_List[0]['rate']
