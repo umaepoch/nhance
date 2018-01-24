@@ -23,14 +23,8 @@ def execute(filters=None):
 	global planning_warehouse
 	global summ_data
 	global company_Name
-
 	planning_warehouse = filters.get("planning_warehouse")
 	company_Name = filters.get("company")
-	#company_Name = "Merit Systems Pvt Ltd"
-
-	print "##planning_warehouse filters...", planning_warehouse
-	print "##company_Name filters...", company_Name
-
 	if not filters: filters = {}
 	validate_filters(filters)
 	columns = get_columns()
@@ -140,7 +134,7 @@ def get_item_warehouse_map(filters):
 				whse, whs_flag = get_whs_branch(temp_whse, filters)
 		else:
 			whse = get_warehouses()
-		conversion_factor = 0.5
+		conversion_factor = 0
 		for d in sle:
 			wh_stock = 0
 			for w in whse:
@@ -369,11 +363,11 @@ def make_Purchase_Items(args):
 				max_price_rate = 0
 		innerJson_Transfer = {
 					"item_code": rows[0],
-					"qty": rows[8],
+					"qty": rows[13],
       					"last_purchase_price": last_purchase_rate,
 					"max_purchaseprice_in_last_180days": max_price_rate,
 					"min_purchaseprice_in_last_180days": min_price_rate,
-					"excess_ordered": rows[9],
+					"excess_ordered": rows[14],
 					"doctype": "Pre Purchase Order Item",
 					"parentfield": "Item"
 				  	}
@@ -408,6 +402,7 @@ def make_PurchaseOrder(args,tax_template):
 					"doctype": "Purchase Order",
 					"title": "Purchase Order",
 					"creation": creation_Date,
+					"due_date": creation_Date,
 					"owner": "Administrator",
 					"taxes_and_charges": tax_template,
 					"company": company_Name,
@@ -439,6 +434,7 @@ def make_PurchaseOrder(args,tax_template):
         						       "parentfield": "taxes"
 								}
 					outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
+	print "items_List::", items_List
 	for items in items_List:
 		outerJson_Transfer['supplier'] = items_List[i]['supplier']
 		innerJson_Transfer =	{
@@ -457,6 +453,7 @@ def make_PurchaseOrder(args,tax_template):
 		outerJson_Transfer["items"].append(innerJson_Transfer)
 	print "########-Final Purchase Order Json::", outerJson_Transfer
 	doc = frappe.new_doc("Purchase Order")
+	#print "####-doc::", doc.name
 	doc.update(outerJson_Transfer)
 	doc.save()
 	ret = doc.doctype
