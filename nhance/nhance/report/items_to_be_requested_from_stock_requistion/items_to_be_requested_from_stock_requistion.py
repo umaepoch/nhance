@@ -15,6 +15,7 @@ import json
 import time
 import math
 import ast
+import operator
 
 
 def execute(filters=None):
@@ -231,7 +232,7 @@ def get_item_warehouse_map(filters):
 			req_Qty = 0
 			wso = 0
 			delta = 0
-
+			min_order_quantity = 0
 			if key in iwb_map:
 				
 				print "#### item already exists", key
@@ -244,6 +245,8 @@ def get_item_warehouse_map(filters):
 				delta = item_entry["required_qty"] - wh_stock - excess_from_planning_cycle
 				print "###-delta::", delta
 				print "###-min_Order_Quantity::", min_Order_Quantity
+				min_order_quantity = map(operator.itemgetter(0), min_Order_Quantity)
+				min_order_quantity = min_order_quantity[0]
 				print "###-item_code::", item_entry["item_code"]
 
 				if delta > 0:			
@@ -262,7 +265,7 @@ def get_item_warehouse_map(filters):
 				item_entry["delta"] = delta
 				item_entry["wso"] = wso
 				item_entry["excess_Ordered"] = excess_ord
-				item_entry["min_order_qty"] = min_Order_Quantity
+				item_entry["min_order_qty"] = min_order_quantity
 				item_entry["reorder_Level"] = item_Reord_Level	
 
 			else:
@@ -283,7 +286,7 @@ def get_item_warehouse_map(filters):
 								 "ef_planning_cycle": 								         excess_from_planning_cycle,
 								 "delta": delta,
 							         "reorder_Level": item_Reord_Level,
-								 "min_order_qty": min_Order_Quantity, 
+								 "min_order_qty": min_order_quantity, 
 								 "wso": wso,
 								 "excess_Ordered": excess_ord,
 								 "supplier": "",
