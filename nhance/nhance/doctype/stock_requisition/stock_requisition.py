@@ -237,8 +237,8 @@ def make_purchase_order(source_name, target_doc=None):
 		"Stock Requisition Item": {
 			"doctype": "Purchase Order Item",
 			"field_map": [
-				["name", "material_request_item"],
-				["parent", "material_request"],
+				["name", "stock_requisition_item"],
+				["parent", "stock_requisition"],
 				["uom", "stock_uom"],
 				["uom", "uom"]
 			],
