@@ -154,8 +154,8 @@ class StockRequisition(BuyingController):
 			if d.name in mr_items:
 				if self.material_request_type in ("Material Issue", "Material Transfer"):
 					d.ordered_qty =  flt(frappe.db.sql("""select sum(transfer_qty)
-						from `tabStock Entry Detail` where material_request = %s
-						and material_request_item = %s and docstatus = 1""",
+						from `tabStock Entry Detail` where stock_requistion = %s
+						and stock_requistion_item = %s and docstatus = 1""",
 						(self.name, d.name))[0][0])
 
 					if d.ordered_qty and d.ordered_qty > d.stock_qty:
@@ -164,8 +164,8 @@ class StockRequisition(BuyingController):
 
 				elif self.material_request_type == "Manufacture":
 					d.ordered_qty = flt(frappe.db.sql("""select sum(qty)
-						from `tabProduction Order` where material_request = %s
-						and material_request_item = %s and docstatus = 1""",
+						from `tabProduction Order` where stock_requistion = %s
+						and stock_requistion_item = %s and docstatus = 1""",
 						(self.name, d.name))[0][0])
 
 				frappe.db.set_value(d.doctype, d.name, "ordered_qty", d.ordered_qty)
@@ -199,7 +199,7 @@ def update_completed_and_requested_qty(stock_entry, method):
 
 		for d in stock_entry.get("items"):
 			if d.material_request:
-				material_request_map.setdefault(d.material_request, []).append(d.material_request_item)
+				material_request_map.setdefault(d.material_request, []).append(d.stock_requistion_item)
 
 		for mr, mr_item_rows in material_request_map.items():
 			if mr and mr_item_rows:
@@ -225,7 +225,6 @@ def update_item(obj, target, source_parent):
 def make_purchase_order(source_name, target_doc=None):
 	def postprocess(source, target_doc):
 		set_missing_values(source, target_doc)
-
 	doclist = get_mapped_doc("Stock Requisition", source_name, 	{
 		"Stock Requisition": {
 			"doctype": "Purchase Order",
@@ -297,8 +296,8 @@ def make_purchase_order_based_on_supplier(source_name, target_doc=None):
 			"Stock Requisition Item": {
 				"doctype": "Purchase Order Item",
 				"field_map": [
-					["name", "material_request_item"],
-					["parent", "material_request"],
+					["name", "stock_requisition_item"],
+					["parent", "stock_requisition"],
 					["uom", "stock_uom"],
 					["uom", "uom"]
 				],
@@ -343,8 +342,8 @@ def make_supplier_quotation(source_name, target_doc=None):
 		"Stock Requisition Item": {
 			"doctype": "Supplier Quotation Item",
 			"field_map": {
-				"name": "material_request_item",
-				"parent": "material_request"
+				"name": "stock_requisition_item",
+				"parent": "stock_requisition"
 			}
 		}
 	}, target_doc, postprocess)
@@ -410,8 +409,8 @@ def raise_production_orders(stock_requisition):
 				prod_order.expected_delivery_date = d.schedule_date
 				prod_order.sales_order = d.sales_order
 				prod_order.bom_no = get_item_details(d.item_code).bom_no
-				prod_order.material_request = mr.name
-				prod_order.material_request_item = d.name
+				prod_order.stock_requistion = mr.name
+				prod_order.stock_requistion_item = d.name
 				prod_order.planned_start_date = mr.transaction_date
 				prod_order.company = mr.company
 				prod_order.save()
