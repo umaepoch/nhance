@@ -110,9 +110,9 @@ def set_missing_values(source, target_doc):
 @frappe.whitelist()
 
 def make_quotation(source_name, target_doc=None):
-	
-	get_assembly_price(source_name)
 	boq_record = frappe.get_doc("Bill of Quantity", source_name)
+	set_bom_level(boq_record)
+	get_assembly_price(source_name)
 	
 	company = boq_record.company
 
@@ -222,12 +222,17 @@ def make_quotation(source_name, target_doc=None):
 @frappe.whitelist()
 def make_bom(source_name, target_doc=None):
 	boq_record = frappe.get_doc("Bill of Quantity", source_name)
-	set_bom_level(boq_record)
 	company = boq_record.company
 	max_bom_level = frappe.db.sql("""select max(bom_level) from `tabBill of Quantity Item` boqi where boqi.parent = %s""", (boq_record.name))
 	x = 1
 #	if max_bom_level > 0:
-	bom_level = int(max_bom_level[0][0])
+	if max_bom_level[0][0] is None or max_bom_level[0][0] is "":
+		frappe.msgprint(_("Please create Quotation first"))	
+		return	
+	else:
+
+		bom_level = int(max_bom_level[0][0])
+		
 #	else:
 #		bom_level = 0
 
