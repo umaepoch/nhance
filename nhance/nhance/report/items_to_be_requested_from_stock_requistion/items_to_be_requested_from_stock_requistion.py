@@ -14,7 +14,6 @@ import math
 import ast
 
 def execute(filters=None):
-
 	global item_map
 	global whs_flag
 	global whse
@@ -61,20 +60,20 @@ def execute(filters=None):
 def get_columns():           
 		"""return columns"""
 		columns = [	
-		_("Item_Code")+"::100",
-		_("Item_Name")+"::100",
+		_("Item Code")+"::100",
+		_("Item Name")+"::100",
 		_("MR Recd.")+"::100",
-		_("Qty in Stock")+"::100",
-		_("Excess from Planning Cycle")+"::100",
+		_("Qty In Stock")+"::100",
+		_("Excess From Planning Cycle")+"::100",
 		_("Delta")+"::100",
 		_("Reorder Level")+"::100",
 		_("MOQ")+"::100",
-		_("What Should be ordered")+"::100",
+		_("What Should Be ordered")+"::100",
 		_("Excess Ordered")+"::100",
 		_("Stock Uom")+"::100",
 		_("Purchase Uom")+"::100",
 		_("Conversion Factor")+"::100",
-		_("What Should be ordered(Purchase Uom)")+"::100",
+		_("What Should Be ordered(Purchase Uom)")+"::100",
 		_("Excess Ordered(Purchase Uom)")+"::100",
 		_("Supplier")+"::100",
 		_("Rate")+"::100",
@@ -112,6 +111,13 @@ def get_ItemName(item_code):
 
 def get_Uom_Data(item_code):
 	uom_Data = frappe.db.sql("""select stock_uom, purchase_uom  from `tabItem` where item_code = %s """, (item_code), as_dict=1)
+	if len(uom_Data)!=0:
+		stock_uom = uom_Data[0]['stock_uom']
+		purchase_uom = uom_Data[0]['purchase_uom']
+		if purchase_uom is None or purchase_uom is "":
+			purchase_uom = stock_uom
+	must_be_whole_number = frappe.db.sql("""select must_be_whole_number  from `tabUOM` where uom_name = %s """, (purchase_uom), as_dict=1)
+	uom_Data.extend(must_be_whole_number)
 	return uom_Data
 	
 
@@ -361,9 +367,29 @@ def make_Purchase_Items(args):
 				min_price_rate = 0
 				last_purchase_rate = 0
 				max_price_rate = 0
+		uom_details = get_Uom_Data(item_code)
+		round_up_down = 0
+		round_off = "up"
+		if len(uom_details)!=0:
+			must_be_whole_number = uom_details[1]['must_be_whole_number']
+			if must_be_whole_number == 1:
+				item_qty = rows[13]
+ 				check_qty = math.floor(item_qty) 
+				check_qty = item_qty - check_qty
+				if check_qty != 0.0:
+					if round_off == "up":
+						quantity = math.ceil(item_qty)
+						quantity = int(quantity)
+					else:
+						quantity = int(item_qty)
+				else:
+					quantity = int(item_qty)
+				print "#################-quantity::", quantity
+			else:
+				quantity = rows[13]
 		innerJson_Transfer = {
 					"item_code": rows[0],
-					"qty": rows[13],
+					"qty": quantity,
       					"last_purchase_price": last_purchase_rate,
 					"max_purchaseprice_in_last_180days": max_price_rate,
 					"min_purchaseprice_in_last_180days": min_price_rate,
@@ -402,7 +428,6 @@ def make_PurchaseOrder(args,tax_template):
 					"doctype": "Purchase Order",
 					"title": "Purchase Order",
 					"creation": creation_Date,
-					"due_date": creation_Date,
 					"owner": "Administrator",
 					"taxes_and_charges": tax_template,
 					"company": company_Name,
@@ -453,7 +478,6 @@ def make_PurchaseOrder(args,tax_template):
 		outerJson_Transfer["items"].append(innerJson_Transfer)
 	print "########-Final Purchase Order Json::", outerJson_Transfer
 	doc = frappe.new_doc("Purchase Order")
-	#print "####-doc::", doc.name
 	doc.update(outerJson_Transfer)
 	doc.save()
 	ret = doc.doctype
