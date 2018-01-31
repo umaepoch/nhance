@@ -523,7 +523,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 					if len(uom_details)!=0:
 						must_be_whole_number = uom_details[0]['must_be_whole_number']
 						if must_be_whole_number == 1:
-							item_qty = rows[13]
+							item_qty = float(rows[13])
 							#item_qty = 40.23
  							check_qty = math.floor(item_qty) 
 							check_qty = item_qty - check_qty
@@ -555,7 +555,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 					if len(uom_details)!=0:
 						must_be_whole_number = uom_details[0]['must_be_whole_number']
 						if must_be_whole_number == 1:
-							#balance_qty =40.2
+							balance_qty = float(balance_qty)
  							check_qty = math.floor(balance_qty) 
 							check_qty = balance_qty - check_qty
 							if check_qty != 0.0:
@@ -620,7 +620,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 			if len(uom_details)!=0:
 				must_be_whole_number = uom_details[0]['must_be_whole_number']
 				if must_be_whole_number == 1:
-					#delta_qty =40.2
+					delta_qty = float(delta_qty)
  					check_qty = math.floor(delta_qty) 
 					check_qty = delta_qty - check_qty
 					if check_qty != 0.0:

@@ -373,7 +373,7 @@ def make_Purchase_Items(args):
 		if len(uom_details)!=0:
 			must_be_whole_number = uom_details[1]['must_be_whole_number']
 			if must_be_whole_number == 1:
-				item_qty = rows[13]
+				item_qty = float(rows[13])
  				check_qty = math.floor(item_qty) 
 				check_qty = item_qty - check_qty
 				if check_qty != 0.0:
@@ -472,7 +472,8 @@ def make_PurchaseOrder(args,tax_template):
 					"parenttype": "Purchase Order",
 					"schedule_date": creation_Date,
 					"parentfield": "items",
-					"warehouse": planning_warehouse
+					"warehouse": planning_warehouse,
+					"due_date": creation_Date
 				   	}
 		i = i + 1
 		outerJson_Transfer["items"].append(innerJson_Transfer)
