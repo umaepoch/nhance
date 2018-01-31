@@ -51,6 +51,7 @@ def execute(filters=None):
 	item_count = 0
 	total_delta_qty = 0
 	tot_bal_qty = 0
+	tot_p_bal_qty = 0
 	reqd_qty = 0
 	p_reqd_qty = 0
 	tot_bi_qty = 0
@@ -73,7 +74,9 @@ def execute(filters=None):
 				conv_factor = convert_factor[0][0]
 			else:
 				conv_factor = 1
-
+		bal_qty = qty_dict.bal_qty
+		bal_qty_puom = bal_qty/conv_factor
+		
 		if bi_item != " ":
 			data.append([
 							bom,
@@ -91,6 +94,7 @@ def execute(filters=None):
  							bi_item,
 							qty_dict.qty_to_make,
 							conv_factor,
+							bal_qty_puom,
 						])
 		else:
 
@@ -110,6 +114,7 @@ def execute(filters=None):
 							bi_item, 
 							qty_dict.qty_to_make,
 							conv_factor,
+							bal_qty_puom,
 						])
 
 
@@ -119,6 +124,7 @@ def execute(filters=None):
 		if item_prev == item_work:
 			item_count = item_count + 1
 			tot_bal_qty =float(tot_bal_qty + rows[7])
+			tot_p_bal_qty = float(tot_p_bal_qty + rows[15])
 			reqd_qty = (rows[8] / rows[11]) * flt(rows[13])
 			p_reqd_qty = reqd_qty / rows[14]
 			tot_bi_qty = rows[8]
@@ -127,9 +133,8 @@ def execute(filters=None):
 			if check_for_whole_number_itemwise(item_work):
 				tot_reqd_qty = math.ceil(tot_reqd_qty)
 				tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
-
 			summ_data.append([rows[0], rows[1], rows[11], rows[2],
-		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", " ", rows[9], rows[14]
+		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", rows[15], " ", rows[9], rows[14]
 			])
 		if (item_prev != item_work or loop_count == len(data)):
 			if item_count > 1:
@@ -139,15 +144,17 @@ def execute(filters=None):
 				data_array[9] = " "
 				data_array[10] = " "
 				data_array[12] = " "
+				data_array[13] = " "
+				data_array[15] = " "
 				#tot_bal_qty = tot_bal_qty + rows[6]
 				total_delta_qty = tot_reqd_qty - tot_bal_qty
-				total_p_delta_qty = tot_p_reqd_qty - (tot_bal_qty / rows[14])
+				total_p_delta_qty = tot_p_reqd_qty - (tot_p_bal_qty / rows[14])
 				if total_delta_qty < 0:
 					total_delta_qty = 0
 					total_p_delta_qty = 0
 				summ_data.append([rows[0], " ", " ", data_array[3], " ", data_array[5], data_array[6], data_array[7], data_array[8],
 				tot_bi_qty, round(tot_reqd_qty,2),
-				tot_bal_qty, round(total_delta_qty,2), round(tot_p_reqd_qty,2), round(total_p_delta_qty,2), " ", rows[14]
+				tot_bal_qty, round(total_delta_qty,2), round(tot_p_reqd_qty,2), tot_p_bal_qty, round(total_p_delta_qty,2), " ", data_array[17]
 				])
 			if item_prev != item_work:
 				item_count = 1
@@ -157,15 +164,15 @@ def execute(filters=None):
 					reqd_qty = math.ceil(reqd_qty)
 					p_reqd_qty = math.ceil(p_reqd_qty)
 				tot_bal_qty = rows[7]
+				tot_p_bal_qty = rows[15]
 				total_delta_qty = reqd_qty - tot_bal_qty
-				total_p_delta_qty = p_reqd_qty - (tot_bal_qty / rows[14])
+				total_p_delta_qty = p_reqd_qty - tot_p_bal_qty
 				if total_delta_qty < 0:
 					total_delta_qty = 0
 					total_p_delta_qty = 0
-
 				summ_data.append([rows[0], rows[1], rows[11], rows[2],
 				rows[3], rows[4],
-				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), round(p_reqd_qty,2), round(total_p_delta_qty,2), rows[9],rows[14]
+				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), round(p_reqd_qty,2), tot_p_bal_qty, round(total_p_delta_qty,2), rows[9], rows[14]
 				])
 		item_prev = item_work
 		loop_count = loop_count + 1
@@ -193,6 +200,7 @@ def get_columns():
 		_("Balance Qty")+":Float:100",
 		_("Delta Qty")+"::100",
 		_("Required Qty(P UoM)")+"::100",
+		_("Balance Qty(P UoM)")+":Float:100",
 		_("Delta Qty(P UoM)")+"::100",
 		_("Warehouse")+"::100",
 		_("Conversion Factor")+"::100"
@@ -498,7 +506,8 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	whse_map = {}
 	empty_desc = []
 	empty_uom = []
-	round_off = "down"
+	round_off_purchase = "up"
+	round_off_transfer = "down"
 	for rows in summ_data:
 		required = str(rows[10]).strip()
 		if required and rows[11] and planning_warehouse != (rows[15]) :
@@ -528,30 +537,31 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
  							check_qty = math.floor(item_qty) 
 							check_qty = item_qty - check_qty
 							if check_qty != 0.0:
-								if round_off == "up":
+								if round_off_transfer == "up":
 									quantity = math.ceil(item_qty)
 									quantity = int(quantity)
 								else:
 									quantity = int(item_qty)
 							else:
 								quantity = int(item_qty)
-							print "#################-quantity::", quantity
 						else:
 							quantity = rows[13]
-					innerJson_transfer ={
-					"doctype": "Stock Requisition Item",
-					"item_code": rows[8],
-					"qty": quantity,
-					"schedule_date": required_date,
-					"warehouse":planning_warehouse,
-					"uom": rows[7],
-					"stock_uom": rows[6],
-					"conversion_factor":rows[16],
-					"description": rows[3]
-				   	}
+					if quantity > 0:
+						innerJson_transfer ={
+						"doctype": "Stock Requisition Item",
+						"item_code": rows[8],
+						"qty": quantity,
+						"schedule_date": required_date,
+						"warehouse":planning_warehouse,
+						"uom": rows[7],
+						"stock_uom": rows[6],
+						"conversion_factor":rows[17],
+						"description": rows[3]
+				   		}
+						newJson_transfer["items"].append(innerJson_transfer)
 
 				if rows[10] >= rows[11]:
-					balance_qty = rows[11]/rows[16]
+					balance_qty = rows[14]
 					if len(uom_details)!=0:
 						must_be_whole_number = uom_details[0]['must_be_whole_number']
 						if must_be_whole_number == 1:
@@ -559,41 +569,42 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
  							check_qty = math.floor(balance_qty) 
 							check_qty = balance_qty - check_qty
 							if check_qty != 0.0:
-								if round_off == "up":
+								if round_off_transfer == "up":
 									quantity = math.ceil(balance_qty)
 									quantity = int(quantity)
 								else:
 									quantity = int(balance_qty)
 							else:
 								quantity = int(balance_qty)
-							print "#################-quantity::", quantity
 						else:
 							quantity = balance_qty
-					innerJson_transfer =	{
-					"doctype": "Stock Requisition Item",
-					"item_code": rows[8],
-					"qty": quantity,
-					"schedule_date": required_date,
-					"warehouse":planning_warehouse,
-					"uom":rows[7],
-					"stock_uom": rows[6],
-					"conversion_factor":rows[16],
-					"description": rows[3]
-				   	}
-				newJson_transfer["items"].append(innerJson_transfer)
+					if quantity > 0:
+						innerJson_transfer =	{
+						"doctype": "Stock Requisition Item",
+						"item_code": rows[8],
+						"qty": quantity,
+						"schedule_date": required_date,
+						"warehouse":planning_warehouse,
+						"uom":rows[7],
+						"stock_uom": rows[6],
+						"conversion_factor":rows[17],
+						"description": rows[3]
+				   		}
+						newJson_transfer["items"].append(innerJson_transfer)
 		else:
 			if str(rows[15]).strip():
 				whse_map[(rows[15])] = rows[11]
 
 	if no_transfer == 0:
 		frappe.msgprint("Planning Warehouse has all the item !! Stock transfer is not required")
-	else:
+	elif curr_stock_balance == 1:
 		if empty_uom:
 			frappe.throw(_("UOM for  {0} is empty,Please add UOM in Item Master Doctype.").format(frappe.bold(comma_and(empty_uom))))
 		if empty_desc:
 			frappe.throw(_("Description for  {0} is empty,Please add description in Item Master Doctype.").format(frappe.bold(comma_and(empty_desc))))
 		doc = frappe.new_doc("Stock Requisition")
 		doc.update(newJson_transfer)
+		print "####################-newJson_transfer::", newJson_transfer
 		if args == "as a draft":
 			doc.save()
 		else:
@@ -601,11 +612,11 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 		ret = doc.doctype
 
 
-
+	
 	for rows in summ_data:
 
 		if curr_stock_balance == 1:
-			delta_qty = str(rows[14]).strip()
+			delta_qty = str(rows[15]).strip()
 		else:
 			delta_qty = str(rows[13]).strip()
 		
@@ -624,28 +635,28 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
  					check_qty = math.floor(delta_qty) 
 					check_qty = delta_qty - check_qty
 					if check_qty != 0.0:
-						if round_off == "up":
+						if round_off_purchase == "up":
 							quantity = math.ceil(delta_qty)
 							quantity = int(quantity)
 						else:
 							quantity = int(delta_qty)
 					else:
 						quantity = int(delta_qty)
-					print "#################-quantity::", quantity
 				else:
 					quantity = delta_qty
-			innerJson_requisition =	{
-			"doctype": "Stock Requisition Item",
-			"item_code": rows[8],
-			"qty": float(quantity),
-			"schedule_date": required_date,
-			"warehouse":planning_warehouse,
-			"uom":rows[7],
-			"conversion_factor":rows[16],
-			"description": rows[3]
-		   	}
+			if quantity > 0:
+				innerJson_requisition =	{
+				"doctype": "Stock Requisition Item",
+				"item_code": rows[8],
+				"qty": float(quantity),
+				"schedule_date": required_date,
+				"warehouse":planning_warehouse,
+				"uom":rows[7],
+				"conversion_factor":rows[17],
+				"description": rows[3]
+		   		}
 
-			newJson_requisition["items"].append(innerJson_requisition)
+				newJson_requisition["items"].append(innerJson_requisition)
 	del summ_data[:]
 	del required
 	del test_whole_number

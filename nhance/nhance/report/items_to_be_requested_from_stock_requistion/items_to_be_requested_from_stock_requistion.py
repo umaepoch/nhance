@@ -387,28 +387,28 @@ def make_Purchase_Items(args):
 				print "#################-quantity::", quantity
 			else:
 				quantity = rows[13]
-		innerJson_Transfer = {
-					"item_code": rows[0],
-					"qty": quantity,
-      					"last_purchase_price": last_purchase_rate,
-					"max_purchaseprice_in_last_180days": max_price_rate,
-					"min_purchaseprice_in_last_180days": min_price_rate,
-					"excess_ordered": rows[14],
-					"doctype": "Pre Purchase Order Item",
-					"parentfield": "Item"
-				  	}
-		outerJson_Transfer["item"].append(innerJson_Transfer)
-	doc = frappe.new_doc("Pre Purchase Order")
-	print "outerJson_Transfer::", outerJson_Transfer
-	doc.update(outerJson_Transfer)
-	if args == "as a draft":
-		doc.save()
-	else:
-	  	doc.save()
-	#doc.submit()
-	ret = doc.doctype
-	docid = doc.name
-	print "## Docid:", doc.name
+		if quantity > 0:
+			innerJson_Transfer = {
+			"item_code": rows[0],
+			"qty": quantity,
+      			"last_purchase_price": last_purchase_rate,
+			"max_purchaseprice_in_last_180days": max_price_rate,
+			"min_purchaseprice_in_last_180days": min_price_rate,
+			"excess_ordered": rows[14],
+			"doctype": "Pre Purchase Order Item",
+			"parentfield": "Item"
+			}
+			outerJson_Transfer["item"].append(innerJson_Transfer)
+			doc = frappe.new_doc("Pre Purchase Order")
+			print "outerJson_Transfer::", outerJson_Transfer
+			doc.update(outerJson_Transfer)
+			if args == "as a draft":
+				doc.save()
+			else:
+	  			doc.save()
+			ret = doc.doctype
+			docid = doc.name
+	print "## Docid:", docid
 	if ret:
 		return docid
 def get_Purchase_Taxes_and_Charges(account_head, tax_name):
