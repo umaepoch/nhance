@@ -473,7 +473,7 @@ def make_PurchaseOrder(args,tax_template):
 					"parenttype": "Purchase Order",
 					"schedule_date": creation_Date,
 					"parentfield": "items",
-					"warehouse": planning_warehousej
+					"warehouse": planning_warehouse
 				   	}
 		i = i + 1
 		outerJson_Transfer["items"].append(innerJson_Transfer)
