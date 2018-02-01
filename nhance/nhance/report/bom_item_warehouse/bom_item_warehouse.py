@@ -510,7 +510,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	round_off_transfer = "down"
 	for rows in summ_data:
 		required = str(rows[10]).strip()
-		if required and rows[11] and planning_warehouse != (rows[15]) :
+		if required and rows[11] and planning_warehouse != (rows[16]) :
 			if whse_map:
 				if whse_map.get(planning_warehouse):
 					if rows[10] > whse_map.get(planning_warehouse):
