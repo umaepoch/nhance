@@ -76,6 +76,7 @@ def execute(filters=None):
 				conv_factor = 1
 		bal_qty = qty_dict.bal_qty
 		bal_qty_puom = bal_qty/conv_factor
+		#bal_qty_puom = 0.5
 		
 		if bi_item != " ":
 			data.append([
@@ -132,7 +133,7 @@ def execute(filters=None):
 			tot_p_reqd_qty = p_reqd_qty
 			if check_for_whole_number_itemwise(item_work):
 				tot_reqd_qty = math.ceil(tot_reqd_qty)
-				tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
+				#tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
 			summ_data.append([rows[0], rows[1], rows[11], rows[2],
 		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", rows[15], " ", rows[9], rows[14]
 			])
@@ -148,10 +149,13 @@ def execute(filters=None):
 				data_array[15] = " "
 				#tot_bal_qty = tot_bal_qty + rows[6]
 				total_delta_qty = tot_reqd_qty - tot_bal_qty
-				total_p_delta_qty = tot_p_reqd_qty - (tot_p_bal_qty / rows[14])
+				total_p_delta_qty = tot_p_reqd_qty - tot_p_bal_qty
+				print "############-total_p_delta_qty::", total_p_delta_qty
 				if total_delta_qty < 0:
 					total_delta_qty = 0
 					total_p_delta_qty = 0
+				#tot_p_reqd_qty = 10.71
+				#tot_p_bal_qty = 53.9
 				summ_data.append([rows[0], " ", " ", data_array[3], " ", data_array[5], data_array[6], data_array[7], data_array[8],
 				tot_bi_qty, round(tot_reqd_qty,2),
 				tot_bal_qty, round(total_delta_qty,2), round(tot_p_reqd_qty,2), tot_p_bal_qty, round(total_p_delta_qty,2), " ", data_array[17]
@@ -162,7 +166,7 @@ def execute(filters=None):
 				p_reqd_qty = reqd_qty / rows[14]
 				if check_for_whole_number_itemwise(item_work):
 					reqd_qty = math.ceil(reqd_qty)
-					p_reqd_qty = math.ceil(p_reqd_qty)
+					#p_reqd_qty = math.ceil(p_reqd_qty)
 				tot_bal_qty = rows[7]
 				tot_p_bal_qty = rows[15]
 				total_delta_qty = reqd_qty - tot_bal_qty
@@ -170,6 +174,8 @@ def execute(filters=None):
 				if total_delta_qty < 0:
 					total_delta_qty = 0
 					total_p_delta_qty = 0
+				#p_reqd_qty = 5.8
+				#tot_p_bal_qty = 53.9
 				summ_data.append([rows[0], rows[1], rows[11], rows[2],
 				rows[3], rows[4],
 				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), round(p_reqd_qty,2), tot_p_bal_qty, round(total_p_delta_qty,2), rows[9], rows[14]
@@ -532,18 +538,26 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 					if len(uom_details)!=0:
 						must_be_whole_number = uom_details[0]['must_be_whole_number']
 						if must_be_whole_number == 1:
-							item_qty = float(rows[13])
-							#item_qty = 40.23
- 							check_qty = math.floor(item_qty) 
-							check_qty = item_qty - check_qty
+							req_qty_puom = float(rows[13])
+							re_qty_puom_round_up = math.ceil(req_qty_puom)
+							bal_qty_puom = float(rows[14])
+							if bal_qty_puom < re_qty_puom_round_up:
+								tmp_round_off = "down"
+							else:
+								tmp_round_off = "up"
+ 							check_qty = math.floor(req_qty_puom) 
+							check_qty = req_qty_puom - check_qty
 							if check_qty != 0.0:
-								if round_off_transfer == "up":
-									quantity = math.ceil(item_qty)
+								if tmp_round_off == "up":
+									quantity = math.ceil(req_qty_puom)
 									quantity = int(quantity)
 								else:
-									quantity = int(item_qty)
+									quantity = int(req_qty_puom)
+									purchase_qty_puom = req_qty_puom - quantity
+									print "==========purchase_qty_puom===",purchase_qty_puom
+									rows[15] = purchase_qty_puom
 							else:
-								quantity = int(item_qty)
+								quantity = int(req_qty_puom)
 						else:
 							quantity = rows[13]
 					if quantity > 0:
