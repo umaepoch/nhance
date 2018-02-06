@@ -5,6 +5,7 @@ from frappe import _, throw, msgprint
 from frappe.model.mapper import get_mapped_doc
 
 from frappe.model.naming import make_autoname
+import sys
 
 from erpnext.utilities.transaction_base import TransactionBase
 from erpnext.accounts.party import get_party_account_currency
