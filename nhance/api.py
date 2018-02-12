@@ -15,15 +15,36 @@ from frappe.desk.notifications import clear_doctype_notifications
 @frappe.whitelist()
 def make_proposal_stage(source_name, target_doc=None):
 
+
 	target_doc = get_mapped_doc("Opportunity", source_name, {
 		"Opportunity": {
 			"doctype": "Proposal Stage",
 			"field_map": {
-				"name": "reference_name"
+				"doctype": "stage_doctype",
+				"name": "document_number"
 			 }
 		}
-		
+	
 	}, target_doc, set_missing_values)
+
+
+	return target_doc
+
+@frappe.whitelist()
+def make_proposal_stage_q(source_name, target_doc=None):
+
+
+	target_doc = get_mapped_doc("Quotation", source_name, {
+		"Quotation": {
+			"doctype": "Proposal Stage",
+			"field_map": {
+				"name": "document_number",
+				"doctype": "stage_doctype"
+			 }
+		}
+	
+	}, target_doc, set_missing_values)
+
 
 	return target_doc
 
@@ -102,6 +123,43 @@ def set_proposal_stage_values(opportunity):
 		where reference_name=%s and closing_date = %s""",
 		(opportunity, max_closing_date))
         return sc_rec
+
+@frappe.whitelist()
+def set_opp_stages(opportunity):
+
+	opp_record = frappe.get_doc("Opportunity", opportunity)
+	frappe.msgprint(_(opp_record.name))
+	check_field = 0
+        
+	stage_records = frappe.db.sql("""select name as stage_name, opportunity_purpose, buying_status, closing_date, stage, value, competition_status, support_needed from `tabProposal Stage` where document_number=%s""", (opportunity), as_dict = 1)
+	frappe.msgprint(_(stage_records))
+	for row in stage_records:
+		check_field = 0
+		frappe.msgprint(_(row.stage_name))
+		for record in opp_record.opp_stage:
+			frappe.msgprint(_(record))
+			if row.stage_name == record.stage_name:
+				check_field = 1
+		frappe.msgprint(_(row.name))
+		if chec_field == 0:
+			child_row = opp_record.append("opp_stage", {})
+			child_row.stage_name = row.name
+			child_row.opportunity_purpose = row.opportunity_purpose
+			child_row.buying_status = row.buying_status
+			child_row.closing_date = row.closing_date
+			child_row.stage = row.stage
+			child_row.value = row.value
+			child_row.competition_status = row.competition_status
+			child_row.support_needed = row.support_needed
+
+		opp_record.save()
+#		frappe.db.commit()	
+
+		
+	return
+
+				
+			
 
 def set_missing_values(source, target_doc):
 	target_doc.run_method("set_missing_values")
