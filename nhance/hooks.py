@@ -107,7 +107,7 @@ app_license = "MIT"
 # Overriding Whitelisted Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "nhance.event.get_events"
-# }
+#override_whitelisted_methods = {
+# 	"erpnext.crm.doctype.opportunity.opportunity.make_quotation": "nhance.nhance.api.make_opp_quotation"
+#}
 
