@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals
 import frappe
+from frappe.utils import cint, flt, cstr, comma_or, getdate, add_days, getdate, rounded, date_diff, money_in_words
 from frappe import _, throw, msgprint
 from frappe.model.document import Document
 
@@ -50,24 +51,31 @@ class BillofQuantity(Document):
 
 
 	def update_prices(self):
-		frappe.msgprint(_("Inside Update prices"))
-
-		frappe.msgprint(_(self.name))
-		update_price_list = frappe.db.sql("""select item_code as item_code, manual_price as manual_price, price as price_list from `tabBill of Quantity Item` where parent = %s and manual_price > 0 and update_price = 1""", self.name, as_dict = 1)
-		frappe.msgprint(_(update_price_list))
+		update_price_list = frappe.db.sql("""select boqi.item_code as item_code, boqi.manual_price as manual_price, boqi.price as price_name, boq.selling_price_list as selling_price_list from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and manual_price > 0 and update_price = 1 and boq.name = boqi.parent""", self.name, as_dict = 1)
 		if update_price_list:
-			frappe.msgprint(_("Update Price list - Yes"))
 			for record in update_price_list:
-				if record.price_list:
-					price_record = frappe.get_doc("Item Price", record.price_list)
-					frappe.msgprint(_(price_record.name))
+				if record.price_name is not None and record.price_name != "":
+					price_record = frappe.get_doc("Item Price", record.price_name)
 					if price_record:
-						price_record.rate = record.manual_price
-#						price_record.update(price_record)
-						price_record.save()
-						frappe.db.commit()
-						frappe.throw(_("Price record saved"))
-#					frappe.db.sql("""update `tabItem Price` set rate = %s where name = %s""", 
-#	
+						rate = record.manual_price
+
+#						price_record.update
+						frappe.db.sql("""update `tabItem Price` pr set pr.price_list_rate = %s where pr.name = %s""", (rate, price_record.name))
+						frappe.msgprint(_("Price list updated for - " + record.item_code + "= " + str(record.manual_price)))
+				else:
+					price_json = {
+						"price_list": record.selling_price_list,
+						"item_code": record.item_code,
+						"price_list_rate": record.manual_price
+								}
+					doc = frappe.new_doc("Item Price")
+					doc.update(price_json)
+					doc.save()
+					frappe.db.commit()
+					docname = doc.name
+					frappe.msgprint(_("Price Record created for - " + record.item_code + " - " + docname))
+
+
+
 	
 

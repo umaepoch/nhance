@@ -124,35 +124,35 @@ def set_proposal_stage_values(opportunity):
 		(opportunity, max_closing_date))
         return sc_rec
 
-@frappe.whitelist()
-def set_opp_stages(opportunity):
+#@frappe.whitelist()
+#def set_opp_stages(opportunity):
 
-	opp_record = frappe.get_doc("Opportunity", opportunity)
-	frappe.msgprint(_(opp_record.name))
-	check_field = 0
+#	opp_record = frappe.get_doc("Opportunity", opportunity)
+#	frappe.msgprint(_(opp_record.name))
+#	check_field = 0
         
-	stage_records = frappe.db.sql("""select name as stage_name, opportunity_purpose, buying_status, closing_date, stage, value, competition_status, support_needed from `tabProposal Stage` where document_number=%s""", (opportunity), as_dict = 1)
-	frappe.msgprint(_(stage_records))
-	for row in stage_records:
-		check_field = 0
-		frappe.msgprint(_(row.stage_name))
-		for record in opp_record.opp_stage:
-			frappe.msgprint(_(record))
-			if row.stage_name == record.stage_name:
-				check_field = 1
-		frappe.msgprint(_(row.name))
-		if chec_field == 0:
-			child_row = opp_record.append("opp_stage", {})
-			child_row.stage_name = row.name
-			child_row.opportunity_purpose = row.opportunity_purpose
-			child_row.buying_status = row.buying_status
-			child_row.closing_date = row.closing_date
-			child_row.stage = row.stage
-			child_row.value = row.value
-			child_row.competition_status = row.competition_status
-			child_row.support_needed = row.support_needed
-
-		opp_record.save()
+#	stage_records = frappe.db.sql("""select name as stage_name, opportunity_purpose, buying_status, closing_date, stage, value, competition_status, support_needed from `tabProposal Stage` where document_number=%s""", (opportunity), as_dict = 1)
+#	frappe.msgprint(_(stage_records))
+#	for row in stage_records:
+#		check_field = 0
+#		frappe.msgprint(_(row.stage_name))
+#		for record in opp_record.opp_stage:
+#			frappe.msgprint(_(record))
+#			if row.stage_name == record.stage_name:
+#				check_field = 1
+#		frappe.msgprint(_(row.name))
+#		if chec_field == 0:
+#			child_row = opp_record.append("opp_stage", {})
+#			child_row.stage_name = row.name
+#			child_row.opportunity_purpose = row.opportunity_purpose
+#			child_row.buying_status = row.buying_status
+#			child_row.closing_date = row.closing_date
+#			child_row.stage = row.stage
+#			child_row.value = row.value
+#			child_row.competition_status = row.competition_status
+#			child_row.support_needed = row.support_needed
+#
+#		opp_record.save()
 #		frappe.db.commit()	
 
 		
@@ -527,7 +527,6 @@ def get_price(item, price_list):
 	item_price_list = frappe.db.sql("""select name as price, price_list_rate as item_price from `tabItem Price` where price_list = %s and item_code = %s""", (price_list, item), as_dict = 1)
 	if item_price_list:
 #		return item_price_list[0]["item_price"]
-		frappe.msgprint(_(item_price_list[0]))
 		return item_price_list[0]["price"], item_price_list[0]["item_price"]
 		
 	else:	
