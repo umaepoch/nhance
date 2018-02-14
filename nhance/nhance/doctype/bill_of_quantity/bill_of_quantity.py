@@ -13,6 +13,7 @@ class BillofQuantity(Document):
 		self.boq_val_1()
 #		self.boq_val_2()
 		self.boq_val_3()
+		self.update_prices()
 
 	def boq_val_1(self):
 
@@ -47,4 +48,26 @@ class BillofQuantity(Document):
 				frappe.msgprint(_("Item -" + record.item_code + ", Immediate Parent Item -" + record.ipi))
 			frappe.throw(_("Can't submit BoQ. There are duplicate records present. Please remove them first"))
 
+
+	def update_prices(self):
+		frappe.msgprint(_("Inside Update prices"))
+
+		frappe.msgprint(_(self.name))
+		update_price_list = frappe.db.sql("""select item_code as item_code, manual_price as manual_price, price as price_list from `tabBill of Quantity Item` where parent = %s and manual_price > 0 and update_price = 1""", self.name, as_dict = 1)
+		frappe.msgprint(_(update_price_list))
+		if update_price_list:
+			frappe.msgprint(_("Update Price list - Yes"))
+			for record in update_price_list:
+				if record.price_list:
+					price_record = frappe.get_doc("Item Price", record.price_list)
+					frappe.msgprint(_(price_record.name))
+					if price_record:
+						price_record.rate = record.manual_price
+#						price_record.update(price_record)
+						price_record.save()
+						frappe.db.commit()
+						frappe.throw(_("Price record saved"))
+#					frappe.db.sql("""update `tabItem Price` set rate = %s where name = %s""", 
+#	
+	
 

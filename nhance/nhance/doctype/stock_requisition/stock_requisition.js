@@ -193,7 +193,8 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var itemsList = "";
 		var check_flag_for_whole_number_in_stock_transactions = false;
 		var itemsArray = new Array();
-		var dialogBoxArray = new Array();
+		var whole_number_in_stock_transactions_flag = false;
+		var itemsMap = new Map();
 		for(var items_size = 0; items_size < cur_frm.doc.items.length; items_size++){
 		//console.log("#############-cur_frm::"+cur_frm.doc.items[items_size].item_code);
 		var item_qty = cur_frm.doc.items[items_size].qty;
@@ -219,21 +220,15 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					 console.log("whole_number_in_stock_transactions::"+whole_number_in_stock_transactions);
 					 console.log("#############-cur_frm::"+cur_frm.doc.items[items_size].item_code);
 					 if(whole_number_in_stock_transactions == 1){
-					 var obj = {
-						"check_flag_for_whole_number_in_stock_transactions" : true,
-						"item_code" : item_code
-					 }
-					 var items_json = JSON.stringify(obj)
-					 dialog_box_flag = true;
-					 itemsArray.push(items_json);
-					 dialogBoxArray.push(dialog_box_flag);
+					 whole_number_in_stock_transactions_flag = true;
+					 itemsMap.set(item_code, whole_number_in_stock_transactions_flag);
 					 }
     					}
 			    });
 		}
 
 		}//for-loop end.
-		if(dialogBoxArray[0] == true && !dialog_displayed){
+		if(whole_number_in_stock_transactions_flag == true && !dialog_displayed){
 			var dialog = new frappe.ui.Dialog({
 			title: __("Select Round Type:"),
 			fields: [
@@ -266,33 +261,50 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						conversion_factor = itemsList[arrayLength].conversion_factor;
 						console.log("qty::"+qty);
 						console.log("stock_qty::"+stock_qty);
-						var i=0;
-						for(i;i<itemsArray.length;i++){
-							items_json = itemsArray[i];
-							json_obj = JSON.parse(items_json);
-							check_flag_for_whole_number_in_stock_transactions = json_obj.check_flag_for_whole_number_in_stock_transactions;
-							itemCode = json_obj.item_code;
-							console.log("item_code::"+item_code);
-							console.log("check_flag_for_whole_number_in_stock_transactions::"+check_flag_for_whole_number_in_stock_transactions);
-							//console.log("qty::"+qty);
-							if(item_code == itemCode && check_flag_for_whole_number_in_stock_transactions){
+						if (itemsMap.has(item_code)) {
+        						check_flag = itemsMap.get(item_code);
+        						if(check_flag){
 								var processedQty = processQuantity(check_args,qty);
 								console.log("processedQty is::"+processedQty);
 								r.message.items[arrayLength].qty = processedQty;
 							}
-						}
-					}
+    						}//end of itemsMap..
+					}//end of for..
+					r.message.supplier = "";
+					r.message.supplier_name = "";
 					frappe.get_doc(r.message.doctype, r.message.name).__run_link_triggers = true;
 					frappe.set_route("Form", r.message.doctype, r.message.name);
-				}
-			}
-		});
+					}
+					}//end of callback fun..
+				});//end of frappe call..
         			dialog.hide();
     				}
-				});
+				});//end of frappe ui dialog...
 				dialog.show();
 				dialog_displayed = true;
 
+		}else{
+						
+			frappe.call({
+					type: "POST",
+					method: 'frappe.model.mapper.make_mapped_doc',
+					args: {
+						method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_purchase_order",
+					source_name: cur_frm.doc.name,
+					selected_children: cur_frm.get_selected()
+						},
+					freeze: true,
+					async: false,
+					callback: function(r) {
+						if(!r.exc) {
+					frappe.model.sync(r.message);
+					r.message.supplier = "";
+					r.message.supplier_name = "";
+					frappe.get_doc(r.message.doctype, r.message.name).__run_link_triggers = true;
+					frappe.set_route("Form", r.message.doctype, r.message.name);
+					}
+				}//end of callback fun..
+			});//end of frappe call..
 		}
 
 	},
@@ -380,28 +392,31 @@ function set_schedule_date(frm) {
 	}
 }
 function processQuantity(check_args,qty) {
-	var quantity = 0;
-	if(check_args.round_up_fractions == 1){
-						check_qty = Math.floor(qty);
-						check_qty = qty - check_qty;
-						if(check_qty != 0.0){
-							quantity = Math.ceil(qty);
-							quantity = parseInt(quantity);
-						}else{
-							quantity = parseInt(qty);
-						}
-					
-					}else if(check_args.round_down_fractions == 1){
-						quantity = parseInt(qty);
-					}else if(check_args.round_fractions == 1){
-						quantity = Math.round(qty);
-					}
-					if(quantity == 0){
-						quantity = qty;
-					}
-	console.log("return quantity::"+quantity);
+var quantity = 0;
+var startTime = new Date().getTime();
+var endTime = 0;
+if (check_args.round_up_fractions == 1) {
+    check_qty = Math.floor(qty);
+    check_qty = qty - check_qty;
+    if (check_qty != 0.0) {
+        quantity = Math.ceil(qty);
+        quantity = parseInt(quantity);
+    } else {
+        quantity = parseInt(qty);
+    }
+
+} else if (check_args.round_down_fractions == 1) {
+    quantity = parseInt(qty);
+} else if (check_args.round_fractions == 1) {
+    quantity = Math.round(qty);
+}
+if (quantity == 0) {
+    quantity = qty;
+}
+endTime = new Date().getTime();
+endTime = startTime + endTime;
+console.log("endTime::" + endTime);
 return quantity;
 }
-
 
 

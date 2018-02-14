@@ -524,11 +524,42 @@ def get_free_workbenches():
 
 @frappe.whitelist()
 def get_price(item, price_list):
-	item_price_list = frappe.db.sql("""select price_list_rate as item_price from `tabItem Price` where price_list = %s and item_code = %s""", (price_list, item), as_dict = 1)
+	item_price_list = frappe.db.sql("""select name as price, price_list_rate as item_price from `tabItem Price` where price_list = %s and item_code = %s""", (price_list, item), as_dict = 1)
 	if item_price_list:
-		return item_price_list[0]["item_price"]
+#		return item_price_list[0]["item_price"]
+		frappe.msgprint(_(item_price_list[0]))
+		return item_price_list[0]["price"], item_price_list[0]["item_price"]
+		
 	else:	
 		return 0
+
+
+@frappe.whitelist()
+def update_prices(source_name):
+	frappe.msgprint(_("Inside Update prices"))
+
+	boq_record = frappe.get_doc("Bill of Quantity", source_name)
+	frappe.msgprint(_(boq_record.name))
+	update_price_list = frappe.db.sql("""select item_code as item_code, manual_price as manual_price, price as price_list from `tabBill of Quantity Item` where parent = %s and manual_price > 0 and update_price = 1""", boq_record.name, as_dict = 1)
+	frappe.msgprint(_(update_price_list))
+	if update_price_list:
+		frappe.msgprint(_("Update Price list - Yes"))
+		for record in update_price_list:
+			if record.price_list:
+				price_record = frappe.get_record("Item Price", record.price_list)
+				frappe.msgprint(_(price.record.name))
+				if price_record:
+					price_record.rate = manual_price
+					price_record.update()
+					price_record.save()
+#					frappe.db.sql("""update `tabItem Price` set rate = %s where name = %s""", 
+#		return item_price_list[0]["item_price"]
+		frappe.msgprint(_(item_price_list[0]))
+		return item_price_list[0]["price"], item_price_list[0]["item_price"]
+		
+	else:	
+		return 0
+
 
 @frappe.whitelist()
 def get_contact(customer):
