@@ -194,41 +194,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var check_flag_for_whole_number_in_stock_transactions = false;
 		var itemsArray = new Array();
 		var whole_number_in_stock_transactions_flag = false;
-		var itemsMap = new Map();
-		for(var items_size = 0; items_size < cur_frm.doc.items.length; items_size++){
-		//console.log("#############-cur_frm::"+cur_frm.doc.items[items_size].item_code);
-		var item_qty = cur_frm.doc.items[items_size].qty;
-		purchase_uom = cur_frm.doc.items[items_size].uom;
-		item_code = cur_frm.doc.items[items_size].item_code;
-		qty = cur_frm.doc.items[items_size].qty;
-		console.log("#############-purchase_uom::"+purchase_uom);
-		if(purchase_uom != null){
-		frappe.call({
-   				 method: 'frappe.client.get_value',
-   				 args: {
-        				 doctype: "UOM",
-        				 filters: {
-						uom_name: ["=", purchase_uom]
-					 },
-	
-        				 fieldname: [ "must_be_whole_number", "needs_to_be_whole_number_in_stock_transactions"]
-    					},
-				 async: false,
-    				 callback: function(r) {
-					 whole_number = r.message.must_be_whole_number;
-					 whole_number_in_stock_transactions = r.message.needs_to_be_whole_number_in_stock_transactions;
-					 console.log("whole_number_in_stock_transactions::"+whole_number_in_stock_transactions);
-					 console.log("#############-cur_frm::"+cur_frm.doc.items[items_size].item_code);
-					 if(whole_number_in_stock_transactions == 1){
-					 whole_number_in_stock_transactions_flag = true;
-					 itemsMap.set(item_code, whole_number_in_stock_transactions_flag);
-					 }
-    					}
-			    });
-		}
-
-		}//for-loop end.
-		if(whole_number_in_stock_transactions_flag == true && !dialog_displayed){
+		if(!dialog_displayed){
 			var dialog = new frappe.ui.Dialog({
 			title: __("Select Round Type:"),
 			fields: [
@@ -252,23 +218,24 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					callback: function(r) {
 						if(!r.exc) {
 					frappe.model.sync(r.message);
-					console.log("result::"+JSON.stringify(r.message))
+					//console.log("result::"+JSON.stringify(r.message))
 					itemsList = r.message.items;
 					for(var arrayLength = 0; arrayLength < itemsList.length; arrayLength++){
 						item_code = itemsList[arrayLength].item_code;
 						qty = itemsList[arrayLength].qty;
 						stock_qty = itemsList[arrayLength].stock_qty;
+						purchase_uom = itemsList[arrayLength].uom;
 						conversion_factor = itemsList[arrayLength].conversion_factor;
-						console.log("qty::"+qty);
-						console.log("stock_qty::"+stock_qty);
-						if (itemsMap.has(item_code)) {
-        						check_flag = itemsMap.get(item_code);
-        						if(check_flag){
-								var processedQty = processQuantity(check_args,qty);
-								console.log("processedQty is::"+processedQty);
-								r.message.items[arrayLength].qty = processedQty;
-							}
-    						}//end of itemsMap..
+						//console.log("qty::"+qty);
+						//console.log("stock_qty::"+stock_qty);
+						check_flag = get_UOM_Details(purchase_uom);
+        					//check_flag = itemsMap.get(item_code);
+        					if(check_flag){
+							console.log("check_flag::"+check_flag);
+							var processedQty = processQuantity(check_args,qty);
+							//console.log("processedQty is::"+processedQty);
+							r.message.items[arrayLength].qty = processedQty;
+						}
 					}//end of for..
 					r.message.supplier = "";
 					r.message.supplier_name = "";
@@ -283,30 +250,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 				dialog.show();
 				dialog_displayed = true;
 
-		}else{
-						
-			frappe.call({
-					type: "POST",
-					method: 'frappe.model.mapper.make_mapped_doc',
-					args: {
-						method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_purchase_order",
-					source_name: cur_frm.doc.name,
-					selected_children: cur_frm.get_selected()
-						},
-					freeze: true,
-					async: false,
-					callback: function(r) {
-						if(!r.exc) {
-					frappe.model.sync(r.message);
-					r.message.supplier = "";
-					r.message.supplier_name = "";
-					frappe.get_doc(r.message.doctype, r.message.name).__run_link_triggers = true;
-					frappe.set_route("Form", r.message.doctype, r.message.name);
-					}
-				}//end of callback fun..
-			});//end of frappe call..
 		}
-
 	},
 
 	make_request_for_quotation: function(){
@@ -415,8 +359,32 @@ if (quantity == 0) {
 }
 endTime = new Date().getTime();
 endTime = startTime + endTime;
-console.log("endTime::" + endTime);
+//console.log("endTime::" + endTime);
 return quantity;
 }
 
+function get_UOM_Details(purchase_uom) {
+    var whole_number_in_stock_transactions_flag = false;
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            doctype: "UOM",
+            filters: {
+                uom_name: ["=", purchase_uom]
+            },
+
+            fieldname: ["must_be_whole_number", "needs_to_be_whole_number_in_stock_transactions"]
+        },
+        async: false,
+        callback: function(r) {
+            whole_number_in_stock_transactions = r.message.needs_to_be_whole_number_in_stock_transactions;
+            //console.log("whole_number_in_stock_transactions::" + whole_number_in_stock_transactions);
+            if (whole_number_in_stock_transactions == 1) {
+                whole_number_in_stock_transactions_flag = true;
+                //itemsMap.set(item_code, whole_number_in_stock_transactions_flag);
+            }
+        }
+    });
+return whole_number_in_stock_transactions_flag;
+}
 
