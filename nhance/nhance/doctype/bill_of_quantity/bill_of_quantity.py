@@ -12,7 +12,7 @@ class BillofQuantity(Document):
 	
 	def on_submit(self):
 		self.boq_val_1()
-#		self.boq_val_2()
+		self.boq_val_2()
 		self.boq_val_3()
 		self.update_prices()
 
@@ -26,16 +26,21 @@ class BillofQuantity(Document):
 		else:
 			frappe.throw(_("There should at least be 1 line item for the main item - " + self.item))
 
-#	def boq_val_2(self):
-#		boq_rm_flag = 0 
-#		boq_wo_rm = frappe.db.sql("""select boqi.item_code from `tabBill of Quantity Item` boqi, `tabBill of Quantity` boq, `tabItem` it where boqi.parent = %s and boqi.parent = boq.name and it.item_group != "Raw Material" and boqi.item_code = it.name""", self.name, as_dict = 1)
-#		if boq_wo_rm:
-#			for boq_items in boq_wo_rm:
-#				boq_sel_items = frappe.db.sql("""select boqi.item_code from `tabBill of Quantity Item` boqi, `tabBill of Quantity` boq where boqi.parent = %s and boqi.parent = boq.name and boqi.immediate_parent_item = %s""", (self.name, boq_items.item_code), as_dict = 1)
-#				if boq_sel_items:
-#					pass
-#				else:
-#					frappe.throw(_("Item is defined as Sub Assembly but does not have any raw materials defined - " + boq_items.item_code))
+	def boq_val_2(self):
+		
+		boq_sub = frappe.db.sql("""select boqvi.item_group as item_group from `tabBOQ Validation Item` boqvi, `tabBOQ Validation` boqv where boqvi.parent = boqv.name and boqv.type_of_validation = "Sub Assemblies" and boqv.validation_on = "ItemGroup" and boqv.docstatus != "2" order by boqvi.item_group""", as_dict = 1)
+		if boq_sub:
+			for boq_sub_items in boq_sub:
+				boq_wo_rm = frappe.db.sql("""select boqi.item_code from `tabBill of Quantity Item` boqi, `tabBill of Quantity` boq, `tabItem` it where boqi.parent = %s and boqi.parent = boq.name and it.item_group = %s and boqi.item_code = it.name""", (self.name, boq_sub_items.item_group), as_dict = 1)
+
+				if boq_wo_rm:
+					for boq_items in boq_wo_rm:
+						boq_sel_items = frappe.db.sql("""select boqi.item_code from `tabBill of Quantity Item` boqi, `tabBill of Quantity` boq where boqi.parent = %s and boqi.parent = boq.name and boqi.immediate_parent_item = %s""", (self.name, boq_items.item_code), as_dict = 1)
+						if boq_sel_items:
+							pass
+						else:
+							frappe.msgprint(_("Item is defined as Sub Assembly but does not have any raw materials defined.")) 
+							frappe.throw(_("Item - " + boq_items.item_code + ", Item Group - " + boq_sub_items.item_group))
 
 		
 
