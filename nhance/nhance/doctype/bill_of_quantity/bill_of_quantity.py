@@ -15,6 +15,9 @@ class BillofQuantity(Document):
 		self.boq_val_2()
 		self.boq_val_3()
 		self.update_prices()
+	
+	def before_save(self):
+		self.validate_uom_is_interger()
 
 	def boq_val_1(self):
 
@@ -80,7 +83,9 @@ class BillofQuantity(Document):
 					docname = doc.name
 					frappe.msgprint(_("Price Record created for - " + record.item_code + " - " + docname))
 
-
-
 	
+	def validate_uom_is_interger(self):
+		from erpnext.utilities.transaction_base import validate_uom_is_integer
+		validate_uom_is_integer(self, "stock_uom", "qty", "Bill of Quantity Item")
+
 
