@@ -14,7 +14,14 @@ from erpnext.stock.stock_balance import update_bin_qty, get_indented_qty
 from erpnext.controllers.buying_controller import BuyingController
 from erpnext.manufacturing.doctype.production_order.production_order import get_item_details
 from erpnext.buying.utils import check_for_closed_status, validate_for_items
-
+import datetime
+from collections import defaultdict
+import operator
+import frappe
+import json
+import time
+import math
+import ast
 form_grid_templates = {
 	"items": "templates/form_grid/material_request_grid.html"
 }
@@ -154,8 +161,8 @@ class StockRequisition(BuyingController):
 			if d.name in mr_items:
 				if self.material_request_type in ("Material Issue", "Material Transfer"):
 					d.ordered_qty =  flt(frappe.db.sql("""select sum(transfer_qty)
-						from `tabStock Entry Detail` where stock_requistion = %s
-						and stock_requistion_item = %s and docstatus = 1""",
+						from `tabStock Entry Detail` where material_request = %s
+						and material_request_item = %s and docstatus = 1""",
 						(self.name, d.name))[0][0])
 
 					if d.ordered_qty and d.ordered_qty > d.stock_qty:
@@ -164,8 +171,8 @@ class StockRequisition(BuyingController):
 
 				elif self.material_request_type == "Manufacture":
 					d.ordered_qty = flt(frappe.db.sql("""select sum(qty)
-						from `tabProduction Order` where stock_requistion = %s
-						and stock_requistion_item = %s and docstatus = 1""",
+						from `tabProduction Order` where material_request = %s
+						and material_request_item = %s and docstatus = 1""",
 						(self.name, d.name))[0][0])
 
 				frappe.db.set_value(d.doctype, d.name, "ordered_qty", d.ordered_qty)
@@ -199,7 +206,7 @@ def update_completed_and_requested_qty(stock_entry, method):
 
 		for d in stock_entry.get("items"):
 			if d.material_request:
-				material_request_map.setdefault(d.material_request, []).append(d.stock_requistion_item)
+				material_request_map.setdefault(d.material_request, []).append(d.material_request_item)
 
 		for mr, mr_item_rows in material_request_map.items():
 			if mr and mr_item_rows:
@@ -220,6 +227,11 @@ def update_item(obj, target, source_parent):
 	target.conversion_factor = obj.conversion_factor
 	target.qty = flt(flt(obj.stock_qty) - flt(obj.ordered_qty))/ target.conversion_factor
 	target.stock_qty = (target.qty * target.conversion_factor)
+
+@frappe.whitelist()
+def get_Uom_Data(purchase_uom):
+	uom_details = frappe.db.sql("""select must_be_whole_number, needs_to_be_whole_number_in_stock_transactions  from `tabUOM` where uom_name = %s """, (purchase_uom), as_dict=1)
+	return uom_details
 
 @frappe.whitelist()
 def make_purchase_order(source_name, target_doc=None):
@@ -247,6 +259,90 @@ def make_purchase_order(source_name, target_doc=None):
 	}, target_doc, postprocess)
 
 	return doclist
+
+def get_Purchase_Taxes_and_Charges(account_head, tax_name):
+	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", (account_head, tax_name), as_dict=1)
+	return tax_List
+
+
+@frappe.whitelist()
+def making_PurchaseOrder_For_SupplierItems(args, company, tax_template):
+	print "##-tax_template::", tax_template
+	order_List = json.loads(args)
+	items_List = json.dumps(order_List)
+	items_List = ast.literal_eval(items_List)
+	creation_Date = datetime.datetime.now()
+	outerJson_Transfer = {
+				"doctype": "Purchase Order",
+				"title": "Purchase Order",
+				"creation": creation_Date,
+				"owner": "Administrator",
+				"taxes_and_charges": tax_template,
+				"company": company,
+				"due_date": creation_Date,
+				"docstatus": 0,
+				"supplier":"",
+				"items": [
+				],
+				"taxes": [			 
+        			],
+			     }
+	i = 0
+	if tax_template is not None and tax_template is not "":
+		tax_Name = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
+		for taxes in tax_Name.taxes:
+			account_Name = taxes.account_head
+			if account_Name:
+				tax_Rate_List = get_Purchase_Taxes_and_Charges(account_Name, tax_Name.name)
+				print "####-account_Name::", account_Name
+				print "####-tax_Name::", tax_Name.name
+				if tax_Rate_List is not None and len(tax_Rate_List) != 0:
+					charge_type = tax_Rate_List[0]['charge_type']
+					rate = tax_Rate_List[0]['rate']
+					description = tax_Rate_List[0]['description']
+					taxes_Json_Transfer = {"owner": "Administrator",
+        						       "charge_type": charge_type,
+        				                       "account_head": account_Name,
+        						       "rate": rate,
+        						       "parenttype": "Purchase Order",
+        						       "description": description,
+        						       "parentfield": "taxes"
+								}
+					outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
+	i = 0
+	for items in items_List:
+		"""
+		stock_uom = items_List[i]['stock_uom']
+		uom = items_List[i]['purchase_uom']
+		stock_uom = stock_uom.replace(" ", "")
+		uom = uom.replace(" ", "")
+		print "stock_uom::", stock_uom
+		print "uom::", uom
+		"""
+		outerJson_Transfer['supplier'] = items_List[i]['supplier']
+		innerJson_Transfer =	{
+					"creation": creation_Date,
+					"qty": items_List[i]['qty'],
+					"item_code": items_List[i]['item_code'],
+					"stock_uom": items_List[i]['stock_uom'],
+					"uom": items_List[i]['purchase_uom'],
+					"price_list_rate": items_List[i]['price'],
+					"stock_qty": items_List[i]['stock_qty'],
+					"doctype": "Purchase Order Item",
+					"parenttype": "Purchase Order",
+					"schedule_date": creation_Date,
+					"parentfield": "items",
+					"warehouse": items_List[i]['warehouse']
+				   	}
+		outerJson_Transfer["items"].append(innerJson_Transfer)
+		i = i + 1
+	print "########-Final Purchase Order Json::", outerJson_Transfer
+	doc = frappe.new_doc("Purchase Order")
+	doc.update(outerJson_Transfer)
+	doc.save()
+	ret = doc.doctype
+	if ret:
+		frappe.msgprint("Purchase Orders is Created:"+doc.name)
 
 @frappe.whitelist()
 def make_request_for_quotation(source_name, target_doc=None):
@@ -342,8 +438,8 @@ def make_supplier_quotation(source_name, target_doc=None):
 		"Stock Requisition Item": {
 			"doctype": "Supplier Quotation Item",
 			"field_map": {
-				"name": "stock_requisition_item",
-				"parent": "stock_requisition"
+				"name": "material_request_item",
+				"parent": "material_request"
 			}
 		}
 	}, target_doc, postprocess)
@@ -409,8 +505,8 @@ def raise_production_orders(stock_requisition):
 				prod_order.expected_delivery_date = d.schedule_date
 				prod_order.sales_order = d.sales_order
 				prod_order.bom_no = get_item_details(d.item_code).bom_no
-				prod_order.stock_requistion = mr.name
-				prod_order.stock_requistion_item = d.name
+				prod_order.material_request = mr.name
+				prod_order.material_request_item = d.name
 				prod_order.planned_start_date = mr.transaction_date
 				prod_order.company = mr.company
 				prod_order.save()

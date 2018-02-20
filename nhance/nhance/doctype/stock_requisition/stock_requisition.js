@@ -191,6 +191,9 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var dialog_box_flag = false;
 		var dialog_displayed = false;
 		var itemsList = "";
+		var company = "";
+		var supplierList = [];
+		var defaultSupplierItemsMap = new Map();
 		var check_flag_for_whole_number_in_stock_transactions = false;
 		var itemsArray = new Array();
 		var whole_number_in_stock_transactions_flag = false;
@@ -220,30 +223,86 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					frappe.model.sync(r.message);
 					//console.log("result::"+JSON.stringify(r.message))
 					itemsList = r.message.items;
+					//r.message.items = [{}];
+					var index = 0;
+					var no_Supplier_Items = new Array();
+					company = r.message.company;
 					for(var arrayLength = 0; arrayLength < itemsList.length; arrayLength++){
+						var arr = {};
+    						var arrList = [];
 						item_code = itemsList[arrayLength].item_code;
 						qty = itemsList[arrayLength].qty;
-						stock_qty = itemsList[arrayLength].stock_qty;
 						purchase_uom = itemsList[arrayLength].uom;
 						conversion_factor = itemsList[arrayLength].conversion_factor;
-						//console.log("qty::"+qty);
+						console.log("qty::"+qty);
 						//console.log("stock_qty::"+stock_qty);
 						check_flag = get_UOM_Details(purchase_uom);
-        					//check_flag = itemsMap.get(item_code);
         					if(check_flag){
 							console.log("check_flag::"+check_flag);
 							var processedQty = processQuantity(check_args,qty);
 							//console.log("processedQty is::"+processedQty);
-							r.message.items[arrayLength].qty = processedQty;
-						}
+							qty = processedQty;
+							itemsList[arrayLength].qty = qty;
+						}//end of check_flag..
+
+						stock_qty = itemsList[arrayLength].stock_qty;
+						console.log("stock_qty is::"+stock_qty);
+   						stock_uom = itemsList[arrayLength].stock_uom;
+    						warehouse = itemsList[arrayLength].warehouse;
+
+						itemsData = getItemDetails(item_code);
+    						json_obj = JSON.parse(itemsData);
+    						supplier = json_obj.supplier;
+   						standard_rate = json_obj.standard_rate;
+
+						arr['item_code'] = item_code;
+   						arr['supplier'] = supplier;
+    						arr['qty'] = qty;
+    						arr['stock_qty'] = stock_qty;
+    						arr['stock_uom'] = stock_uom;
+    						arr['purchase_uom'] = purchase_uom;
+    						arr['price'] = standard_rate;
+    						arr['warehouse'] = warehouse;
+    						arr['conversion_factor'] = conversion_factor;
+
+						if(supplier == null){
+							itemsList[arrayLength].rate = standard_rate;
+							no_Supplier_Items.push(itemsList[arrayLength]);
+						}else{
+							if(!supplierList.includes(supplier)){
+    								supplierList.push(supplier);
+   							 }
+							if (defaultSupplierItemsMap.has(supplier)) {
+        							arrList = defaultSupplierItemsMap.get(supplier);
+        							arrList.push(arr);
+       								defaultSupplierItemsMap.set(supplier, arrList);
+   							 } else {
+       								arrList.push(arr);
+        							defaultSupplierItemsMap.set(supplier, arrList);
+    							 }
+						}//end of else...
 					}//end of for..
+					console.log("no_Supplier_Items::"+no_Supplier_Items);
+					r.message.items = no_Supplier_Items;
+					msg = r.message;
+					making_PurchaseOrder_For_SupplierItems(supplierList,defaultSupplierItemsMap,company,no_Supplier_Items,msg);
+					/**
+					** Making PurchaseOrder For No_Supplier_Items..
+					***/
+					/**if(no_Supplier_Items.length!=0){
+					r.message.items = no_Supplier_Items;
 					r.message.supplier = "";
 					r.message.supplier_name = "";
 					frappe.get_doc(r.message.doctype, r.message.name).__run_link_triggers = true;
 					frappe.set_route("Form", r.message.doctype, r.message.name);
+					}// end of Making PurchaseOrder For No_Supplier_Items..**/
+					//making_PurchaseOrder_For_SupplierItems(supplierList,defaultSupplierItemsMap,company);
 					}
 					}//end of callback fun..
 				});//end of frappe call..
+				/**
+				** Making PurchaseOrder For Supplier_Items..
+				***/
         			dialog.hide();
     				}
 				});//end of frappe ui dialog...
@@ -337,8 +396,6 @@ function set_schedule_date(frm) {
 }
 function processQuantity(check_args,qty) {
 var quantity = 0;
-var startTime = new Date().getTime();
-var endTime = 0;
 if (check_args.round_up_fractions == 1) {
     check_qty = Math.floor(qty);
     check_qty = qty - check_qty;
@@ -357,10 +414,35 @@ if (check_args.round_up_fractions == 1) {
 if (quantity == 0) {
     quantity = qty;
 }
-endTime = new Date().getTime();
-endTime = startTime + endTime;
-//console.log("endTime::" + endTime);
+
 return quantity;
+}
+
+function getItemDetails(item_code){
+var items_json = "";
+frappe.call({
+    method: 'frappe.client.get_value',
+    args: {
+        doctype: "Item",
+        filters: {
+            item_code: ["=", item_code]
+        },
+
+        fieldname: ["default_supplier", "standard_rate"]
+    },
+    async: false,
+    callback: function(r) {
+        console.log("default_supplier..." + r.message.default_supplier);
+        console.log("standard_rate..." + r.message.standard_rate);
+        var obj = {
+            "supplier": r.message.default_supplier,
+            "standard_rate": r.message.standard_rate
+        }
+        items_json = JSON.stringify(obj)
+
+    }
+});
+return items_json;
 }
 
 function get_UOM_Details(purchase_uom) {
@@ -378,13 +460,133 @@ function get_UOM_Details(purchase_uom) {
         async: false,
         callback: function(r) {
             whole_number_in_stock_transactions = r.message.needs_to_be_whole_number_in_stock_transactions;
-            //console.log("whole_number_in_stock_transactions::" + whole_number_in_stock_transactions);
             if (whole_number_in_stock_transactions == 1) {
                 whole_number_in_stock_transactions_flag = true;
-                //itemsMap.set(item_code, whole_number_in_stock_transactions_flag);
             }
         }
     });
 return whole_number_in_stock_transactions_flag;
 }
+
+function making_PurchaseOrder_For_SupplierItems(supplierList,myMap,company,items,message){
+/**
+** Preparing JsonArray Data To Display Dialog box with Suppliers and Tax Template..
+**/
+console.log("#####-supplierList::"+supplierList);
+var dialog_fields = new Array();
+var dialog_array = [];
+var supplier = "";
+var column_break_json ={
+"fieldtype":"Column Break",
+"fieldname":"column_break"	
+}
+column_break_data = JSON.stringify(column_break_json);
+for(var i=0;i<supplierList.length;i++){
+	supplier = supplierList[i];
+	var supplier_json ={
+		"fieldtype":"Data",
+		"fieldname":"supplier"+ "_" + i,	
+		"default": supplier,	
+		"bold":1,	
+		"read_only":1				
+		}
+	var tax_template_json ={
+		"fieldtype":"Link",
+		"fieldname":"tax_template" + "_" + i,	
+		"options": "Purchase Taxes and Charges Template",
+		"reqd":1
+		}
+	tax_template_data = JSON.stringify(tax_template_json);
+	supplier_data = JSON.stringify(supplier_json);
+	dialog_fields.push(supplier_data);
+	//dialog_fields.push(column_break_data);
+	dialog_fields.push(tax_template_data);
+}//end of for loop..
+
+var dialogArray = [];
+for(var i=0;i<dialog_fields.length;i++){
+dialogArray.push(JSON.parse(dialog_fields[i]));
+}
+/**
+** End of Preparing JsonArray Data..
+**/
+message.items = items;
+message.supplier = "";
+message.supplier_name = "";
+if(supplierList.length!=0){
+var dialog = new frappe.ui.Dialog({
+title: __("Select Tax Template For Suppilers"),
+fields: dialogArray,
+	primary_action: function(){
+	dialog.hide();
+	check_args = dialog.get_values();
+	args_length = Object.keys(check_args).length;
+	var supplier_and_tax_array = [];
+	/**
+	** Fetching values from check_args...
+	*/
+	for(var i=0;i<args_length/2;i++){
+	supplier = "supplier_"+i;
+	tax_template = "tax_template_"+i;
+	supplier_val = check_args[supplier];
+	tax_template_val = check_args[tax_template];
+	/**console.log("supplier_val::" + supplier_val);
+	console.log("tax_template_val::" + tax_template_val);**/
+	var supplier_and_tax_json={
+		"supplier": supplier_val,
+		"tax_template": tax_template_val
+	}
+	supplier_and_tax_data = JSON.stringify(supplier_and_tax_json);
+	supplier_and_tax_array.push(supplier_and_tax_data);
+	}//end of for loop..
+	//end of Fetching values from check_args...
+
+	/**
+	** Making Purchase Order For Default Supplier Items..
+	**/
+	var tax_template = "";
+	for (const entry of myMap.entries()) {
+    		map_supplier = entry[0]
+    		list = myMap.get(map_supplier);
+		for(var i = 0;i<supplier_and_tax_array.length;i++){
+			details = JSON.parse(supplier_and_tax_array[i]);
+			supplier = details.supplier;
+			tax_template_for_supplier = details.tax_template;
+			if(map_supplier == supplier){
+				tax_template = tax_template_for_supplier;
+			}
+		}//end of inner for-loop..
+    		console.log("###list", list.length);
+    		console.log("###list", list);
+    		frappe.call({
+       			 method: "nhance.nhance.doctype.stock_requisition.stock_requisition.making_PurchaseOrder_For_SupplierItems",
+        		 args: {
+          			  "args": list,
+           			  "company": company,
+				  "tax_template": tax_template,
+       				},
+        		callback: function(r) {
+        		}
+   		 }); //end of frappe call.
+	}//end of outer for-loop..
+
+	frappe.get_doc(message.doctype, message.name).__run_link_triggers = true;
+	frappe.set_route("Form", message.doctype, message.name);
+	}
+	});//end of dialog box...
+	dialog.show();
+}else{
+	frappe.get_doc(message.doctype, message.name).__run_link_triggers = true;
+	frappe.set_route("Form", message.doctype, message.name);
+}
+}//end of function..
+
+
+function sleep(seconds){
+	var waitUntil = new Date().getTime() + seconds * 10000;
+	while(new Date().getTime() < waitUntil) true;
+}
+
+
+
 
