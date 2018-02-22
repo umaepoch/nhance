@@ -470,7 +470,6 @@ return whole_number_in_stock_transactions_flag;
 }
 
 function making_PurchaseOrder_For_SupplierItems(supplierList,myMap,company,items,message){
-alert("making_PurchaseOrder_For_SupplierItems");
 /**
 ** Preparing JsonArray Data To Display Dialog box with Suppliers and Tax Template..
 **/
