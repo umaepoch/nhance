@@ -266,7 +266,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['conversion_factor'] = conversion_factor;
 
 						if(supplier == null){
-							itemsList[arrayLength].rate = standard_rate;
+							//itemsList[arrayLength].rate = standard_rate;
 							no_Supplier_Items.push(itemsList[arrayLength]);
 						}else{
 							if(!supplierList.includes(supplier)){
@@ -570,23 +570,17 @@ fields: dialogArray,
    		 }); //end of frappe call.
 	}//end of outer for-loop..
 
+	if(items.length!=0){
 	frappe.get_doc(message.doctype, message.name).__run_link_triggers = true;
 	frappe.set_route("Form", message.doctype, message.name);
+	}
 	}
 	});//end of dialog box...
 	dialog.show();
 }else{
+	if(items.length!=0){
 	frappe.get_doc(message.doctype, message.name).__run_link_triggers = true;
 	frappe.set_route("Form", message.doctype, message.name);
+	}
 }
 }//end of function..
-
-
-function sleep(seconds){
-	var waitUntil = new Date().getTime() + seconds * 10000;
-	while(new Date().getTime() < waitUntil) true;
-}
-
-
-
-
