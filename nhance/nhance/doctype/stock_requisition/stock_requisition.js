@@ -197,6 +197,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var check_flag_for_whole_number_in_stock_transactions = false;
 		var itemsArray = new Array();
 		var whole_number_in_stock_transactions_flag = false;
+		var check_args = "";
 		if(!dialog_displayed){
 			var dialog = new frappe.ui.Dialog({
 			title: __("Select Round Type:"),
@@ -261,7 +262,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['stock_qty'] = stock_qty;
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
-    						arr['price'] = standard_rate;
+    						//arr['price'] = standard_rate;
     						arr['warehouse'] = warehouse;
     						arr['conversion_factor'] = conversion_factor;
 
@@ -469,6 +470,7 @@ return whole_number_in_stock_transactions_flag;
 }
 
 function making_PurchaseOrder_For_SupplierItems(supplierList,myMap,company,items,message){
+alert("making_PurchaseOrder_For_SupplierItems");
 /**
 ** Preparing JsonArray Data To Display Dialog box with Suppliers and Tax Template..
 **/
@@ -514,6 +516,7 @@ message.items = items;
 message.supplier = "";
 message.supplier_name = "";
 if(supplierList.length!=0){
+var check_args = "";
 var dialog = new frappe.ui.Dialog({
 title: __("Select Tax Template For Suppilers"),
 fields: dialogArray,
