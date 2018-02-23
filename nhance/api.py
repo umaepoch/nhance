@@ -671,23 +671,21 @@ def get_item_price_details(item_code):
 	#print "###-supplier_details::", supplier_details
 	max_last_180Days_Details = frappe.db.sql("""select parent,rate as max_price_rate from (select parent,rate from `tabPurchase Order Item`  as tpoi where item_code = %s and DATE(creation) > (NOW() - INTERVAL 180 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled')) order by rate desc limit 1) t1""", (item_code), as_dict=1)
 	#print "#######-max_last_180Days_Details::", max_last_180Days_Details
-	max_last_180Days_po_Number = max_last_180Days_Details[0]['parent']
-	max_last_180Days_supplier = frappe.db.sql("""select supplier from `tabPurchase Order` where name = %s""", max_last_180Days_po_Number, as_dict=1)
-
+	if len(max_last_180Days_Details)!=0:
+		max_last_180Days_po_Number = max_last_180Days_Details[0]['parent']
+		max_last_180Days_supplier = frappe.db.sql("""select supplier from `tabPurchase Order` where name = %s""", max_last_180Days_po_Number, as_dict=1)
+		max_last_180Days_Details.extend(max_last_180Days_supplier)
 
 	min_last_180Days_Details = frappe.db.sql("""select parent,rate as min_price_rate from (select parent,rate from `tabPurchase Order Item`  as tpoi where item_code = %s and DATE(creation) > (NOW() - INTERVAL 180 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled')) order by rate asc limit 1) t1""", (item_code), as_dict=1)
-
-	#print "#######-min_last_180Days_Details::", min_last_180Days_Details
-	min_last_180Days_po_Number = min_last_180Days_Details[0]['parent']
-	min_last_180Days_supplier = frappe.db.sql("""select supplier from `tabPurchase Order` where name = %s""", min_last_180Days_po_Number, as_dict=1)
+	if len(min_last_180Days_Details)!=0:
+		#print "#######-min_last_180Days_Details::", min_last_180Days_Details
+		min_last_180Days_po_Number = min_last_180Days_Details[0]['parent']
+		min_last_180Days_supplier = frappe.db.sql("""select supplier from `tabPurchase Order` where name = %s""", min_last_180Days_po_Number, as_dict=1)
+		min_last_180Days_Details.extend(min_last_180Days_supplier)
 
 	last_180Days_Avg_Price = frappe.db.sql("""select avg(rate) as avg_price from `tabPurchase Order Item` as tpoi where item_code = %s and DATE(creation) > (NOW() - INTERVAL 180 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled'))""", (item_code), as_dict=1)
 
-
 	#last_3Days_Details.extend(last_3Days_supplier)
-	max_last_180Days_Details.extend(max_last_180Days_supplier)
-	min_last_180Days_Details.extend(min_last_180Days_supplier)
-
 	item_details.append(last_3Days_Details)
 	item_details.append(max_last_180Days_Details)
 	item_details.append(min_last_180Days_Details)
