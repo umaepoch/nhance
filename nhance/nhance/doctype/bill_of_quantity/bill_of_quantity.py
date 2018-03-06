@@ -14,9 +14,11 @@ class BillofQuantity(Document):
 		self.boq_val_1()
 		self.boq_val_2()
 		self.boq_val_3()
+		self.boq_val_4()
 		self.update_prices()
 	
 	def before_save(self):
+
 		self.validate_uom_is_interger()
 
 	def boq_val_1(self):
@@ -56,6 +58,13 @@ class BillofQuantity(Document):
 			for record in boq_dup_rec:
 				frappe.msgprint(_("Item -" + record.item_code + ", Immediate Parent Item -" + record.ipi))
 			frappe.throw(_("Can't submit BoQ. There are duplicate records present. Please remove them first"))
+	
+	def boq_val_4(self):
+		boq_zero_rec = frappe.db.sql("""select boqi.item_code as item_code, boqi.qty as qty from `tabBill of Quantity Item` boqi where boqi.parent = %s and (boqi.qty <=0 or boqi.qty is NULL)""", self.name, as_dict = 1)
+		if boq_zero_rec:
+			for record in boq_zero_rec:
+				frappe.msgprint(_(record.item_code + ",   Qty:  " + str(record.qty)))
+			frappe.throw(_("Can't Submit. These Items have qty less than or equal to 0. Please modify them and then save."))
 
 
 	def update_prices(self):

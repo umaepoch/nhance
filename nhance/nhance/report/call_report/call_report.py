@@ -81,6 +81,10 @@ def get_conditions(filters):
         if filters.get("user"):
 		conditions += " and inter.user = '%s'" % filters.get("user")
 
+        if filters.get("customer"):
+		conditions += " and inter.customer = '%s'" % filters.get("customer")
+
+
         return conditions
 
 def get_int_details_so(filters):
