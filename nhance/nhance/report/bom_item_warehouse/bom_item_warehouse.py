@@ -509,7 +509,6 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 						rows[10] = 0
 				whse_map.clear()
 			item_code = rows[8]
-			uom = getUOM(item_code)
 			if rows[10]:
 				if rows[3] == "<br>" or rows[3] == "<div><br></div>" or str(rows[3]) == "":
 					empty_desc.append(rows[7])
@@ -525,7 +524,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 						"qty": req_qty,
 						"schedule_date": required_date,
 						"warehouse":planning_warehouse,
-						"uom": uom,
+						"uom": rows[6],
 						"stock_uom": rows[6],
 						"conversion_factor":rows[17],
 						"description": rows[3]
@@ -541,7 +540,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 						"qty": balance_qty,
 						"schedule_date": required_date,
 						"warehouse":planning_warehouse,
-						"uom":uom,
+						"uom":rows[6],
 						"stock_uom": rows[6],
 						"conversion_factor":rows[17],
 						"description": rows[3]
@@ -575,7 +574,6 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 			delta_qty = str(rows[12]).strip()
 		else:
 			delta_qty = str(rows[10]).strip()
-		
 		if (delta_qty and float(delta_qty) != 0.0):
 			if rows[3] == "<br>" or rows[3] == "<div><br></div>" or str(rows[3]) == "":
 				empty_desc.append(rows[8])
@@ -589,7 +587,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 				"qty": delta_qty,
 				"schedule_date": required_date,
 				"warehouse":planning_warehouse,
-				"uom":rows[7],
+				"uom":rows[6],
 				"conversion_factor":rows[17],
 				"description": rows[3]
 		   		}
@@ -615,9 +613,3 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 		ret = doc.doctype
 	if ret:
 		return ret
-
-def getUOM(item_code):
-	records = frappe.db.sql("""select uom from `tabUOM Conversion Detail` where parent=%s""", (item_code), as_dict=1)
-	if len(records)!=0:
-		uom = records[0]['uom']
-	return uom
