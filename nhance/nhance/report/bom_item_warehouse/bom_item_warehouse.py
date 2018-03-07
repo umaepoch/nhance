@@ -69,7 +69,7 @@ def execute(filters=None):
 			item_map[bi_item]["purchase_uom"] = purchase_UOM
 			conv_factor = 1
 		else:
-			convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (bi_item, item_map[bi_item]["purchase_uom"]))
+			convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (bi_item, item_map[bi_item]["stock_uom"]))
 			if convert_factor:
 				conv_factor = convert_factor[0][0]
 			else:
@@ -281,7 +281,6 @@ def get_item_warehouse_map(filters):
 
 		if total_stock > 0:
 			if whs_flag == 1:
-
 				for w in whse:
 					whse_stock = get_stock(d.bi_item, w)
 					if whse_stock > 0:
@@ -297,20 +296,15 @@ def get_item_warehouse_map(filters):
 											"bi_qty": 0.0, "qty_to_make": 0.0,
 											"val_rate": 0.0, "uom": None
 									})
-
 							qty_dict = iwb_map[(d.bom_name, d.bo_item, d.bi_item, w)]
-
 							qty_dict.bal_qty = whse_stock
-
 							qty_dict.bi_qty = d.bi_qty
 							qty_dict.bom_qty = d.bo_qty
 							qty_dict.qty_to_make = qty_to_make
 							#qty_dict.delta_qty=(qty_dict.bal_qty-(d.bi_qty * flt(qty_to_make)))
 							qty_dict.project = d.project
-
 			else:
 				key = (d.bom_name, d.bo_item, d.bi_item, whse)
-
 				if key not in iwb_map:
 					item_flag[d.bi_item] = True
 					iwb_map[key] = frappe._dict({
@@ -328,8 +322,6 @@ def get_item_warehouse_map(filters):
 					qty_dict.qty_to_make = qty_to_make
 					#qty_dict.delta_qty=(qty_dict.bal_qty-(d.bi_qty * flt(qty_to_make)))
 					qty_dict.project = d.project
-
-
 		else:
 			key = (d.bom_name, d.bo_item, d.bi_item, " ")
 			if key not in iwb_map:
@@ -363,9 +355,7 @@ def get_item_warehouse_map(filters):
 								   "val_rate": 0.0, "uom": None
 						   })
 				qty_dict = iwb_map[(d.bom_name, d.bo_item, d.bi_item, " ")]
-
 				qty_dict.bal_qty = 0
-
 				qty_dict.bi_qty = d.bi_qty
 				qty_dict.bom_qty = d.bo_qty
 				qty_dict.qty_to_make = qty_to_make
@@ -377,11 +367,8 @@ def get_item_warehouse_map(filters):
 def get_warehouses(company):
 		whse = frappe.db.sql("""select name from `tabWarehouse` where company = %s""", company)
 		whse_list = [row[0] for row in whse]
-
-
 		whs_flag = 1
 		return whse_list, whs_flag
-
 
 def get_whs_branch(temp_whs, filters):
 	whse = frappe.db.sql("""select name from `tabWarehouse` where parent_warehouse = %s""", temp_whs)
@@ -487,7 +474,6 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	"material_request_type": "Material Transfer",
 	"quantity_to_make": qty_to_make,
 	"requested_by" : reference_no,
-
 	"items": [
 ]
 }
@@ -499,8 +485,6 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	"material_request_type": "Purchase",
 	"quantity_to_make": qty_to_make,
 	"requested_by" : reference_no,
-
-
 	"items": [
 ]
 }
@@ -512,8 +496,6 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	whse_map = {}
 	empty_desc = []
 	empty_uom = []
-	round_off_purchase = "up"
-	round_off_transfer = "down"
 	for rows in summ_data:
 		required = str(rows[10]).strip()
 		if required and rows[11] and planning_warehouse != (rows[16]) :
@@ -526,8 +508,8 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 					else:
 						rows[10] = 0
 				whse_map.clear()
-			purchase_uom = rows[7]
-			uom_details = get_Uom_Data(purchase_uom)
+			item_code = rows[8]
+			uom = getUOM(item_code)
 			if rows[10]:
 				if rows[3] == "<br>" or rows[3] == "<div><br></div>" or str(rows[3]) == "":
 					empty_desc.append(rows[7])
@@ -535,39 +517,15 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 					empty_uom.append(rows[8])
 				no_transfer = no_transfer + 1
 				if rows[10] < rows[11]:
-					if len(uom_details)!=0:
-						must_be_whole_number = uom_details[0]['must_be_whole_number']
-						if must_be_whole_number == 1:
-							req_qty_puom = float(rows[13])
-							re_qty_puom_round_up = math.ceil(req_qty_puom)
-							bal_qty_puom = float(rows[14])
-							if bal_qty_puom < re_qty_puom_round_up:
-								tmp_round_off = "down"
-							else:
-								tmp_round_off = "up"
- 							check_qty = math.floor(req_qty_puom) 
-							check_qty = req_qty_puom - check_qty
-							if check_qty != 0.0:
-								if tmp_round_off == "up":
-									quantity = math.ceil(req_qty_puom)
-									quantity = int(quantity)
-								else:
-									quantity = int(req_qty_puom)
-									purchase_qty_puom = req_qty_puom - quantity
-									print "==========purchase_qty_puom===",purchase_qty_puom
-									rows[15] = purchase_qty_puom
-							else:
-								quantity = int(req_qty_puom)
-						else:
-							quantity = rows[13]
-					if quantity > 0:
+					req_qty = rows[10]
+					if req_qty > 0:
 						innerJson_transfer ={
 						"doctype": "Stock Requisition Item",
 						"item_code": rows[8],
-						"qty": quantity,
+						"qty": req_qty,
 						"schedule_date": required_date,
 						"warehouse":planning_warehouse,
-						"uom": rows[7],
+						"uom": uom,
 						"stock_uom": rows[6],
 						"conversion_factor":rows[17],
 						"description": rows[3]
@@ -575,39 +533,23 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 						newJson_transfer["items"].append(innerJson_transfer)
 
 				if rows[10] >= rows[11]:
-					balance_qty = rows[14]
-					if len(uom_details)!=0:
-						must_be_whole_number = uom_details[0]['must_be_whole_number']
-						if must_be_whole_number == 1:
-							balance_qty = float(balance_qty)
- 							check_qty = math.floor(balance_qty) 
-							check_qty = balance_qty - check_qty
-							if check_qty != 0.0:
-								if round_off_transfer == "up":
-									quantity = math.ceil(balance_qty)
-									quantity = int(quantity)
-								else:
-									quantity = int(balance_qty)
-							else:
-								quantity = int(balance_qty)
-						else:
-							quantity = balance_qty
-					if quantity > 0:
+					balance_qty = rows[11]
+					if balance_qty > 0:
 						innerJson_transfer =	{
 						"doctype": "Stock Requisition Item",
 						"item_code": rows[8],
-						"qty": quantity,
+						"qty": balance_qty,
 						"schedule_date": required_date,
 						"warehouse":planning_warehouse,
-						"uom":rows[7],
+						"uom":uom,
 						"stock_uom": rows[6],
 						"conversion_factor":rows[17],
 						"description": rows[3]
 				   		}
 						newJson_transfer["items"].append(innerJson_transfer)
 		else:
-			if str(rows[15]).strip():
-				whse_map[(rows[15])] = rows[11]
+			if str(rows[12]).strip():
+				whse_map[(rows[12])] = rows[11]
 
 	if no_transfer == 0:
 		frappe.msgprint("Planning Warehouse has all the item !! Stock transfer is not required")
@@ -630,9 +572,9 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	for rows in summ_data:
 
 		if curr_stock_balance == 1:
-			delta_qty = str(rows[15]).strip()
+			delta_qty = str(rows[12]).strip()
 		else:
-			delta_qty = str(rows[13]).strip()
+			delta_qty = str(rows[10]).strip()
 		
 		if (delta_qty and float(delta_qty) != 0.0):
 			if rows[3] == "<br>" or rows[3] == "<div><br></div>" or str(rows[3]) == "":
@@ -640,29 +582,11 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 			if rows[6] == "":
 				empty_uom.append(rows[8])
 			no_requisition = no_requisition + 1
-			purchase_uom = rows[7]
-			uom_details = get_Uom_Data(purchase_uom)
-			if len(uom_details)!=0:
-				must_be_whole_number = uom_details[0]['must_be_whole_number']
-				if must_be_whole_number == 1:
-					delta_qty = float(delta_qty)
- 					check_qty = math.floor(delta_qty) 
-					check_qty = delta_qty - check_qty
-					if check_qty != 0.0:
-						if round_off_purchase == "up":
-							quantity = math.ceil(delta_qty)
-							quantity = int(quantity)
-						else:
-							quantity = int(delta_qty)
-					else:
-						quantity = int(delta_qty)
-				else:
-					quantity = delta_qty
-			if quantity > 0:
+			if delta_qty > 0:
 				innerJson_requisition =	{
 				"doctype": "Stock Requisition Item",
 				"item_code": rows[8],
-				"qty": float(quantity),
+				"qty": delta_qty,
 				"schedule_date": required_date,
 				"warehouse":planning_warehouse,
 				"uom":rows[7],
@@ -691,3 +615,9 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 		ret = doc.doctype
 	if ret:
 		return ret
+
+def getUOM(item_code):
+	records = frappe.db.sql("""select uom from `tabUOM Conversion Detail` where parent=%s""", (item_code), as_dict=1)
+	if len(records)!=0:
+		uom = records[0]['uom']
+	return uom

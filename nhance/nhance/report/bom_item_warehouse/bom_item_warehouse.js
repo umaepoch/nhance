@@ -3,9 +3,12 @@
  */
 // Copyright (c) 2016, Epoch and contributors
 // For license information, please see license.txt
+var warehouse = "";
+var reference_no = "";
 frappe.query_reports["BOM Item Warehouse"] = {
 
-    "filters": [{
+    "filters": [
+	{
             "fieldname": "bom",
             "label": __("BOM"),
             "fieldtype": "Link",
@@ -20,7 +23,6 @@ frappe.query_reports["BOM Item Warehouse"] = {
                 }
             }
         },
-
         {
             "fieldname": "company",
             "label": __("Company"),
@@ -36,7 +38,8 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "fieldtype": "Link",
             "options": "Warehouse",
             "default": "All"
-        }, {
+        }, 
+	{
             "fieldname": "item_code",
             "label": __("Item"),
             "fieldtype": "Link",
@@ -124,14 +127,8 @@ frappe.query_reports["BOM Item Warehouse"] = {
                     }
                 })
             }
-        },
-//	{
-//            "fieldname": "reference_no",
-//            "label": __("Reference Number"),
-//            "fieldtype": "Data",
-//        },
-
-
+        }
+	
     ],
     onload: function(report) {
         report.page.add_inner_button(__("As a draft"),
@@ -149,64 +146,63 @@ frappe.query_reports["BOM Item Warehouse"] = {
     isNumeric: function( obj ) {
     return !jQuery.isArray( obj ) && (obj - parseFloat( obj ) + 1) >= 0;
   },
-   makeStockRequisition: function(report,status){
-    
-     var dialog = new frappe.ui.Dialog({
-		title: __("Enter information for Stock Requisition"),
-		fields: [
-			{"fieldname": "planning_warehouse", "label": __("Planning Warehouse"), "fieldtype": "Link", "reqd": 1, "options": "Warehouse", "get_query": function() {
-                return {
-                    'filters': [
-                        ['Warehouse', 'is_group', '=', '0']
-                    ]
+   makeStockRequisition: function(report, status) {
+	var filters = report.get_values();
+    	var dialog = new frappe.ui.Dialog({
+        title: __("Enter Information For Stock Requisition"),
+        fields: [{
+                "fieldname": "planning_warehouse",
+                "label": __("Planning Warehouse"),
+                "fieldtype": "Link",
+                "reqd": 1,
+                "options": "Warehouse",
+                "get_query": function() {
+                    return {
+                        'filters': [
+                            ['Warehouse', 'is_group', '=', '0']
+                        ]
+                    }
                 }
-            }},
-			
-//			{"fieldtype": "Date", "label": __("Required Date"), "fieldname": "required_on", "reqd": 1},
-			{"fieldname":"required_on", "label": __("Required Date"), "fieldtype": "Date", "default": get_today()},
-	                
-			{"fieldname": "reference_no", "label": __("Reference Number"), "fieldtype": "Data"}
-		],
-
-		primary_action: function(){
-        	dialog.hide();
-        	show_alert(dialog.get_values());
-		var filters = report.get_values();
-		if (filters.company && filters.warehouse && filters.bom) {
-
-		var planning_warehouse = dialog.fields_dict.planning_warehouse.get_value();
-		var required_on = dialog.fields_dict.required_on.get_value();
-		
-		var reference_no = dialog.fields_dict.reference_no.get_value();
-		
-
-	         return frappe.call({
-        	     method: "nhance.nhance.report.bom_item_warehouse.bom_item_warehouse.make_stock_requisition",
-        	     args: {
-        	         "args": status,
-			 "planning_warehouse": planning_warehouse,
-			 "required_date": required_on,
-			 "reference_no": reference_no
-			
-        	     },
-        	     callback: function(r) {
-        	       if(r.message) {
-        	         frappe.set_route('List',r.message );
-        	     }
-        	     }
-        	 })
-	     } else {
-        	 frappe.msgprint("Please select all three filters For Stock Requisition")
-	     }
-
-
-	}
-	});
-	dialog.show();
+            },
+            //{"fieldtype": "Date", "label": __("Required Date"), "fieldname": "required_on", "reqd": 1},
+            {
+                "fieldname": "required_on",
+                "label": __("Required Date"),
+                "fieldtype": "Date",
+                "default": get_today()
+            },
+            {"fieldname": "reference_no", "label": __("Reference Number"), "fieldtype": "Data"}
+        ],
+        primary_action: function() {
+            dialog.hide();
+            show_alert(dialog.get_values());
+            //var filters = report.get_values();
+            if (filters.company && filters.warehouse && filters.bom) {
+                var planning_warehouse = dialog.fields_dict.planning_warehouse.get_value();
+                var required_on = dialog.fields_dict.required_on.get_value();
+                //var reference_no = dialog.fields_dict.reference_no.get_value();
+                return frappe.call({
+                    method: "nhance.nhance.report.bom_item_warehouse.bom_item_warehouse.make_stock_requisition",
+                    args: {
+                        "args": status,
+                        "planning_warehouse": planning_warehouse,
+                        "required_date": required_on,
+                        "reference_no": reference_no,
+                    },
+                    callback: function(r) {
+                        if (r.message) {
+                            frappe.set_route('List', r.message);
+                        }
+                    } //end of callback fun..
+                }) //end of frappe call.
+            } else {
+                frappe.msgprint("Please select all three filters For Stock Requisition")
+            }
+        }
+    }); //end of dialog box..
+    dialog.show();
 	
-
-     
-   }
+}
 }
 
         /*
