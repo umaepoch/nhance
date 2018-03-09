@@ -50,7 +50,7 @@ def get_columns():
 		_("Date of Interaction")+":Date:150",
 		_("Interaction")+":Link/Customer:150",		
 		_("Customer")+":Link/Customer:150",
-		_("Short Description")+"::140",
+		_("Short Description")+":Text:140",
 		_("First Name")+"::100",
 		_("Last Name")+"::100",
 		_("City")+"::150",
@@ -60,7 +60,7 @@ def get_columns():
 		_("Item Code")+"::100",
 		_("Item Name")+"::100",
 	        _("Qty")+"::100",
-		_("Complete Description")+"::140"
+		_("Complete Description")+":Text:300"
        	       
           ]
 

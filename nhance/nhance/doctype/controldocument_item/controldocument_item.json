@@ -62,7 +62,7 @@
    "label": "Transformed Materials", 
    "length": 0, 
    "no_copy": 0, 
-   "options": "BOM", 
+   "options": "Item", 
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
