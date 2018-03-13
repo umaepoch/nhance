@@ -7,4 +7,32 @@ import frappe
 from frappe.model.document import Document
 
 class ControlDocument(Document):
-	pass
+	
+	def on_submit(self):
+		self.manage_default_cd()
+
+	def on_cancel(self):
+		frappe.db.set(self, "is_active", 0)
+		frappe.db.set(self, "is_default", 0)
+
+		self.manage_default_cd()
+
+	def on_update_after_submit(self):
+		self.manage_default_cd()
+
+
+	def manage_default_cd(self):
+		""" Uncheck others if current one is selected as default,
+		"""
+		if self.is_default and self.is_active:
+			from frappe.model.utils import set_default
+			set_default(self, "item")
+			role = frappe.get_doc("Role Profile", self.user)
+			if role.default_controldocument != self.name:
+				frappe.db.set_value('Role Profile', self.user, 'default_controldocument', self.name)
+		else:
+			frappe.db.set(self, "is_default", 0)
+			role = frappe.get_doc("Role Profile", self.user)
+			if role.default_controldocument == self.name:
+				frappe.db.set_value('Role Profile', self.user, 'default_controldocument', None)
+
