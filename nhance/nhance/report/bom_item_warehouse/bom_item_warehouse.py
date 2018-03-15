@@ -31,6 +31,8 @@ def execute(filters=None):
 	reference_no = filters.get("reference_no")
 	qty_to_make = filters.get("qty_to_make")
 	bom_for_validation = filters.get("bom")
+	if bom_for_validation is None:
+		bom_for_validation = filters.get("control_bom")
 	company = filters.get("company")
 	planning_warehouse = filters.get("planning_warehouse")
 	required_date = filters.get("required_on")
@@ -217,23 +219,17 @@ def get_columns():
 
 def get_conditions(filters):
 	conditions = ""
-
 	if filters.get("company"):
 		conditions += " and bo.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
 
 	if filters.get("item_code"):
 		conditions += " and bi.item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
+	if filters.get("control_bom"):
+		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("control_bom"), percent=False)
 	if filters.get("bom"):
 		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
 
 	return conditions
-
-
-#       if filters.get("warehouse"):
-#             conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
-
-
-
 def get_sales_order_entries(filters):
 	conditions = get_conditions(filters)
 
@@ -451,8 +447,7 @@ def get_Uom_Data(purchase_uom):
 
 
 @frappe.whitelist()
-def make_stock_requisition(args, planning_warehouse, required_date, reference_no):
-
+def make_stock_requisition(planning_warehouse, required_date, reference_no, workflowStatus):
 	global required_date_count
 #	if getdate(required_date) == getdate(datetime.now().strftime('%Y-%m-%d')):
 	if required_date == getdate(datetime.now().strftime('%Y-%m-%d')):
@@ -466,11 +461,11 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	innerJson_requisition = " "
 	innerJson_transfer = " "
 	ret = ""
-
 	newJson_transfer = {
 	"company": company,
 	"doctype": "Stock Requisition",
 	"title": "Material Transfer",
+	"workflow_state": workflowStatus,
 	"material_request_type": "Material Transfer",
 	"quantity_to_make": qty_to_make,
 	"requested_by" : reference_no,
@@ -484,6 +479,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 	"title": "Purchase",
 	"material_request_type": "Purchase",
 	"quantity_to_make": qty_to_make,
+	"workflow_state": workflowStatus,
 	"requested_by" : reference_no,
 	"items": [
 ]
@@ -509,6 +505,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 						rows[10] = 0
 				whse_map.clear()
 			item_code = rows[8]
+			#uom = getUOM(item_code)
 			if rows[10]:
 				if rows[3] == "<br>" or rows[3] == "<div><br></div>" or str(rows[3]) == "":
 					empty_desc.append(rows[7])
@@ -560,13 +557,11 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 		doc = frappe.new_doc("Stock Requisition")
 		doc.update(newJson_transfer)
 		print "####################-newJson_transfer::", newJson_transfer
-		if args == "as a draft":
-			doc.save()
-		else:
+		if workflowStatus == "Approved":
 			doc.submit()
+		else:
+			doc.save()
 		ret = doc.doctype
-
-
 	
 	for rows in summ_data:
 
@@ -574,6 +569,7 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 			delta_qty = str(rows[12]).strip()
 		else:
 			delta_qty = str(rows[10]).strip()
+		print "#########-delta_qty::", delta_qty
 		if (delta_qty and float(delta_qty) != 0.0):
 			if rows[3] == "<br>" or rows[3] == "<div><br></div>" or str(rows[3]) == "":
 				empty_desc.append(rows[8])
@@ -606,10 +602,144 @@ def make_stock_requisition(args, planning_warehouse, required_date, reference_no
 			frappe.throw(_("Description for  {0} is empty,Please add description in Item Master Doctype.").format(frappe.bold(comma_and(empty_desc))))
 		doc = frappe.new_doc("Stock Requisition")
 		doc.update(newJson_requisition)
-		if args == "as a draft":
-			doc.save()
-		else:
+		print "#######################-newJson_requisition purchse::", newJson_requisition
+		if workflowStatus == "Approved":
 			doc.submit()
+		else:
+			doc.save()
 		ret = doc.doctype
 	if ret:
 		return ret
+
+def getUOM(item_code):
+	records = frappe.db.sql("""select uom from `tabUOM Conversion Detail` where parent=%s""", (item_code), as_dict=1)
+	if len(records)!=0:
+		uom = records[0]['uom']
+	return uom
+
+@frappe.whitelist()
+def fetch_Records(docName):
+	if docName == "Sales Order":
+		records = frappe.db.sql("""select name from `tab"""+ docName +"""` where docstatus = 1 and status<>'Cancelled'""")
+		print "##########-Doc Records::", records
+	else:
+		records = frappe.db.sql("""select name from `tab"""+ docName +"""` where status not in('Completed','Cancelled')""")
+		print "##########-Doc Records::", records
+	return records
+@frappe.whitelist()
+def get_sales_order_item_details(so_Number):
+	splitted_so_number = so_Number.split("-")
+	if len(splitted_so_number) == 3:
+		so = splitted_so_number[0] + "-" + splitted_so_number[1]
+		so_names = frappe.db.sql("""select name  from `tabSales Order` where name like '%"""+so+"""%'""", as_dict=1)
+		ammended_so_list = ""
+		for name in so_names:
+			if ammended_so_list == "":
+				ammended_so_list = "'" + ammended_so_list + name['name'] + "'"
+			else:
+				ammended_so_list = ammended_so_list + "," + "'" + name['name'] + "'"
+		records = frappe.db.sql("""select item_code,qty  from `tabSales Order Item` where parent in("""+ammended_so_list+""")""",  as_dict=1)
+		print "##########-sales_order_item Records::", records
+	else:
+		records = frappe.db.sql("""select item_code,qty  from `tabSales Order Item` where parent=%s""", (so_Number), as_dict=1)
+	return records
+
+@frappe.whitelist()
+def get_stock_requistion_item_qty(so_Number,item_code):
+	sum_qty = 0
+	splitted_so_number = so_Number.split("-")
+	if len(splitted_so_number) == 3:
+		so = splitted_so_number[0] + "-" + splitted_so_number[1]
+		print "Final SO------------", so
+		so_names = frappe.db.sql("""select name  from `tabSales Order` where name like '%"""+so+"""%'""", as_dict=1)
+		print "Final so_names------------", so_names
+		ammended_so_list = ""
+		for name in so_names:
+			if ammended_so_list == "":
+				ammended_so_list = "'" + ammended_so_list + name['name'] + "'"
+			else:
+				ammended_so_list = ammended_so_list + "," + "'" + name['name'] + "'"
+		print "##########-ammended_so_list::", ammended_so_list 
+		quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where tsr.requested_by in("""+ammended_so_list+""") and tsri.item_code=%s and tsr.status not in('Stopped','Cancelled') and tsri.parent=tsr.name""", (item_code), as_dict=1)
+		if len(quantity)!=0:
+			for value in quantity:
+				sum_qty = sum_qty + value['qty']
+	else:
+		quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where tsr.requested_by=%s and tsri.item_code=%s and tsr.status not in('Stopped','Cancelled') and tsri.parent=tsr.name""", (so_Number, item_code), as_dict=1)
+		if len(quantity)!=0:
+			for value in quantity:
+				sum_qty = sum_qty + value['qty']
+	return sum_qty
+
+@frappe.whitelist()
+def get_stock_requistion_bom_item_qty(bom,item_code):
+	sum_qty = 0
+	splitted_bom_number = bom.split("-")
+	split_bom = splitted_bom_number[0] + "-" + splitted_bom_number[1]
+	previous_bom_list = frappe.db.sql("""select name  from `tabBOM` where name like '%"""+split_bom+"""%'""", as_dict=1)
+	total_bom_list = ""
+	for name in previous_bom_list:
+		if total_bom_list == "":
+			total_bom_list = "'" + total_bom_list + name['name'] + "'"
+		else:
+			total_bom_list = total_bom_list + "," + "'" + name['name'] + "'"
+	print "##########-total_bom_list::", total_bom_list 
+
+	quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where tsr.requested_by in("""+total_bom_list+""")and tsri.item_code=%s and tsr.status not in('Stopped','Cancelled') and tsri.parent=tsr.name""", (item_code), as_dict=1)
+	if len(quantity)!=0:
+		for value in quantity:
+			sum_qty = sum_qty + value['qty']
+	return sum_qty
+
+@frappe.whitelist()
+def get_bom_items_list():
+	data = []
+	details = {}
+	bom_item_qty = 0.0 
+	for rows in summ_data:
+		bom_item = rows[8]
+		bom_item_qty = rows[9]
+		required_qty = rows[10]
+		#print "bom_item::", bom_item
+		#print "required_qty_puom::", required_qty_puom
+		#print "bom_item_qty::", bom_item_qty
+		if type(bom_item_qty) != unicode:
+			details = {"bom_item":bom_item,"required_qty":required_qty,"bom_item_qty":bom_item_qty}
+			data.append(details)
+	return data
+@frappe.whitelist()
+def get_sales_order_items(sales_order):
+	records = frappe.db.sql("""select item_code from `tabSales Order Item` where parent=%s""", (sales_order))
+	print "##########-Sales Order Item Records::", records
+	return records
+
+@frappe.whitelist()
+def get_so_bom_list(sales_order,item_code):
+	records = frappe.db.sql("""select control_bom from `tabSales Order Item` where parent=%s and item_code=%s""", (sales_order,item_code), 		as_dict=1)
+	control_bom = records[0]['control_bom']
+	if control_bom is not None:
+		data = {"name":control_bom}
+		records = []
+		records.append(data)
+		print "control_bom records::", (records)
+	else:
+		records = frappe.db.sql("""select name  from `tabBOM` where item=%s""", (item_code), as_dict=1)
+		print "list of records::", records
+		print "records length::", (len(records))
+		if len(records)==1:
+			print "recordname::", records[0]['name']
+			data = {"name":records[0]['name']}
+			records = []
+			records.append(data)
+			
+	return records
+
+@frappe.whitelist()
+def get_bom_list():
+	records = frappe.db.sql("""select name  from `tabBOM` where docstatus=1""");
+	return records
+@frappe.whitelist()
+def get_bom_list_for_so(item_code):
+	records = frappe.db.sql("""select name  from `tabBOM` where item=%s""", (item_code), as_dict=1);
+	return records
+

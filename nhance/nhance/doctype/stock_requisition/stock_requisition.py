@@ -341,7 +341,7 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template):
 	doc.save()
 	ret = doc.doctype
 	if ret:
-		frappe.msgprint("Purchase Orders is Created:"+doc.name)
+		frappe.msgprint("Purchase Order is Created:"+doc.name)
 
 @frappe.whitelist()
 def make_request_for_quotation(source_name, target_doc=None):

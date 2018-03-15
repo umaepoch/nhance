@@ -230,6 +230,8 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					var no_Supplier_Items = new Array();
 					company = r.message.company;
 					console.log("primary_action------callback-----------");
+					console.log("###################cur_frm.doc.name::"+cur_frm.doc.name);
+					cur_frm.doc.name
 					for(var arrayLength = 0; arrayLength < itemsList.length; arrayLength++){
 						var arr = {};
     						var arrList = [];
@@ -612,6 +614,7 @@ fields: dialogArray,
 				  "tax_template": tax_template,
        				},
         		callback: function(r) {
+				//console.log("########-PO::"+r.message);
         		}
    		 }); //end of frappe call.
 	}//end of outer for-loop..
