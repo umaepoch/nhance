@@ -21,6 +21,25 @@ class BillofQuantity(Document):
 
 		self.validate_uom_is_interger()
 
+	def validate(self):
+		self.validate_main_item()
+
+	def validate_main_item(self):
+		item = self.get_item_det(self.item)
+		if not item:
+			frappe.throw(_("Item {0} does not exist in the system or has expired").format(self.item))
+		else:
+			ret = frappe.db.get_value("Item", self.item, ["description", "stock_uom", "item_name"])
+			self.description = ret[0]
+			self.uom = ret[1]
+			self.item_name= ret[2]
+
+		for m in self.get('items'):
+			if flt(m.qty) <= 0:
+				frappe.throw(_("Quantity required for Item {0} in row {1}").format(m.item_code, m.idx))
+
+
+
 	def boq_val_1(self):
 
 		company = self.company
@@ -96,5 +115,16 @@ class BillofQuantity(Document):
 	def validate_uom_is_interger(self):
 		from erpnext.utilities.transaction_base import validate_uom_is_integer
 		validate_uom_is_integer(self, "stock_uom", "qty", "Bill of Quantity Item")
+
+	def get_item_det(self, item_code):
+		item = frappe.db.sql("""select name, item_name, docstatus, description, image,
+			is_sub_contracted_item, stock_uom, default_bom, last_purchase_rate
+			from `tabItem` where name=%s""", item_code, as_dict = 1)
+
+		if not item:
+			frappe.throw(_("Item: {0} does not exist in the system").format(item_code))
+
+		return item
+
 
 

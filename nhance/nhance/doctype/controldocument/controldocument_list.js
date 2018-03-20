@@ -1,5 +1,5 @@
 frappe.listview_settings['ControlDocument'] = {
-	add_fields: ["is_active", "is_default", "total_cost"],
+	add_fields: ["is_active", "is_default"],
 	get_indicator: function(doc) {
 		if(doc.is_default) {
 			return [__("Default"), "green", "is_default,=,Yes"];

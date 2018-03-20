@@ -35,7 +35,7 @@ class ControlDocument(Document):
 #			frappe.db.set(self, "is_default", 0)
 			role = frappe.get_doc("Role Profile", self.user)
 			if role.default_controldocument == self.name:
-				frappe.db.set_value('Role Profile', self.user, 'default_controldocument', None)
+				frappe.db.set_value('Role Profile', self.user, 'default_controldocument', self.name)
 
 	def change_default_cd(self):		
 		cd_list = frappe.db.sql("""select name from `tabControlDocument` where user = %s and name != %s""", (self.user, self.name), as_dict = 1)
