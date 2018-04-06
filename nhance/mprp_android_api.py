@@ -85,9 +85,7 @@ def set_requested_items_details(loggedInUser, reqdByDate, reqdItemsList=[]):
 					return """Error: Couldnt find the Item doctype for the item code {it}. Could not create the Material Request Document""".format(it = item_code).encode('ascii')
 				if conversion_factor == "dummy":
 					return """Error: Couldnt find the conversion factor for the item code {it} with stock UOM {stuom}. Could not create the Material Request Document""".format(it = item_code, stuom = stock_uom).encode('ascii')
-								
-				print reqd_qty
-				
+																
 				innerJson = {
 						"doctype": "Material Request Item",
 						"item_code": item_code,
@@ -104,12 +102,11 @@ def set_requested_items_details(loggedInUser, reqdByDate, reqdItemsList=[]):
 			doc = frappe.new_doc("Material Request")
 			doc.update(newJson)
 			doc.save()
+			doc.submit()
 			frappe.db.commit()
 			docname = doc.name
-			return """Success: Succesfully created a Material Request {mreq} document. Click on Submit to submit it!""".format(mreq=docname).encode('ascii')
+			return """Success: Succesfully submitted a Material Request {mreq} document for the requested items. """.format(mreq=docname).encode('ascii')
 		else:
 			return """Error: Could not find the Control Document for the user {user}""".format(user = loggedInUser).encode('ascii')
 	else:
 		return """Error: Could not find the role profile for the user {user}""".format(user = loggedInUser).encode('ascii')
-
-
