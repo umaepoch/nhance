@@ -28,17 +28,24 @@ def get_requested_items_details(loggedInUser):
 			
 			if requestedItemRecords:
 				for item in requestedItemRecords:
-					itemDetails = frappe.db.sql("""select sle.item_code, sle.stock_uom, sle.qty_after_transaction from `tabStock Ledger Entry` sle where sle.item_code = %(itemCode)s and sle.warehouse = %(fromwh)s""",{'itemCode': item[0],'fromwh': upstream_warehouse})
+					itemDetails = frappe.db.sql("""select itmtable.item_code, itmtable.stock_uom from `tabItem` itmtable where itmtable.item_code = %(itemCode)s""",{'itemCode': item[0]})
 								
-					constructedJson = {}
-					constructedJson ['item_code'] =  itemDetails[0][0]
-					constructedJson['uom'] = itemDetails[0][1]
-					constructedJson['available_qnty'] = get_latest_stock_qty(itemDetails[0][0],upstream_warehouse)
-					constructedJson['reqd_qnty'] = 0.0
-					
-							   
-					outerJson.append(constructedJson)
-				return outerJson
+					if itemDetails:
+						constructedJson = {}
+						availQnty = 0.0
+						constructedJson ['item_code'] =  itemDetails[0][0]
+						constructedJson['uom'] = itemDetails[0][1]
+						if get_latest_stock_qty(itemDetails[0][0],upstream_warehouse):
+							availQnty = get_latest_stock_qty(itemDetails[0][0],upstream_warehouse)
+						constructedJson['available_qnty'] = availQnty
+						constructedJson['reqd_qnty'] = 0.0
+						outerJson.append(constructedJson)
+					else:
+						continue
+				if len(outerJson) == 0:
+					return None
+				else:
+					return outerJson
 
 @frappe.whitelist()
 def set_requested_items_details(loggedInUser, reqdByDate, reqdItemsList=[]):
