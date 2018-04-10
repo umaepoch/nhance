@@ -519,3 +519,11 @@ def raise_production_orders(stock_requisition):
 	if errors:
 		frappe.throw(_("Productions Orders cannot be raised for:") + '\n' + new_line_sep(errors))
 	return production_orders
+
+@frappe.whitelist()
+def fetch_conversion_factor(purchase_uom, item_code):
+	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where uom=%s and parent=%s""", (purchase_uom, 					item_code), as_dict=1)
+	print "records::", records
+	if len(records)!=0:
+		conversion_factor = records[0]['conversion_factor']
+	return conversion_factor

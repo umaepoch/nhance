@@ -467,31 +467,51 @@ function get_UOM_Details(stock_uom) {
 return whole_number_in_stock_transactions_flag;
 }
 
-function getConversionFactor(purchase_uom,item_code){
-var conversion_factor = 0;
-    frappe.call({
-        method: 'frappe.client.get_value',
-        args: {
-            doctype: "UOM Conversion Detail",
-            filters: {
-                uom: ["=", purchase_uom],
-		parent: ["=", item_code]
+//function getConversionFactor(purchase_uom,item_code){
+//var conversion_factor = 0;
+  //  frappe.call({
+//        method: 'frappe.client.get_value',
+  //      args: {
+    //        doctype: "UOM Conversion Detail",
+      //      filters: {
+        //        uom: ["=", purchase_uom],
+//		parent: ["=", item_code]
 		
-            },
+  //          },
 
-            fieldname: ["conversion_factor"]
-        },
-        async: false,
-        callback: function(r) {
-		if(r.message){
-            	conversion_factor = r.message.conversion_factor;
-		}else{
-		conversion_factor =null;
-		}
-        }
-    });
+    //        fieldname: ["conversion_factor"]
+      //  },
+//        async: false,
+  //      callback: function(r) {
+	//	if(r.message){
+//            	conversion_factor = r.message.conversion_factor;
+//		}else{
+//		conversion_factor =null;
+//		}
+  //      }
+//    });
+//return conversion_factor;
+//}
+
+function getConversionFactor(purchase_uom,item_code){
+var conversion_factor;
+frappe.call({
+           method: "nhance.nhance.doctype.stock_requisition.stock_requisition.fetch_conversion_factor",
+           args: {
+                   "purchase_uom": purchase_uom,
+		   "item_code": item_code
+           },
+	   async: false,
+           callback: function(r) {
+           if (r.message) {
+		console.log("conversion_factor::"+r.message);
+		conversion_factor = r.message;
+            }
+            }//end of callback fun..
+           })//end of frappe call..
 return conversion_factor;
-}
+}//end of getConversionFactor..
+
 
 function getPurchaseUom(item_code){
 var purchase_uom = "";
