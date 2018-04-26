@@ -12,7 +12,8 @@ from frappe import msgprint, _
 from frappe.model.mapper import get_mapped_doc
 from erpnext.stock.stock_balance import update_bin_qty, get_indented_qty
 from erpnext.controllers.buying_controller import BuyingController
-#from erpnext.manufacturing.doctype.production_order.production_order import get_item_details
+from erpnext.manufacturing.doctype.production_order.production_order import get_item_details
+#from erpnext.manufacturing.doctype.work_order.work_order import get_item_details
 from erpnext.buying.utils import check_for_closed_status, validate_for_items
 import datetime
 from collections import defaultdict
@@ -266,7 +267,7 @@ def get_Purchase_Taxes_and_Charges(account_head, tax_name):
 
 
 @frappe.whitelist()
-def making_PurchaseOrder_For_SupplierItems(args, company, tax_template):
+def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 	print "##-tax_template::", tax_template
 	order_List = json.loads(args)
 	items_List = json.dumps(order_List)
@@ -279,6 +280,7 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template):
 				"owner": "Administrator",
 				"taxes_and_charges": tax_template,
 				"company": company,
+				"stock_requisition_id": srID,
 				"due_date": creation_Date,
 				"docstatus": 0,
 				"supplier":"",
@@ -342,6 +344,7 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template):
 	ret = doc.doctype
 	if ret:
 		frappe.msgprint("Purchase Order is Created:"+doc.name)
+	return doc.name
 
 @frappe.whitelist()
 def make_request_for_quotation(source_name, target_doc=None):
@@ -521,9 +524,76 @@ def raise_production_orders(stock_requisition):
 	return production_orders
 
 @frappe.whitelist()
+def get_po_list(srID):
+	po_list = frappe.db.sql("""select po_list from `tabStock Requisition` where name=%s""", (srID), as_dict=1)
+	pos_list = po_list[0]['po_list']
+	return pos_list
+
+@frappe.whitelist()
+def update_po_list(srID, po_list):
+	result = frappe.db.sql("""update `tabStock Requisition` set po_list='""" + po_list + """' where name=%s""", (srID))
+	print "####-result::", result
+
+@frappe.whitelist()
+def get_stock_requisition_items(parent):
+	records = frappe.db.sql("""select hidden_item_code,hidden_qty from `tabStock Requisition Item` where parent=%s""", (parent), as_dict=1)
+	print "####-Stock Requisition records::", records
+	return records
+
+@frappe.whitelist()
+def get_stock_requisition_po_items_list(srID):
+	po_items_map = {}
+	po_items_list = []
+	po_list = get_po_list(srID)
+	if po_list is not None and po_list is not "" and po_list != "NULL":
+		pos = po_list.split(",")
+		if len(pos)!=0:
+			for po in pos:
+				data = get_ordered_items_and_qty(po)
+				if len(data)!=0:
+					for item in data:
+						item_code = item['item_code']
+						qty = item['qty']
+						key = item_code	
+						if key in po_items_map:
+							item_entry = po_items_map[key]
+							qty_temp = item_entry['qty']
+							item_entry['qty'] = float(qty_temp) + float(qty)
+						else:
+							po_items_map[key] = frappe._dict({
+							"item_code": item_code,
+							"qty": qty
+							})
+	print "po_items_map::", po_items_map
+	print "---------------------------po_items_map::", len(po_items_map) 
+	for item_code in sorted(po_items_map):
+		items_dict = po_items_map[item_code]
+		item_code = items_dict.item_code;
+		qty = items_dict.qty;
+		data = {"item_code":item_code, "qty":qty}
+		po_items_list.append(data)
+	return po_items_list
+
+def get_ordered_items_and_qty(po):
+	data = {}
+	items_list = []
+	records = frappe.db.sql("""select tpoi.item_code,tpoi.qty from `tabPurchase Order Item` tpoi,`tabPurchase Order` tpo where
+ 				tpoi.parent=%s and tpo.docstatus=1 and tpo.name=tpoi.parent""", (po), as_dict=1)
+	print "records::", records
+	if len(records)!=0:
+		for items in records:
+			item_code = items.item_code
+			qty = items.qty
+			data = {"item_code":item_code, "qty":qty}
+			items_list.append(data)
+	return items_list
+
+@frappe.whitelist()
 def fetch_conversion_factor(purchase_uom, item_code):
+	conversion_factor = 1
 	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where uom=%s and parent=%s""", (purchase_uom, 					item_code), as_dict=1)
 	print "records::", records
 	if len(records)!=0:
 		conversion_factor = records[0]['conversion_factor']
 	return conversion_factor
+
