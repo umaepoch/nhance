@@ -26,6 +26,8 @@ class BillofQuantity(Document):
 
 	def validate_main_item(self):
 		item = self.get_item_det(self.item)
+		uom_err = 0
+
 		if not item:
 			frappe.throw(_("Item {0} does not exist in the system or has expired").format(self.item))
 		else:
@@ -37,6 +39,14 @@ class BillofQuantity(Document):
 		for m in self.get('items'):
 			if flt(m.qty) <= 0:
 				frappe.throw(_("Quantity required for Item {0} in row {1}").format(m.item_code, m.idx))
+
+			stockuom = m.stock_uom
+			if stockuom != self.uom:
+				frappe.msgprint(_("StockUoM wrong for Item {0} in Row {1}. Correct UoM - {2}").format(m.item_code, m.idx, self.uom))
+				uom_err = 1
+		if uom_err:
+			frappe.throw(_("Please correct StockUoM errors before updating BOQ"))
+
 
 
 
