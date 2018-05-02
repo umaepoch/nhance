@@ -14,9 +14,7 @@ from frappe.desk.notifications import clear_doctype_notifications
 
 @frappe.whitelist()
 def get_user_role():
-	frappe.msgprint(_("Inside Get User Role"))
-	userrole = frappe.get_roles(frappe.session.user)
-	frappe.msgprint(_(userrole))
+	userrole = frappe.db.get_value("User",{"name":frappe.session.user},"role_profile_name")
 	return userrole	
 	
 
