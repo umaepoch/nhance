@@ -13,6 +13,15 @@ from frappe.desk.notifications import clear_doctype_notifications
 
 
 @frappe.whitelist()
+def get_user_role():
+	frappe.msgprint(_("Inside Get User Role"))
+	userrole = frappe.get_roles(frappe.session.user)
+	frappe.msgprint(_(userrole))
+	return userrole	
+	
+
+
+@frappe.whitelist()
 def make_proposal_stage(source_name, target_doc=None):
 
 
