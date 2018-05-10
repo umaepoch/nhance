@@ -80,6 +80,8 @@ def execute(filters=None):
 					conv_factor = 1
 			bal_qty = qty_dict.bal_qty
 			bal_qty_puom = bal_qty/conv_factor
+			print "------------bal_qty----------------", bal_qty
+			print "------------whse----------------", whse
 			if bi_item != " ":
 				data.append([
 							bom,
@@ -123,7 +125,6 @@ def execute(filters=None):
 
 		for rows in data:
 			item_work = rows[12]
-
 			if item_prev == item_work:
 				item_count = item_count + 1
 				tot_bal_qty =float(tot_bal_qty + rows[7])
@@ -137,6 +138,7 @@ def execute(filters=None):
 					tot_reqd_qty = math.ceil(tot_reqd_qty)
 				tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
 				print "##########-tot_p_reqd_qty::", tot_p_reqd_qty
+				print "########################-tot_bal_qty::", tot_bal_qty
 				summ_data.append([rows[0], rows[1], rows[11], rows[2],
 		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", rows[15], " ", rows[9], rows[14]
 			])
@@ -153,7 +155,7 @@ def execute(filters=None):
 					#tot_bal_qty = tot_bal_qty + rows[6]
 					total_delta_qty = tot_reqd_qty - tot_bal_qty
 					total_p_delta_qty = tot_p_reqd_qty - tot_p_bal_qty
-					print "############-total_p_delta_qty::", total_p_delta_qty
+					print "########################prev-total_p_delta_qty::", total_p_delta_qty
 					if total_delta_qty < 0:
 						total_delta_qty = 0
 						total_p_delta_qty = 0
@@ -175,6 +177,7 @@ def execute(filters=None):
 					if total_delta_qty < 0:
 						total_delta_qty = 0
 						total_p_delta_qty = 0
+					print "########################prev1-tot_bal_qty::", tot_bal_qty
 					summ_data.append([rows[0], rows[1], rows[11], rows[2],
 				rows[3], rows[4],
 				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), round(p_reqd_qty,2), tot_p_bal_qty, round(total_p_delta_qty,2), rows[9], rows[14]
@@ -269,27 +272,22 @@ def get_item_warehouse_map(filters):
 
 	if filters.get("warehouse"):
 		temp_whse = filters.get("warehouse")
-
-
 		if temp_whse == 'All':
 			whse, whs_flag = get_warehouses(company)
 		else:
 			whse, whs_flag = get_whs_branch(temp_whse, filters)
-
 	else:
 		whse = get_warehouses(company)
-
-
-
 	for d in sle:
 
 		item_flag[d.bi_item] = False
 		total_stock = get_total_stock(d.bi_item)
-
 		if total_stock > 0:
 			if whs_flag == 1:
 				for w in whse:
 					whse_stock = get_stock(d.bi_item, w)
+					print "--------------------------whse_stock-----------", whse_stock
+					print "------------w-----------", w
 					if whse_stock > 0:
 						key = (d.bom_name, d.bo_item, d.bi_item, w)
 
@@ -369,7 +367,7 @@ def get_item_warehouse_map(filters):
 				#qty_dict.delta_qty=(qty_dict.bal_qty-(d.bi_qty * flt(qty_to_make)))
 				qty_dict.project = d.project
 	del sle[:]
-	#print "-------------------iwb_map::", iwb_map
+	print "-------------------iwb_map::", iwb_map
 	return iwb_map
 
 def get_warehouses(company):
@@ -745,7 +743,6 @@ def get_stock_requistion_bom_item_qty(bom,item_code):
 		else:
 			total_bom_list = total_bom_list + "," + "'" + name['name'] + "'"
 	print "##########-total_bom_list::", total_bom_list 
-
 	quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where tsr.requested_by in("""+total_bom_list+""")and tsri.item_code=%s and tsr.status not in('Stopped','Cancelled') and tsri.parent=tsr.name""", (item_code), as_dict=1)
 	if len(quantity)!=0:
 		for value in quantity:
@@ -836,15 +833,21 @@ def get_bom_list_for_so(item_code):
 	records = frappe.db.sql("""select name  from `tabBOM` where item=%s""", (item_code), as_dict=1);
 	return records
 
+
 @frappe.whitelist()
 def get_so_item_status(item_code):
-	item_group = get_item_group(item_code)
-	print "item_code::", item_code 
-	print "item_group::", item_group
-	if item_group == "Purchased Materials":
-		data={"status":"-1"}
+	records = frappe.db.sql("""select name  from `tabBOM` where item=%s and is_default=1""", (item_code), as_dict=1);
+	if len(records) == 0:
+		item_group = get_item_group(item_code)
+		print "item_code::", item_code 
+		print "item_group::", item_group
+		if item_group!="Purchased Materials":
+			data={"status":1}
+		else:
+			
+			data={"status":"-1"}
 	else:
-		data={"status":"1"}
+		data={"status":1}
 	return data
 
 def get_item_group(item_code):
