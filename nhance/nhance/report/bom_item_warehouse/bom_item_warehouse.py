@@ -377,7 +377,7 @@ def get_warehouses(company):
 		return whse_list, whs_flag
 
 def get_whs_branch(temp_whs, filters):
-	whse = frappe.db.sql("""select name from `tabWarehouse` where parent_warehouse = %s""", temp_whs)
+	whse = frappe.db.sql("""select name from `tabWarehouse` where parent_warehouse = %s and docstatus=1""", temp_whs)
 	whse_list = [row[0] for row in whse]
 	if whse_list:
 		whs_flag = 1
