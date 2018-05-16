@@ -12,8 +12,7 @@ from frappe import msgprint, _
 from frappe.model.mapper import get_mapped_doc
 from erpnext.stock.stock_balance import update_bin_qty, get_indented_qty
 from erpnext.controllers.buying_controller import BuyingController
-from erpnext.manufacturing.doctype.production_order.production_order import get_item_details
-#from erpnext.manufacturing.doctype.work_order.work_order import get_item_details
+from erpnext.manufacturing.doctype.production_order.production_order import get_item_details#from erpnext.manufacturing.doctype.work_order.work_order import get_item_details
 from erpnext.buying.utils import check_for_closed_status, validate_for_items
 import datetime
 from collections import defaultdict
@@ -525,7 +524,7 @@ def raise_production_orders(stock_requisition):
 
 @frappe.whitelist()
 def get_po_list(srID):
-	po_list = frappe.db.sql("""select po_list from `tabStock Requisition` where name=%s""", (srID), as_dict=1)
+	po_list = frappe.db.sql("""select po_list from `tabStock Requisition` where name=%s""", srID, as_dict=1)
 	pos_list = po_list[0]['po_list']
 	return pos_list
 
@@ -545,11 +544,14 @@ def get_stock_requisition_po_items_list(srID):
 	po_items_map = {}
 	po_items_list = []
 	po_list = get_po_list(srID)
+	print "po_list****************************************************9",po_list
 	if po_list is not None and po_list is not "" and po_list != "NULL":
 		pos = po_list.split(",")
 		if len(pos)!=0:
 			for po in pos:
+				print "po--------------from pos",po
 				data = get_ordered_items_and_qty(po)
+				
 				if len(data)!=0:
 					for item in data:
 						item_code = item['item_code']
@@ -572,13 +574,16 @@ def get_stock_requisition_po_items_list(srID):
 		qty = items_dict.qty;
 		data = {"item_code":item_code, "qty":qty}
 		po_items_list.append(data)
+	print "Po Item List************************************************8",po_items_list
 	return po_items_list
+
 
 def get_ordered_items_and_qty(po):
 	data = {}
 	items_list = []
 	records = frappe.db.sql("""select tpoi.item_code,tpoi.qty from `tabPurchase Order Item` tpoi,`tabPurchase Order` tpo where
  				tpoi.parent=%s and tpo.docstatus=1 and tpo.name=tpoi.parent""", (po), as_dict=1)
+	
 	print "records::", records
 	if len(records)!=0:
 		for items in records:
@@ -586,6 +591,7 @@ def get_ordered_items_and_qty(po):
 			qty = items.qty
 			data = {"item_code":item_code, "qty":qty}
 			items_list.append(data)
+	print "Item_list-------",items_list
 	return items_list
 
 @frappe.whitelist()
@@ -597,3 +603,42 @@ def fetch_conversion_factor(purchase_uom, item_code):
 		conversion_factor = records[0]['conversion_factor']
 	return conversion_factor
 
+@frappe.whitelist() 
+def update_stock_requisition_status(srID,status):
+	print "status---------------------",status
+	result = frappe.db.sql("""update `tabStock Requisition` set status='""" + status + """' where name=%s""", (srID))
+	print "####-result::", result
+
+@frappe.whitelist()
+def po_list_value(srID,po_list):
+	print "SREQ from po_list value"
+	print "hello"
+	sreq_qty=""
+	items_list = []	
+	StockReqValue = frappe.db.sql("""select hidden_item_code,hidden_qty from `tabStock Requisition Item` where parent=%s""", (srID), as_dict=1)
+	PurchaseOrderValue= frappe.db.sql("""select tpoi.item_code,tpoi.qty from `tabPurchase Order Item` tpoi,`tabPurchase Order` tpo where
+ 				tpoi.parent=%s  and tpo.name=tpoi.parent""", (po_list), as_dict=1)	
+	print "####-StockReqValue::", StockReqValue
+	print "####-PurchaseOrderValue::", PurchaseOrderValue
+	status="";
+	for item in StockReqValue:
+		status="Partially Ordered"
+		sreq_item_code = str(item['hidden_item_code'])
+		print "Sr_item_code from if statement",sreq_item_code
+		sreq_qty =float(item['hidden_qty'])
+		print "Sr_qty from if statement",sreq_qty
+		for item in PurchaseOrderValue:
+			po_item_code=str(item['item_code'])
+			po_item_qty=float(item['qty'])
+			if(sreq_item_code==po_item_code):
+				print "po_item_code-----",po_item_code
+				print " po item qty---" ,po_item_qty
+				if(sreq_qty<item['qty']):
+					sreq_qty=sreq_qty
+					data = {"item_code":po_item_code, "qty":sreq_qty}
+					items_list.append(data)
+					break;
+			
+	print "sreq_qty11",items_list
+					
+	return items_list
