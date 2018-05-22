@@ -16,6 +16,7 @@ import ast
 def execute(filters=None):
 	global data
 	global company
+	BomValue=[]
 	new_bom_list=[]
 	old_bom_list=[]
 	company = filters.get("company")
@@ -73,8 +74,8 @@ def get_columns():
 		"""return columns"""
 		columns = [
 		_("Item")+":Link/Item:100",
-		_("Old Qty")+"::150",
-		_("New Qty")+"::140",
+		_("Old BOM Item Qty")+"::150",
+		_("New BOM Item Qty")+"::140",
 		_("Excess Qty")+"::100",
 		_("Stock Qty")+"::100",
 		_("Delta Qty")+"::100"
@@ -128,14 +129,9 @@ def get_report_items(items_data,new_bom_items,old_bom_items,warehouse):
 				old_qty=old_bom_items[old]['qty']
 		
 		excees_qty=old_qty-new_qty
-		#query for quantity accordind to warehouse value
-		stock_qty= frappe.db.sql("""select qty  from `tabStock Entry Detail` where item_code=%s and t_warehouse=%s""", 					(data,warehouse), as_dict=1)
-		if len(stock_qty) !=0:
-			stock_qty = stock_qty[0]['qty']
-		else:
-			stock_qty=0
+		item_code = data
+		stock_qty = get_stock(item_code, warehouse)
 		delta_qty=stock_qty-new_qty
-
 		details = {"item_code":data,"new_qty":new_qty,"old_qty":old_qty,"excees_qty":excees_qty,"stock_qty":stock_qty,"delta_qty":delta_qty}
 		data_for_report.append(details)
 		new_qty=0
@@ -144,6 +140,10 @@ def get_report_items(items_data,new_bom_items,old_bom_items,warehouse):
 		stock_qt=0
 		delta_qty=0
 	return data_for_report
+
+def get_stock(item_code, warehouse):
+	item_stock = get_balance_qty_from_sle(item_code, warehouse)
+	return item_stock
 
 @frappe.whitelist()
 def get_report_data():
