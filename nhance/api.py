@@ -700,11 +700,9 @@ def get_item_price_details(item_code):
 
 @frappe.whitelist()
 def calculate_overtime_and_food(employee, start_date, end_date):
-	frappe.msgprint(_("Inside Overtime and Food Api"))
 	overtime_fa_amount = frappe.db.sql("""select sum(ofe.overtime_amount) as overtime, sum(food_allowance_amount) as food_allowance
 			from `tabOvertime FA` ofa, `tabOvertime FA Employees` ofe where ofe.employee = %s and ofa.from_date >= %s and ofa.to_date <= %s and ofe.parent = ofa.name""",
 			(employee, start_date, end_date), as_dict=1)
-	frappe.msgprint(_(overtime_fa_amount))
 	return overtime_fa_amount
 
 
