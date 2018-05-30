@@ -700,7 +700,7 @@ def get_item_price_details(item_code):
 
 @frappe.whitelist()
 def calculate_overtime_and_food(employee, start_date, end_date):
-	overtime_fa_amount = frappe.db.sql("""select sum(ofe.overtime_amount) as overtime, sum(food_allowance_amount) as food_allowance, sum(attendnce_bonus) as attendance_bonus
+	overtime_fa_amount = frappe.db.sql("""select sum(ofe.overtime_amount) as overtime, sum(food_allowance_amount) as food_allowance, sum(attendance_bonus) as attendance_bonus
 			from `tabOvertime and Other Allowances` ofa, `tabOvertime and Other Allowances Employees` ofe where ofe.employee = %s and ofa.from_date >= %s and ofa.to_date <= %s and ofe.parent = ofa.name and ofa.docstatus = 1""",
 			(employee, start_date, end_date), as_dict=1)
 	return overtime_fa_amount
