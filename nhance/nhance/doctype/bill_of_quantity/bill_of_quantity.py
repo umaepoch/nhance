@@ -42,11 +42,12 @@ class BillofQuantity(Document):
 
 			stockuom = m.stock_uom
 			item_uom = frappe.db.get_value("Item", m.item_code, ["stock_uom"])
-			if stockuom != item_uom:
-				frappe.msgprint(_("StockUoM wrong for Item {0} in Row {1}. Correct UoM - {2}").format(m.item_code, m.idx, item_uom))
-				uom_err = 1
-		if uom_err:
-			frappe.throw(_("Please correct StockUoM errors before updating BOQ"))
+			m.stock_uom = item_uom
+#			if stockuom != item_uom:
+#				frappe.msgprint(_("StockUoM wrong for Item {0} in Row {1}. Correct UoM - {2}").format(m.item_code, m.idx, item_uom))
+#				uom_err = 1
+#		if uom_err:
+#			frappe.throw(_("Please correct StockUoM errors before updating BOQ"))
 
 
 
