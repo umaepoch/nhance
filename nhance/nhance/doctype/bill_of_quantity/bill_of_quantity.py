@@ -37,17 +37,19 @@ class BillofQuantity(Document):
 			self.item_name= ret[2]
 
 		for m in self.get('items'):
-			if flt(m.qty) <= 0:
+			if flt(m.uom_qty) <= 0:
 				frappe.throw(_("Quantity required for Item {0} in row {1}").format(m.item_code, m.idx))
 
-			stockuom = m.stock_uom
 			item_uom = frappe.db.get_value("Item", m.item_code, ["stock_uom"])
 			m.stock_uom = item_uom
-#			if stockuom != item_uom:
-#				frappe.msgprint(_("StockUoM wrong for Item {0} in Row {1}. Correct UoM - {2}").format(m.item_code, m.idx, item_uom))
-#				uom_err = 1
-#		if uom_err:
-#			frappe.throw(_("Please correct StockUoM errors before updating BOQ"))
+			conv_factor = self.get_uom_det(m.item_code, m.unit_of_measure)
+			if (conv_factor == 1 and m.stock_uom != m.unit_of_measure):
+				frappe.msgprint(_("Conversion factor not set for UOM - {0} to Stock UOM - {1} for Item {2} in Row {3}").format(m.unit_of_measure, m.stock_uom, m.item_code, m.idx))
+				uom_err = 1
+			else:
+				m.qty = float(m.uom_qty * conv_factor)
+		if uom_err:
+			frappe.throw(_("Please correct StockUoM errors before updating BOQ"))
 
 
 
@@ -137,6 +139,14 @@ class BillofQuantity(Document):
 			frappe.throw(_("Item: {0} does not exist in the system").format(item_code))
 
 		return item
+
+	def get_uom_det(self, item_code, uom):
+		convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (item_code, uom))
+		if convert_factor:
+			conv_factor = convert_factor[0][0]
+		else:
+			conv_factor = 1
+		return conv_factor
 
 
 
