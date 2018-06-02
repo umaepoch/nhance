@@ -42,12 +42,19 @@ class BillofQuantity(Document):
 
 			item_uom = frappe.db.get_value("Item", m.item_code, ["stock_uom"])
 			m.stock_uom = item_uom
-			conv_factor = self.get_uom_det(m.item_code, m.unit_of_measure)
-			if (conv_factor == 1 and m.stock_uom != m.unit_of_measure):
-				frappe.msgprint(_("Conversion factor not set for UOM - {0} to Stock UOM - {1} for Item {2} in Row {3}").format(m.unit_of_measure, m.stock_uom, m.item_code, m.idx))
-				uom_err = 1
+
+			if m.unit_of_measure:
+
+				conv_factor = self.get_uom_det(m.item_code, m.unit_of_measure)
+				if (conv_factor == 1 and m.stock_uom != m.unit_of_measure):
+					frappe.msgprint(_("Conversion factor not set for UOM - {0} to Stock UOM - {1} for Item {2} in Row {3}").format(m.unit_of_measure, m.stock_uom, m.item_code, m.idx))
+					uom_err = 1
+				else:
+					m.qty = float(m.uom_qty * conv_factor)
 			else:
-				m.qty = float(m.uom_qty * conv_factor)
+				m.unit_of_measure = m.stock_uom
+				m.qty = m.uom_qty
+
 		if uom_err:
 			frappe.throw(_("Please correct StockUoM errors before updating BOQ"))
 
