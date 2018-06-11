@@ -713,10 +713,13 @@ def calculate_overtime_and_food(employee, start_date, end_date):
 
 @frappe.whitelist()
 def get_uom_list(item_code):
+	frappe.msgprint(_(item_code))
 	records = frappe.db.sql("""select t2.uom as uom from `tabUOM Conversion Detail` t2 where t2.parent = %s""", (item_code))
+	frappe.msgprint(_(records))
 	if records:
 #		frappe.msgprint(_(records[0].warehouse))
 #		return records[0].warehouse
+		frappe.msgprint(_(records))
 		return records
 	else:
 		return
