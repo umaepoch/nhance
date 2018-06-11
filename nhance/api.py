@@ -700,15 +700,20 @@ def get_item_price_details(item_code):
 
 @frappe.whitelist()
 def calculate_overtime_and_food(employee, start_date, end_date):
-	overtime_fa_amount = frappe.db.sql("""select sum(ofe.overtime_amount) as overtime, sum(food_allowance_amount) as food_allowance, sum(attendance_bonus) as attendance_bonus
+#	overtime_fa_amount = frappe.db.sql("""select sum(ofe.overtime_amount) as overtime, sum(food_allowance_amount) as food_allowance, sum(attendance_bonus) as attendance_bonus
+#			from `tabOvertime and Other Allowances` ofa, `tabOvertime and Other Allowances Employees` ofe where ofe.employee = %s and ofa.from_date >= %s and ofa.to_date <= %s and ofe.parent = ofa.name and ofa.docstatus = 1""",
+#			(employee, start_date, end_date), as_dict=1)
+
+	overtime_fa_amount = frappe.db.sql("""select sum(ofe.overtime_hours) as overtime_hours, sum(ofe.overtime_amount) as overtime, sum(food_allowance_amount) as food_allowance, sum(attendance_bonus) as attendance_bonus
 			from `tabOvertime and Other Allowances` ofa, `tabOvertime and Other Allowances Employees` ofe where ofe.employee = %s and ofa.from_date >= %s and ofa.to_date <= %s and ofe.parent = ofa.name and ofa.docstatus = 1""",
 			(employee, start_date, end_date), as_dict=1)
+
 	return overtime_fa_amount
 
 
 @frappe.whitelist()
 def get_uom_list(item_code):
-	records = frappe.db.sql("""select uom as uom from `tabUOM Conversion Detail` t2 where t2.parent = %s""", (item_code))
+	records = frappe.db.sql("""select t2.uom as uom from `tabUOM Conversion Detail` t2 where t2.parent = %s""", (item_code))
 	if records:
 #		frappe.msgprint(_(records[0].warehouse))
 #		return records[0].warehouse
