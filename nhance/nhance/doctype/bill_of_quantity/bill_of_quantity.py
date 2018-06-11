@@ -51,9 +51,11 @@ class BillofQuantity(Document):
 					uom_err = 1
 				else:
 					m.qty = float(m.uom_qty * conv_factor)
+					m.conversion_factor = conv_factor
 			else:
 				m.unit_of_measure = m.stock_uom
 				m.qty = m.uom_qty
+				m.conversion_factor = 1
 
 		if uom_err:
 			frappe.throw(_("Please correct StockUoM errors before updating BOQ"))
