@@ -113,6 +113,22 @@ def make_interactions_si(source_name, target_doc=None):
 
 	return target_doc
 
+@frappe.whitelist()
+def make_interactions_cust(source_name, target_doc=None):
+	src_name = "Customer"
+	target_doc = get_mapped_doc("Customer", source_name, {
+		"Customer": {
+			"doctype": "Interactions",
+			"field_map": {
+				"name": "customer"
+
+				}
+		}
+		
+	}, target_doc, set_missing_values)
+
+	return target_doc
+
 
 @frappe.whitelist()
 def set_proposal_stage_values(opportunity):

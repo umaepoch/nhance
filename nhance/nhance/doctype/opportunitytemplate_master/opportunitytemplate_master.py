@@ -180,4 +180,4 @@ class OpportunityTemplateMaster(Document):
 
 
 				else:
-					frappe.throw(_("This Opportunity number cannot be blank. "))
+					frappe.throw(_("The Opportunity number cannot be blank. "))
