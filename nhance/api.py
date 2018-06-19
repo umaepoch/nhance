@@ -130,6 +130,7 @@ def make_interactions_cust(source_name, target_doc=None):
 	return target_doc
 
 
+
 @frappe.whitelist()
 def set_proposal_stage_values(opportunity):
 
