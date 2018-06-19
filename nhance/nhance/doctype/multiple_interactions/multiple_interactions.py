@@ -14,7 +14,7 @@ class MultipleInteractions(Document):
 		self.create_interactions()	
 
 	def create_interactions(self):
-		opp_temp_list = frappe.db.sql("""select mi.date, mi.type_of_interaction, mi.mode, mi.inbound_or_outbound, mi.customer, mi.interaction_status, mii.reference_doctype, mii.reference_document, mii.contact, mii.short_description, mii.complete_description, mii.todo, mii.equipment from `tabMultiple Interactions` mi, `tabMultiple Interactions Item` mii where mii.parent = %s and mi.name = mii.parent""", self.name, as_dict = 1)
+		opp_temp_list = frappe.db.sql("""select mi.date, mi.type_of_interaction, mi.mode, mi.inbound_or_outbound, mi.customer, mi.interaction_status, mii.reference_doctype, mii.reference_document, mii.contact, mii.short_description, mii.complete_description, mii.todo, mii.equipment, mii.address from `tabMultiple Interactions` mi, `tabMultiple Interactions Item` mii where mii.parent = %s and mi.name = mii.parent""", self.name, as_dict = 1)
 		if opp_temp_list:
 			for record in opp_temp_list:
 				if record.reference_document is not None and record.reference_document != "":
@@ -31,6 +31,7 @@ class MultipleInteractions(Document):
 								"inbound_or_outbound": record.inbound_or_outbound,
 								"customer": record.customer,
 								"contact": record.contact,
+								"address": record.address,
 								"short_description": record.short_description,
 								"complete_description": record.complete_description,
 								"equipment": record.equipment
@@ -52,6 +53,7 @@ class MultipleInteractions(Document):
 								"inbound_or_outbound": record.inbound_or_outbound,
 								"customer": record.customer,
 								"contact": record.contact,
+								"address": record.address,
 								"short_description": record.short_description,
 								"complete_description": record.complete_description,
 								"equipment": record.equipment
@@ -72,6 +74,7 @@ class MultipleInteractions(Document):
 								"inbound_or_outbound": record.inbound_or_outbound,
 								"customer": record.customer,
 								"contact": record.contact,
+								"address": record.address,
 								"short_description": record.short_description,
 								"complete_description": record.complete_description,
 								"equipment": record.equipment
@@ -94,6 +97,7 @@ class MultipleInteractions(Document):
 								"inbound_or_outbound": record.inbound_or_outbound,
 								"customer": record.customer,
 								"contact": record.contact,
+								"address": record.address,
 								"short_description": record.short_description,
 								"complete_description": record.complete_description,
 								"equipment": record.equipment
