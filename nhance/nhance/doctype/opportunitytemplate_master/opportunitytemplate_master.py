@@ -88,7 +88,7 @@ class OpportunityTemplateMaster(Document):
 
 
 	def create_opportunity(self):
-		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number as opportunity_number, oppti.customer as customer, oppti.contact_name as contact from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
+		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number as opportunity_number, oppti.salesperson_name, oppti.customer as customer, oppti.contact_name as contact from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
 		if opp_temp_list:
 			for record in opp_temp_list:
 				if record.opportunity_number is not None and record.opportunity_number != "":
@@ -101,7 +101,8 @@ class OpportunityTemplateMaster(Document):
 				else:
 					opp_json = {
 						"customer": record.customer,
-						"enquiry_from": "Customer"
+						"enquiry_from": "Customer",
+						"sales_person": record.salesperson_name
 					}	
 					doc = frappe.new_doc("Opportunity")
 					doc.update(opp_json)
