@@ -26,6 +26,7 @@ class OpportunityTemplateMaster(Document):
 				if record.customer is not None and record.customer != "":
 
 					cust_record = frappe.db.sql("""select name as customer from `tabCustomer` where name = %s""", record.customer, as_dict = 1)
+					frappe.msgprint(_(cust_record))
 					if cust_record:
 						pass
 					else:
@@ -47,13 +48,17 @@ class OpportunityTemplateMaster(Document):
 		if opp_temp_list:
 			for record in opp_temp_list:
 				if record.customer is not None and record.customer != "":
+					frappe.msgprint(_(record.customer))
 					if record.address1:
+						frappe.msgprint(_(record.address1))
 						addr_name = record.customer+"-Billing"
+						frappe.msgprint(_(addr_name))
 						addr_record = frappe.db.sql("""select name from `tabAddress` where name= %s""", addr_name, as_dict = 1)
+						frappe.msgprint(_(addr_record))
 						if addr_record:
 							pass
 						else:
-							address = frappe.get_doc({
+							address_json = {
 								'doctype': 'Address',
 								'address_title': record.customer,
 								'address_line1': record.address1,
@@ -64,16 +69,27 @@ class OpportunityTemplateMaster(Document):
 								'links': [{
 									'link_doctype': 'Customer',
 									'link_name': record.customer
-								}]
-								}).insert()
+								  }]
+								}
+							doc = frappe.new_doc("Address")
+							doc.update(address_json)
+							doc.save()
+							frappe.db.commit()
+							docname = doc.name
+							frappe.msgprint(_("Address Record created for - " + docname))
 
 					if record.contact_name:
 						cont_name = record.contact_name+"-"+record.customer
+						frappe.msgprint(_(cont_name))
 						contact_record = frappe.db.sql("""select name from `tabContact` where name = %s""", cont_name, as_dict = 1)
+						frappe.msgprint(_(contact_record))
+				
 						if contact_record:
+							frappe.msgprint(_("Contact Record exists"))
 							pass
 						else:
-							contact = frappe.get_doc({
+							frappe.msgprint(_("Contact Record does not exists"))
+							contact_json = {
 								'doctype': 'Contact',
 								'first_name': record.contact_name,
 								'mobile_no': record.contact_phone,
@@ -84,7 +100,14 @@ class OpportunityTemplateMaster(Document):
 									'link_doctype': 'Customer',
 									'link_name': record.customer
 									}]
-								}).insert()
+								}
+							doc = frappe.new_doc("Contact")
+							doc.update(contact_json)
+							doc.save()
+							frappe.db.commit()
+							docname = doc.name
+							frappe.msgprint(_("Contact Record created for - " + docname))
+
 
 
 	def create_opportunity(self):
