@@ -88,7 +88,7 @@ class OpportunityTemplateMaster(Document):
 
 
 	def create_opportunity(self):
-		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number as opportunity_number, oppti.salesperson_name, oppti.customer as customer, oppti.contact_name as contact from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
+		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number as opportunity_number, oppti.salesperson_name, oppti.customer as customer, oppti.contact_name as contact, oppti.call_date from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
 		if opp_temp_list:
 			for record in opp_temp_list:
 				if record.opportunity_number is not None and record.opportunity_number != "":
@@ -102,7 +102,8 @@ class OpportunityTemplateMaster(Document):
 					opp_json = {
 						"customer": record.customer,
 						"enquiry_from": "Customer",
-						"sales_person": record.salesperson_name
+						"sales_person": record.salesperson_name,
+						"transaction_date": record.call_date
 					}	
 					doc = frappe.new_doc("Opportunity")
 					doc.update(opp_json)
@@ -114,7 +115,7 @@ class OpportunityTemplateMaster(Document):
 
 
 	def create_proposal(self):
-		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number, oppti.stage_date, oppti.stage, oppti.value, oppti.closing_date, oppti.probability_of_closure, oppti.support_needed, oppti.opportunity_purpose, oppti.buying_status from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
+		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number, oppti.stage_date, oppti.stage, oppti.value, oppti.closing_date, oppti.probability_of_closure, oppti.support_needed, oppti.opportunity_purpose, oppti.buying_status, oppti.salesperson_name, oppti.call_date from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
 		if opp_temp_list:
 			for record in opp_temp_list:
 				if record.opportunity_number is not None and record.opportunity_number != "":
@@ -130,7 +131,8 @@ class OpportunityTemplateMaster(Document):
 							"closing_date": record.closing_date,
 							"probability_of_closure": record.probability_of_closure,
 							"support_needed": record.support_needed,
-							"buying_status": record.buying_status
+							"buying_status": record.buying_status,
+							"sales_person": record.salesperson_name
 
 						}
 						doc = frappe.new_doc("Proposal Stage")
@@ -149,7 +151,7 @@ class OpportunityTemplateMaster(Document):
 					frappe.throw(_("This Opportunity number cannot be blank. "))
 
 	def create_interactions(self):
-		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number, oppti.customer, oppti.type_of_interaction, oppti.inbound_or_outbound, opptm.import_date, oppti.short_description, oppti.complete_description, oppti.equipment from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
+		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number, oppti.customer, oppti.type_of_interaction, oppti.inbound_or_outbound, opptm.import_date, oppti.short_description, oppti.complete_description, oppti.equipment, oppti.salesperson_name, oppti.call_date from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
 		if opp_temp_list:
 			for record in opp_temp_list:
 				if record.opportunity_number is not None and record.opportunity_number != "":
@@ -159,13 +161,14 @@ class OpportunityTemplateMaster(Document):
 							"reference_doctype": "Opportunity",
 							"reference_document": record.opportunity_number,
 							"opportunity": record.opportunity_number,
-							"date": record.import_date,
+							"date": record.call_date,
 							"type_of_interaction": record.type_of_interaction,
 							"inbound_or_outbound": record.inbound_or_outbound,
 							"customer": record.customer,
 							"short_description": record.short_description,
 							"complete_description": record.complete_description,
-							"equipment": record.equipment
+							"equipment": record.equipment,
+							"sales_person": record.salesperson_name
 
 						}
 						doc = frappe.new_doc("Interactions")
