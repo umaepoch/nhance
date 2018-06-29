@@ -123,14 +123,18 @@ class OpportunityTemplateMaster(Document):
 		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number as opportunity_number, oppti.salesperson_name, oppti.customer as customer, oppti.contact_name as contact, oppti.call_date from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
 		if opp_temp_list:
 			for record in opp_temp_list:
+				frappe.msgprint(_(record.opportunity_number))
 				if record.opportunity_number is not None and record.opportunity_number != "":
-					opp_record = frappe.db.sql("""select name as opportunity from `tabOpportunity` where name = %s""", record.opportunity_number, as_dict = 1)
+					frappe.msgprint(_("Inside"))
+					opp_record = frappe.db.sql("""select name from `tabOpportunity` where name = %s""", record.opportunity_number, as_dict = 1)
+					frappe.msgprint(_(opp_record))
 					if opp_record:
 						pass
 					else:
 						frappe.throw(_("This Opportunity number does not exist - " + record.opportunity_number))
 
 				else:
+					frappe.msgprint(_("Opportunity not found. Creating new"))
 					opp_json = {
 						"customer": record.customer,
 						"enquiry_from": "Customer",
@@ -143,6 +147,10 @@ class OpportunityTemplateMaster(Document):
 					frappe.db.commit()
 					docname = doc.name
 					frappe.msgprint(_("Opportunity Record created for - " + docname))
+					frappe.msgprint(_(self.name))
+					frappe.msgprint(_(record.customer))
+					temp_rec = frappe.db.sql("""select oppti.customer, oppti.opportunity_number from `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s""", (self.name, record.customer))
+					frappe.msgprint(_(temp_rec))
 					frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.opportunity_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s""", (docname, self.name, record.customer))
 
 
@@ -152,14 +160,14 @@ class OpportunityTemplateMaster(Document):
 			for record in opp_temp_list:
 				if record.opportunity_number is not None and record.opportunity_number != "":
 					if record.proposal_stage is not None and record.proposal_stage != "":
-						prop_stage_record = frappe.db.sql("""select name as proposal from `tabProposal Stage` where name = %s""", record.proposal_stage, as_dict = 1)
+						prop_stage_record = frappe.db.sql("""select name from `tabProposal Stage` where name = %s""", record.proposal_stage, as_dict = 1)
 						if prop_stage_record:
 							pass
 						else:
 							frappe.throw(_("This Proposal Stage number does not exist - " + record.proposal_stage))
 					else:	
 
-						prop_record = frappe.db.sql("""select name as opportunity from `tabOpportunity` where name = %s""", record.opportunity_number, as_dict = 1)
+						prop_record = frappe.db.sql("""select name from `tabOpportunity` where name = %s""", record.opportunity_number, as_dict = 1)
 						if prop_record:
 							prop_json = {
 								"stage_doctype": "Opportunity",
@@ -202,14 +210,14 @@ class OpportunityTemplateMaster(Document):
 			for record in opp_temp_list:
 				if record.opportunity_number is not None and record.opportunity_number != "":
 					if record.interaction_number is not None and record.interaction_number != "":
-						int_record = frappe.db.sql("""select name as interaction from `tabInteractions` where name = %s""", record.interaction_number, as_dict = 1)
+						int_record = frappe.db.sql("""select name from `tabInteractions` where name = %s""", record.interaction_number, as_dict = 1)
 						if int_record:
 							pass
 						else:
 							frappe.throw(_("This Interaction does not exist - " + record.interaction_number))
 					else:	
 
-						inter_record = frappe.db.sql("""select name as opportunity from `tabOpportunity` where name = %s""", record.opportunity_number, as_dict = 1)
+						inter_record = frappe.db.sql("""select name from `tabOpportunity` where name = %s""", record.opportunity_number, as_dict = 1)
 						if inter_record:
 							int_json = {
 								"reference_doctype": "Opportunity",
