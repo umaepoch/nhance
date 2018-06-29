@@ -195,7 +195,7 @@ class OpportunityTemplateMaster(Document):
 							frappe.msgprint(_(self.name))
 							frappe.msgprint(_(record.customer))
 							frappe.msgprint(_(record.opportunity_number))
-							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.proposal_stage_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s and oppti.opportunity_number = %s and oppti.call_date = %d""", (docname, self.name, record.customer, record.opportunity_number, record.call_date))
+							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.proposal_stage_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s and oppti.opportunity_number = %s and oppti.call_date = %s""", (docname, self.name, record.customer, record.opportunity_number, str(record.call_date)))
 							frappe.db.commit()
 						else:
 							frappe.throw(_("This Opportunity number does not exist - " + record.opportunity_number))
@@ -239,7 +239,7 @@ class OpportunityTemplateMaster(Document):
 							frappe.db.commit()
 							docname = doc.name
 							frappe.msgprint(_("Interaction record created - " + docname))
-							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.interactions_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s and oppti.call_date = %d""", (docname, self.name, record.customer, record.call_date))
+							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.interactions_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s and oppti.call_date = %s""", (docname, self.name, record.customer, str(record.call_date)))
 
 							frappe.db.commit()
 						else:
