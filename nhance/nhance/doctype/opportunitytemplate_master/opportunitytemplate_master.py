@@ -152,10 +152,11 @@ class OpportunityTemplateMaster(Document):
 					temp_rec = frappe.db.sql("""select oppti.customer, oppti.opportunity_number from `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s""", (self.name, record.customer))
 					frappe.msgprint(_(temp_rec))
 					frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.opportunity_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s""", (docname, self.name, record.customer))
+					frappe.db.commit()
 
 
 	def create_proposal(self):
-		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number, oppti.proposal_stage_number as proposal_stage, oppti.customer, oppti.stage_date, oppti.stage, oppti.value, oppti.closing_date, oppti.probability_of_closure, oppti.support_needed, oppti.opportunity_purpose, oppti.buying_status, oppti.salesperson_name, oppti.call_date from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
+		opp_temp_list = frappe.db.sql("""select oppti.opportunity_number, oppti.proposal_stage_number as proposal_stage, oppti.customer, oppti.call_date, oppti.stage_date, oppti.stage, oppti.value, oppti.closing_date, oppti.probability_of_closure, oppti.support_needed, oppti.opportunity_purpose, oppti.buying_status, oppti.salesperson_name, oppti.call_date from `tabOpportunityTemplate Master` opptm, `tabOpportunityImportTemplate` oppti where oppti.parent = %s and opptm.name = oppti.parent""", self.name, as_dict = 1)
 		if opp_temp_list:
 			for record in opp_temp_list:
 				if record.opportunity_number is not None and record.opportunity_number != "":
@@ -169,6 +170,7 @@ class OpportunityTemplateMaster(Document):
 
 						prop_record = frappe.db.sql("""select name from `tabOpportunity` where name = %s""", record.opportunity_number, as_dict = 1)
 						if prop_record:
+							
 							prop_json = {
 								"stage_doctype": "Opportunity",
 								"document_number": record.opportunity_number,
@@ -193,10 +195,8 @@ class OpportunityTemplateMaster(Document):
 							frappe.msgprint(_(self.name))
 							frappe.msgprint(_(record.customer))
 							frappe.msgprint(_(record.opportunity_number))
-							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.proposal_stage_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s and oppti.opportunity_number = %s""", (docname, self.name, record.customer, record.opportunity_number))
-							frappe.throw(_("I am not going any further"))
-
-
+							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.proposal_stage_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s and oppti.opportunity_number = %s and oppti.call_date = %d""", (docname, self.name, record.customer, record.opportunity_number, record.call_date))
+							frappe.db.commit()
 						else:
 							frappe.throw(_("This Opportunity number does not exist - " + record.opportunity_number))
 
@@ -239,9 +239,9 @@ class OpportunityTemplateMaster(Document):
 							frappe.db.commit()
 							docname = doc.name
 							frappe.msgprint(_("Interaction record created - " + docname))
-							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.interactions_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s""", (docname, self.name, record.customer))
+							frappe.db.sql("""update `tabOpportunityImportTemplate` oppti, `tabOpportunityTemplate Master` opptm set oppti.interactions_number = %s where oppti.parent = %s and opptm.name = oppti.parent and oppti.customer = %s and oppti.call_date = %d""", (docname, self.name, record.customer, record.call_date))
 
-
+							frappe.db.commit()
 						else:
 							frappe.throw(_("This Opportunity number does not exist - " + record.opportunity_number))
 
