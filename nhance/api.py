@@ -738,3 +738,45 @@ def get_uom_list(item_code):
 		return records
 	else:
 		return
+
+@frappe.whitelist()
+def get_user_role():
+	userrole = frappe.db.get_value("User",{"name":frappe.session.user},"role_profile_name")
+	if userrole:
+		return userrole	
+	else:
+		return 1
+
+@frappe.whitelist()
+def get_user_role_status(approval_a, dt):
+	frappe.msgprint(_("Inside api"))
+	frappe.msgprint(_(approval_a))
+	role_status = ""
+	userrole = frappe.db.get_value("User",{"name":frappe.session.user},"role_profile_name")
+	frappe.msgprint(_(userrole))
+	if userrole:
+		if approval_a == "Rejected":
+			role_status = "Rejected"
+			return role_status
+		else:
+			workflow_records = frappe.db.sql("""select at.approval_level, at.approval_role, at.approval_status from `tabApproval Master` am, `tabApproval Transition` at where at.parent = am.name and am.document_type = %s""", (dt), as_dict = 1)
+			frappe.msgprint(_(workflow_records))
+			if workflow_records:
+				for wfw in workflow_records:
+					if userrole == wfw.approval_role:
+						if wfw.approval_status:
+							role_status = wfw.approval_status
+						else:
+							role_status = "Approved by " + userrole
+
+				if role_status:
+					frappe.msgprint(_(role_status))
+					return role_status
+				else:
+					return 0
+			else:
+				frappe.msgprint(_("There are no Approval workflow records set for doctype: " + dt))	
+				return 0
+	else:
+		return 0
+
