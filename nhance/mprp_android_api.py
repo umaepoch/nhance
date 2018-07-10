@@ -6,6 +6,7 @@ from erpnext.stock.utils import get_latest_stock_qty
 import json
 
 
+
 @frappe.whitelist()
 def hellosub(loggedInUser):
 	return 'pong'
