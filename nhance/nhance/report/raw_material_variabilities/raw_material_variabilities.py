@@ -14,7 +14,7 @@ import time
 import math
 import ast
 def execute(filters=None):
-	global data
+	global prepare_report_data
 	global company
 	BomValue=[]
 	new_bom_list=[]
@@ -47,7 +47,7 @@ def execute(filters=None):
 			
 	items_data=get_merge_bom_list(new_bom_list,old_bom_list);
 	report_items_details=get_report_items(items_data,new_bom_items,old_bom_items,warehouse)
-	data = []
+	prepare_report_data = []
 	print "ItemDetail",report_items_details
 	for items in report_items_details:
 		item_code = items['item_code']
@@ -56,7 +56,7 @@ def execute(filters=None):
 		excees_qty = items['excees_qty']
 		stock_qty = items['stock_qty']
 		delta_qty=items['delta_qty']	
-		data.append([				
+		prepare_report_data.append([				
 			    	item_code,
 				old_qty,
 				new_qty,
@@ -67,8 +67,8 @@ def execute(filters=None):
 	
 	
 	columns = get_columns()
-	print "DaTA----",data
-	return columns, data
+	print "DaTA----",prepare_report_data
+	return columns, prepare_report_data
 
 def get_columns():
 		"""return columns"""
@@ -146,10 +146,29 @@ def get_stock(item_code, warehouse):
 	return item_stock
 
 @frappe.whitelist()
+def get_sreq_items_list(requested_by,item_code):
+	total_qty = 0
+	items_data = {}
+	items_list = []
+	sreqID = frappe.db.sql("""select name from `tabStock Requisition` where requested_by = %s """, (requested_by), as_dict=1)
+	if len(sreqID)!=0:
+		for stockReqID in sreqID:
+			if stockReqID['name'] is not None:
+				parent = stockReqID['name']
+				print "parent-------", parent
+				details = frappe.db.sql("""select item_code,qty from `tabStock Requisition Item` where parent = %s and 								item_code=%s""", (parent,item_code), as_dict=1)
+				print "length of details------", len(details)
+				for rows in details:
+					item_code = rows['item_code']
+					qty = rows['qty']
+					total_qty = float(total_qty) + float(qty)
+	return total_qty
+
+@frappe.whitelist()
 def get_report_data():
 	report_data = []
 	details = {}
-	for rows in data:
+	for rows in prepare_report_data:
 		item_code = rows[0]
 		old_qty = rows[1]
 		new_qty = rows[2]
@@ -159,10 +178,9 @@ def get_report_data():
 		report_data.append(details)
 	return report_data
 
-		
 @frappe.whitelist()
-def make_material_issue(material_items_list):
-	raw_material_list = json.loads(material_items_list)
+def make_stock_requisition(stockRequisitionItemsList, materialRequestType, workflow_status, reference_no):
+	raw_material_list = json.loads(stockRequisitionItemsList)
 	items_List = json.dumps(raw_material_list)
 	items_List = ast.literal_eval(items_List)
 	required_date = datetime.datetime.now()
@@ -171,11 +189,18 @@ def make_material_issue(material_items_list):
 	OuterJson_Transfer = {
 	"company": company,
 	"doctype": "Stock Requisition",
-	"title": "Material Issue",
-	"material_request_type": "Material Issue",
 	"items": [
 	]
 	}
+
+	if materialRequestType == "Purchase":
+		OuterJson_Transfer["title"] = "Purchase"
+		OuterJson_Transfer["requested_by"] = reference_no
+		OuterJson_Transfer["workflow_state"] = workflow_status
+		OuterJson_Transfer["material_request_type"] = "Purchase"
+	elif materialRequestType == "Issue":
+		OuterJson_Transfer["title"] = "Material Issue"
+		OuterJson_Transfer["material_request_type"] = "Material Issue"
 
 	for data in items_List:
 		item_code = data['item_code']
@@ -186,12 +211,18 @@ def make_material_issue(material_items_list):
 			"item_code": item_code,
 			"qty": qty,
 			"schedule_date": required_date,
-			"warehouse":target_warehouse,
+			"warehouse":target_warehouse
 		}
 		OuterJson_Transfer["items"].append(innerJson_transfer)
 	doc = frappe.new_doc("Stock Requisition")
 	doc.update(OuterJson_Transfer)
-	doc.save()
+	if materialRequestType == "Purchase":
+		if workflow_status == "Approved":
+			doc.submit()
+		else:
+			doc.save()
+	else:
+		doc.submit()
 	return_doc = doc.doctype
 	if return_doc:
 		return return_doc
