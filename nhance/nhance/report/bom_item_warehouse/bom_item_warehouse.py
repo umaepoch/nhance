@@ -67,22 +67,21 @@ def execute(filters=None):
 		loop_count = 1
 		for (bom, item, bi_item, whse) in sorted(iwb_map):
 			qty_dict = iwb_map[(bom, item, bi_item, whse)]
-			if bi_item in item_map:
-				if item_map[bi_item]["purchase_uom"] is None or item_map[bi_item]["purchase_uom"] is "":
-					print "purchase_uom is empty....."
-					purchase_UOM = item_map[bi_item]["stock_uom"]
-					item_map[bi_item]["purchase_uom"] = purchase_UOM
-					conv_factor = 1
+			if item_map[bi_item]["purchase_uom"] is None or item_map[bi_item]["purchase_uom"] is "":
+				print "purchase_uom is empty....."
+				purchase_UOM = item_map[bi_item]["stock_uom"]
+				item_map[bi_item]["purchase_uom"] = purchase_UOM
+				conv_factor = 1
+			else:
+				convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (bi_item, item_map[bi_item]["stock_uom"]))
+				if convert_factor:
+					conv_factor = convert_factor[0][0]
 				else:
-					convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (bi_item, item_map[bi_item]["stock_uom"]))
-					if convert_factor:
-						conv_factor = convert_factor[0][0]
-					else:
-						conv_factor = 1
-				bal_qty = qty_dict.bal_qty
-				bal_qty_puom = bal_qty/conv_factor
-				if bi_item != " ":
-					data.append([
+					conv_factor = 1
+			bal_qty = qty_dict.bal_qty
+			bal_qty_puom = bal_qty/conv_factor
+			if bi_item != " ":
+				data.append([
 							bom,
  							item,
  							item_map[bi_item]["description"],
@@ -100,9 +99,9 @@ def execute(filters=None):
 							conv_factor,
 							bal_qty_puom,
 						])
-				else:
+			else:
 
-					data.append([
+				data.append([
 							bom,
  							bi_item, 
 							item_map[item]["description"],
