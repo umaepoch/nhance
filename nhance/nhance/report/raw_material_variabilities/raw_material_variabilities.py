@@ -45,7 +45,7 @@ def execute(filters=None):
 			details = {"item_code":item_code,"new_qty":qty,"old_qty":old}
 			old_bom_list.append(details)
 			
-	items_data=get_merge_bom_list(new_bom_list,old_bom_list);
+	items_data=get_merge_bom_list(new_bom_list,old_bom_list)
 	report_items_details=get_report_items(items_data,new_bom_items,old_bom_items,warehouse)
 	prepare_report_data = []
 	print "ItemDetail",report_items_details
@@ -98,7 +98,7 @@ def get_merge_bom_list(new_bom_list,old_bom_list):
 	after_merge=new_bom_list+old_bom_list
 	item_data=[]
 	for new in range(0,len(after_merge)):
-		print "new---",new
+		print "new---", new
 		for old in range(new,len(after_merge)):
 			print "new value ",after_merge[new]['item_code']
 			new_item_code=after_merge[new]['item_code']

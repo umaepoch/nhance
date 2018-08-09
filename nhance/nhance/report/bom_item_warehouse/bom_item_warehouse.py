@@ -47,7 +47,7 @@ def execute(filters=None):
 	validate_filters(filters)
 	columns = get_columns()
 	item_map = get_item_details(filters)
-	#print "item_map===>>",item_map
+	print "item_map===>>",item_map
 	if for_field_value is not None and filters.get("docIds"):
 		iwb_map = get_item_warehouse_map(filters)
 		data = []
@@ -67,23 +67,22 @@ def execute(filters=None):
 		loop_count = 1
 		for (bom, item, bi_item, whse) in sorted(iwb_map):
 			qty_dict = iwb_map[(bom, item, bi_item, whse)]
-			if item_map[bi_item]["purchase_uom"] is None or item_map[bi_item]["purchase_uom"] is "":
-				print "purchase_uom is empty....."
-				purchase_UOM = item_map[bi_item]["stock_uom"]
-				item_map[bi_item]["purchase_uom"] = purchase_UOM
-				conv_factor = 1
-			else:
-				convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (bi_item, item_map[bi_item]["stock_uom"]))
-				if convert_factor:
-					conv_factor = convert_factor[0][0]
-				else:
+			if bi_item in item_map:
+				if item_map[bi_item]["purchase_uom"] is None or item_map[bi_item]["purchase_uom"] is "":
+					print "purchase_uom is empty....."
+					purchase_UOM = item_map[bi_item]["stock_uom"]
+					item_map[bi_item]["purchase_uom"] = purchase_UOM
 					conv_factor = 1
-			bal_qty = qty_dict.bal_qty
-			bal_qty_puom = bal_qty/conv_factor
-			print "------------bal_qty----------------", bal_qty
-			print "------------whse----------------", whse
-			if bi_item != " ":
-				data.append([
+				else:
+					convert_factor = frappe.db.sql("""select conversion_factor as conversion_factor from `tabUOM Conversion Detail` t2 where t2.parent = %s and uom = %s""", (bi_item, item_map[bi_item]["stock_uom"]))
+					if convert_factor:
+						conv_factor = convert_factor[0][0]
+					else:
+						conv_factor = 1
+				bal_qty = qty_dict.bal_qty
+				bal_qty_puom = bal_qty/conv_factor
+				if bi_item != " ":
+					data.append([
 							bom,
  							item,
  							item_map[bi_item]["description"],
@@ -101,9 +100,9 @@ def execute(filters=None):
 							conv_factor,
 							bal_qty_puom,
 						])
-			else:
+				else:
 
-				data.append([
+					data.append([
 							bom,
  							bi_item, 
 							item_map[item]["description"],
@@ -137,8 +136,8 @@ def execute(filters=None):
 				if check_for_whole_number_itemwise(item_work):
 					tot_reqd_qty = math.ceil(tot_reqd_qty)
 				tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
-				print "##########-tot_p_reqd_qty::", tot_p_reqd_qty
-				print "########################-tot_bal_qty::", tot_bal_qty
+				#print "##########-tot_p_reqd_qty::", tot_p_reqd_qty
+				#print "########################-tot_bal_qty::", tot_bal_qty
 				summ_data.append([rows[0], rows[1], rows[11], rows[2],
 		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", rows[15], " ", rows[9], rows[14]
 			])
@@ -155,7 +154,7 @@ def execute(filters=None):
 					#tot_bal_qty = tot_bal_qty + rows[6]
 					total_delta_qty = tot_reqd_qty - tot_bal_qty
 					total_p_delta_qty = tot_p_reqd_qty - tot_p_bal_qty
-					print "########################prev-total_p_delta_qty::", total_p_delta_qty
+					#print "########################prev-total_p_delta_qty::", total_p_delta_qty
 					if total_delta_qty < 0:
 						total_delta_qty = 0
 						total_p_delta_qty = 0
@@ -177,7 +176,7 @@ def execute(filters=None):
 					if total_delta_qty < 0:
 						total_delta_qty = 0
 						total_p_delta_qty = 0
-					print "########################prev1-tot_bal_qty::", tot_bal_qty
+					#print "########################prev1-tot_bal_qty::", tot_bal_qty
 					summ_data.append([rows[0], rows[1], rows[11], rows[2],
 				rows[3], rows[4],
 				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), round(p_reqd_qty,2), tot_p_bal_qty, round(total_p_delta_qty,2), rows[9], rows[14]
@@ -286,8 +285,8 @@ def get_item_warehouse_map(filters):
 			if whs_flag == 1:
 				for w in whse:
 					whse_stock = get_stock(d.bi_item, w)
-					print "--------------------------whse_stock-----------", whse_stock
-					print "------------w-----------", w
+					#print "--------------------------whse_stock-----------", whse_stock
+					#print "------------w-----------", w
 					if whse_stock > 0:
 						key = (d.bom_name, d.bo_item, d.bi_item, w)
 
@@ -432,7 +431,7 @@ def get_item_details(filters):
 
 
 		items = frappe.db.sql("""select item_group, item_name, stock_uom, purchase_uom, t1.name,conversion_factor, brand, description
-				from tabItem t1 JOIN `tabUOM Conversion Detail` t2 where t1.item_code = t2.parent {condition}""".format(condition=condition), value, as_dict=1)
+				from tabItem t1 JOIN `tabUOM Conversion Detail` t2 where t1.name = t2.parent {condition}""".format(condition=condition), value, as_dict=1)
 
 		return dict((d.name, d) for d in items)
 
