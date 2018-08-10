@@ -328,10 +328,44 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 	},
 
 	make_stock_entry: function() {
-		frappe.model.open_mapped_doc({
+		console.log("--------material_request_type--------"+cur_frm.doc.material_request_type);
+		var me = this;
+		var stock_requisition_id = cur_frm.doc.name;
+		console.log("stock_requisition_id--------"+stock_requisition_id);
+		if (cur_frm.doc.material_request_type == "Material Issue"){
+		var issueFlag = getStockRequisitionIssueFlag(stock_requisition_id);
+		if (issueFlag == "true"){
+		frappe.call({
+			type: "POST",
+			method: 'frappe.model.mapper.make_mapped_doc',
+			args: {
+				method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_stock_entry",
+				source_name: cur_frm.doc.name,
+				selected_children: cur_frm.get_selected()
+				},
+			freeze: true,
+			async: false,
+			callback: function(r) {
+				/**
+				console.log("se--------"+JSON.stringify(r.message));
+				console.log("se--------"+r.message.items);
+				console.log("se--------"+r.message.name);
+				**/
+				var items = r.message.items;
+				var stockEntryList = r.message;
+				makeStockEntry(stockEntryList,items,stock_requisition_id);
+			}
+			});
+		}else{
+			frappe.msgprint(__("Material Issue is already done for "+stock_requisition_id));
+		}
+		}else if(cur_frm.doc.material_request_type == "Material Transfer"){
+			frappe.model.open_mapped_doc({
 			method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_stock_entry",
 			frm: cur_frm
-		});
+			});
+		}
+
 	},
 
 	raise_production_orders: function() {
@@ -694,4 +728,39 @@ frappe.call({
 	});//end of frappe call..
 }//end of updatePOList..
 
+function getStockRequisitionIssueFlag(stock_requisition_id){
+var checkFlag = false;
+console.log("SreqID-----"+stock_requisition_id);
+frappe.call({
+	method: "nhance.nhance.doctype.stock_requisition.stock_requisition.check_stock_entry_for_stock_requisition",
+        args: {
+		"stock_requisition_id": stock_requisition_id
+       		},
+	async: false,
+        callback: function(r) {
+		console.log("Result-----callback----");
+		console.log("Result---------"+r.message);
+		checkFlag = r.message;
+        }//end of call-back fun..
+    }); //end of frappe call.
 
+return checkFlag;
+}
+
+function makeStockEntry(stockEntryList,items,stock_requisition_id){
+var company = stockEntryList.company;
+frappe.call({
+	method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_material_issue",
+        args: {
+                 "items": items,
+		 "company": company,
+		 "stock_requisition_id": stock_requisition_id
+                },
+        async: false,
+        callback: function(r) {
+        	if (r.message) {
+                	frappe.set_route('List', r.message);
+                 }
+        } //end of callback fun..
+       }) //end of frappe call.
+}

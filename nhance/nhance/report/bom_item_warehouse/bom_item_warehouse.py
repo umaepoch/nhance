@@ -37,6 +37,8 @@ def execute(filters=None):
 		bom_for_validation = filters.get("docIds")
 	if for_field_value == "Project":
 		bom_for_validation = filters.get("master_bom_hidden")
+	if for_field_value == "Production Order":
+		bom_for_validation = filters.get("production_bom_hidden")
 	company = filters.get("company")
 	planning_warehouse = filters.get("planning_warehouse")
 	required_date = filters.get("required_on")
@@ -80,6 +82,7 @@ def execute(filters=None):
 					conv_factor = 1
 			bal_qty = qty_dict.bal_qty
 			bal_qty_puom = bal_qty/conv_factor
+			#frappe.msgprint("bal_qty:"+qty_dict.bal_qty)
 			if bi_item != " ":
 				data.append([
 							bom,
@@ -123,6 +126,7 @@ def execute(filters=None):
 
 		for rows in data:
 			item_work = rows[12]
+
 			if item_prev == item_work:
 				item_count = item_count + 1
 				tot_bal_qty =float(tot_bal_qty + rows[7])
@@ -135,8 +139,7 @@ def execute(filters=None):
 				if check_for_whole_number_itemwise(item_work):
 					tot_reqd_qty = math.ceil(tot_reqd_qty)
 				tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
-				#print "##########-tot_p_reqd_qty::", tot_p_reqd_qty
-				#print "########################-tot_bal_qty::", tot_bal_qty
+				print "##########-tot_p_reqd_qty::", tot_p_reqd_qty
 				summ_data.append([rows[0], rows[1], rows[11], rows[2],
 		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", rows[15], " ", rows[9], rows[14]
 			])
@@ -153,7 +156,7 @@ def execute(filters=None):
 					#tot_bal_qty = tot_bal_qty + rows[6]
 					total_delta_qty = tot_reqd_qty - tot_bal_qty
 					total_p_delta_qty = tot_p_reqd_qty - tot_p_bal_qty
-					#print "########################prev-total_p_delta_qty::", total_p_delta_qty
+					print "############-total_p_delta_qty::", total_p_delta_qty
 					if total_delta_qty < 0:
 						total_delta_qty = 0
 						total_p_delta_qty = 0
@@ -175,7 +178,6 @@ def execute(filters=None):
 					if total_delta_qty < 0:
 						total_delta_qty = 0
 						total_p_delta_qty = 0
-					#print "########################prev1-tot_bal_qty::", tot_bal_qty
 					summ_data.append([rows[0], rows[1], rows[11], rows[2],
 				rows[3], rows[4],
 				rows[5], rows[6], rows[12], rows[8],round(reqd_qty,2) ,tot_bal_qty,round(total_delta_qty,2), round(p_reqd_qty,2), tot_p_bal_qty, round(total_p_delta_qty,2), rows[9], rows[14]
@@ -246,6 +248,10 @@ def get_conditions(filters):
 	if filters.get("for") == "Project":
 		print filters.get("master_bom_hidden")
 		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("master_bom_hidden"), percent=False)
+
+	if filters.get("for") == "Production Order":
+		print filters.get("production_bom_hidden")
+		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("production_bom_hidden"), percent=False)
 	return conditions
 
 def get_sales_order_entries(filters):
@@ -270,25 +276,30 @@ def get_item_warehouse_map(filters):
 
 	if filters.get("warehouse"):
 		temp_whse = filters.get("warehouse")
+
+
 		if temp_whse == 'All':
 			whse, whs_flag = get_warehouses(company)
 		else:
 			whse, whs_flag = get_whs_branch(temp_whse, filters)
+
 	else:
 		whse = get_warehouses(company)
+
+
+
 	for d in sle:
 
 		item_flag[d.bi_item] = False
 		total_stock = get_total_stock(d.bi_item)
+
 		if total_stock > 0:
 			if whs_flag == 1:
 				for w in whse:
 					whse_stock = get_stock(d.bi_item, w)
-					#print "--------------------------whse_stock-----------", whse_stock
-					#print "------------w-----------", w
 					if whse_stock > 0:
 						key = (d.bom_name, d.bo_item, d.bi_item, w)
-
+						
 						if key not in iwb_map:
 							item_flag[d.bi_item] = True
 							iwb_map[key] = frappe._dict({
@@ -375,7 +386,7 @@ def get_warehouses(company):
 		return whse_list, whs_flag
 
 def get_whs_branch(temp_whs, filters):
-	whse = frappe.db.sql("""select name from `tabWarehouse` where parent_warehouse = %s and docstatus=1""", temp_whs)
+	whse = frappe.db.sql("""select name from `tabWarehouse` where parent_warehouse = %s""", temp_whs)
 	whse_list = [row[0] for row in whse]
 	if whse_list:
 		whs_flag = 1
@@ -722,26 +733,30 @@ def get_stock_requistion_item_qty(so_Number,item_code):
 	return sum_qty
 
 @frappe.whitelist()
-def get_stock_requistion_bom_item_qty(bom,item_code):
+def get_stock_requistion_bom_item_qty(bom,item_code,docName):
 	sum_qty = 0
-	splitted_bom_number = bom.split("-")
-	del splitted_bom_number[-1]
-	updated_bom = ""
-	for split_bom in splitted_bom_number:
-    		if updated_bom == "":
-        		updated_bom = split_bom
-    		else:
-       			updated_bom = updated_bom + "-" + split_bom
-	print "updated_bom::", updated_bom	
-	previous_bom_list = frappe.db.sql("""select name  from `tabBOM` where name like '%"""+updated_bom+"""%'""", as_dict=1)
-	total_bom_list = ""
-	for name in previous_bom_list:
-		if total_bom_list == "":
-			total_bom_list = "'" + total_bom_list + name['name'] + "'"
-		else:
-			total_bom_list = total_bom_list + "," + "'" + name['name'] + "'"
-	print "##########-total_bom_list::", total_bom_list 
-	quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where tsr.requested_by in("""+total_bom_list+""")and tsri.item_code=%s and tsr.status not in('Stopped','Cancelled') and tsri.parent=tsr.name""", (item_code), as_dict=1)
+	if docName == "Production Order":
+		quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where 						tsr.requested_by=%s and tsri.item_code=%s and tsr.status not in('Stopped','Cancelled') and 						tsri.parent=tsr.name""", (bom,item_code), as_dict=1)
+	else:
+		splitted_bom_number = bom.split("-")
+		del splitted_bom_number[-1]
+		updated_bom = ""
+		for split_bom in splitted_bom_number:
+    			if updated_bom == "":
+        			updated_bom = split_bom
+    			else:
+       				updated_bom = updated_bom + "-" + split_bom
+		print "updated_bom::", updated_bom	
+		previous_bom_list = frappe.db.sql("""select name  from `tabBOM` where name like '%"""+updated_bom+"""%'""", as_dict=1)
+		total_bom_list = ""
+		for name in previous_bom_list:
+			if total_bom_list == "":
+				total_bom_list = "'" + total_bom_list + name['name'] + "'"
+			else:
+				total_bom_list = total_bom_list + "," + "'" + name['name'] + "'"
+		print "##########-total_bom_list::", total_bom_list 
+
+		quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where 						tsr.requested_by in("""+total_bom_list+""")and tsri.item_code=%s and tsr.status not in 					        ('Stopped','Cancelled') and tsri.parent=tsr.name""", (item_code), as_dict=1)
 	if len(quantity)!=0:
 		for value in quantity:
 			sum_qty = sum_qty + value['qty']
@@ -795,7 +810,7 @@ def get_sales_order_items(docId,docName):
 
 @frappe.whitelist()
 def get_so_bom_list(sales_order,item_code):
-	records = frappe.db.sql("""select control_bom from `tabSales Order Item` where parent=%s and item_code=%s""", (sales_order,item_code), 		as_dict=1)
+	records = frappe.db.sql("""select control_bom from `tabSales Order Item` where parent=%s and item_code=%s""", (sales_order,item_code), 					as_dict=1)
 	control_bom = records[0]['control_bom']
 	if control_bom is not None:
 		data = {"name":control_bom}
@@ -812,7 +827,7 @@ def get_so_bom_list(sales_order,item_code):
 @frappe.whitelist()
 def get_bom_list(soNumber,item_code):
 	control_bom = ""
-	records = frappe.db.sql("""select control_bom from `tabSales Order Item` where parent=%s and item_code=%s""", (soNumber, item_code), 		as_dict=1)
+	records = frappe.db.sql("""select control_bom from `tabSales Order Item` where parent=%s and item_code=%s""", (soNumber, item_code), 					as_dict=1)
 	control_bom = records[0]['control_bom']
 	if control_bom is not None:
 		control_bom = {"is_default":"so", "control_bom":control_bom}
@@ -831,21 +846,15 @@ def get_bom_list_for_so(item_code):
 	records = frappe.db.sql("""select name  from `tabBOM` where item=%s""", (item_code), as_dict=1);
 	return records
 
-
 @frappe.whitelist()
 def get_so_item_status(item_code):
-	records = frappe.db.sql("""select name  from `tabBOM` where item=%s and is_default=1""", (item_code), as_dict=1);
-	if len(records) == 0:
-		item_group = get_item_group(item_code)
-		print "item_code::", item_code 
-		print "item_group::", item_group
-		if item_group!="Purchased Materials":
-			data={"status":1}
-		else:
-			
-			data={"status":"-1"}
+	item_group = get_item_group(item_code)
+	print "item_code::", item_code 
+	print "item_group::", item_group
+	if item_group == "Purchased Materials":
+		data={"status":"-1"}
 	else:
-		data={"status":1}
+		data={"status":"1"}
 	return data
 
 def get_item_group(item_code):

@@ -639,7 +639,50 @@ def po_list_value(srID,po_list):
 					data = {"item_code":po_item_code, "qty":sreq_qty}
 					items_list.append(data)
 					break;
-			
-	print "sreq_qty11",items_list
-					
+	print "sreq_qty11",items_list	
 	return items_list
+
+@frappe.whitelist()
+def check_stock_entry_for_stock_requisition(stock_requisition_id):
+	records = frappe.db.sql("""select * from `tabStock Entry` where stock_requisition_id=%s and docstatus=1""", stock_requisition_id, as_dict=1)
+	if len(records) == 0:
+		flag = "true"
+	else:
+		flag = "false"
+	print "flag----------", flag
+	return flag
+
+@frappe.whitelist()
+def make_material_issue(items,company,stock_requisition_id):
+	print "stock_requisition_id------", stock_requisition_id
+	required_date = datetime.datetime.now()
+	return_doc = ""
+	innerJson_Transfer = " "
+	material_issue_list = json.loads(items)
+	items_List = json.dumps(material_issue_list)
+	items_List = ast.literal_eval(items_List)
+	outerJson_Transfer = {
+			"naming_series": "STE-",
+			"doctype": "Stock Entry",
+			"title": "Material Issue",
+			"docstatus": 0,
+			"purpose": "Material Issue",
+			"company": company,
+			"stock_requisition_id": stock_requisition_id,
+			"items": []
+			}
+	for data in items_List:
+		innerJson_Transfer =	{
+			"s_warehouse":data['s_warehouse'],
+			"qty":data['qty'],
+			"item_code":data['item_code'],
+			"basic_rate": data['basic_amount'],
+			"doctype": "Stock Entry Detail"
+			}
+		outerJson_Transfer["items"].append(innerJson_Transfer)
+	doc = frappe.new_doc("Stock Entry")
+	doc.update(outerJson_Transfer)
+	doc.save()
+	return_doc = doc.doctype
+	if return_doc:
+		return return_doc
