@@ -995,10 +995,5 @@ def generate_rarb(warehouse, rooms, aisle, rack, bin_no):
 	doc_wh.update(newJson_wh)
 	doc_wh.save()
 	frappe.db.commit()
-
 	frappe.throw(_("RARBs created"))
-	
-	
-
 	return
-
