@@ -43,41 +43,8 @@ frappe.query_reports["BOM Item Warehouse2"] = {
                             warehouse_filter.df.default = r.message[0].project_warehouse;
                             warehouse_filter.refresh();
                             warehouse_filter.set_input(warehouse_filter.df.default);
+			    query_report.refresh();
                             console.log("----------------Break Point 3");
-
-                            var reserve_warehouse_filter = frappe.query_report_filters_by_name.reserve_warehouse;
-                            reserve_warehouse_filter.df.options = r.message[0].reserve_warehouse;
-                            reserve_warehouse_filter.df.default = r.message[0].reserve_warehouse;
-                            reserve_warehouse_filter.refresh();
-                            reserve_warehouse_filter.set_input(reserve_warehouse_filter.df.default);
-
-                            var bom_filter = frappe.query_report_filters_by_name.bom;
-                            bom_filter.df.options = r.message[0].master_bom;
-                            bom_filter.df.default = r.message[0].master_bom;
-                            bom_filter.refresh();
-                            bom_filter.set_input(bom_filter.df.default);
-
-                            var core_team_coordinator_filter = frappe.query_report_filters_by_name.core_team_coordinator;
-                            core_team_coordinator_filter.df.options = r.message[0].core_team_coordinator;
-                            core_team_coordinator_filter.df.default = r.message[0].core_team_coordinator;
-                            core_team_coordinator_filter.refresh();
-                            core_team_coordinator_filter.set_input(core_team_coordinator_filter.df.default);
-                            console.log("----------------Break Point 4");
-
-                            var planner_filter = frappe.query_report_filters_by_name.planner;
-                            planner_filter.df.options = r.message[0].planner;
-                            planner_filter.df.default = r.message[0].planner;
-                            planner_filter.refresh();
-                            planner_filter.set_input(planner_filter.df.default);
-
-                            var start_date_filter = frappe.query_report_filters_by_name.start_date;
-                            start_date_filter.df.options = r.message[0].start_date;
-                            start_date_filter.df.default = r.message[0].start_date;
-                            start_date_filter.refresh();
-                            start_date_filter.set_input(start_date_filter.df.default);
-                            console.log("----------------Break Point 5");
-                            query_report.refresh();
-                            console.log("----------------Break Point 6");
                         } //end of if..
                     } //end of call-back function..
                 }); //end of frappe call..
