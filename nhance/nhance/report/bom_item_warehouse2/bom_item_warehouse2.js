@@ -146,6 +146,7 @@ frappe.query_reports["BOM Item Warehouse2"] = {
     	}
 }//end of report..
 
+/**
 function makeMaterialIssue(report){
 	console.log("----------------makeMaterialIssue report...");
 	var filters = report.get_values();
@@ -178,13 +179,6 @@ function makeMaterialIssue(report){
 			    	frappe.call({
         			method:"nhance.nhance.report.bom_item_warehouse2.bom_item_warehouse2.make_issue",
         			args: {
-					/**
-            				"item_code": item_code,
-					"project": project,
-					"qty": qty,
-					"planner": planner,
-					"core_team_coordinator": core_team_coordinator
-					**/
 					"issue_items": table_data_list
         			},
         		       async: false,
@@ -198,7 +192,7 @@ function makeMaterialIssue(report){
 		}//end of for loop..
 	}//end of if..
 }//end of function..
-
+**/
 function getReportData() {
     var reportData = [];
     frappe.call({
