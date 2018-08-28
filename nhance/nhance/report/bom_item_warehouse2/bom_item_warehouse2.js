@@ -64,6 +64,7 @@ frappe.query_reports["BOM Item Warehouse2"] = {
 				core_team_coordinator_filter.df.default = r.message[0].core_team_coordinator;
 				core_team_coordinator_filter.refresh();
 				core_team_coordinator_filter.set_input(core_team_coordinator_filter.df.default);
+				console.log("----------------Break Point 4");
 
 				var planner_filter = frappe.query_report_filters_by_name.planner;
 				planner_filter.df.options = r.message[0].planner;
@@ -76,8 +77,9 @@ frappe.query_reports["BOM Item Warehouse2"] = {
 				start_date_filter.df.default = r.message[0].start_date;
 				start_date_filter.refresh();
 				start_date_filter.set_input(start_date_filter.df.default);
-
+				console.log("----------------Break Point 5");
 				query_report.refresh();
+				console.log("----------------Break Point 6");
 				}//end of if..
 			}//end of call-back function..
 		});//end of frappe call..
