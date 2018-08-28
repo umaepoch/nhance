@@ -37,11 +37,15 @@ frappe.query_reports["BOM Item Warehouse2"] = {
       			{ 
 				if(r.message){
 				console.log("docids options::"+r.message.length);
+				console.log("result::"+JSON.stringify(r.message));
+				console.log("----------------Break Point 1");
 				var warehouse_filter = frappe.query_report_filters_by_name.warehouse;
+				console.log("----------------Break Point 2");
 				warehouse_filter.df.options = r.message[0].project_warehouse;
 				warehouse_filter.df.default = r.message[0].project_warehouse;
 				warehouse_filter.refresh();
 				warehouse_filter.set_input(warehouse_filter.df.default);
+				console.log("----------------Break Point 3");
 
 				var reserve_warehouse_filter = frappe.query_report_filters_by_name.reserve_warehouse;
 				reserve_warehouse_filter.df.options = r.message[0].reserve_warehouse;
@@ -141,6 +145,7 @@ frappe.query_reports["BOM Item Warehouse2"] = {
 }//end of report..
 
 function makeMaterialIssue(report){
+	console.log("----------------makeMaterialIssue report...");
 	var filters = report.get_values();
 	var reportData = getReportData();
 	var project = filters.project;
