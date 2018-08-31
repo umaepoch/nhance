@@ -30,6 +30,7 @@ def execute(filters=None):
 	reserved_whse_stock_entry_qty = 0
 	company = filters.get("company")
 	bom = filters.get("bom")
+	quantity_to_make = filters.get("qty_to_make")
 	include_exploded_items = filters.get("include_exploded_items")
 	warehouse = filters.get("warehouse")
 	reserve_warehouse = filters.get("reserve_warehouse")
@@ -37,31 +38,57 @@ def execute(filters=None):
 	columns = get_columns()
 
 	if warehouse is not None:
-		print "warehouse-----------", warehouse
+		#print "warehouse-----------", warehouse
 		whse_items = get_items_from_warehouse(warehouse)
+		if whse_items is None:
+			whse_items = []
 		print "whse_items-----------", whse_items
 	if bom is not None:
 		bom_items = get_bom_items(filters)
+		if bom_items is None:
+			bom_items = []
 		print "bom_items-----------", bom_items
 
 	items_data = merger_items_list(whse_items,bom_items)
 	print "items_data-----------", items_data
-	for item_code in items_data:
-		bom_qty = get_bom_qty(bom,item_code)
-		whse_qty = get_warehouse_qty(warehouse,item_code)
-		whse_stock_entry_qty = get_stock_entry_quantities(warehouse,item_code,project_start_date)
+
+	for item in sorted(items_data):
+		dict_items = items_data[item]
+		item_code = str(dict_items.item_code)
+		bom_qty = dict_items.bom_qty
+		bom_item_qty = dict_items.bi_qty
+		
+		if bom_qty!=0:
+			required_qty = (bom_item_qty/bom_qty) * (float(quantity_to_make))
+		else:
+			required_qty = 0
+		if warehouse is not None and warehouse is not "":
+			whse_qty = get_warehouse_qty(warehouse,item_code)
+			whse_stock_entry_qty = get_stock_entry_quantities(warehouse,item_code,project_start_date)
+		else:
+			whse_qty = 0
+			whse_stock_entry_qty = 0
+
 		if whse_stock_entry_qty:
 			whse_qty = whse_qty + whse_stock_entry_qty
-		print "whse_qty-----------", whse_qty, item_code
-		delta_qty = float(whse_qty) - float(bom_qty)
-		reserved_whse_qty = get_warehouse_qty(reserve_warehouse,item_code)
-		reserved_whse_stock_entry_qty = get_stock_entry_quantities(reserve_warehouse,item_code,project_start_date)
+		if reserve_warehouse is not None and reserve_warehouse is not "":
+			reserved_whse_qty = get_warehouse_qty(reserve_warehouse,item_code)
+			reserved_whse_stock_entry_qty = get_stock_entry_quantities(reserve_warehouse,item_code,project_start_date)
+		else:
+			reserved_whse_qty = 0
+			reserved_whse_stock_entry_qty = 0
+
 		if reserved_whse_stock_entry_qty:
 			reserved_whse_qty = reserved_whse_qty + reserved_whse_stock_entry_qty
-		print "reserved_whse_qty-----------", reserved_whse_qty, item_code
-		sum_qty = float(whse_qty) + float(reserved_whse_qty)
-		delta1_qty = float(sum_qty) - float(bom_qty)
-		summ_data.append([item_code, bom_qty, whse_qty, delta_qty, reserved_whse_qty, sum_qty, delta1_qty])
+
+		#delta_qty = whse_qty - bom_qty 
+		delta_qty = whse_qty - required_qty
+		sum_qty = whse_qty + reserved_whse_qty
+		#delta1_qty = sum_qty - bom_qty
+		delta1_qty = sum_qty - required_qty
+		summ_data.append([str(item_code), str(bom_qty), str(bom_item_qty), str(required_qty), str(whse_qty), str(delta_qty), 
+					str(reserved_whse_qty), str(sum_qty), str(delta1_qty)])
+	print "summ_data-----------", summ_data
 	return columns, summ_data
 
 def get_stock_entry_quantities(warehouse,item_code,project_start_date):
@@ -70,29 +97,33 @@ def get_stock_entry_quantities(warehouse,item_code,project_start_date):
 	details = frappe.db.sql("""select sed.item_code,sed.qty,se.purpose from  `tabStock Entry Detail` sed, `tabStock Entry` se where 		  sed.item_code=%s and sed.s_warehouse=%s and se.purpose='Manufacture' and sed.modified >='""" + str(project_start_date) +"""'
 		  and sed.modified <='""" + current_date + """' and sed.parent=se.name and se.docstatus=1""", (item_code,warehouse), as_dict=1)
 	if len(details)!=0:
-		print "details------------", details
+		#print "details------------", details
 		for se_qty in details:
-			total_qty = total_qty + float(se_qty['qty'])
+			if se_qty['qty'] is None:
+				qty = 0
+			else:
+				qty = float(se_qty['qty'])
+			total_qty = total_qty + qty
 	return total_qty
 
 def merger_items_list(whse_items,bom_items):
-	if whse_items is None:
-		whse_items = []
-	if bom_items is None:
-		bom_items = []
-	after_merge = whse_items + bom_items
-	item_data=[]
-	for new in range(0,len(after_merge)):
-		print "new---", new
-		for old in range(new,len(after_merge)):
-			print "new value ",after_merge[new]['item_code']
-			new_item_code=after_merge[new]['item_code']
-			old_item_code=after_merge[old]['item_code']
-			if new_item_code  not in item_data:
-				item_data.append(new_item_code)
-				break;	
-	return item_data
-				
+	items_map = {}
+	if bom_items:
+		for data in bom_items:
+			item_code = data['item_code']
+			bi_qty = data['bi_qty']
+			bo_qty = data['bo_qty']
+			print "bom_item_qty--------", bi_qty
+			key = (item_code)
+			if key not in items_map:
+				items_map[key] = frappe._dict({"item_code": item_code,"bi_qty": float(bi_qty),"bom_qty": bo_qty})
+	if whse_items:
+		for whse_items_data in 	whse_items:
+			whse_item = whse_items_data['item_code']
+			if whse_item not in items_map:
+				key = whse_item
+				items_map[key] = frappe._dict({"item_code": whse_item,"bi_qty": 0.0,"bom_qty": 0.0})
+	return items_map
 
 def get_warehouse_qty(warehouse,item_code):
 	whse_qty = 0
@@ -146,10 +177,10 @@ def get_report_data():
 	for rows in summ_data:
 		item_code = rows[0]
 		bom_qty = rows[1]
-		qty = rows[6]
-		qty_in_reserved_whse = rows[4]
-		qty_in_production_whse = rows[2]
-		total_qty = rows[5]
+		qty = rows[8]
+		qty_in_reserved_whse = rows[6]
+		qty_in_production_whse = rows[4]
+		total_qty = rows[7]
 		details = 											{"item_code":item_code,"bom_qty":bom_qty,"qty":qty,"qty_in_reserved_whse":qty_in_reserved_whse,"qty_in_production_whse":qty_in_production_whse,"total_qty":total_qty}
 		report_data.append(details)
 	return report_data
@@ -159,13 +190,19 @@ def get_columns():
 	columns = [
 		_("Item Code")+":Link/BOM:100",
 		_("BOM Qty")+"::100",
+		_("BOM Item Qty")+"::100",
+		_("Required Qty")+"::100",
 		_("Quantity Available In Warehouse")+"::140",
-		_("Available - Required")+"::100",
+		_("Delta Qty")+"::100",
 		_("Reserved Warehouse Qty")+"::150",
 		_("Sum Qty")+":Link/UOM:90",
 		_("Sum Qty - Required Qty")+"::100"
 		 ]
 	return columns
+
+@frappe.whitelist()
+def check_for_whole_number(bomno):
+	return (frappe.db.sql("""select must_be_whole_number from `tabUOM` where name IN (select uom from `tabBOM`where name = %s) """,(bomno)))
 
 @frappe.whitelist()
 #def make_issue(item_code,project,qty,planner,core_team_coordinator):
@@ -194,9 +231,9 @@ def make_issue(issue_items):
 			qty_in_production_whse = 0
 		if total_qty is None:
 			total_qty = 0
-		if core_team_coordinator:
+		if core_team_coordinator != "null" and core_team_coordinator is not None:
 			issue_assign.append(core_team_coordinator)
-		if planner:
+		if planner != "null" and planner is not None:
 			issue_assign.append(planner)
 
 		#Start of Table format data for Description field in Issue doc..
