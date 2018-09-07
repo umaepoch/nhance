@@ -16,20 +16,25 @@ import ast
 def execute(filters=None):
 	global prepare_report_data
 	global company
-	BomValue=[]
+	bom_type = ""
 	new_bom_list=[]
 	old_bom_list=[]
+	new_bom_items = []
+	old_bom_items = []
 	company = filters.get("company")
 	new_bom = filters.get("new_bom")
 	old_bom = filters.get("old_bom")
 	warehouse = filters.get("stock_warehouse")
-	new_bom_items=get_new_bom_value(new_bom);
-	old_bom_items=get_old_bom_value(old_bom);
-
+	if new_bom:
+		bom_type = "new"
+		new_bom_items = get_exploded_bom_entries(filters, bom_type)
+	if old_bom:
+		bom_type = "old"
+		old_bom_items = get_exploded_bom_entries(filters, bom_type)
 	if len(new_bom_items) !=0:
 		for items in new_bom_items:
 			item_code = items['item_code']
-			qty = items['qty']
+			qty = items['bi_qty']
 			old =0
 			print "item_code",item_code
 			print "item_code",qty
@@ -39,7 +44,7 @@ def execute(filters=None):
 		for items in old_bom_items:
 			item_code = items['item_code']
 			qty = 0
-			old =items['qty']
+			old =items['bi_qty']
 			print "item_code",item_code
 			print "item_code",qty
 			details = {"item_code":item_code,"new_qty":qty,"old_qty":old}
@@ -56,15 +61,7 @@ def execute(filters=None):
 		excees_qty = items['excees_qty']
 		stock_qty = items['stock_qty']
 		delta_qty=items['delta_qty']	
-		prepare_report_data.append([				
-			    	item_code,
-				old_qty,
-				new_qty,
-				excees_qty,
-				stock_qty,
-				delta_qty
-				])
-	
+		prepare_report_data.append([ item_code, old_qty, new_qty, excees_qty, stock_qty, delta_qty])
 	
 	columns = get_columns()
 	print "DaTA----",prepare_report_data
@@ -81,18 +78,6 @@ def get_columns():
 		_("Delta Qty")+"::100"
 		 ]
 		return columns
-
-
-def get_new_bom_value(new_bom):
-	new_bom_value = frappe.db.sql("""select item_code,qty from `tabBOM Item` where parent=%s and docstatus=1""",(new_bom),as_dict=1)
-	print "new_bom_value----------------",new_bom_value
-	return new_bom_value
-
-
-def get_old_bom_value(old_bom):
-	old_bom_value = frappe.db.sql("""select item_code,qty from `tabBOM Item` where parent=%s and docstatus=1""",(old_bom),as_dict=1)
-	print "old_bom_value----------------",old_bom_value
-	return old_bom_value
 
 def get_merge_bom_list(new_bom_list,old_bom_list):
 	after_merge=new_bom_list+old_bom_list
@@ -144,6 +129,32 @@ def get_report_items(items_data,new_bom_items,old_bom_items,warehouse):
 def get_stock(item_code, warehouse):
 	item_stock = get_balance_qty_from_sle(item_code, warehouse)
 	return item_stock
+
+def get_exploded_bom_entries(filters, bom_type):
+	if bom_type == "old":
+		conditions = get_conditions_for_old_bom(filters)
+	if bom_type == "new":
+		conditions = get_conditions_for_new_bom(filters)
+	print "---------conditions::", conditions
+	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as qty, bo.project, bi.item_code, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
+
+def get_conditions_for_old_bom(filters):
+	conditions = ""
+	if filters.get("company"):
+		conditions += " and bo.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
+
+	if filters.get("old_bom"):
+		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("old_bom"), percent=False)
+	return conditions
+
+def get_conditions_for_new_bom(filters):
+	conditions = ""
+	if filters.get("company"):
+		conditions += " and bo.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
+
+	if filters.get("new_bom"):
+		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("new_bom"), percent=False)
+	return conditions
 
 @frappe.whitelist()
 def get_sreq_items_list(requested_by,item_code):
