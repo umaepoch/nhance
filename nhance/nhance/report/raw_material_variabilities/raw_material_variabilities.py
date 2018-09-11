@@ -31,6 +31,7 @@ def execute(filters=None):
 	if old_bom:
 		bom_type = "old"
 		old_bom_items = get_exploded_bom_entries(filters, bom_type)
+		print "old_bom_items--------------------", old_bom_items
 	if len(new_bom_items) !=0:
 		for items in new_bom_items:
 			item_code = items['item_code']
@@ -41,17 +42,19 @@ def execute(filters=None):
 			details = {"item_code":item_code,"new_qty":qty,"old_qty":old}
 			new_bom_list.append(details)
 	if len(old_bom_items) !=0:
+		old_bom_item_qty = 0
 		for items in old_bom_items:
 			item_code = items['item_code']
 			qty = 0
-			old =items['bi_qty']
-			print "item_code",item_code
-			print "item_code",qty
-			details = {"item_code":item_code,"new_qty":qty,"old_qty":old}
+			old_bom_item_qty =items['bi_qty']
+			print "item_code--",item_code
+			print "old_bom_item_qty--",old_bom_item_qty
+			details = {"item_code":item_code,"new_qty":qty,"old_qty":old_bom_item_qty}
 			old_bom_list.append(details)
 			
-	items_data=get_merge_bom_list(new_bom_list,old_bom_list)
-	report_items_details=get_report_items(items_data,new_bom_items,old_bom_items,warehouse)
+	items_data = get_merge_bom_list(new_bom_list,old_bom_list)
+	print "items_data---------", items_data
+	report_items_details = get_report_items(items_data,new_bom_items,old_bom_items,warehouse)
 	prepare_report_data = []
 	print "ItemDetail",report_items_details
 	for items in report_items_details:
@@ -107,16 +110,17 @@ def get_report_items(items_data,new_bom_items,old_bom_items,warehouse):
 		for new in range(0,len(new_bom_items)):
 			new_item_code=new_bom_items[new]['item_code']
 			if data==new_item_code:
-				new_qty=new_bom_items[new]['qty']
+				new_qty=new_bom_items[new]['bi_qty']
 		for old in range(0,len(old_bom_items)):
-			old_item_code=old_bom_items[old]['item_code']
-			if data==old_item_code:
-				old_qty=old_bom_items[old]['qty']
+			old_item_code = old_bom_items[old]['item_code']
+			if str(data) == str(old_item_code):
+				old_qty = old_bom_items[old]['bi_qty']
+				#print "old_qty---------", old_qty
 		
-		excees_qty=old_qty-new_qty
+		excees_qty = old_qty - new_qty
 		item_code = data
 		stock_qty = get_stock(item_code, warehouse)
-		delta_qty=stock_qty-new_qty
+		delta_qty = stock_qty - new_qty
 		details = {"item_code":data,"new_qty":new_qty,"old_qty":old_qty,"excees_qty":excees_qty,"stock_qty":stock_qty,"delta_qty":delta_qty}
 		data_for_report.append(details)
 		new_qty=0
