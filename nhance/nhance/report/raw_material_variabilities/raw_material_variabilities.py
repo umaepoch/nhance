@@ -215,6 +215,7 @@ def make_stock_requisition(stockRequisitionItemsList, materialRequestType, workf
 		OuterJson_Transfer["material_request_type"] = "Purchase"
 	elif materialRequestType == "Issue":
 		OuterJson_Transfer["title"] = "Material Issue"
+		OuterJson_Transfer["requested_by"] = reference_no
 		OuterJson_Transfer["material_request_type"] = "Material Issue"
 
 	for data in items_List:
