@@ -848,8 +848,6 @@ def generate_rarb(warehouse, rooms, aisle, rack, bin_no):
 	doc.update(newJson)
 	doc.save()
 	frappe.db.commit()
-
-
 	newJson_wh = {
 			"higher_rarb": warehouse,
 			"warehouse": warehouse,
@@ -888,8 +886,6 @@ def generate_rarb(warehouse, rooms, aisle, rack, bin_no):
 				]
 			}
 
-
-	
 		for x in xrange(1, ais):
 			aisle_id = warehouse + "-Aisle-" + str(w) + "-" + str(x)
 			rarb_aisle = "Aisle-" + str(w) + "-" + str(x)
@@ -921,7 +917,6 @@ def generate_rarb(warehouse, rooms, aisle, rack, bin_no):
 				]
 			}
 
-
 			for y in xrange(1, rac):
 				rac_id = warehouse + "-Rack-" + str(w) + "-" + str(x)+ "-" + str(y)
 				rarb_rack = "Rack-" + str(w) + "-" + str(x)+ "-" + str(y)
@@ -952,8 +947,6 @@ def generate_rarb(warehouse, rooms, aisle, rack, bin_no):
 					"rarb_locations": [
 						]
 					}
-
-
 				for z in xrange(1, bin_n):
 					bin_id = warehouse + "-Bin-" + str(w) + "-" + str(x)+ "-" + str(y)+ "-" + str(z)
 					rarb_bin = "Bin-" + str(w) + "-" + str(x)+ "-" + str(y)+ "-" + str(z)
@@ -974,12 +967,11 @@ def generate_rarb(warehouse, rooms, aisle, rack, bin_no):
 					doc.update(newJson)
 					doc.save()
 					frappe.db.commit()
-			
+
 				doc_rac = frappe.new_doc("RARB")
 				doc_rac.update(newJson_rac)
 				doc_rac.save()
 				frappe.db.commit()
-
 
 			doc_ai = frappe.new_doc("RARB")
 			doc_ai.update(newJson_ai)
@@ -997,3 +989,125 @@ def generate_rarb(warehouse, rooms, aisle, rack, bin_no):
 	frappe.db.commit()
 	frappe.throw(_("RARBs created"))
 	return
+
+@frappe.whitelist()
+def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,payment_schedule):
+	name = ""
+	title = ""
+	owner = ""
+	taxes_and_charges = ""
+	company = ""
+	supplier = ""
+	schedule_date = ""
+	stock_req = ""
+	stock_req_id = ""
+	busyvoucherno = ""
+	item_lines_to_print = 0
+	apply_discount_on = ""
+	project = ""
+	additional_discount_percentage = 0
+	remark = ""
+	material_req = ""
+	payment_terms = ""
+	due_date = ""
+	payment_term = ""
+	return_doc = ""
+	inner_json_for_items = " "
+	inner_json_for_taxes = ""
+	required_date = datetime.now()
+	purchase_order_details = ast.literal_eval(purchase_order_details) 
+	purchase_taxes = ast.literal_eval(purchase_taxes) 
+	purchase_items = ast.literal_eval(purchase_items)
+	payment_schedule = ast.literal_eval(payment_schedule)
+	for data in purchase_order_details:
+		title = data["title"]
+		owner = data["owner"]
+		taxes_and_charges = data["taxes_and_charges"]
+		company = data["company"]
+		supplier = data["supplier"]
+		schedule_date = data["schedule_date"]
+		stock_req =  data["stock_req"]
+		busyvoucherno =  data["busyvoucherno"]
+		item_lines_to_print = data["item_lines_to_print"]
+		additional_discount_percentage = data["additional_discount_percentage"]
+		project = data["project"]
+		remark = data["remark"]
+		material_req = data["material_req"]
+		payment_terms = data["payment_terms_template"]
+		apply_discount_on = data["apply_discount_on"]
+		name = data["name"]
+	for data in payment_schedule:
+		due_date = data['due_date']
+	outer_json = {
+		"doctype": "Purchase Order",
+		"title" : title,
+		"creation" : required_date,
+		"owner" : owner,
+		"taxes_and_charges" :taxes_and_charges,
+		"company" : company,
+		"due_date" : due_date,
+		"docstatus" :0,
+		"supplier" : supplier,
+		"schedule_date" :schedule_date,
+		"stock_req" : stock_req,
+		"stock_requisition_id" : stock_req_id,
+		"additional_discount_percentage" :additional_discount_percentage,
+		"busyvoucherno" : busyvoucherno,
+		"item_lines_to_print" : item_lines_to_print,
+		"project" : project,
+		"tracking_no" : remark,
+		"material_request" : material_req,
+		"payment_terms_template":payment_terms,
+		"apply_discount_on" :apply_discount_on,
+		"items":[],
+		"taxes":[]
+		}
+	for data in purchase_items:
+		item_code = data['item_code']
+		received_qty = data['received_qty']
+		target_warehouse = data['warehouse']
+		last_purchase_price = data["last_purchase_rate"]
+		parentfield = data["parentfield"]
+		qty_as_per_stock_uom = data['stock_qty']
+		rate = data['rate']
+		pending_qty = qty_as_per_stock_uom-received_qty
+		pending = hash(round(pending_qty, 1))
+		if pending > 0:
+			inner_json_for_items = {
+				"item_code": item_code,
+				"doctype": "Purchase Order Item",
+				"qty": pending_qty,
+				"schedule_date": required_date,
+				"last_purchase_price" : last_purchase_price,
+				"parentfield" : parentfield,
+				"warehouse":target_warehouse,
+				"qty_as_per_stock_uom":qty_as_per_stock_uom,
+				"rate":rate
+			}
+			outer_json["items"].append(inner_json_for_items)
+	for data in purchase_taxes:
+		charge_type = data['charge_type']
+		account_head = data['account_head']
+		rate = data['rate']
+		tax_amount = data["tax_amount"]
+		description = data["description"]
+		inner_json_for_taxes = {
+			"charge_type" : charge_type,
+			"account_head":account_head,
+			"rate":rate,
+			"tax_amount": tax_amount,
+			"description" :description,
+		}
+		outer_json["taxes"].append(inner_json_for_taxes)
+	print "outer json -------------", outer_json
+	doc = frappe.new_doc("Purchase Order")
+	doc.update(outer_json)
+	doc.save()
+	return_doc = doc.doctype
+	frappe.msgprint("Purchase Order is Created  :  "+doc.name)
+	po_doc = frappe.get_doc("Purchase Order", name)
+	po_doc.set_status(update = True , status = "Closed")
+	po_doc.save()
+	return_doc = po_doc.doctype
+	if return_doc:
+		return return_doc 

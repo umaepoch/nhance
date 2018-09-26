@@ -98,7 +98,6 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 				// stop
 				cur_frm.add_custom_button(__('Stop'),
 					cur_frm.cscript['Stop Material Request']);
-
 			}
 		}
 
@@ -410,10 +409,26 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 $.extend(cur_frm.cscript, new erpnext.buying.MaterialRequestController({frm: cur_frm}));
 
 cur_frm.cscript['Stop Material Request'] = function() {
-	var doc = cur_frm.doc;
-	$c('runserverobj', args={'method':'update_status', 'arg': 'Stopped', 'docs': doc}, function(r,rt) {
-		cur_frm.refresh();
-	});
+    var doc = cur_frm.doc;
+    console.log("from cancel:" + doc.name);
+    var stock_requisition_id=doc.name
+    frappe.call({
+        method: "nhance.nhance.doctype.stock_requisition.stock_requisition.cancel_stock_requisition",
+	 args: {
+               "stock_requisition_id": stock_requisition_id
+               },
+        async: false,
+	callback: function(r) {
+		if(r.message) {
+			cur_frm.reload_doc();
+		} 
+		}
+         });
+    /**
+    $c('runserverobj', args={'method':'update_status', 'arg': 'Stopped', 'docs': doc}, function(r,rt) {
+    	cur_frm.refresh();
+    });
+   **/
 };
 
 cur_frm.cscript['Unstop Material Request'] = function(){
@@ -561,6 +576,7 @@ var purchase_uom = "";
 		}
         }
     });
+
 return purchase_uom;
 }
 
@@ -661,7 +677,8 @@ fields: dialogArray,
 		for(var j=0;j<list.length;j++){
 		if(cur_frm.doc.items[i].item_code.toString() == list[j].item_code.toString()){
 		cur_frm.doc.items[i].hidden_item_code = list[j].item_code;
-		cur_frm.doc.items[i].hidden_qty = list[j].qty;
+		//cur_frm.doc.items[i].hidden_qty = list[j].qty;
+		cur_frm.doc.items[i].hidden_qty = list[j].stock_qty;
 		}
 		}
 		}
@@ -701,7 +718,8 @@ function makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID){
 	for(var j=0;j<items.length;j++){
 	if(cur_frm.doc.items[i].item_code.toString() == items[j].item_code.toString()){
 	cur_frm.doc.items[i].hidden_item_code = items[j].item_code;
-	cur_frm.doc.items[i].hidden_qty = items[j].qty;
+	//cur_frm.doc.items[i].hidden_qty = items[j].qty;
+	cur_frm.doc.items[i].hidden_qty = list[j].stock_qty;
 	}
 	}	
 	}//end of for loop..
@@ -759,7 +777,7 @@ frappe.call({
         async: false,
         callback: function(r) {
         	if (r.message) {
-                	frappe.set_route('List', r.message);
+                	frm.reload_doc()
                  }
         } //end of callback fun..
        }) //end of frappe call.

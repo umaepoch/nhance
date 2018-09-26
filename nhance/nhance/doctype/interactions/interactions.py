@@ -23,5 +23,5 @@ class Interactions(Document):
 				ignore_permissions=self.flags.ignore_permissions,
 				doctype=self.doctype)
 			self.address = party_details.customer_address
-			self.contact = party_details.contact_person
+			#self.contact = party_details.contact_person
 

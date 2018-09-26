@@ -268,7 +268,7 @@ def get_Purchase_Taxes_and_Charges(account_head, tax_name):
 
 @frappe.whitelist()
 def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
-	print "##-tax_template::", tax_template
+	#print "##-tax_template::", tax_template
 	order_List = json.loads(args)
 	items_List = json.dumps(order_List)
 	items_List = ast.literal_eval(items_List)
@@ -296,8 +296,8 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 			account_Name = taxes.account_head
 			if account_Name:
 				tax_Rate_List = get_Purchase_Taxes_and_Charges(account_Name, tax_Name.name)
-				print "####-account_Name::", account_Name
-				print "####-tax_Name::", tax_Name.name
+				#print "####-account_Name::", account_Name
+				#print "####-tax_Name::", tax_Name.name
 				if tax_Rate_List is not None and len(tax_Rate_List) != 0:
 					charge_type = tax_Rate_List[0]['charge_type']
 					rate = tax_Rate_List[0]['rate']
@@ -313,14 +313,6 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 					outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
 	i = 0
 	for items in items_List:
-		"""
-		stock_uom = items_List[i]['stock_uom']
-		uom = items_List[i]['purchase_uom']
-		stock_uom = stock_uom.replace(" ", "")
-		uom = uom.replace(" ", "")
-		print "stock_uom::", stock_uom
-		print "uom::", uom
-		"""
 		outerJson_Transfer['supplier'] = items_List[i]['supplier']
 		innerJson_Transfer =	{
 					"creation": creation_Date,
@@ -337,7 +329,7 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 				   	}
 		outerJson_Transfer["items"].append(innerJson_Transfer)
 		i = i + 1
-	print "########-Final Purchase Order Json::", outerJson_Transfer
+	#print "########-Final Purchase Order Json::", outerJson_Transfer
 	doc = frappe.new_doc("Purchase Order")
 	doc.update(outerJson_Transfer)
 	doc.save()
@@ -532,12 +524,12 @@ def get_po_list(srID):
 @frappe.whitelist()
 def update_po_list(srID, po_list):
 	result = frappe.db.sql("""update `tabStock Requisition` set po_list='""" + po_list + """' where name=%s""", (srID))
-	print "####-result::", result
+	#print "####-result::", result
 
 @frappe.whitelist()
 def get_stock_requisition_items(parent):
 	records = frappe.db.sql("""select hidden_item_code,hidden_qty from `tabStock Requisition Item` where parent=%s""", (parent), as_dict=1)
-	print "####-Stock Requisition records::", records
+	#print "####-Stock Requisition records::", records
 	return records
 
 @frappe.whitelist()
@@ -545,12 +537,11 @@ def get_stock_requisition_po_items_list(srID):
 	po_items_map = {}
 	po_items_list = []
 	po_list = get_po_list(srID)
-	print "po_list****************************************************9",po_list
 	if po_list is not None and po_list is not "" and po_list != "NULL":
 		pos = po_list.split(",")
 		if len(pos)!=0:
 			for po in pos:
-				print "po--------------from pos",po
+				#print "po--------------from pos",po
 				data = get_ordered_items_and_qty(po)
 				
 				if len(data)!=0:
@@ -567,79 +558,78 @@ def get_stock_requisition_po_items_list(srID):
 							"item_code": item_code,
 							"qty": qty
 							})
-	print "po_items_map::", po_items_map
-	print "---------------------------po_items_map::", len(po_items_map) 
+	#print "po_items_map::", po_items_map
+	#print "---------------------------po_items_map::", len(po_items_map) 
 	for item_code in sorted(po_items_map):
 		items_dict = po_items_map[item_code]
 		item_code = items_dict.item_code;
 		qty = items_dict.qty;
 		data = {"item_code":item_code, "qty":qty}
 		po_items_list.append(data)
-	print "Po Item List************************************************8",po_items_list
+	#print "Po Item List************************************************8",po_items_list
 	return po_items_list
 
 
 def get_ordered_items_and_qty(po):
 	data = {}
 	items_list = []
-	records = frappe.db.sql("""select tpoi.item_code,tpoi.qty from `tabPurchase Order Item` tpoi,`tabPurchase Order` tpo where
+	records = frappe.db.sql("""select tpoi.item_code,tpoi.stock_qty as qty from `tabPurchase Order Item` tpoi,`tabPurchase Order` tpo where
  				tpoi.parent=%s and tpo.docstatus=1 and tpo.name=tpoi.parent""", (po), as_dict=1)
 	
-	print "records::", records
+	#print "records::", records
 	if len(records)!=0:
 		for items in records:
 			item_code = items.item_code
 			qty = items.qty
 			data = {"item_code":item_code, "qty":qty}
 			items_list.append(data)
-	print "Item_list-------",items_list
+	#print "Item_list-------",items_list
 	return items_list
 
 @frappe.whitelist()
 def fetch_conversion_factor(purchase_uom, item_code):
 	conversion_factor = 1
 	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where uom=%s and parent=%s""", (purchase_uom, 					item_code), as_dict=1)
-	print "records::", records
+	#print "records::", records
 	if len(records)!=0:
 		conversion_factor = records[0]['conversion_factor']
 	return conversion_factor
 
 @frappe.whitelist() 
 def update_stock_requisition_status(srID,status):
-	print "status---------------------",status
+	#print "status---------------------",status
 	result = frappe.db.sql("""update `tabStock Requisition` set status='""" + status + """' where name=%s""", (srID))
-	print "####-result::", result
+	#print "####-result::", result
 
 @frappe.whitelist()
 def po_list_value(srID,po_list):
-	print "SREQ from po_list value"
-	print "hello"
 	sreq_qty=""
 	items_list = []	
 	StockReqValue = frappe.db.sql("""select hidden_item_code,hidden_qty from `tabStock Requisition Item` where parent=%s""", (srID), as_dict=1)
-	PurchaseOrderValue= frappe.db.sql("""select tpoi.item_code,tpoi.qty from `tabPurchase Order Item` tpoi,`tabPurchase Order` tpo where
- 				tpoi.parent=%s  and tpo.name=tpoi.parent""", (po_list), as_dict=1)	
-	print "####-StockReqValue::", StockReqValue
-	print "####-PurchaseOrderValue::", PurchaseOrderValue
+
+	PurchaseOrderValue= frappe.db.sql("""select tpoi.item_code,tpoi.stock_qty as qty from `tabPurchase Order Item` tpoi,
+				`tabPurchase Order` tpo where tpoi.parent=%s  and tpo.name=tpoi.parent""", (po_list), as_dict=1)	
+	#print "####-StockReqValue::", StockReqValue
+	#print "####-PurchaseOrderValue::", PurchaseOrderValue
 	status="";
 	for item in StockReqValue:
 		status="Partially Ordered"
 		sreq_item_code = str(item['hidden_item_code'])
-		print "Sr_item_code from if statement",sreq_item_code
+		#print "Sr_item_code from if statement",sreq_item_code
 		sreq_qty =float(item['hidden_qty'])
-		print "Sr_qty from if statement",sreq_qty
+		#print "Sr_qty from if statement",sreq_qty
 		for item in PurchaseOrderValue:
 			po_item_code=str(item['item_code'])
 			po_item_qty=float(item['qty'])
 			if(sreq_item_code==po_item_code):
-				print "po_item_code-----",po_item_code
-				print " po item qty---" ,po_item_qty
+				#print "po_item_code-----",po_item_code
+				#print " po item qty---" ,po_item_qty
 				if(sreq_qty<item['qty']):
 					sreq_qty=sreq_qty
 					data = {"item_code":po_item_code, "qty":sreq_qty}
 					items_list.append(data)
 					break;
-	print "sreq_qty11",items_list	
+	#print "sreq_qty11",items_list	
 	return items_list
 
 @frappe.whitelist()
@@ -686,3 +676,11 @@ def make_material_issue(items,company,stock_requisition_id):
 	return_doc = doc.doctype
 	if return_doc:
 		return return_doc
+
+@frappe.whitelist()
+def cancel_stock_requisition(stock_requisition_id):
+	stock_requisition = frappe.get_doc("Stock Requisition", stock_requisition_id)
+	stock_requisition.cancel()
+	frappe.msgprint("The Stock Requisition is cancelled successfully!!")
+	return 1
+
