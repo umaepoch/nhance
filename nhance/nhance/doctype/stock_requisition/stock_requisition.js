@@ -213,7 +213,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					type: "POST",
 					method: 'frappe.model.mapper.make_mapped_doc',
 					args: {
-						method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_purchase_order",
+					method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_purchase_order",
 					source_name: cur_frm.doc.name,
 					selected_children: cur_frm.get_selected()
 						},
@@ -672,17 +672,6 @@ fields: dialogArray,
 		}//end of inner for-loop..
     		console.log("###list", list.length);
     		console.log("###list", list);
-		if(list.length!=0){
-		for(var i = 0;i<cur_frm.doc.items.length;i++){
-		for(var j=0;j<list.length;j++){
-		if(cur_frm.doc.items[i].item_code.toString() == list[j].item_code.toString()){
-		cur_frm.doc.items[i].hidden_item_code = list[j].item_code;
-		//cur_frm.doc.items[i].hidden_qty = list[j].qty;
-		cur_frm.doc.items[i].hidden_qty = list[j].stock_qty;
-		}
-		}
-		}
-		}
     		frappe.call({
        			 method: "nhance.nhance.doctype.stock_requisition.stock_requisition.making_PurchaseOrder_For_SupplierItems",
         		 args: {
@@ -700,7 +689,6 @@ fields: dialogArray,
 	if(items.length!=0){
 	makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID);
 	}
-	cur_frm.save("Update");//updating Stock Requisition..
 	}
 	});//end of dialog box...
 	dialog.show();
@@ -708,21 +696,12 @@ fields: dialogArray,
 	if(items.length!=0){
 	console.log("-----------------items::"+items.length);
 	makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID);
-	cur_frm.save("Update");//updating Stock Requisition..
+
 	}
 }
 }//end of function..
 
 function makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID){
-	for(var i=0;i<cur_frm.doc.items.length;i++){
-	for(var j=0;j<items.length;j++){
-	if(cur_frm.doc.items[i].item_code.toString() == items[j].item_code.toString()){
-	cur_frm.doc.items[i].hidden_item_code = items[j].item_code;
-	//cur_frm.doc.items[i].hidden_qty = items[j].qty;
-	cur_frm.doc.items[i].hidden_qty = list[j].stock_qty;
-	}
-	}	
-	}//end of for loop..
 	message.items = items;
 	message.stock_requisition_id  = srID;
 	message.supplier = "";

@@ -528,8 +528,8 @@ def update_po_list(srID, po_list):
 
 @frappe.whitelist()
 def get_stock_requisition_items(parent):
-	records = frappe.db.sql("""select hidden_item_code,hidden_qty from `tabStock Requisition Item` where parent=%s""", (parent), as_dict=1)
-	#print "####-Stock Requisition records::", records
+	records = frappe.db.sql("""select item_code as hidden_item_code,stock_qty as hidden_qty from `tabStock Requisition Item` where 
+				parent=%s""", (parent), as_dict=1)
 	return records
 
 @frappe.whitelist()
@@ -605,7 +605,7 @@ def update_stock_requisition_status(srID,status):
 def po_list_value(srID,po_list):
 	sreq_qty=""
 	items_list = []	
-	StockReqValue = frappe.db.sql("""select hidden_item_code,hidden_qty from `tabStock Requisition Item` where parent=%s""", (srID), as_dict=1)
+	StockReqValue = frappe.db.sql("""select item_code as hidden_item_code,stock_qty as hidden_qty from `tabStock Requisition Item` where 				parent=%s""", (srID), as_dict=1)
 
 	PurchaseOrderValue= frappe.db.sql("""select tpoi.item_code,tpoi.stock_qty as qty from `tabPurchase Order Item` tpoi,
 				`tabPurchase Order` tpo where tpoi.parent=%s  and tpo.name=tpoi.parent""", (po_list), as_dict=1)	

@@ -353,8 +353,6 @@ def make_bom(source_name, target_doc=None):
 								"stock_uom": item_record.stock_uom,
 								"qty": qty,
 								"part_of_despatch_list": pod_list
-								
-				
 								}
 		
 							newJson["items"].append(innerJson)
