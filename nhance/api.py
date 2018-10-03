@@ -304,7 +304,7 @@ def make_bom(source_name, target_doc=None):
 	boq_record = frappe.get_doc("Bill of Quantity", source_name)
 	company = boq_record.company
 	max_bom_level = frappe.db.sql("""select max(bom_level) from `tabBill of Quantity Item` boqi where boqi.parent = %s""", (boq_record.name))
-	x = 1
+	x = 0
 #	if max_bom_level > 0:
 	if max_bom_level[0][0] is None or max_bom_level[0][0] is "":
 		frappe.msgprint(_("Please create Quotation first"))	
@@ -369,7 +369,7 @@ def make_bom(source_name, target_doc=None):
 					frappe.msgprint(_("There are no BOM Items present in the quotation. Could not create a BOM for this Item."))
 
 	else:
-		for x in xrange(bom_level, 0, -1):
+		for x in xrange(bom_level + 1):
 			boq_record_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item from `tabBill of Quantity Item` boqi where boqi.parent = %s and boqi.bom_level = %s order by boqi.immediate_parent_item""" , (boq_record.name, x), as_dict=1)
 
 			if boq_record_items:

@@ -684,3 +684,4 @@ def cancel_stock_requisition(stock_requisition_id):
 	frappe.msgprint("The Stock Requisition is cancelled successfully!!")
 	return 1
 
+
