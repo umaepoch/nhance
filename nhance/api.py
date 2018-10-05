@@ -999,6 +999,7 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 	taxes_and_charges = ""
 	company = ""
 	supplier = ""
+	stopped_po="" 
 	schedule_date = ""
 	stock_req = ""
 	stock_req_id = ""
@@ -1013,19 +1014,26 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 	due_date = ""
 	payment_term = ""
 	return_doc = ""
-	inner_json_for_items = " "
+	inner_json_for_items = ""
 	inner_json_for_taxes = ""
 	required_date = datetime.now()
 	purchase_order_details = ast.literal_eval(purchase_order_details) 
 	purchase_taxes = ast.literal_eval(purchase_taxes) 
 	purchase_items = ast.literal_eval(purchase_items)
 	payment_schedule = ast.literal_eval(payment_schedule)
+
+	'''
+	stopped_purchase_order_when_submitted_object = frappe.get_doc("Buying Settings", 'stopped_purchase_order_when_submitted')
+	stopped_purchase_order_when_submitted = stopped_purchase_order_when_submitted_object.stopped_purchase_order_when_submitted
+	'''
+
 	for data in purchase_order_details:
 		title = data["title"]
 		owner = data["owner"]
 		taxes_and_charges = data["taxes_and_charges"]
 		company = data["company"]
 		supplier = data["supplier"]
+		stopped_po = data["name"] 
 		schedule_date = data["schedule_date"]
 		stock_req =  data["stock_req"]
 		busyvoucherno =  data["busyvoucherno"]
@@ -1039,16 +1047,18 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 		name = data["name"]
 	for data in payment_schedule:
 		due_date = data['due_date']
+	
 	outer_json = {
 		"doctype": "Purchase Order",
 		"title" : title,
 		"creation" : required_date,
+		"docstatus" : 0,
 		"owner" : owner,
 		"taxes_and_charges" :taxes_and_charges,
 		"company" : company,
 		"due_date" : due_date,
-		"docstatus" :0,
 		"supplier" : supplier,
+		"stopped_po":stopped_po,
 		"schedule_date" :schedule_date,
 		"stock_req" : stock_req,
 		"stock_requisition_id" : stock_req_id,
@@ -1063,6 +1073,16 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 		"items":[],
 		"taxes":[]
 		}
+	'''
+	if stopped_purchase_order_when_submitted:
+		if stopped_purchase_order_when_submitted == "Go Back to the state of the original Purchase Order":
+			outer_json['docstatus'] = 1
+			outer_json['workflow_state'] = "Approved"
+		elif stopped_purchase_order_when_submitted == "Start the Approval Process all over again":
+			outer_json['docstatus'] = 0
+			outer_json['workflow_state'] = "Pending Approval"
+	'''
+
 	for data in purchase_items:
 		item_code = data['item_code']
 		received_qty = data['received_qty']
@@ -1100,15 +1120,24 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 			"description" :description,
 		}
 		outer_json["taxes"].append(inner_json_for_taxes)
-	print "outer json -------------", outer_json
 	doc = frappe.new_doc("Purchase Order")
-	doc.update(outer_json)
+	doc.update(outer_json)	
 	doc.save()
 	return_doc = doc.doctype
 	frappe.msgprint("Purchase Order is Created  :  "+doc.name)
 	po_doc = frappe.get_doc("Purchase Order", name)
 	po_doc.set_status(update = True , status = "Closed")
-	po_doc.save()
+	po_doc.save()	
 	return_doc = po_doc.doctype
 	if return_doc:
 		return return_doc 
+
+@frappe.whitelist()
+def fetch_stopped_po_items(stopped_po):
+	items = []
+	items = frappe.db.sql("""select item_code,qty,price_list_rate from `tabPurchase Order Item` where parent=%s""", (stopped_po), 					as_dict = 1)
+	if items:
+		return items
+	else:
+		return items
+
