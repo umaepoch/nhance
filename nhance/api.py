@@ -1021,12 +1021,6 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 	purchase_taxes = ast.literal_eval(purchase_taxes) 
 	purchase_items = ast.literal_eval(purchase_items)
 	payment_schedule = ast.literal_eval(payment_schedule)
-
-	'''
-	stopped_purchase_order_when_submitted_object = frappe.get_doc("Buying Settings", 'stopped_purchase_order_when_submitted')
-	stopped_purchase_order_when_submitted = stopped_purchase_order_when_submitted_object.stopped_purchase_order_when_submitted
-	'''
-
 	for data in purchase_order_details:
 		title = data["title"]
 		owner = data["owner"]
@@ -1073,15 +1067,6 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 		"items":[],
 		"taxes":[]
 		}
-	'''
-	if stopped_purchase_order_when_submitted:
-		if stopped_purchase_order_when_submitted == "Go Back to the state of the original Purchase Order":
-			outer_json['docstatus'] = 1
-			outer_json['workflow_state'] = "Approved"
-		elif stopped_purchase_order_when_submitted == "Start the Approval Process all over again":
-			outer_json['docstatus'] = 0
-			outer_json['workflow_state'] = "Pending Approval"
-	'''
 
 	for data in purchase_items:
 		item_code = data['item_code']
@@ -1133,11 +1118,41 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 		return return_doc 
 
 @frappe.whitelist()
+def make_sreq(stock_requisition_list,company,stopped_po):
+	required_date = datetime.now()
+	return_doc = ""
+	innerJson = " "
+	sreq_items = json.loads(stock_requisition_list)
+	sreq_items = json.dumps(sreq_items)
+	sreq_items_list = ast.literal_eval(sreq_items)
+	outerJson = {
+			"doctype": "Stock Requisition",
+			"company": company,
+			"title": "Purchase",
+			"workflow_state": "Pending Approval",
+			"docstatus": 0,
+			"purpose": "Purchase",
+			"requested_by": stopped_po,
+			"items": []
+			}
+	for data in sreq_items_list:
+		innerJson = {
+			"doctype": "Stock Requisition Item",
+			"item_code": data['item_code'],
+			"qty": data['qty'],
+			"schedule_date": required_date,
+			"warehouse":data['warehouse']
+		}
+		outerJson["items"].append(innerJson)
+	doc = frappe.new_doc("Stock Requisition")
+	doc.update(outerJson)
+	doc.save()
+
+@frappe.whitelist()
 def fetch_stopped_po_items(stopped_po):
 	items = []
-	items = frappe.db.sql("""select item_code,qty,price_list_rate from `tabPurchase Order Item` where parent=%s""", (stopped_po), 					as_dict = 1)
+	items = frappe.db.sql("""select item_code,qty,rate,price_list_rate,received_qty from `tabPurchase Order Item` where parent=%s""", 					(stopped_po), as_dict = 1)
 	if items:
 		return items
 	else:
 		return items
-
