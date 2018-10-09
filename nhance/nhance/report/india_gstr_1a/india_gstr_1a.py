@@ -95,12 +95,12 @@ class Gstr1Report(object):
 					invoice_items_data = self.get_invoice_items_details()
 					for items in invoice_items_data:
 						self.item_name = items.item_name
-						self.item_code = items.item_code
-						gst_hsn_code = items.gst_hsn_code
-						qty = items.qty
-						uom = items.uom
-						rate = items.rate
-						price_list_rate = items.price_list_rate
+						self.item_code = items['item_code']
+						gst_hsn_code = items['gst_hsn_code']
+						qty = items['qty']
+						uom = items['uom']
+						rate = items['rate']
+						price_list_rate = items['price_list_rate']
 						total_disc = price_list_rate-rate
 						if total_disc == 0:
 							total_disc = "0"
@@ -134,6 +134,33 @@ class Gstr1Report(object):
 						cess_tax_rate = 0
 						customer_type = ""
 						customer_gst = ""
+						gst_status = ""
+						composition = ""
+						item_good_service = ""
+						gst_item_status = ""
+						customer_gst_status = ""
+						gst_status = items['india_gst_item_status']
+						item_goods_services = items['is_the_item_is_good_or_serivce']
+						if item_goods_services is not None:
+							if str(item_goods_services) == "Service":
+								item_good_service = item_goods_services
+							elif str(item_goods_services) == "Goods":
+								item_good_service = item_goods_services
+						else :
+							item_good_service ="--"
+						if gst_status is not None:
+							if "Nil Rated Item" == str(gst_status):
+								gst_item_status = gst_status
+							elif "Exempt Item" == str(gst_status):
+								gst_item_status = gst_status
+							elif "Non-GST Item" == str(gst_status):
+								gst_item_status = gst_status
+							elif "Composition Dealer " == str(gst_status):
+								gst_item_status = gst_status
+							elif "UIN Restration changes " == str(gst_status):
+								gst_item_status = gst_status
+						else :
+							gst_item_status = "--"
 						if len(advance_payment_detais ) != 0:
 							for ad_payment in advance_payment_detais:
 								party_name = ad_payment.party_name
@@ -200,7 +227,21 @@ class Gstr1Report(object):
 								if bill_of_supply == 1:
 									check_bill_of_supply = "Yes"
 								else:
-									check_bill_of_supply = "No"					
+									check_bill_of_supply = "No"
+							gst_status = invoice_value.india_gst_customer_status
+							if self.invoice_ID  in sales_invoice_id:
+								if self.billing_address_gstin is None:
+									if gst_status:
+										customer_gst_status = gst_status
+									else:
+										customer_gst_status = "--"
+							if self.invoice_ID  in sales_invoice_id:
+								if gst_status == "Composite Dealer" or gst_status == "UIN Holder":
+									composition = "Yes"
+									
+								else :
+									composition = "No"
+									
 						tax_data_details = self.get_tax_details()
 						for items_data in tax_data_details:
 							if "cgst_rate" in items_data:
@@ -235,30 +276,7 @@ class Gstr1Report(object):
 								cess_tax_amount = items_data["cess_amount"]
 							else:
 								cess_tax_amount = "--"
-						item_good_service =""
-						gst_item_status = ""
-						item_code,is_the_item_is_good_or_serivce,item_status = self.get_Item_details()
-						if item_code:
-							if is_the_item_is_good_or_serivce != None:
-								if "Service" == str(is_the_item_is_good_or_serivce):
-									item_good_service = is_the_item_is_good_or_serivce
-								elif "Goods" == str(is_the_item_is_good_or_serivce):
-									item_good_service = is_the_item_is_good_or_serivce
-							else :
-								item_good_service ="--"
-							if item_status is not None:
-								if "Nil Rated Item" == str(item_status):
-									gst_item_status = item_status
-								elif "Exempt Item" == str(item_status):
-									gst_item_status = item_status
-								elif "Non-GST Item" == str(item_status):
-									gst_item_status = item_status
-								elif "Composition Dealer " == str(item_status):
-									gst_item_status = item_status
-								elif "UIN Restration changes " == str(item_status):
-									gst_item_status = item_status
-							else :
-								gst_item_status = "--"
+						
 						city = ""
 						state =""
 						gst_state_number = ""
@@ -283,26 +301,11 @@ class Gstr1Report(object):
 									has_gst_or_idt = "NO"
 						b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
 						address_details = self.address_gst_number()
-						customer_gst = self.customer_gst_Status()
-						gst_status = ""
-						composition = ""
-						for custum in customer_gst:
-							customer_status = custum.gst_status
-							if self.billing_address_gstin is None:
-								
-								if custum.gst_status:
-									gst_status = custum.gst_status
-								else:
-									gst_status = "--"
-							if "Composite Dealer" == str(customer_status) or "UIN Holder" == str(customer_status):
-								composition = "Yes"
-							else :
-								composition = "No"
 						gst_bill_state_number = 0
 						if self.customer_type == "Company":
 							if self.filters.get("type_of_business") ==  "B2B":
 								summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-								item_list[4],gst_status,item_list[6],
+								item_list[4],customer_gst_status,item_list[6],
 								item_good_service, self.item_name,gst_hsn_code, 
 								qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
 								cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
@@ -318,7 +321,7 @@ class Gstr1Report(object):
 							if self.filters.get("type_of_business") ==  "B2C Large":
 								if grand_total > float(b2c_limit) and address_details != gst_state_number:
 									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],gst_status,item_list[6],
+									item_list[4],customer_gst_status,item_list[6],
 									item_good_service, self.item_name,gst_hsn_code, 
 									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
 									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
@@ -333,7 +336,7 @@ class Gstr1Report(object):
 							elif self.filters.get("type_of_business") ==  "B2C Small":
 								if grand_total <= float(b2c_limit) and address_details != gst_state_number:
 									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],gst_status,item_list[6],
+									item_list[4],customer_gst_status,item_list[6],
 									item_good_service, self.item_name,gst_hsn_code, 
 									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
 									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
@@ -347,7 +350,7 @@ class Gstr1Report(object):
 									item_list[46], item_list[47], item_list[48]])
 								elif grand_total <= float(b2c_limit) and address_details == gst_state_number:
 									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],gst_status,item_list[6],
+									item_list[4],customer_gst_status,item_list[6],
 									item_good_service, self.item_name,gst_hsn_code, 
 									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
 									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
@@ -361,7 +364,7 @@ class Gstr1Report(object):
 									item_list[46], item_list[47], item_list[48]])
 								elif grand_total >= float(b2c_limit) and address_details == gst_state_number:
 									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],gst_status,item_list[6],
+									item_list[4],customer_gst_status,item_list[6],
 									item_good_service, self.item_name,gst_hsn_code, 
 									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
 									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
@@ -375,7 +378,7 @@ class Gstr1Report(object):
 									item_list[46], item_list[47], item_list[48]])
 						if self.filters.get("type_of_business") ==  "EXPORT":
 							summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-							item_list[4],gst_status,item_list[6],
+							item_list[4],customer_gst_status,item_list[6],
 							item_good_service, self.item_name,gst_hsn_code, 
 							qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
 							cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
@@ -390,7 +393,7 @@ class Gstr1Report(object):
 							#summ_data.append(["","","","","",""])
 						if self.filters.get("type_of_business") ==  "CDNR":
 							summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-							item_list[4],gst_status,item_list[6],
+							item_list[4],customer_gst_status,item_list[6],
 							item_good_service, self.item_name,gst_hsn_code, 
 							qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
 							cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
@@ -403,7 +406,6 @@ class Gstr1Report(object):
 							voucher_number,advance_amount, item_list[45],
 							item_list[46], item_list[47], item_list[48]])
 		return self.columns, summ_data
-
 	def get_data(self):
 		for inv, items_based_on_rate in self.items_based_on_tax_rate.items():
 			invoice_details = self.invoices.get(inv)
@@ -438,7 +440,7 @@ class Gstr1Report(object):
 				{select_columns},bill_of_supply,customer_address,status,
 				posting_date,docstatus,shipping_bill_number,
 				shipping_bill_date,port_code,export_type,grand_total,customer_type,company_address,name,customer_gstin,
-				billing_address_gstin
+				billing_address_gstin,india_gst_customer_status
 			from `tab{doctype}`
 			where docstatus NOT IN (0) {where_conditions}
 			order by posting_date desc
@@ -489,11 +491,17 @@ class Gstr1Report(object):
 			self.invoice_items.setdefault(d.parent, {}).setdefault(d.item_code, d.base_net_amount)
 
 	def get_invoice_items_details(self):
-		sales_invoice_items = []
+		#sales_invoice_items = []
 		if self.invoice_ID:
-			sales_invoice_id = str(self.invoice_ID)
-			doc = frappe.get_doc("Sales Invoice",sales_invoice_id)
-			sales_invoice_items = doc.items
+
+			sales_invoice_items = frappe.db.sql("""
+				select
+					item_name,item_code,rate,qty,uom,gst_hsn_code,price_list_rate,
+					india_gst_item_status,is_the_item_is_good_or_serivce
+				 from `tabSales Invoice Item` 
+				where parent = %s 
+				order by idx limit 1""", self.invoice_ID, as_dict=1)
+			
 		return sales_invoice_items
 
 	def get_items_based_on_tax_rate(self):
@@ -507,6 +515,7 @@ class Gstr1Report(object):
 			order by account_head
 		""" % (self.tax_doctype, '%s', ', '.join(['%s']*len(self.invoices.keys()))),
 			tuple([self.doctype] + self.invoices.keys()))
+		
 		self.details_tax =self.tax_details
 		self.items_based_on_tax_rate = {}
 		self.invoice_cess = frappe._dict()
@@ -601,16 +610,6 @@ class Gstr1Report(object):
 			return payment_data
 		else:
 			return None
-
-	def get_Item_details(self):
-		item_code = ""
-		is_the_item_is_good_or_serivce = ""
-		item_status = ""
-		if self.item_code:
-			item_code,is_the_item_is_good_or_serivce,item_status = frappe.db.get_value('Item',self.item_code,
-			['item_code',"is_the_item_is_good_or_serivce","india_gst_item_status"])
-		return item_code,is_the_item_is_good_or_serivce,item_status
-
 	def address_gst_number(self):
 		address_detail = frappe.get_list("Address",["address_type","gst_state_number","name"])
 		for itrate_address in address_detail:
@@ -618,13 +617,6 @@ class Gstr1Report(object):
 			if name == self.company_address:
 				self.company_gst_state_number  = itrate_address.gst_state_number
 		return self.company_gst_state_number
-	def customer_gst_Status(self):
-		customer_details = ""
-		if self.customer_address_bill:
-			customer_details = frappe.get_list("Customer", {"name":self.customer_address_bill},
-			["gst_status"])
-		return customer_details
-
 	def get_gst_accounts(self):
 		self.gst_accounts = frappe._dict()
 		gst_settings_accounts = frappe.get_list("GST Account",
@@ -861,7 +853,7 @@ class Gstr1Report(object):
 					"width":180
 				},
 				{
-					"fieldname": "check_for_registed",
+					"fieldname": "composition",
 					"label": "Is the customer a Composition dealer or UIN registered?",
 					"fieldtype": "Data",
 					"width":180
@@ -1166,7 +1158,7 @@ class Gstr1Report(object):
 					"width":180
 				},
 				{
-					"fieldname": "check_for_registed",
+					"fieldname": "composition",
 					"label": "Is the customer a Composition dealer or UIN registered?",
 					"fieldtype": "Data",
 					"width":180
@@ -1470,7 +1462,7 @@ class Gstr1Report(object):
 					"width":180
 				},
 				{
-					"fieldname": "check_for_registed",
+					"fieldname": "composition",
 					"label": "Is the customer a Composition dealer or UIN registered?",
 					"fieldtype": "Data",
 					"width":180
@@ -1774,7 +1766,7 @@ class Gstr1Report(object):
 					"width":180
 				},
 				{
-					"fieldname": "check_for_registed",
+					"fieldname": "composition",
 					"label": "Is the customer a Composition dealer or UIN registered?",
 					"fieldtype": "Data",
 					"width":180
@@ -2078,7 +2070,7 @@ class Gstr1Report(object):
 					"width":180
 				},
 				{
-					"fieldname": "check_for_registed",
+					"fieldname": "composition",
 					"label": "Is the customer a Composition dealer or UIN registered?",
 					"fieldtype": "Data",
 					"width":180
@@ -2159,4 +2151,4 @@ class Gstr1Report(object):
 					"hidden": 1
 				}
 			]
-		self.columns = self.invoice_columns +self.tax_columns + self.other_columns
+		self.columns = self.invoice_columns + self.tax_columns + self.other_columns
