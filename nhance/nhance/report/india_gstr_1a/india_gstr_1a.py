@@ -132,6 +132,7 @@ class Gstr1Report(object):
 						cess_tax_amount = 0
 						cess_tax_rate = 0
 						customer_type = ""
+						sales_gst_status = ""
 						customer_gst = ""
 						gst_status = ""
 						composition = ""
@@ -139,7 +140,7 @@ class Gstr1Report(object):
 						gst_item_status = ""
 						customer_gst_status = ""
 						gst_status = items['india_gst_item_status']
-						item_goods_services = items['is_the_item_is_good_or_serivce']
+						item_goods_services = items['item_goods_or_service']
 						if item_goods_services is not None:
 							if str(item_goods_services) == "Service":
 								item_good_service = item_goods_services
@@ -227,11 +228,11 @@ class Gstr1Report(object):
 									check_bill_of_supply = "Yes"
 								else:
 									check_bill_of_supply = "No"
-							gst_status = invoice_value.india_gst_customer_status
+							sales_gst_status = invoice_value.india_gst_customer_status
 							if self.invoice_ID  in sales_invoice_id:
 								if self.billing_address_gstin is None:
-									if gst_status:
-										customer_gst_status = gst_status
+									if sales_gst_status:
+										customer_gst_status = sales_gst_status
 									else:
 										customer_gst_status = "--"
 							if self.invoice_ID  in sales_invoice_id:
@@ -496,7 +497,7 @@ class Gstr1Report(object):
 			sales_invoice_items = frappe.db.sql("""
 				select
 					item_name,item_code,rate,qty,uom,gst_hsn_code,price_list_rate,
-					india_gst_item_status,is_the_item_is_good_or_serivce
+					india_gst_item_status,item_goods_or_service
 				 from `tabSales Invoice Item` 
 				where parent = %s 
 				order by idx limit 1""", self.invoice_ID, as_dict=1)

@@ -607,7 +607,7 @@ class Gstr1Report(object):
 		item_status = ""
 		if self.item_code:
 			item_code,is_the_item_is_good_or_serivce,item_status = frappe.db.get_value('Item',self.item_code,
-			['item_code',"is_the_item_is_good_or_serivce","india_gst_item_status"])
+			['item_code',"item_goods_or_service","india_gst_item_status"])
 		return item_code,is_the_item_is_good_or_serivce,item_status
 
 	def address_gst_number(self):
