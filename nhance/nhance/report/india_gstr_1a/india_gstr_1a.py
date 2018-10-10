@@ -28,7 +28,6 @@ class Gstr1Report(object):
 		self.company_address = ""
 		self.customer_address = ""
 		self.customer_address_bill = ""
-		#self.customer_type = ""
 		self.data = []
 		self.value_of_invoice_data=""
 		self.details_tax=""
@@ -439,7 +438,7 @@ class Gstr1Report(object):
 			select
 				{select_columns},bill_of_supply,customer_address,status,
 				posting_date,docstatus,shipping_bill_number,
-				shipping_bill_date,port_code,export_type,grand_total,customer_type,company_address,name,customer_gstin,
+				shipping_bill_date,port_code,export_type,grand_total,company_address,name,customer_gstin,
 				billing_address_gstin,india_gst_customer_status
 			from `tab{doctype}`
 			where docstatus NOT IN (0) {where_conditions}
