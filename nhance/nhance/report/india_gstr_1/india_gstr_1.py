@@ -65,7 +65,9 @@ class Gstr1Report(object):
 			name
 		"""
 		self.customer_type = "Company" if self.filters.get("type_of_business") ==  "B2B" else "Individual"
-		
+		if self.filters.fetch_days_data is not None:
+			self.filters.from_date = self.filters.temp_from_date
+			self.filters.to_date = self.filters.temp_to_date
 	def run(self):
 		self.get_columns()
 		self.get_gst_accounts()
