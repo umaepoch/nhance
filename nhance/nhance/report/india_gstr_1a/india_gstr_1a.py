@@ -1,2156 +1,971 @@
 # Copyright (c) 2013, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
+
 from __future__ import unicode_literals
-import frappe, json
-from frappe import _
-from frappe.utils import flt
-from datetime import date
-from frappe import _, throw, msgprint, utils
-from frappe.model.mapper import get_mapped_doc
-import ast
+import frappe
+from frappe.utils import flt, getdate
+from frappe import _, msgprint
+from datetime import datetime
 import datetime
+from datetime import date, timedelta
+
+import calendar
+import time
+import math
+import json
+import ast
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 def execute(filters=None):
-	return Gstr1Report(filters).run()
-
-class Gstr1Report(object):
+	return IndiaGstr1A(filters).run()
+class IndiaGstr1A(object):
 	def __init__(self, filters=None):
 		self.filters = frappe._dict(filters or {})
-		self.columns = []
-		self.invoice_ID = ""
-		self.docstatus = ""
-		self.amended_from=""
-		self.sales_Invoice_iD = ""
-		self.item_name = ""
-		self.item_code = ""
-		self.invoice_type = ""
-		self.billing_address_gstin =""
-		self.company_address = ""
-		self.customer_address = ""
-		self.customer_address_bill = ""
 		self.data = []
-		self.value_of_invoice_data=""
-		self.details_tax=""
-		self.gst_state_number = 0
-		self.company_gst_state_number = 0
-		self.doctype = "Sales Invoice"
-		self.tax_doctype = "Sales Taxes and Charges"
-		self.Sales_invoice_item = "Sales Invoice Item"
-		self.select_columns = """
-			name as invoice_number,
-			manual_serial_number,
-			customer_name,
-			posting_date,
-			base_grand_total,
-			base_rounded_total,
-			customer_gstin,
-			place_of_supply,
-			company_gstin,
-			billing_address_gstin,
-			customer_address,
-			reverse_charge,
-			invoice_type,
-			return_against,
-			is_return,
-			invoice_type,
-			export_type,
-			port_code,
-			shipping_bill_number,
-			shipping_bill_date,
-			reason_for_issuing_document,
-			grand_total,
-			ecommerce_gstin,
-			docstatus,
-			amended_from,
-			name
-		"""
-		self.customer_type = "Company" if self.filters.get("type_of_business") ==  "B2B" else "Individual"
+		self.columns = []
+		self.invoice_id = ""
+		self.item_code = ""
+		self.tax_data = []
+		self.tax_details = []
+		self.customer_address = ""
+		self.company_address = ""
 		if self.filters.fetch_days_data is not None:
 			self.filters.from_date = self.filters.temp_from_date
 			self.filters.to_date = self.filters.temp_to_date
 	def run(self):
-		self.get_columns()
-		self.get_gst_accounts()
-		self.get_invoice_data()
-		summ_data = []
-		if self.invoices:
-			self.get_invoice_items()
-			self.get_items_based_on_tax_rate()
-			self.invoice_fields = [d["fieldname"] for d in self.invoice_columns]
-			self.get_data()
-			sales_in = ""
-			for item_list in self.data:
-				sales_in = item_list[1]
-				if sales_in != self.sales_Invoice_iD:
-					self.sales_Invoice_iD = sales_in
-					self.invoice_ID = self.sales_Invoice_iD
-					self.customer_address_bill = item_list[3]
-					self.docstatus = item_list[46]
-					self.amended_from = item_list[47]
-					self.invoice_type = item_list[48]
-					self.billing_address_gstin = item_list[4]
-					advance_payment_detais = self.get_Advance_Payment_details()
-					now = datetime.datetime.now()
-					current_year = now.year
-					current_month = now.month
-					invoice_items_data = self.get_invoice_items_details()
-					for items in invoice_items_data:
-						self.item_name = items.item_name
-						self.item_code = items['item_code']
-						gst_hsn_code = items['gst_hsn_code']
-						qty = items['qty']
-						uom = items['uom']
-						rate = items['rate']
-						price_list_rate = items['price_list_rate']
-						total_disc = price_list_rate-rate
-						if total_disc == 0:
-							total_disc = "0"
-						bill_of_supply = ""
-						check_bill_of_supply=""
-						docstatus = ""
-						is_cancelled=""
-						dealer_registered=""
-						check_for_registed =""
-						amended_from = ""
-						original_invoice_date = ""
-						original_invoice_id = ""
-						Return_Filing_Quarter = ""
-						original_customer_gstin = ""
-						advance_reciept_date = ""
-						voucher_number = ""
-						advance_amount = ""
-						shipping_bill_date = ""
-						port_code = ""
-						export_type = ""
-						grand_total = 0
-						shipping_bill_number = ""
-						address_type = ""
-						cgst_tax_rate =0
-						cgst_tax_amount = 0
-						sgst_tax_amount = 0
-						sgst_tax_rate = 0
-						igst_tax_rate = 0
-						igst_tax_amount = 0
-						cess_tax_amount = 0
-						cess_tax_rate = 0
-						customer_type = ""
-						sales_gst_status = ""
-						customer_gst = ""
-						gst_status = ""
-						composition = ""
-						item_good_service = ""
-						gst_item_status = ""
-						customer_gst_status = ""
-						gst_status = items['india_gst_item_status']
-						item_goods_services = items['item_goods_or_service']
-						if item_goods_services is not None:
-							if str(item_goods_services) == "Service":
-								item_good_service = item_goods_services
-							elif str(item_goods_services) == "Goods":
-								item_good_service = item_goods_services
-						else :
-							item_good_service ="--"
-						if gst_status is not None:
-							if "Nil Rated Item" == str(gst_status):
-								gst_item_status = gst_status
-							elif "Exempt Item" == str(gst_status):
-								gst_item_status = gst_status
-							elif "Non-GST Item" == str(gst_status):
-								gst_item_status = gst_status
-							elif "Composition Dealer " == str(gst_status):
-								gst_item_status = gst_status
-							elif "UIN Restration changes " == str(gst_status):
-								gst_item_status = gst_status
-						else :
-							gst_item_status = "--"
-						if len(advance_payment_detais ) != 0:
-							for ad_payment in advance_payment_detais:
-								party_name = ad_payment.party_name
-								if str(self.customer_address_bill) == str(party_name):
-									advance_reciept_date = ad_payment.creation
-									voucher_number = ad_payment.name
-									advance_amount = ad_payment.paid_amount
-								else:
-									advance_reciept_date = "--"
-									advance_amount = "--"
-									voucher_number = "--"
-						else:
-							advance_reciept_date ="--"
-							advance_amount = "--"
-							voucher_number = "--"
-						
-						if self.filters.get("type_of_business") ==  "EXPORT":
-							export_Details = self.value_of_invoice_data
-							if self.invoice_type == "Export":
-								for export_items in export_Details:
-									customer_gst = export_items.customer_gstin
-									bil_gstin = export_items.billing_address_gstin
-									invoice_id = export_items.invoice_number
-									if str(self.invoice_ID) == str(invoice_id):
-										export_type = export_items.export_type
-										port_code = export_items.port_code
-										shipping_bill_number = export_items.shipping_bill_number
-										shipping_bill_date = export_items.shipping_bill_date
-										
-							else:
-								export_type = "--"
-								port_code = "--"
-								shipping_bill_number = "--"
-								shipping_bill_date = "--"
-							
-						for invoice_value in self.value_of_invoice_data:
-							self.company_address = invoice_value.company_address
-							sales_invoice_id = invoice_value.invoice_number
-							if self.invoice_ID in sales_invoice_id:
-								grand_total = invoice_value.grand_total
-								if self.amended_from is not None:
-									original_invoice_date = invoice_value.posting_date
-									original_invoice_id = self.amended_from
-									original_customer_gstin = invoice_value.customer_gstin
-								else:
-									original_invoice_date = "--"
-									original_invoice_id = "--"
-									original_customer_gstin = "--"
-								if current_month >= 1 and current_month <=3:
-									Return_Filing_Quarter = "Jan - March  "+str(current_year)
-								if current_month >= 4 and current_month <=6:
-									Return_Filing_Quarter = "April - Jun  "+str(current_year)
-								if current_month >= 7 and current_month <=9:
-									Return_Filing_Quarter = "Jul - Sep  "+str(current_year)
-								if current_month >= 10 and current_month <=12:
-									Return_Filing_Quarter = "Oct - Dec  "+str(current_year)
-								if self.docstatus == 2:
-									is_cancelled = "Yes"
-								elif self.docstatus == 1:
-									is_cancelled = "No"
-								bill_of_supply = invoice_value.bill_of_supply
-								self.customer_address =invoice_value.customer_address
-								docstatus = invoice_value. status
-								if bill_of_supply == 1:
-									check_bill_of_supply = "Yes"
-								else:
-									check_bill_of_supply = "No"
-							sales_gst_status = invoice_value.india_gst_customer_status
-							if self.invoice_ID  in sales_invoice_id:
-								if self.billing_address_gstin is None:
-									if sales_gst_status:
-										customer_gst_status = sales_gst_status
+		if self.filters.get("type_of_business") == "B2B":
+			sales = self.sales_invoice_details()
+			columns = self.get_columns_b2b()
+			sales_count = self.sales_invoice_counts()
+			total_bill_gstin = 0
+			total_customer = 0
+			total_taxable_vlaue = 0.0
+			total_invoice_value = 0.0
+			total_cess_amount = 0.0
+			invoice_map = {}
+			for sale in sales_count:
+				total_bill_gstin = sale.bill_gstin
+				total_customer = sale.customer
+			for seles_data in sales:
+				amended_from = seles_data.amended_from
+				if amended_from == None:
+					self.invoice_id = seles_data.name
+					print "self.invoice_id----------",self.invoice_id
+					billing_address_gstin = seles_data.billing_address_gstin
+					customer_address = seles_data.customer_address
+					place_of_supply = seles_data.place_of_supply
+					reverse_charge = seles_data.reverse_charge
+					invoice_type = seles_data.invoice_type
+					ecommerce_gstin = seles_data.ecommerce_gstin
+					posting_date = seles_data.posting_date
+					account_head = ""
+					sales_item = self.sales_item_details()
+					for item in sales_item:
+						self.item_code = item.item_code
+						item_net_amount = item.net_amount
+						tax_data = self.sales_tax()
+						#print "tax_data----------",tax_data
+						sales_invoice_tax_data = self.sales_account_tax()
+						if len(tax_data) != 0:
+							tax_rate_list = []
+							for data in tax_data:
+								tax_rate = data.tax_rate
+								net_amount = data.net_amount
+								#print "net_amount----------",net_amount
+								key = self.invoice_id
+								if key in invoice_map:
+									item_entry = invoice_map[key]
+									mapped_items_list = item_entry["mapped_items"]
+									print "type of mapped_items_list-------------", (mapped_items_list,net_amount)
+									new_list = []
+									for mapped_items in mapped_items_list:
+										tax_rate_list.append(mapped_items["tax_rate"])
+										data_rate = list(set(tax_rate_list))
+										print "data_rate---------",data_rate
+									if tax_rate in data_rate:
+										for items in mapped_items_list:
+											if float(tax_rate) == float(items["tax_rate"]):
+												qty_temp = items["net_amount"]
+												items["net_amount"] = (qty_temp) + (net_amount)
 									else:
-										customer_gst_status = "--"
-							if self.invoice_ID  in sales_invoice_id:
-								if gst_status == "Composite Dealer" or gst_status == "UIN Holder":
-									composition = "Yes"
+										
+										new_list.append({
+												"tax_rate": tax_rate, 
+										  		"net_amount": net_amount,
+									                        "invoice_id": key,
+												"billing_address_gstin":billing_address_gstin,
+												"customer_address":customer_address,
+												"place_of_supply":place_of_supply,
+												"reverse_charge":reverse_charge,
+												"invoice_type":invoice_type,
+												"posting_date":posting_date,
+												"ecommerce_gstin":ecommerce_gstin
+												})
 									
-								else :
-									composition = "No"
-									
-						tax_data_details = self.get_tax_details()
-						for items_data in tax_data_details:
-							if "cgst_rate" in items_data:
-								cgst_tax_rate = items_data["cgst_rate"]
-							else:
-								cgst_tax_rate = "--"
-							if "cgst_amount" in items_data:
-								cgst_tax_amount = items_data["cgst_amount"]
-							else:
-								cgst_tax_amount = "--"
-							if "sgst_rate" in items_data:
-								sgst_tax_rate = items_data["cgst_rate"]
-							else:
-								sgst_tax_rate = "--"
-							if "sgst_amount" in items_data:
-								sgst_tax_amount = items_data["sgst_amount"]
-							else:
-								sgst_tax_amount = "--"
-							if "igst_rate" in items_data:
-								igst_tax_rate = items_data["igst_rate"]
-							else:
-								igst_tax_rate = "--"
-							if "igst_amount" in items_data:
-								igst_tax_amount = items_data["igst_amount"]
-							else:
-								igst_tax_amount = "--"
-							if "cess_rate" in items_data:
-								cess_tax_rate = items_data["cess_rate"]
-							else:
-								cess_tax_rate = "--"
-							if "cess_amount" in items_data:
-								cess_tax_amount = items_data["cess_amount"]
-							else:
-								cess_tax_amount = "--"
-						
-						city = ""
-						state =""
-						gst_state_number = ""
-						name,city,state,gst_state_number = self.get_contact_details()
-						if name:
-							if str(name) == self.customer_address:
-								if city is None:
-									city = "--"
-								if state is None:
-									state = "--"
-						else:
-							city = "--"
-							state = "--"
-						has_gst_or_idt = ""
-						for taxs_name in self.details_tax:
-							invoice_id = taxs_name[0]
-							if invoice_id in self.invoice_ID:
-								acount_head = taxs_name[1]
-								if "CGST" in acount_head or "SGST" in acount_head or "IGST" in acount_head:
-									has_gst_or_idt = "YES"
+										item_entry["mapped_items"] = mapped_items_list + new_list
+									#print "new_list--------",item_entry["mapped_items"]
 								else:
-									has_gst_or_idt = "NO"
-						b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
-						address_details = self.address_gst_number()
-						gst_bill_state_number = 0
-						if self.customer_type == "Company":
-							if self.filters.get("type_of_business") ==  "B2B":
-								summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-								item_list[4],customer_gst_status,item_list[6],
-								item_good_service, self.item_name,gst_hsn_code, 
-								qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
-								cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
-								igst_tax_amount,cess_tax_rate,cess_tax_amount,check_bill_of_supply,
-								gst_item_status,item_list[25],export_type,port_code,
-								shipping_bill_number,shipping_bill_date,has_gst_or_idt,
-								item_list[31], item_list[32],city,state,is_cancelled,composition,
-								Return_Filing_Quarter,original_invoice_date,original_invoice_id,
-								original_customer_gstin,item_list[41],advance_reciept_date,
-								voucher_number,advance_amount, item_list[45],
-								item_list[46], item_list[47], item_list[48]])
-						elif self.customer_type == "Individual":
-							if self.filters.get("type_of_business") ==  "B2C Large":
-								if grand_total > float(b2c_limit) and address_details != gst_state_number:
-									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],customer_gst_status,item_list[6],
-									item_good_service, self.item_name,gst_hsn_code, 
-									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
-									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
-									igst_tax_amount,cess_tax_rate,cess_tax_amount,check_bill_of_supply,
-									gst_item_status,item_list[25],export_type,port_code,
-									shipping_bill_number,shipping_bill_date,has_gst_or_idt,
-									item_list[31], item_list[32],city,state,is_cancelled,composition,
-									Return_Filing_Quarter,original_invoice_date,original_invoice_id,
-									original_customer_gstin,item_list[41],advance_reciept_date,
-									voucher_number,advance_amount, item_list[45],
-									item_list[46], item_list[47], item_list[48]])
-							elif self.filters.get("type_of_business") ==  "B2C Small":
-								if grand_total <= float(b2c_limit) and address_details != gst_state_number:
-									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],customer_gst_status,item_list[6],
-									item_good_service, self.item_name,gst_hsn_code, 
-									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
-									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
-									igst_tax_amount,cess_tax_rate,cess_tax_amount,check_bill_of_supply,
-									gst_item_status,item_list[25],export_type,port_code,
-									shipping_bill_number,shipping_bill_date,has_gst_or_idt,
-									item_list[31], item_list[32],city,state,is_cancelled,composition,
-									Return_Filing_Quarter,original_invoice_date,original_invoice_id,
-									original_customer_gstin,item_list[41],advance_reciept_date,
-									voucher_number,advance_amount, item_list[45],
-									item_list[46], item_list[47], item_list[48]])
-								elif grand_total <= float(b2c_limit) and address_details == gst_state_number:
-									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],customer_gst_status,item_list[6],
-									item_good_service, self.item_name,gst_hsn_code, 
-									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
-									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
-									igst_tax_amount,cess_tax_rate,cess_tax_amount,check_bill_of_supply,
-									gst_item_status,item_list[25],export_type,port_code,
-									shipping_bill_number,shipping_bill_date,has_gst_or_idt,
-									item_list[31], item_list[32],city,state,is_cancelled,composition,
-									Return_Filing_Quarter,original_invoice_date,original_invoice_id,
-									original_customer_gstin,item_list[41],advance_reciept_date,
-									voucher_number,advance_amount, item_list[45],
-									item_list[46], item_list[47], item_list[48]])
-								elif grand_total >= float(b2c_limit) and address_details == gst_state_number:
-									summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-									item_list[4],customer_gst_status,item_list[6],
-									item_good_service, self.item_name,gst_hsn_code, 
-									qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
-									cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
-									igst_tax_amount,cess_tax_rate,cess_tax_amount,check_bill_of_supply,
-									gst_item_status,item_list[25],export_type,port_code,
-									shipping_bill_number,shipping_bill_date,has_gst_or_idt,
-									item_list[31], item_list[32],city,state,is_cancelled,composition,
-									Return_Filing_Quarter,original_invoice_date,original_invoice_id,
-									original_customer_gstin,item_list[41],advance_reciept_date,
-									voucher_number,advance_amount, item_list[45],
-									item_list[46], item_list[47], item_list[48]])
-						if self.filters.get("type_of_business") ==  "EXPORT":
-							summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-							item_list[4],customer_gst_status,item_list[6],
-							item_good_service, self.item_name,gst_hsn_code, 
-							qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
-							cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
-							igst_tax_amount,cess_tax_rate,cess_tax_amount,check_bill_of_supply,
-							gst_item_status,item_list[25],export_type,port_code,
-							shipping_bill_number,shipping_bill_date,has_gst_or_idt,
-							item_list[31], item_list[32],city,state,is_cancelled,composition,
-							Return_Filing_Quarter,original_invoice_date,original_invoice_id,
-							original_customer_gstin,item_list[41],advance_reciept_date,
-							voucher_number,advance_amount, item_list[45],
-							item_list[46], item_list[47], item_list[48]])
-							#summ_data.append(["","","","","",""])
-						if self.filters.get("type_of_business") ==  "CDNR":
-							summ_data.append([item_list[0], item_list[1], item_list[2],item_list[3],
-							item_list[4],customer_gst_status,item_list[6],
-							item_good_service, self.item_name,gst_hsn_code, 
-							qty, uom, rate,total_disc,price_list_rate,cgst_tax_rate ,
-							cgst_tax_amount,sgst_tax_rate,sgst_tax_amount,igst_tax_rate,
-							igst_tax_amount,cess_tax_rate,cess_tax_amount,composition,
-							gst_item_status,item_list[25],export_type,port_code,
-							shipping_bill_number,shipping_bill_date,has_gst_or_idt,
-							item_list[31], item_list[32],city,state,is_cancelled,check_for_registed,
-							Return_Filing_Quarter,original_invoice_date,original_invoice_id,
-							original_customer_gstin,item_list[41],advance_reciept_date,
-							voucher_number,advance_amount, item_list[45],
-							item_list[46], item_list[47], item_list[48]])
-		return self.columns, summ_data
-	def get_data(self):
-		for inv, items_based_on_rate in self.items_based_on_tax_rate.items():
-			invoice_details = self.invoices.get(inv)
-			for rate, items in items_based_on_rate.items():
-				row, taxable_value = self.get_row_data_for_invoice(inv, invoice_details, rate, items)
-				if self.filters.get("type_of_business") ==  "B2C Small":
-					row.append("E" if invoice_details.ecommerce_gstin else "OE")
-				if self.filters.get("type_of_business") ==  "CDNR":
-					row.append("Y" if invoice_details.posting_date <= date(2017, 7, 1) else "N")
-					row.append("C" if invoice_details.return_against else "R")
-				self.data.append(row)
+									item_list = []
+									item_list.append({
+											"tax_rate": tax_rate, 
+											"net_amount": net_amount,
+										        "invoice_id": key,
+											"billing_address_gstin":billing_address_gstin,
+											"customer_address":customer_address,
+											"place_of_supply":place_of_supply,
+											"reverse_charge":reverse_charge,
+											"invoice_type":invoice_type,
+											"posting_date":posting_date,
+											"ecommerce_gstin":ecommerce_gstin		
+											})
+									invoice_map[key] = frappe._dict({"mapped_items": item_list})
+								
+						else:
+							#print "else part enter ---------"
+							#print "item_net_amount----------",item_net_amount
+							sales_tax_rate = 0
+							total_amount = 0.0
+							if len(sales_invoice_tax_data) != 0:
+								for invoice_tax_data in sales_invoice_tax_data:
+									account_head = invoice_tax_data.account_head
+									#print "account_head----------",account_head
+									item_wise_tax_detail = invoice_tax_data.item_wise_tax_detail
+									#print "type of -----------",type(item_wise_tax_detail)
+									converted = ast.literal_eval(item_wise_tax_detail)
+									#print "else----item_code--------",self.item_code
+									if self.item_code in converted:
+										details = converted[self.item_code]
+										if "SGST" in account_head or "CGST" in account_head:
+											sales_tax_rate = sales_tax_rate + details[0]
+											#print "rate ---------",addition
+										elif "IGST" in account_head:
+											sales_tax_rate = details[0]
+											
+								if self.invoice_id in invoice_map:
+									item_entry = invoice_map[self.invoice_id]
+									mapped_items_list = item_entry["mapped_items"]
 
-	def get_row_data_for_invoice(self, invoice, invoice_details, tax_rate, items):
-		row = []
-		for fieldname in self.invoice_fields:
-			if self.filters.get("type_of_business") ==  "CDNR" and fieldname == "invoice_value":
-				row.append(abs(invoice_details.base_rounded_total) or abs(invoice_details.base_grand_total))
-			elif fieldname == "invoice_value":
-				row.append(invoice_details.base_rounded_total or invoice_details.base_grand_total)
-			else:
-				row.append(invoice_details.get(fieldname))
-		taxable_value = sum([abs(net_amount)
-			for item_code, net_amount in self.invoice_items.get(invoice).items() if item_code in items])
-		row += [tax_rate, taxable_value]
-		return row, taxable_value
-
-	def get_invoice_data(self):
-		self.invoices = frappe._dict()
-		conditions = self.get_conditions()
-		invoice_data = frappe.db.sql("""
-			select
-				{select_columns},bill_of_supply,customer_address,status,
-				posting_date,docstatus,shipping_bill_number,
-				shipping_bill_date,port_code,export_type,grand_total,company_address,name,customer_gstin,
-				billing_address_gstin,india_gst_customer_status
-			from `tab{doctype}`
-			where docstatus NOT IN (0) {where_conditions}
-			order by posting_date desc
-			""".format(select_columns=self.select_columns, doctype=self.doctype,
-				where_conditions=conditions), self.filters, as_dict=1)
-		self.value_of_invoice_data = invoice_data
-		for d in invoice_data:
-			self.invoices.setdefault(d.invoice_number, d)
-			
-	def get_conditions(self):
-		conditions = ""
-		for opts in (("company", " and company=%(company)s"),
-			("from_date", " and posting_date>=%(from_date)s"),
-			("to_date", " and posting_date<=%(to_date)s")):
-				if self.filters.get(opts[0]):
-					conditions += opts[1]
-		customers = frappe.get_all("Customer", filters={"customer_type": self.customer_type})
-		if self.filters.get("type_of_business") ==  "B2B":
-			conditions += """ and ifnull(invoice_type, '') != 'Export' and is_return != 1
-				and customer in ('{0}')""".format("', '".join([frappe.db.escape(c.name) for c in customers]))
-		if self.filters.get("type_of_business") in ("B2C Large", "B2C Small"):
-			b2c_limit = frappe.db.get_single_value('GSt Settings', 'b2c_limit')
-			if not b2c_limit:
-				frappe.throw(_("Please set B2C Limit in GST Settings."))
-		if self.filters.get("type_of_business") ==  "B2C Large":
-			conditions += """ and SUBSTR(place_of_supply, 1, 2) != SUBSTR(company_gstin, 1, 2)
-				and grand_total > {0} and is_return != 1 and customer in ('{1}')""".\
-					format(flt(b2c_limit), "', '".join([frappe.db.escape(c.name) for c in customers])	)
-		elif self.filters.get("type_of_business") ==  "B2C Small":
-			conditions += """ and (
-				SUBSTR(place_of_supply, 1, 2) = SUBSTR(company_gstin, 1, 2)
-					or grand_total <= {0}) and is_return != 1 and customer in ('{1}')""".\
-						format(flt(b2c_limit), "', '".join([frappe.db.escape(c.name) for c in customers]))
-		elif self.filters.get("type_of_business") ==  "CDNR":
-			conditions += """ and is_return = 1 """
-		elif self.filters.get("type_of_business") ==  "EXPORT":
-			conditions += """ and is_return !=1 and invoice_type = 'Export' """
-		return conditions
-
-	def get_invoice_items(self):
-		self.invoice_items = frappe._dict()
-		items = frappe.db.sql("""
-			select item_code, parent, base_net_amount
-			from `tab%s Item`
-			where parent in (%s)
-		""" % (self.doctype, ', '.join(['%s']*len(self.invoices))), tuple(self.invoices), as_dict=1)
-		for d in items:
-			self.invoice_items.setdefault(d.parent, {}).setdefault(d.item_code, d.base_net_amount)
-
-	def get_invoice_items_details(self):
-		#sales_invoice_items = []
-		if self.invoice_ID:
-
-			sales_invoice_items = frappe.db.sql("""
-				select
-					item_name,item_code,rate,qty,uom,gst_hsn_code,price_list_rate,
-					india_gst_item_status,item_goods_or_service
-				 from `tabSales Invoice Item` 
-				where parent = %s 
-				order by idx limit 1""", self.invoice_ID, as_dict=1)
-			
-		return sales_invoice_items
-
-	def get_items_based_on_tax_rate(self):
-		self.tax_details = frappe.db.sql("""
-			select
-				parent, account_head, item_wise_tax_detail,
-				base_tax_amount_after_discount_amount
-			from `tab%s`
-			where
-				parenttype = %s and parent in (%s)
-			order by account_head
-		""" % (self.tax_doctype, '%s', ', '.join(['%s']*len(self.invoices.keys()))),
-			tuple([self.doctype] + self.invoices.keys()))
+									for mapped_items in mapped_items_list:
+										tax_rate_list.append(mapped_items["tax_rate"])
+										data_rate = list(set(tax_rate_list))
+										#print "data_rate---------",data_rate
+									if sales_tax_rate in data_rate:
+										for items in mapped_items_list:
+											if float(sales_tax_rate) == float(items["tax_rate"]):
+												qty_temp = items["net_amount"]
+												items["net_amount"] = (qty_temp) + (item_net_amount)
+									else:
+										mapped_items_list.append({
+												"tax_rate": sales_tax_rate, 
+										  		"net_amount": item_net_amount,
+									                        "invoice_id": self.invoice_id,
+												"billing_address_gstin":billing_address_gstin,
+												"customer_address":customer_address,
+												"place_of_supply":place_of_supply,
+												"reverse_charge":reverse_charge,
+												"invoice_type":invoice_type,
+												"posting_date":posting_date,
+												"ecommerce_gstin":ecommerce_gstin
+												})
+										item_entry["mapped_items"] = mapped_items_list
+								else:
+									item_list = []
+									item_list.append({
+											"tax_rate": sales_tax_rate, 
+											"net_amount": item_net_amount,
+										        "invoice_id": self.invoice_id,
+											"billing_address_gstin":billing_address_gstin,
+											"customer_address":customer_address,
+											"place_of_supply":place_of_supply,
+											"reverse_charge":reverse_charge,
+											"invoice_type":invoice_type,
+											"posting_date":posting_date,
+											"ecommerce_gstin":ecommerce_gstin
+											})
+									invoice_map[self.invoice_id] = frappe._dict({"mapped_items": item_list})
+			print "	invoice_map-------------",invoice_map
+			for invoice_map_data in invoice_map:
+				map_data = invoice_map[invoice_map_data]
+				for map_d in range(0,len(map_data["mapped_items"])):
+					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
+					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
+					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					billing_address_gstin = map_data["mapped_items"][map_d]["billing_address_gstin"]
+					customer_address = map_data["mapped_items"][map_d]["customer_address"]
+					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
+					reverse_charge = map_data["mapped_items"][map_d]["reverse_charge"]
+					invoice_type = map_data["mapped_items"][map_d]["invoice_type"]
+					posting_date = map_data["mapped_items"][map_d]["posting_date"]
+					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					invoice_value = tot_net_amount * rate_of_tax /100
+					grand_total = invoice_value + tot_net_amount
+					self.data.append([billing_address_gstin,customer_address,invoice_no,
+						posting_date,grand_total,place_of_supply,reverse_charge,"",
+						invoice_type,ecommerce_gstin,rate_of_tax,tot_net_amount,""])	
+			#print "self.data------out side loop----",self.data
 		
-		self.details_tax =self.tax_details
-		self.items_based_on_tax_rate = {}
-		self.invoice_cess = frappe._dict()
-		unidentified_gst_accounts = []
-		for parent, account, item_wise_tax_detail, tax_amount in self.tax_details:
-			if account in self.gst_accounts.cess_account:
-				self.invoice_cess.setdefault(parent, tax_amount)
-			else:
-				if item_wise_tax_detail:
-					try:
-						item_wise_tax_detail = json.loads(item_wise_tax_detail)
-						cgst_or_sgst = False
-						if account in self.gst_accounts.cgst_account \
-							or account in self.gst_accounts.sgst_account:
-							cgst_or_sgst = True
-						if not (cgst_or_sgst or account in self.gst_accounts.igst_account):
-							if "gst" in account.lower() and account not in unidentified_gst_accounts:
-								unidentified_gst_accounts.append(account)
-							continue
-						for item_code, tax_amounts in item_wise_tax_detail.items():
-							tax_rate = tax_amounts[0]
-							if cgst_or_sgst:
-								tax_rate *= 2
-							rate_based_dict = self.items_based_on_tax_rate\
-								.setdefault(parent, {}).setdefault(tax_rate, [])
-							if item_code not in rate_based_dict:
-								rate_based_dict.append(item_code)
-					except ValueError:
-						continue
-		if unidentified_gst_accounts:
-			frappe.msgprint(_("Following accounts might be selected in GST Settings:")
-				+ "<br>" + "<br>".join(unidentified_gst_accounts), alert=True)
+		elif self.filters.get("type_of_business") == "B2BA":
+			invoice_map = {}
+			columns = self.get_columns_b2ba()
+			sales_detail = self.sales_invoice_details()
+			for sale in sales_detail:
+				amended_from = sale.amended_from
+				#print "amended_from----------",amended_from
+				if amended_from is not None:
+					self.invoice_id = sale.name
+					#print "self.invoice_id----------",self.invoice_id
+					billing_address_gstin = sale.billing_address_gstin
+					customer_address = sale.customer_address
+					place_of_supply = sale.place_of_supply
+					reverse_charge = sale.reverse_charge
+					invoice_type = sale.invoice_type
+					ecommerce_gstin = sale.ecommerce_gstin
+					posting_date = sale.posting_date
+					modified_from = sale.modified
+					modified = getdate(modified_from.strftime('%Y-%m-%d'))
+					sales_item = self.sales_item_details()
+					for item in sales_item:
+						self.item_code = item.item_code
+						item_net_amount = item.net_amount
+						#print "self.item_code----------",self.item_code
+						tax_data = self.sales_tax()
+						#print "tax_data----------",tax_data
+						sales_invoice_tax_data = self.sales_account_tax()
+						if len(tax_data) != 0:
+							tax_rate_list = []
+							for data in tax_data:
+								tax_rate = data.tax_rate
+								net_amount = data.net_amount
+								#print "net_amount----------",net_amount
+								key = self.invoice_id
+								if key in invoice_map:
+									item_entry = invoice_map[key]
+									mapped_items_list = item_entry["mapped_items"]
+									#print "type of mapped_items_list-------------", (mapped_items_list,net_amount)
+									new_list = []
+									for mapped_items in mapped_items_list:
+										tax_rate_list.append(mapped_items["tax_rate"])
+										data_rate = list(set(tax_rate_list))
+										#print "data_rate---------",data_rate
+									if tax_rate in data_rate:
+										for items in mapped_items_list:
+											if float(tax_rate) == float(items["tax_rate"]):
+												qty_temp = items["net_amount"]
+												items["net_amount"] = (qty_temp) + (net_amount)
+									else:
+										
+										new_list.append({
+												"tax_rate": tax_rate, 
+										  		"net_amount": net_amount,
+									                        "invoice_id": key,
+												"billing_address_gstin":billing_address_gstin,
+												"customer_address":customer_address,
+												"place_of_supply":place_of_supply,
+												"reverse_charge":reverse_charge,
+												"invoice_type":invoice_type,
+												"posting_date":posting_date,
+												"modified":modified,
+												"amended_from":amended_from,
+												"ecommerce_gstin":ecommerce_gstin
+												})
+									
+										item_entry["mapped_items"] = mapped_items_list + new_list
+									#print "new_list--------",item_entry["mapped_items"]
+								else:
+									item_list = []
+									item_list.append({
+											"tax_rate": tax_rate, 
+											"net_amount": net_amount,
+										        "invoice_id": key,
+											"billing_address_gstin":billing_address_gstin,
+											"customer_address":customer_address,
+											"place_of_supply":place_of_supply,
+											"reverse_charge":reverse_charge,
+											"invoice_type":invoice_type,
+											"posting_date":posting_date,
+											"modified":modified,
+											"amended_from":amended_from,
+											"ecommerce_gstin":ecommerce_gstin
+											})
+									invoice_map[key] = frappe._dict({"mapped_items": item_list})
+								
+									
+						else:
+							#print "else part enter ---------"
+							print "invoice_map----------",invoice_map
+							sales_tax_rate = 0
+							total_amount = 0.0
+							if len(sales_invoice_tax_data) != 0:
+								for invoice_tax_data in sales_invoice_tax_data:
+									account_head = invoice_tax_data.account_head
+									print "account_head----------",account_head
+									item_wise_tax_detail = invoice_tax_data.item_wise_tax_detail
+									#print "type of -----------",type(item_wise_tax_detail)
+									converted = ast.literal_eval(item_wise_tax_detail)
+									print "else----item_code--------",self.item_code
+									if self.item_code in converted:
+										details = converted[self.item_code]
+										if "SGST" in account_head or "CGST" in account_head:
+											sales_tax_rate = sales_tax_rate + details[0]
+											#print "rate ---------",addition
+										elif "IGST" in account_head:
+											sales_tax_rate = details[0]
+											
+								if self.invoice_id in invoice_map:
+									item_entry = invoice_map[self.invoice_id]
+									mapped_items_list = item_entry["mapped_items"]
+									
 
-	def get_tax_details(self):
-		tax_data = []
-		tax_data_json = {}
-		for tax_list in self.tax_details:
-			tax_invoice_id = tax_list[0]
-			gst_rate = tax_list[2]
-			account_head = tax_list[1]
-			cgst_rate = 0
-			cgst_amount = 0
-			sgst_rate = 0
-			sgst_amount = 0
-			igst_rate = 0
-			igst_amount = 0
-			convert_dict = ast.literal_eval(gst_rate)
-			if tax_invoice_id == self.invoice_ID:
-				if self.item_code in convert_dict:
-					tax_rate = convert_dict.get(self.item_code)
-					if "CGST" in account_head:
-						cgst_rate = tax_rate[0]
-						cgst_amount = tax_rate[1]
-						tax_data_json['cgst_rate'] = cgst_rate
-						tax_data_json['cgst_amount'] = cgst_amount
-						tax_data.append(tax_data_json)
-					elif "SGST" in account_head:
-						sgst_rate = tax_rate[0]
-						sgst_amount = tax_rate[1]
-						tax_data_json['sgst_rate'] = sgst_rate
-						tax_data_json['sgst_amount'] = sgst_amount
-						tax_data.append(tax_data_json)
-					elif "IGST" in account_head:
-						igst_rate = tax_rate[0]
-						igst_amount = tax_rate[1]
-						tax_data_json['igst_rate'] = igst_rate
-						tax_data_json['igst_amount'] = igst_amount
-						tax_data.append(tax_data_json)
-					elif "CESS" in account_head:
-						cess_rate = tax_rate[0]
-						cess_amount = tax_rate[1]
-						tax_data_json['cess_rate'] = cess_rate
-						tax_data_json['cess_amount'] = cess_amount
-						tax_data.append(tax_data_json)
-		return tax_data
+									for mapped_items in mapped_items_list:
+										tax_rate_list.append(mapped_items["tax_rate"])
+										data_rate = list(set(tax_rate_list))
+										#print "data_rate---------",data_rate
+									if sales_tax_rate in data_rate:
+										for items in mapped_items_list:
+											if float(sales_tax_rate) == float(items["tax_rate"]):
+												qty_temp = items["net_amount"]
+												items["net_amount"] = (qty_temp) + (item_net_amount)
+
+									else:
+										mapped_items_list.append({
+												"tax_rate": sales_tax_rate, 
+											  	"net_amount": item_net_amount,
+										                "invoice_id": self.invoice_id,
+												"billing_address_gstin":billing_address_gstin,
+												"customer_address":customer_address,
+												"place_of_supply":place_of_supply,
+												"reverse_charge":reverse_charge,
+												"invoice_type":invoice_type,
+												"posting_date":posting_date,
+												"modified":modified,
+												"amended_from":amended_from,
+												"ecommerce_gstin":ecommerce_gstin
+												})
+										item_entry["mapped_items"] = mapped_items_list
+								else:
+									item_list = []
+									item_list.append({
+											"tax_rate": sales_tax_rate, 
+											"net_amount": item_net_amount,
+										        "invoice_id": self.invoice_id,
+											"billing_address_gstin":billing_address_gstin,
+											"customer_address":customer_address,
+											"place_of_supply":place_of_supply,
+											"reverse_charge":reverse_charge,
+											"invoice_type":invoice_type,
+											"posting_date":posting_date,
+											"modified":modified,
+											"amended_from":amended_from,
+											"ecommerce_gstin":ecommerce_gstin
+											})
+									invoice_map[self.invoice_id] = frappe._dict({"mapped_items": item_list})
+			print "	invoice_map-------------",invoice_map
+			#print "amended_from----------",amended_from
+			for invoice_map_data in invoice_map:
+				map_data = invoice_map[invoice_map_data]
+				for map_d in range(0,len(map_data["mapped_items"])):
+					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
+					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
+					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					billing_address_gstin = map_data["mapped_items"][map_d]["billing_address_gstin"]
+					customer_address = map_data["mapped_items"][map_d]["customer_address"]
+					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
+					reverse_charge = map_data["mapped_items"][map_d]["reverse_charge"]
+					invoice_type = map_data["mapped_items"][map_d]["invoice_type"]
+					posting_date = map_data["mapped_items"][map_d]["posting_date"]
+					modified = map_data["mapped_items"][map_d]["modified"]
+					amended_from = map_data["mapped_items"][map_d]["amended_from"]
+					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					invoice_value = tot_net_amount * rate_of_tax /100
+					grand_total = invoice_value + tot_net_amount
+					self.data.append([billing_address_gstin,customer_address,amended_from,
+						posting_date,invoice_no,modified,grand_total,place_of_supply,reverse_charge,"",
+						invoice_type,ecommerce_gstin,rate_of_tax,tot_net_amount,""])	
+			#print "self.data------out side loop----",self.data
+		
+		elif self.filters.get("type_of_business") == "B2CL":
+			invoice_map = {}
+			columns = self.get_columns_b2bl()
+			sales_b = self.sales_invoice_b2bl()
+			for sales_datas in sales_b:
+				amended_from = sales_datas.amended_from
+				if amended_from == None:
+					self.invoice_id = sales_datas.name
+					print "self.invoice_id--------",self.invoice_id
+					posting_date = sales_datas.posting_date
+					place_of_supply = sales_datas.place_of_supply
+					print "place_of_supply------",place_of_supply
+					ecommerce_gstin = sales_datas.ecommerce_gstin
+					self.customer_address = sales_datas.customer_address
+					grand_total = sales_datas.grand_total
+					print "grand_total--------",grand_total
+					self.company_address = sales_datas.company_address
+					b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
+					gst_state_number = self.get_contact_details()
+					address_details = self.address_gst_number()
+					if grand_total > float(b2c_limit) and address_details != gst_state_number:
+						sales_item = self.sales_item_details()
+						for item in sales_item:
+							self.item_code = item.item_code
+							item_net_amount = item.net_amount
+							#print "self.item_code----------",self.item_code
+							tax_data = self.sales_tax()
+							#print "tax_data----------",tax_data
+							sales_invoice_tax_data = self.sales_account_tax()
+							if len(tax_data) != 0:
+								tax_rate_list = []
+								for data in tax_data:
+									tax_rate = data.tax_rate
+									net_amount = data.net_amount
+									#print "net_amount----------",net_amount
+									key = self.invoice_id
+									if key in invoice_map:
+										item_entry = invoice_map[key]
+										mapped_items_list = item_entry["mapped_items"]
+										#print "type of mapped_items_list-------------", (mapped_items_list,net_amount)
+										new_list = []
+										for mapped_items in mapped_items_list:
+											tax_rate_list.append(mapped_items["tax_rate"])
+											data_rate = list(set(tax_rate_list))
+											#print "data_rate---------",data_rate
+										if tax_rate in data_rate:
+											for items in mapped_items_list:
+												if float(tax_rate) == float(items["tax_rate"]):
+													qty_temp = items["net_amount"]
+													items["net_amount"] = (qty_temp) + (net_amount)
+										else:
+										
+											new_list.append({
+												"tax_rate": tax_rate, 
+											  	"net_amount": net_amount,
+											        "invoice_id": key,
+												"posting_date":posting_date,
+												 "place_of_supply":place_of_supply,	
+												 "ecommerce_gstin":ecommerce_gstin
+															})
+									
+											item_entry["mapped_items"] = mapped_items_list + new_list
+										#print "new_list--------",item_entry["mapped_items"]
+									else:
+										item_list = []
+										item_list.append({"tax_rate": tax_rate, 
+												  "net_amount": net_amount,
+												  "invoice_id": key,
+												  "posting_date":posting_date,
+												  "place_of_supply":place_of_supply,	
+												  "ecommerce_gstin":ecommerce_gstin 																									
+													})
+										invoice_map[key] = frappe._dict({"mapped_items": item_list})
+								
+									
+							else:
+								#print "else part enter ---------"
+								print "invoice_map----------",invoice_map
+								sales_tax_rate = 0
+								total_amount = 0.0
+								if len(sales_invoice_tax_data) != 0:
+									for invoice_tax_data in sales_invoice_tax_data:
+										account_head = invoice_tax_data.account_head
+										print "account_head----------",account_head
+										item_wise_tax_detail = invoice_tax_data.item_wise_tax_detail
+										#print "type of -----------",type(item_wise_tax_detail)
+										converted = ast.literal_eval(item_wise_tax_detail)
+										print "else----item_code--------",self.item_code
+										if self.item_code in converted:
+											details = converted[self.item_code]
+											if "SGST" in account_head or "CGST" in account_head:
+												sales_tax_rate = sales_tax_rate + details[0]
+												#print "rate ---------",addition
+											elif "IGST" in account_head:
+												sales_tax_rate = details[0]
+											
+									if self.invoice_id in invoice_map:
+										item_entry = invoice_map[self.invoice_id]
+										mapped_items_list = item_entry["mapped_items"]
+									
+
+										for mapped_items in mapped_items_list:
+											tax_rate_list.append(mapped_items["tax_rate"])
+											data_rate = list(set(tax_rate_list))
+											#print "data_rate---------",data_rate
+										if sales_tax_rate in data_rate:
+											for items in mapped_items_list:
+												if float(sales_tax_rate) == float(items["tax_rate"]):
+													qty_temp = items["net_amount"]
+													items["net_amount"] = (qty_temp) + (item_net_amount)
+
+										else:
+											mapped_items_list.append({
+												"tax_rate": sales_tax_rate, 
+												"net_amount": item_net_amount,
+												"invoice_id": self.invoice_id,
+												"posting_date":posting_date,
+												"place_of_supply":place_of_supply,	
+												"ecommerce_gstin":ecommerce_gstin
+														})
+											item_entry["mapped_items"] = mapped_items_list
+									else:
+										item_list = []
+										item_list.append({
+												 "tax_rate": sales_tax_rate, 
+												 "net_amount": item_net_amount,
+												 "invoice_id": self.invoice_id,
+												 "posting_date":posting_date,
+												 "place_of_supply":place_of_supply,	  													"ecommerce_gstin":ecommerce_gstin				
+													})
+										invoice_map[self.invoice_id] = frappe._dict({"mapped_items": item_list})
+			#print "	invoice_map-------------",invoice_map
+			for invoice_map_data in invoice_map:
+				map_data = invoice_map[invoice_map_data]
+				for map_d in range(0,len(map_data["mapped_items"])):
+					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
+					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
+					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
+					posting_date = map_data["mapped_items"][map_d]["posting_date"]
+					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					invoice_value = tot_net_amount * rate_of_tax /100
+					invoice_grand_total = invoice_value + tot_net_amount
+					self.data.append([invoice_no,
+						posting_date,invoice_grand_total,place_of_supply,""
+						,rate_of_tax,tot_net_amount,"",ecommerce_gstin])	
+			#print "self.data------out side loop----",self.data
+		elif self.filters.get("type_of_business") == "B2CLA":
+			invoice_map = {}
+			columns = self.get_columns_b2bla()
+			sales_b = self.sales_invoice_b2bl()
+			for sales_datas in sales_b:
+				amended_from = sales_datas.amended_from
+				if amended_from is not None:
+					self.invoice_id = sales_datas.name
+					posting_date = sales_datas.posting_date
+					place_of_supply = sales_datas.place_of_supply
+					ecommerce_gstin = sales_datas.ecommerce_gstin
+					self.customer_address = sales_datas.customer_address
+					grand_total = sales_datas.grand_total
+					modified = sales_datas.modified
+					modified_date = getdate(modified.strftime('%Y-%m-%d'))
+					self.company_address = sales_datas.company_address
+					b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
+					gst_state_number = self.get_contact_details()
+					address_details = self.address_gst_number()
+					if grand_total > float(b2c_limit) and address_details != gst_state_number:
+						sales_item = self.sales_item_details()
+						for item in sales_item:
+							self.item_code = item.item_code
+							item_net_amount = item.net_amount
+							tax_data = self.sales_tax()
+							sales_invoice_tax_data = self.sales_account_tax()
+							if len(tax_data) != 0:
+								tax_rate_list = []
+								for data in tax_data:
+									tax_rate = data.tax_rate
+									net_amount = data.net_amount
+									key = self.invoice_id
+									if key in invoice_map:
+										item_entry = invoice_map[key]
+										mapped_items_list = item_entry["mapped_items"]
+										new_list = []
+										for mapped_items in mapped_items_list:
+											tax_rate_list.append(mapped_items["tax_rate"])
+											data_rate = list(set(tax_rate_list))
+										if tax_rate in data_rate:
+											for items in mapped_items_list:
+												if float(tax_rate) == float(items["tax_rate"]):
+													qty_temp = items["net_amount"]
+													items["net_amount"] = (qty_temp) + (net_amount)
+										else:
+										
+											new_list.append({
+												"tax_rate": tax_rate, 
+											  	"net_amount": net_amount,
+											        "invoice_id": key,
+												 "posting_date":posting_date,
+												 "place_of_supply":place_of_supply,	
+												 "ecommerce_gstin":ecommerce_gstin,
+												 "modified_date":modified_date,
+												 "amended_from":amended_from
+															})
+									
+											item_entry["mapped_items"] = mapped_items_list + new_list
+									else:
+										item_list = []
+										item_list.append({
+												"tax_rate": tax_rate, 
+												 "net_amount": net_amount,
+												 "invoice_id": key,
+												 "posting_date":posting_date,
+												 "place_of_supply":place_of_supply,	
+												 "ecommerce_gstin":ecommerce_gstin,
+												 "modified_date":modified_date,
+												 "amended_from":amended_from 																									
+													})
+										invoice_map[key] = frappe._dict({"mapped_items": item_list})
+								
+									
+							else:
+								sales_tax_rate = 0
+								total_amount = 0.0
+								if len(sales_invoice_tax_data) != 0:
+									for invoice_tax_data in sales_invoice_tax_data:
+										account_head = invoice_tax_data.account_head
+										item_wise_tax_detail = invoice_tax_data.item_wise_tax_detail
+										converted = ast.literal_eval(item_wise_tax_detail)
+										if self.item_code in converted:
+											details = converted[self.item_code]
+											if "SGST" in account_head or "CGST" in account_head:
+												sales_tax_rate = sales_tax_rate + details[0]
+											elif "IGST" in account_head:
+												sales_tax_rate = details[0]
+											
+									if self.invoice_id in invoice_map:
+										item_entry = invoice_map[self.invoice_id]
+										mapped_items_list = item_entry["mapped_items"]
+									
+
+										for mapped_items in mapped_items_list:
+											tax_rate_list.append(mapped_items["tax_rate"])
+											data_rate = list(set(tax_rate_list))
+										if sales_tax_rate in data_rate:
+											for items in mapped_items_list:
+												if float(sales_tax_rate) == float(items["tax_rate"]):
+													qty_temp = items["net_amount"]
+													items["net_amount"] = (qty_temp) + (item_net_amount)
+
+										else:
+											mapped_items_list.append({
+												"tax_rate": sales_tax_rate, 
+												"net_amount": item_net_amount,
+												"invoice_id": self.invoice_id,
+												 "posting_date":posting_date,
+												 "place_of_supply":place_of_supply,	
+												 "ecommerce_gstin":ecommerce_gstin,
+												 "modified_date":modified_date,
+												 "amended_from":amended_from
+														})
+											item_entry["mapped_items"] = mapped_items_list
+									else:
+										item_list = []
+										item_list.append({
+												 "tax_rate": sales_tax_rate, 
+												 "net_amount": item_net_amount,
+												 "invoice_id": self.invoice_id,
+												 "posting_date":posting_date,
+												 "place_of_supply":place_of_supply,	
+												 "ecommerce_gstin":ecommerce_gstin,
+												 "modified_date":modified_date,
+												 "amended_from":amended_from
+													})
+										invoice_map[self.invoice_id] = frappe._dict({"mapped_items": item_list})
+			for invoice_map_data in invoice_map:
+				map_data = invoice_map[invoice_map_data]
+				for map_d in range(0,len(map_data["mapped_items"])):
+					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
+					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
+					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
+					posting_date = map_data["mapped_items"][map_d]["posting_date"]
+					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					modified_date = map_data["mapped_items"][map_d]["modified_date"]
+					amended_from = map_data["mapped_items"][map_d]["amended_from"]
+					invoice_value = tot_net_amount * rate_of_tax /100
+					invoice_grand_total = invoice_value + tot_net_amount
+					self.data.append([amended_from,posting_date,place_of_supply,invoice_no,
+						modified_date,invoice_grand_total,""
+						,rate_of_tax,tot_net_amount,"",ecommerce_gstin])	
+		elif self.filters.get("type_of_business") == "B2CS":
+			invoice_map = {}
+			columns = self.get_columns_b2bcs()
+			sales_b = self.sales_invoice_b2bl()
+			for sales_datas in sales_b:
+				amended_from = sales_datas.amended_from
+				if amended_from == None:
+					self.invoice_id = sales_datas.name
+					posting_date = sales_datas.posting_date
+					place_of_supply = sales_datas.place_of_supply
+					ecommerce_gstin = sales_datas.ecommerce_gstin
+					customer_address = sales_datas.customer_address
+					grand_total = sales_datas.grand_total
+					invoice_type = sales_datas.invoice_type
+					company_address = sales_datas.company_address
+					customer_type = sales_datas.customer_type
+					sales_item = self.sales_item_details()
+					for item in sales_item:
+						self.item_code = item.item_code
+						item_net_amount = item.net_amount
+						tax_data = self.sales_tax()
+						sales_invoice_tax_data = self.sales_account_tax()
+						if len(tax_data) != 0:
+							tax_rate_list = []
+							for data in tax_data:
+								tax_rate = data.tax_rate
+								net_amount = data.net_amount
+								key = self.invoice_id
+								if key in invoice_map:
+									item_entry = invoice_map[key]
+									mapped_items_list = item_entry["mapped_items"]
+									new_list = []
+									for mapped_items in mapped_items_list:
+										tax_rate_list.append(mapped_items["tax_rate"])
+										data_rate = list(set(tax_rate_list))
+									if tax_rate in data_rate:
+										for items in mapped_items_list:
+											if float(tax_rate) == float(items["tax_rate"]):
+												qty_temp = items["net_amount"]
+												items["net_amount"] = (qty_temp) + (net_amount)
+									else:
+									
+										new_list.append({
+											"tax_rate": tax_rate, 
+										  	"net_amount": net_amount,
+										        "invoice_id": key,
+											 "customer_type":customer_type,
+											 "place_of_supply":place_of_supply,	
+											 "ecommerce_gstin":ecommerce_gstin,
+											"grand_total":grand_total,
+											"customer_address":customer_address,
+											"company_address":company_address
+														})
+								
+										item_entry["mapped_items"] = mapped_items_list + new_list
+								else:
+									item_list = []
+									item_list.append({
+											"tax_rate": tax_rate, 
+										  	"net_amount": net_amount,
+										        "invoice_id": key,
+											 "customer_type":customer_type,
+											 "place_of_supply":place_of_supply,	
+											 "ecommerce_gstin":ecommerce_gstin,
+											"grand_total":grand_total,
+											"customer_address":customer_address,
+											"company_address":company_address 																									
+													})
+									invoice_map[key] = frappe._dict({"mapped_items": item_list})
+								
+									
+						else:
+							sales_tax_rate = 0
+							total_amount = 0.0
+							if len(sales_invoice_tax_data) != 0:
+								for invoice_tax_data in sales_invoice_tax_data:
+									account_head = invoice_tax_data.account_head
+									item_wise_tax_detail = invoice_tax_data.item_wise_tax_detail
+									converted = ast.literal_eval(item_wise_tax_detail)
+									if self.item_code in converted:
+										details = converted[self.item_code]
+										if "SGST" in account_head or "CGST" in account_head:
+											sales_tax_rate = sales_tax_rate + details[0]
+										elif "IGST" in account_head:
+											sales_tax_rate = details[0]
+										
+								if self.invoice_id in invoice_map:
+									item_entry = invoice_map[self.invoice_id]
+									mapped_items_list = item_entry["mapped_items"]
+								
+									for mapped_items in mapped_items_list:
+										tax_rate_list.append(mapped_items["tax_rate"])
+										data_rate = list(set(tax_rate_list))
+									if sales_tax_rate in data_rate:
+										for items in mapped_items_list:
+											if float(sales_tax_rate) == float(items["tax_rate"]):
+												qty_temp = items["net_amount"]
+												items["net_amount"] = (qty_temp) + (item_net_amount)
+
+									else:
+										mapped_items_list.append({
+											"tax_rate": tax_rate, 
+										  	"net_amount": net_amount,
+										        "invoice_id": key,
+											 "customer_type":customer_type,
+											 "place_of_supply":place_of_supply,	
+											 "ecommerce_gstin":ecommerce_gstin,
+											"grand_total":grand_total,
+											"customer_address":customer_address,
+											"company_address":company_address
+													})
+										item_entry["mapped_items"] = mapped_items_list
+								else:
+									item_list = []
+									item_list.append({
+											"tax_rate": tax_rate, 
+										  	"net_amount": net_amount,
+										        "invoice_id": key,
+											 "customer_type":customer_type,
+											 "place_of_supply":place_of_supply,	
+											 "ecommerce_gstin":ecommerce_gstin,
+											"grand_total":grand_total,
+											"customer_address":customer_address,
+											"company_address":company_address
+												})
+									invoice_map[self.invoice_id] = frappe._dict({"mapped_items": item_list})
+			for invoice_map_data in invoice_map:
+				map_data = invoice_map[invoice_map_data]
+				for map_d in range(0,len(map_data["mapped_items"])):
+					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
+					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
+					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
+					customer_type = map_data["mapped_items"][map_d]["customer_type"]
+					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					self.customer_address = map_data["mapped_items"][map_d]["customer_address"]
+					self.company_address = map_data["mapped_items"][map_d]["company_address"]
+					b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
+					gst_state_number = self.get_contact_details()
+					address_details = self.address_gst_number()
+					invoice_value = tot_net_amount * rate_of_tax /100
+					invoice_grand_total = invoice_value + tot_net_amount
+					if grand_total <= float(b2c_limit) and address_details != gst_state_number:
+						self.data.append([customer_type,place_of_supply,""
+							,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
+					elif grand_total <= float(b2c_limit) and address_details == gst_state_number:
+						self.data.append([customer_type,place_of_supply,""
+							,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
+					elif grand_total >= float(b2c_limit) and address_details == gst_state_number:
+						self.data.append([customer_type,place_of_supply,""
+							,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
+			#print "self.data------out side loop----",self.data
+		return columns, self.data
+	
+	def get_columns_b2b(self):
+		return [
+			_("GSTIN/UIN of Recipient") + "::150",
+			_("Receiver Name") + "::150",
+			_("Invoice Number") + "::150",
+			_("Invoice date") + "::150",
+			_("Invoice Value") + "::180",
+			_("Place Of Supply") + "::150",
+			_("Reverse Charge") + "::150",
+			_("Applicable % of Tax Rate") + "::150",
+			_("Invoice Type") + "::150",
+			_("E-Commerce GSTIN") + "::150",
+			_("Rate") + "::150",
+			_("Taxable Value") + "::160", 
+			_("Cess Amount") + "::120"
+		
+		]
+	def get_columns_b2ba(self):
+		return [
+			_("GSTIN/UIN of Recipient") + "::150",
+			_("Receiver Name") + "::150",
+			_("Original Invoice Number") + "::150",
+			_("Original Invoice date") + "::150",
+			_("Revised Invoice Number") + "::150",
+			_("Revised Invoice date") + "::150",
+			_("Invoice Value") + "::180",
+			_("Place Of Supply") + "::150",
+			_("Reverse Charge") + "::150",
+			_("Applicable % of Tax Rate") + "::150",
+			_("Invoice Type") + "::150",
+			_("E-Commerce GSTIN") + "::150",
+			_("Rate") + "::150",
+			_("Taxable Value") + "::160", 
+			_("Cess Amount") + "::120"
+		
+		]
+	def get_columns_b2bl(self):
+		return [
+			_("Invoice Number") + "::150",
+			_("Invoice date") + "::150",
+			_("Invoice Value") + "::150",
+			_("Place Of Supply") + "::150",
+			_("Applicable % of Tax Rate") + "::150",
+			_("Rate") + "::150",
+			_("Taxable Value") + "::180",
+			_("Cess Amount") + "::150",
+			_("E-Commerce GSTIN") + "::150"
+		
+		]
+	def get_columns_b2bla(self):
+		return [
+			_("Original Invoice Number") + "::150",
+			_("Original Invoice date") + "::150",
+			_("Original Place Of Supply") + "::150",
+			_("Revised Invoice Number") + "::150",
+			_("Revised Invoice date") + "::150",
+			_("Invoice Value") + "::150",
+			_("Applicable % of Tax Rate") + "::150",
+			_("Rate") + "::150",
+			_("Taxable Value") + "::180",
+			_("Cess Amount") + "::150",
+			_("E-Commerce GSTIN") + "::150"
+		
+		]
+	def get_columns_b2bcs(self):
+		return [
+			_("Type") + "::150",
+			_("Place Of Supply") + "::150",
+			_("Applicable % of Tax Rate") + "::150",
+			_("Rate") + "::150",
+			_("Taxable Value") + "::150",
+			_("Cess Amount") + "::150",
+			_("E-Commerce GSTIN") + "::150"
+		
+		]
+
+	def sales_invoice_details(self):
+		sales_invoice = frappe.db.sql("""select billing_address_gstin,customer_address,name,posting_date,place_of_supply,
+						reverse_charge,invoice_type,ecommerce_gstin,posting_date,amended_from,modified
+ 						from `tabSales Invoice` 
+						where posting_date >= %s AND posting_date <= %s 
+						AND customer_name IN (select customer_name from `tabCustomer` where customer_type = "Company")
+						 AND docstatus = 1""",(self.filters.from_date,self.filters.to_date), as_dict = 1)
+
+		
+		return sales_invoice
+
+	def sales_invoice_b2bl(self):
+		sales_invoice_b = frappe.db.sql("""select si.billing_address_gstin,si.customer_address,si.name,si.posting_date,si.place_of_supply,
+					si.reverse_charge,si.invoice_type,si.ecommerce_gstin,si.posting_date,si.amended_from,
+					si.modified,si.grand_total,si.company_address,c.customer_type
+					from `tabSales Invoice` si, `tabCustomer` c
+					where si.posting_date >= %s AND si.posting_date <= %s
+			 		AND c.customer_type = "Individual" AND si.customer_name = c.customer_name 
+					AND si.docstatus = 1""",(self.filters.from_date,self.filters.to_date), as_dict = 1)
+		#print "sales_invoice_b-----------",sales_invoice_b
+		return sales_invoice_b
+
+	def sales_invoice_counts(self):
+		sales_in = frappe.db.sql("""select count(billing_address_gstin) as bill_gstin, count(name) as customer,amended_from 
+					from `tabSales Invoice` 
+					where posting_date >= %s AND posting_date <= %s AND amended_from is NULL
+ 					AND customer_name IN (select customer_name from `tabCustomer` where customer_type = "Company")""",(self.filters.from_date,self.filters.to_date), as_dict = 1)
+
+		
+		return sales_in
+	def sales_item_details(self):
+		if self.invoice_id:
+			invoice_item = frappe.db.sql("""select item_code,net_amount,qty,rate from `tabSales Invoice Item` where parent = %s""",(self.invoice_id), as_dict = 1)
+			
+		return invoice_item
+
+	def sales_tax(self):
+		#rint " self.item_code-------------", self.item_code
+		if self.item_code:
+			items = frappe.db.sql("""select distinct si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type from `tabSales Invoice Item` si, `tabItem Tax` it where si.item_code = '"""+ str(self.item_code)+"""' AND it.parent = si.item_code AND it.tax_type like '%IGST%' AND si.parent = '"""+ str(self.invoice_id)+"""'""", as_dict = 1)
+		#print "items-----------",items
+		return items		
+	def sales_account_tax(self):
+		if self.invoice_id:
+			account_tax = frappe.db.sql("""select account_head,rate,item_wise_tax_detail from `tabSales Taxes and Charges` where parent = %s""",(self.invoice_id),as_dict =1)
+		return account_tax
 
 	def get_contact_details(self):
-		name = ""
-		city = ""
-		state = ""
-		address_type = ""
+		
 		gst_state_number =""
 		if self.customer_address:
-			name,city,state,gst_state_number = frappe.db.get_value('Address',self.customer_address,
-			['name','city','state','gst_state_number'])
-		return name,city,state,gst_state_number
+			gst_state_number = frappe.db.get_value('Address',self.customer_address,
+			['gst_state_number'])
+		return gst_state_number
 
-	def get_Advance_Payment_details(self):
-		if self.customer_address_bill:
-			payment_data = frappe.get_list("Payment Entry", {"party_name":self.customer_address_bill},
-			["paid_amount","name","creation","party_name"])
-			return payment_data
-		else:
-			return None
 	def address_gst_number(self):
+		company_gst_state_number = ""
 		address_detail = frappe.get_list("Address",["address_type","gst_state_number","name"])
 		for itrate_address in address_detail:
 			name = itrate_address.name
 			if name == self.company_address:
-				self.company_gst_state_number  = itrate_address.gst_state_number
-		return self.company_gst_state_number
-	def get_gst_accounts(self):
-		self.gst_accounts = frappe._dict()
-		gst_settings_accounts = frappe.get_list("GST Account",
-			filters={"parent": "GST Settings", "company": self.filters.company},
-			fields=["cgst_account", "sgst_account", "igst_account", "cess_account"])
-		if not gst_settings_accounts:
-			frappe.throw(_("Please set GST Accounts in GST Settings"))
-		for d in gst_settings_accounts:
-			for acc, val in d.items():
-				self.gst_accounts.setdefault(acc, []).append(val)
+				company_gst_state_number  = itrate_address.gst_state_number
+		return company_gst_state_number
 
-	def get_columns(self):
-		self.tax_columns = [
-		]
-		self.other_columns = []
-		if self.filters.get("type_of_business") ==  "B2B":
-			self.invoice_columns = [
-				{
-					"fieldname": "posting_date",
-					"label": "Invoice date",
-					"fieldtype": "Date",
-					"width":80
-				},
-				{
-					"fieldname": "invoice_number",
-					"label": "Invoice Number",
-					"fieldtype": "Link",
-					"options": "Sales Invoice",
-					"width":100
-				},
-				{
-					"fieldname": "manual_serial_number",
-					"label": "Manual Serial Number",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_name",
-					"label": "Customer Billing Name",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "billing_address_gstin",
-					"label": "Customer Billing GSTIN",
-					"fieldtype": "Data",
-					"width": 150
-				},
-				{
-					"fieldname": "gst_status",
-					"label": "GST Status",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "place_of_supply",
-					"label": "State Place of Supply",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "item_good_service",
-					"label": "Is the item a GOOD (G) or SERVICE (S)",
-					"fieldtype": "Data",
-					"width":160
-				},
-				{
-					"fieldname": "item_name",
-					"label": "Item Description",
-					"fieldtype": "Data",
-					"width":200
-				},
-				{
-					"fieldname": "gst_hsn_code",
-					"label": "HSN or SAC code",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "qty",
-					"label": "Item Quantity",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "uom",
-					"label": "Item Unit of Measurement",
-					"fieldtype": "Link",
-					"options": "UOM",
-					"width":180
-				},
-				{
-					"fieldname": "rate",
-					"label": "Item Rate",
-					"fieldtype": "Currency",
-					"width":90
-				},
-				{
-					"fieldname": "total_disc",
-					"label": "Total Item Discount Amount",
-					"fieldtype": "Currency",
-					"width":180
-				},
-				{
-					"fieldname": "price_list_rate",
-					"label": "Item Taxable Value",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_rate",
-					"label": "CGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_amount",
-					"label": "CGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_rate",
-					"label": "SGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_amount",
-					"label": "SGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_rate",
-					"label": "IGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_amount",
-					"label": "IGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_rate",
-					"label": "CESS Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_amount",
-					"label": "CESS Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "check_bill_of_supply",
-					"label": "Is this a Bill of Supply?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "nil_rate_non_gst",
-					"label": "Is this a Nil Rated/Exempt/NonGST item?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "reverse_charge",
-					"label": "Reverse Charge",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "export_type",
-					"label": "Type of Export",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "port_code",
-					"label": "Shipping Port Code - Export",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "shipping_bill_number",
-					"label": "Shipping Bill Number - Export",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "shipping_bill_date",
-					"label": "Shipping Bill Date - Export",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "has_gst_or_idt",
-					"label": "Has GST/IDT TDS been deducted",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "company_gstin",
-					"label": "MY GSTIN",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_address",
-					"label": "Customer Billing Address",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "city",
-					"label": "Customer Billing City",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "state",
-					"label": "Customer Billing State",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "is_cancelled",
-					"label": "Is this document cancelled?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "composition",
-					"label": "Is the customer a Composition dealer or UIN registered?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "Return_Filing_Quarter",
-					"label": "Return Filing Quarter",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "original_invoice_date",
-					"label": "Original Invoice Date (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_invoice_id",
-					"label": "Original Invoice Number (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_customer_gstin",
-					"label": "Original Customer Billing GSTIN (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "ecommerce_gstin",
-					"label": "GSTIN of Ecommerce Marketplace",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_reciept_date",
-					"label": "Date of Linked Advance Receipt",
-					"fieldtype": "Date",
-					"width":180
-				},
-				{
-					"fieldname": "voucher_number",
-					"label": "Voucher Number of Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_amount",
-					"label": "Adjustment Amount of the Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "grand_total",
-					"label": "Total Transaction Value",
-					"fieldtype": "Currency",
-					"width":140
-				},
-				{
-					"fieldname": "docstatus",
-					"label": "Docstatus",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "amended_from",
-					"label": "amended_from",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "invoice_type",
-					"label": "invoice_type",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				}
-			]
-				
-			self.other_columns = [
-				]
-		elif self.filters.get("type_of_business") ==  "B2C Large":
-			self.invoice_columns = [
-				{
-					"fieldname": "posting_date",
-					"label": "Invoice date",
-					"fieldtype": "Date",
-					"width":80
-				},
-				{
-					"fieldname": "invoice_number",
-					"label": "Invoice Number",
-					"fieldtype": "Link",
-					"options": "Sales Invoice",
-					"width":100
-				},
-				{
-					"fieldname": "manual_serial_number",
-					"label": "Manual Serial Number",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_name",
-					"label": "Customer Billing Name",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "billing_address_gstin",
-					"label": "Customer Billing GSTIN",
-					"fieldtype": "Data",
-					"width": 150
-				},
-				{
-					"fieldname": "gst_status",
-					"label": "GST Status",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "place_of_supply",
-					"label": "State Place of Supply",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "item_good_service",
-					"label": "Is the item a GOOD (G) or SERVICE (S)",
-					"fieldtype": "Data",
-					"width":160
-				},
-				{
-					"fieldname": "item_name",
-					"label": "Item Description",
-					"fieldtype": "Data",
-					"width":200
-				},
-				{
-					"fieldname": "gst_hsn_code",
-					"label": "HSN or SAC code",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "qty",
-					"label": "Item Quantity",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "uom",
-					"label": "Item Unit of Measurement",
-					"fieldtype": "Link",
-					"options": "UOM",
-					"width":180
-				},
-				{
-					"fieldname": "rate",
-					"label": "Item Rate",
-					"fieldtype": "Currency",
-					"width":90
-				},
-				{
-					"fieldname": "total_disc",
-					"label": "Total Item Discount Amount",
-					"fieldtype": "Currency",
-					"width":180
-				},
-				{
-					"fieldname": "price_list_rate",
-					"label": "Item Taxable Value",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_rate",
-					"label": "CGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_amount",
-					"label": "CGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_rate",
-					"label": "SGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_amount",
-					"label": "SGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_rate",
-					"label": "IGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_amount",
-					"label": "IGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_rate",
-					"label": "CESS Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_amount",
-					"label": "CESS Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "check_bill_of_supply",
-					"label": "Is this a Bill of Supply?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "nil_rate_non_gst",
-					"label": "Is this a Nil Rated/Exempt/NonGST item?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "reverse_charge",
-					"label": "Reverse Charge",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "export_type",
-					"label": "Type of Export",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "port_code",
-					"label": "Shipping Port Code - Export",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "shipping_bill_number",
-					"label": "Shipping Bill Number - Export",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "shipping_bill_date",
-					"label": "Shipping Bill Date - Export",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "has_gst_or_idt",
-					"label": "Has GST/IDT TDS been deducted",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "company_gstin",
-					"label": "MY GSTIN",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_address",
-					"label": "Customer Billing Address",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "city",
-					"label": "Customer Billing City",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "state",
-					"label": "Customer Billing State",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "is_cancelled",
-					"label": "Is this document cancelled?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "composition",
-					"label": "Is the customer a Composition dealer or UIN registered?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "Return_Filing_Quarter",
-					"label": "Return Filing Quarter",
-					"fieldtype": "Data",
-					"width":150
-				},	
-				{
-					"fieldname": "original_invoice_date",
-					"label": "Original Invoice Date (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_invoice_id",
-					"label": "Original Invoice Number (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_customer_gstin",
-					"label": "Original Customer Billing GSTIN (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "ecommerce_gstin",
-					"label": "GSTIN of Ecommerce Marketplace",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_reciept_date",
-					"label": "Date of Linked Advance Receipt",
-					"fieldtype": "Date",
-					"width":180
-				},
-				{
-					"fieldname": "voucher_number",
-					"label": "Voucher Number of Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_amount",
-					"label": "Adjustment Amount of the Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "grand_total",
-					"label": "Total Transaction Value",
-					"fieldtype": "Currency",
-					"width":140
-				},
-				{
-					"fieldname": "docstatus",
-					"label": "Docstatus",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "amended_from",
-					"label": "amended_from",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "invoice_type",
-					"label": "invoice_type",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				}
-			]
-			self.other_columns = [
-				]
-		elif self.filters.get("type_of_business") ==  "CDNR":
-			self.invoice_columns = [
-				{
-					"fieldname": "posting_date",
-					"label": "Invoice date",
-					"fieldtype": "Date",
-					"width":80
-				},
-				{
-					"fieldname": "invoice_number",
-					"label": "Invoice Number",
-					"fieldtype": "Link",
-					"options": "Sales Invoice",
-					"width":100
-				},
-				{
-					"fieldname": "manual_serial_number",
-					"label": "Manual Serial Number",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_name",
-					"label": "Customer Billing Name",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "billing_address_gstin",
-					"label": "Customer Billing GSTIN",
-					"fieldtype": "Data",
-					"width": 150
-				},
-				{
-					"fieldname": "gst_status",
-					"label": "GST Status",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "place_of_supply",
-					"label": "State Place of Supply",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "item_good_service",
-					"label": "Is the item a GOOD (G) or SERVICE (S)",
-					"fieldtype": "Data",
-					"width":160
-				},
-				{
-					"fieldname": "item_name",
-					"label": "Item Description",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "gst_hsn_code",
-					"label": "HSN or SAC code",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "qty",
-					"label": "Item Quantity",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "uom",
-					"label": "Item Unit of Measurement",
-					"fieldtype": "Link",
-					"options": "UOM",
-					"width":180
-				},
-				{
-					"fieldname": "rate",
-					"label": "Item Rate",
-					"fieldtype": "Currency",
-					"width":90
-				},
-				{
-					"fieldname": "total_disc",
-					"label": "Total Item Discount Amount",
-					"fieldtype": "Currency",
-					"width":180
-				},
-				{
-					"fieldname": "price_list_rate",
-					"label": "Item Taxable Value",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_rate",
-					"label": "CGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_amount",
-					"label": "CGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_rate",
-					"label": "SGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_amount",
-					"label": "SGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_rate",
-					"label": "IGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_amount",
-					"label": "IGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_rate",
-					"label": "CESS Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_amount",
-					"label": "CESS Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "check_bill_of_supply",
-					"label": "Is this a Bill of Supply?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "nil_rate_non_gst",
-					"label": "Is this a Nil Rated/Exempt/NonGST item?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "reverse_charge",
-					"label": "Reverse Charge",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "export_type",
-					"label": "Type of Export",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "port_code",
-					"label": "Shipping Port Code - Export",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "shipping_bill_number",
-					"label": "Shipping Bill Number - Export",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "shipping_bill_date",
-					"label": "Shipping Bill Date - Export",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "has_gst_or_idt",
-					"label": "Has GST/IDT TDS been deducted",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "company_gstin",
-					"label": "MY GSTIN",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_address",
-					"label": "Customer Billing Address",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "city",
-					"label": "Customer Billing City",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "state",
-					"label": "Customer Billing State",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "is_cancelled",
-					"label": "Is this document cancelled?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "composition",
-					"label": "Is the customer a Composition dealer or UIN registered?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "Return_Filing_Quarter",
-					"label": "Return Filing Quarter",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "original_invoice_date",
-					"label": "Original Invoice Date (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_invoice_id",
-					"label": "Original Invoice Number (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_customer_gstin",
-					"label": "Original Customer Billing GSTIN (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "ecommerce_gstin",
-					"label": "GSTIN of Ecommerce Marketplace",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_reciept_date",
-					"label": "Date of Linked Advance Receipt",
-					"fieldtype": "Date",
-					"width":180
-				},
-				{
-					"fieldname": "voucher_number",
-					"label": "Voucher Number of Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_amount",
-					"label": "Adjustment Amount of the Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "grand_total",
-					"label": "Total Transaction Value",
-					"fieldtype": "Currency",
-					"width":140
-				},
-				{
-					"fieldname": "docstatus",
-					"label": "Docstatus",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "amended_from",
-					"label": "amended_from",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "invoice_type",
-					"label": "invoice_type",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				}
-			]
-			self.other_columns = [
-			]
-		elif self.filters.get("type_of_business") ==  "B2C Small":
-			self.invoice_columns = [
-				{
-					"fieldname": "posting_date",
-					"label": "Invoice date",
-					"fieldtype": "Date",
-					"width":80
-				},
-				{
-					"fieldname": "invoice_number",
-					"label": "Invoice Number",
-					"fieldtype": "Link",
-					"options": "Sales Invoice",
-					"width":100
-				},
-				{
-					"fieldname": "manual_serial_number",
-					"label": "Manual Serial Number",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_name",
-					"label": "Customer Billing Name",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "billing_address_gstin",
-					"label": "Customer Billing GSTIN",
-					"fieldtype": "Data",
-					"width": 150
-				},
-				{
-					"fieldname": "gst_status",
-					"label": "GST Status",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "place_of_supply",
-					"label": "State Place of Supply",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "item_good_service",
-					"label": "Is the item a GOOD (G) or SERVICE (S)",
-					"fieldtype": "Data",
-					"width":160
-				},
-				{
-					"fieldname": "item_name",
-					"label": "Item Description",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "gst_hsn_code",
-					"label": "HSN or SAC code",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "qty",
-					"label": "Item Quantity",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "uom",
-					"label": "Item Unit of Measurement",
-					"fieldtype": "Link",
-					"options": "UOM",
-					"width":180
-				},
-				{
-					"fieldname": "rate",
-					"label": "Item Rate",
-					"fieldtype": "Currency",
-					"width":90
-				},
-				{
-					"fieldname": "total_disc",
-					"label": "Total Item Discount Amount",
-					"fieldtype": "Currency",
-					"width":180
-				},
-				{
-					"fieldname": "price_list_rate",
-					"label": "Item Taxable Value",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{		
-					"fieldname": "cgst_tax_rate",
-					"label": "CGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_amount",
-					"label": "CGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_rate",
-					"label": "SGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_amount",
-					"label": "SGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_rate",
-					"label": "IGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_amount",
-					"label": "IGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_rate",
-					"label": "CESS Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_amount",
-					"label": "CESS Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "check_bill_of_supply",
-					"label": "Is this a Bill of Supply?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "nil_rate_non_gst",
-					"label": "Is this a Nil Rated/Exempt/NonGST item?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "reverse_charge",
-					"label": "Reverse Charge",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "export_type",
-					"label": "Type of Export",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "port_code",
-					"label": "Shipping Port Code - Export",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "shipping_bill_number",
-					"label": "Shipping Bill Number - Export",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "shipping_bill_date",
-					"label": "Shipping Bill Date - Export",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "has_gst_or_idt",
-					"label": "Has GST/IDT TDS been deducted",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "company_gstin",
-					"label": "MY GSTIN",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_address",
-					"label": "Customer Billing Address",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "city",
-					"label": "Customer Billing City",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "state",
-					"label": "Customer Billing State",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "is_cancelled",
-					"label": "Is this document cancelled?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "composition",
-					"label": "Is the customer a Composition dealer or UIN registered?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "Return_Filing_Quarter",
-					"label": "Return Filing Quarter",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "original_invoice_date",
-					"label": "Original Invoice Date (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_invoice_id",
-					"label": "Original Invoice Number (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_customer_gstin",
-					"label": "Original Customer Billing GSTIN (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "ecommerce_gstin",
-					"label": "GSTIN of Ecommerce Marketplace",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_reciept_date",
-					"label": "Date of Linked Advance Receipt",
-					"fieldtype": "Date",
-					"width":180
-				},
-				{
-					"fieldname": "voucher_number",
-					"label": "Voucher Number of Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_amount",
-					"label": "Adjustment Amount of the Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "grand_total",
-					"label": "Total Transaction Value",
-					"fieldtype": "Currency",
-					"width":140
-				},
-				{
-					"fieldname": "docstatus",
-					"label": "Docstatus",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "amended_from",
-					"label": "amended_from",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "invoice_type",
-					"label": "invoice_type",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				}
-			]
-			self.other_columns = [
-			]
-		elif self.filters.get("type_of_business") ==  "EXPORT":
-			self.invoice_columns = [
-				{
-					"fieldname": "posting_date",
-					"label": "Invoice date",
-					"fieldtype": "Date",
-					"width":80
-				},
-				{
-					"fieldname": "invoice_number",
-					"label": "Invoice Number",
-					"fieldtype": "Link",
-					"options": "Sales Invoice",
-					"width":100
-				},
-				{
-					"fieldname": "manual_serial_number",
-					"label": "Manual Serial Number",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_name",
-					"label": "Customer Billing Name",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "billing_address_gstin",
-					"label": "Customer Billing GSTIN",
-					"fieldtype": "Data",
-					"width": 150
-				},
-				{
-					"fieldname": "gst_status",
-					"label": "GST Status",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "place_of_supply",
-					"label": "State Place of Supply",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "item_good_service",
-					"label": "Is the item a GOOD (G) or SERVICE (S)",
-					"fieldtype": "Data",
-					"width":160
-				},
-				{
-					"fieldname": "item_name",
-					"label": "Item Description",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "gst_hsn_code",
-					"label": "HSN or SAC code",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "qty",
-					"label": "Item Quantity",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "uom",
-					"label": "Item Unit of Measurement",
-					"fieldtype": "Link",
-					"options": "UOM",
-					"width":180
-				},
-				{
-					"fieldname": "rate",
-					"label": "Item Rate",
-					"fieldtype": "Currency",
-					"width":90
-				},
-				{
-					"fieldname": "total_disc",
-					"label": "Total Item Discount Amount",
-					"fieldtype": "Currency",
-					"width":180
-				},
-				{
-					"fieldname": "price_list_rate",
-					"label": "Item Taxable Value",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_rate",
-					"label": "CGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cgst_tax_amount",
-					"label": "CGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_rate",
-					"label": "SGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "sgst_tax_amount",
-					"label": "SGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_rate",
-					"label": "IGST Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "igst_tax_amount",
-					"label": "IGST Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_rate",
-					"label": "CESS Rate",
-					"fieldtype": "Data",
-					"width":120
-				},
-				{
-					"fieldname": "cess_tax_amount",
-					"label": "CESS Amount",
-					"fieldtype": "Currency",
-					"width":120
-				},
-				{
-					"fieldname": "check_bill_of_supply",
-					"label": "Is this a Bill of Supply?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "nil_rate_non_gst",
-					"label": "Is this a Nil Rated/Exempt/NonGST item?",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "reverse_charge",
-					"label": "Reverse Charge",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "export_type",
-					"label": "Type of Export",
-					"fieldtype": "Data",
-					"width":140
-				},
-				{
-					"fieldname": "port_code",
-					"label": "Shipping Port Code - Export",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "shipping_bill_number",
-					"label": "Shipping Bill Number - Export",
-					"fieldtype": "Data",
-					"width":160
-				},
-				{
-					"fieldname": "shipping_bill_date",
-					"label": "Shipping Bill Date - Export",
-					"fieldtype": "Data",
-					"width":160
-				},
-				{
-					"fieldname": "has_gst_or_idt",
-					"label": "Has GST/IDT TDS been deducted",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "company_gstin",
-					"label": "MY GSTIN",
-					"fieldtype": "Data",
-					"width":100
-				},
-				{
-					"fieldname": "customer_address",
-					"label": "Customer Billing Address",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "city",
-					"label": "Customer Billing City",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "state",
-					"label": "Customer Billing State",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "is_cancelled",
-					"label": "Is this document cancelled?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "composition",
-					"label": "Is the customer a Composition dealer or UIN registered?",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "Return_Filing_Quarter",
-					"label": "Return Filing Quarter",
-					"fieldtype": "Data",
-					"width":150
-				},
-				{
-					"fieldname": "original_invoice_date",
-					"label": "Original Invoice Date (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_invoice_id",
-					"label": "Original Invoice Number (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "original_customer_gstin",
-					"label": "Original Customer Billing GSTIN (In case of amendment)",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "ecommerce_gstin",
-					"label": "GSTIN of Ecommerce Marketplace",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_reciept_date",
-					"label": "Date of Linked Advance Receipt",
-					"fieldtype": "Date",
-					"width":180
-				},
-				{
-					"fieldname": "voucher_number",
-					"label": "Voucher Number of Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "advance_amount",
-					"label": "Adjustment Amount of the Linked Advance Receipt",
-					"fieldtype": "Data",
-					"width":180
-				},
-				{
-					"fieldname": "grand_total",
-					"label": "Total Transaction Value",
-					"fieldtype": "Currency",
-					"width":140
-				},
-				{
-					"fieldname": "docstatus",
-					"label": "Docstatus",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "amended_from",
-					"label": "amended_from",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				},
-				{
-					"fieldname": "invoice_type",
-					"label": "invoice_type",
-					"fieldtype": "Data",
-					"width":140,
-					"hidden": 1
-				}
-			]
-		self.columns = self.invoice_columns + self.tax_columns + self.other_columns

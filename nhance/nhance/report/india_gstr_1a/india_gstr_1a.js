@@ -1,15 +1,13 @@
-// Copyright (c) 2016, Epoch and contributors
-// For license information, please see license.txt
-/* eslint-disable */
-
+// Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and Contributors
+// License: GNU General Public License v3. See license.txt
 const monthNames = ["January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+    "July", "August", "September", "October", "November", "December"
 ];
 
 const d = new Date();
 var currentMonth = monthNames[d.getMonth()];
 frappe.query_reports["India GSTR-1A"] = {
-	 "filters": [{
+    "filters": [{
             "fieldname": "company",
             "label": __("Company"),
             "fieldtype": "Link",
@@ -88,7 +86,7 @@ frappe.query_reports["India GSTR-1A"] = {
             "label": __("Type of Business"),
             "fieldtype": "Select",
             "reqd": 1,
-            "options": ["B2B", "B2C Large", "B2C Small", "CDNR", "EXPORT"],
+            "options": ["B2B","B2BA", "B2CL","B2CLA","B2CS","B2CSA", "CDNR", "EXPORT"],
             "default": "B2B"
         },
         {
@@ -118,6 +116,7 @@ frappe.query_reports["India GSTR-1A"] = {
         console.log("onload.............");
         report.page.add_inner_button(__("Previous"),
             function() {
+                var reporter = frappe.query_reports["Test Report For GSTR"];
                 var filters = report.get_values();
                 var from_date = filters.from_date;
                 var to_date = filters.to_date;
@@ -169,6 +168,7 @@ frappe.query_reports["India GSTR-1A"] = {
             });
         report.page.add_inner_button(__("Next"),
             function() {
+                var reporter = frappe.query_reports["Test Report For GSTR"];
                 var filters = report.get_values();
                 var from_date = filters.from_date;
                 var to_date = filters.to_date;
@@ -241,9 +241,11 @@ frappe.query_reports["India GSTR-1A"] = {
             });
 	report.page.add_inner_button(__("Fetch All"),
             function() {
+                var reporter = frappe.query_reports["Test Report For GSTR"];
 		console.log("Fetch All entered.............!");
 		var temp_from_date_filter = frappe.query_report_filters_by_name.temp_from_date;
                 var temp_to_date_filter = frappe.query_report_filters_by_name.temp_to_date;
+		
 		frappe.query_report_filters_by_name.temp_from_date.set_input("");
 		frappe.query_report_filters_by_name.temp_to_date.set_input("");
 		frappe.query_report_filters_by_name.fetch_days_data.set_input("");
@@ -257,3 +259,5 @@ frappe.query_reports["India GSTR-1A"] = {
         return !jQuery.isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
     }
 }
+
+
