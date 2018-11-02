@@ -777,8 +777,8 @@ class IndiaGstr1A(object):
 									else:
 										mapped_items_list.append({
 											"tax_rate": sales_tax_rate, 
-										  	"net_amount": net_amount,
-										        "invoice_id": key,
+										  	"net_amount": item_net_amount,
+										        "invoice_id": self.invoice_id,
 											 "customer_type":customer_type,
 											 "place_of_supply":place_of_supply,	
 											 "ecommerce_gstin":ecommerce_gstin,
@@ -791,8 +791,8 @@ class IndiaGstr1A(object):
 									item_list = []
 									item_list.append({
 											"tax_rate": sales_tax_rate, 
-										  	"net_amount": net_amount,
-										        "invoice_id": key,
+										  	"net_amount": item_net_amount,
+										        "invoice_id": self.invoice_id,
 											 "customer_type":customer_type,
 											 "place_of_supply":place_of_supply,	
 											 "ecommerce_gstin":ecommerce_gstin,
@@ -827,6 +827,15 @@ class IndiaGstr1A(object):
 						self.data.append([customer_type,place_of_supply,""
 							,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
 			#print "self.data------out side loop----",self.data
+		elif self.filters.get("type_of_business") == "B2CSA":
+			invoice_map = {}
+			columns = self.get_columns_b2bcs()
+		elif self.filters.get("type_of_business") == "CDNR":
+			invoice_map = {}
+			columns = self.get_columns_b2bcs()
+		elif self.filters.get("type_of_business") == "EXPORT":
+			invoice_map = {}
+			columns = self.get_columns_b2bcs()
 		return columns, self.data
 	
 	def get_columns_b2b(self):
