@@ -68,8 +68,8 @@ class IndiaGstr1A(object):
 						tax_data = self.sales_tax()
 						#print "tax_data----------",tax_data
 						sales_invoice_tax_data = self.sales_account_tax()
+						tax_rate_list = []
 						if len(tax_data) != 0:
-							tax_rate_list = []
 							for data in tax_data:
 								tax_rate = data.tax_rate
 								net_amount = data.net_amount
@@ -233,8 +233,8 @@ class IndiaGstr1A(object):
 						tax_data = self.sales_tax()
 						#print "tax_data----------",tax_data
 						sales_invoice_tax_data = self.sales_account_tax()
+						tax_rate_list = []
 						if len(tax_data) != 0:
-							tax_rate_list = []
 							for data in tax_data:
 								tax_rate = data.tax_rate
 								net_amount = data.net_amount
@@ -414,8 +414,8 @@ class IndiaGstr1A(object):
 							tax_data = self.sales_tax()
 							#print "tax_data----------",tax_data
 							sales_invoice_tax_data = self.sales_account_tax()
+							tax_rate_list = []
 							if len(tax_data) != 0:
-								tax_rate_list = []
 								for data in tax_data:
 									tax_rate = data.tax_rate
 									net_amount = data.net_amount
@@ -558,8 +558,8 @@ class IndiaGstr1A(object):
 							item_net_amount = item.net_amount
 							tax_data = self.sales_tax()
 							sales_invoice_tax_data = self.sales_account_tax()
+							tax_rate_list = []
 							if len(tax_data) != 0:
-								tax_rate_list = []
 								for data in tax_data:
 									tax_rate = data.tax_rate
 									net_amount = data.net_amount
@@ -697,8 +697,8 @@ class IndiaGstr1A(object):
 						item_net_amount = item.net_amount
 						tax_data = self.sales_tax()
 						sales_invoice_tax_data = self.sales_account_tax()
+						tax_rate_list = []
 						if len(tax_data) != 0:
-							tax_rate_list = []
 							for data in tax_data:
 								tax_rate = data.tax_rate
 								net_amount = data.net_amount
