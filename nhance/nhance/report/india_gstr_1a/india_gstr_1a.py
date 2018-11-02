@@ -776,7 +776,7 @@ class IndiaGstr1A(object):
 
 									else:
 										mapped_items_list.append({
-											"tax_rate": tax_rate, 
+											"tax_rate": sales_tax_rate, 
 										  	"net_amount": net_amount,
 										        "invoice_id": key,
 											 "customer_type":customer_type,
@@ -790,7 +790,7 @@ class IndiaGstr1A(object):
 								else:
 									item_list = []
 									item_list.append({
-											"tax_rate": tax_rate, 
+											"tax_rate": sales_tax_rate, 
 										  	"net_amount": net_amount,
 										        "invoice_id": key,
 											 "customer_type":customer_type,
