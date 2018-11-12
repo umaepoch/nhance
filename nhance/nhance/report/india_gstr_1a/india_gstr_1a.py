@@ -9,6 +9,7 @@ from datetime import datetime
 import datetime
 from datetime import date, timedelta
 import calendar
+import dateutil.parser
 import time
 import math
 import json
@@ -69,6 +70,7 @@ class IndiaGstr1A(object):
 					manual_serial_number =map_data["mapped_items"][map_d]["manual_serial_number"]
 					invoice_value = tot_net_amount * rate_of_tax /100
 					grand_total = invoice_value + tot_net_amount
+					
 					if amended_from is None:
 						total_taxable_vlaue = total_taxable_vlaue + tot_net_amount
 						total_invoice_value = total_invoice_value +grand_total
@@ -108,8 +110,8 @@ class IndiaGstr1A(object):
 					modified = map_data["mapped_items"][map_d]["modified"]
 					amended_from = map_data["mapped_items"][map_d]["amended_from"]
 					manual_serial_number =map_data["mapped_items"][map_d]["manual_serial_number"]
-					print "amended_from--------------",amended_from
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					
 					invoice_value = tot_net_amount * rate_of_tax /100
 					grand_total = invoice_value + tot_net_amount
 					if amended_from is not None:
@@ -320,6 +322,8 @@ class IndiaGstr1A(object):
 						for payment in payment_entry:
 							payment_number = payment.name
 							payment_date = payment.posting_date
+							payment_date = payment_date.strftime('%d-%m-%Y')
+							
 					else:
 						
 						payment_number = invoice_no
@@ -328,9 +332,10 @@ class IndiaGstr1A(object):
 					for return_sale in return_sales_details:
 						credit_invoice_id = return_sale.name
 						creadit_return_date = return_sale.posting_date
+						creadit_return_date = creadit_return_date.strftime('%d-%m-%Y')
 						document_type = "C"
 					pre_gst = ""
-					if str(posting_date) < "2017-07-01":
+					if str(posting_date) < "01-07-2017":
 						pre_gst = "Y"
 					else:
 						pre_gst = "N"
@@ -383,6 +388,7 @@ class IndiaGstr1A(object):
 						for payment in payment_entry:
 							payment_number = payment.name
 							payment_date = payment.posting_date
+							payment_date = payment_date.strftime('%d-%m-%Y')
 					else:
 						
 						payment_number = invoice_no
@@ -391,9 +397,10 @@ class IndiaGstr1A(object):
 					for return_sale in return_sales_details:
 						credit_invoice_id = return_sale.name
 						creadit_return_date = return_sale.posting_date
+						creadit_return_date = creadit_return_date.strftime('%d-%m-%Y')
 						document_type = "C"
 					pre_gst = ""
-					if str(posting_date) < "2017-07-01":
+					if str(posting_date) < "01-07-2017":
 						pre_gst = "Y"
 					else:
 						pre_gst = "N"
@@ -826,18 +833,23 @@ def get_business_type_details(sales):
 		customer_name = seles_data.customer_name
 		ecommerce_gstin = seles_data.ecommerce_gstin
 		posting_date = seles_data.posting_date
+		posting_date = posting_date.strftime('%d-%m-%Y')
 		grand_total = seles_data.grand_total
 		company_address = seles_data.company_address
 		customer_type = seles_data.customer_type
 		port_code = seles_data.port_code
 		shipping_bill_number = seles_data.shipping_bill_number
 		shipping_bill_date = seles_data.shipping_bill_date
+		if shipping_bill_date is not None:
+			shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
 		export_type = seles_data.export_type
 		is_return = seles_data.is_return
 		return_against = seles_data.return_against
 		manual_serial_number = seles_data.manual_serial_number
 		account_head = ""
 		modified = seles_data.modified
+		modified = modified.date()
+		modified = modified.strftime('%d-%m-%Y')
 		amended_from = seles_data.amended_from
 		sales_item = sales_item_details(invoice_id)
 		for item in sales_item:
@@ -1015,20 +1027,23 @@ def get_unique_state_list(sales):
 		customer_name = seles_data.customer_name
 		ecommerce_gstin = seles_data.ecommerce_gstin
 		posting_date = seles_data.posting_date
+		posting_date = posting_date.strftime('%d-%m-%Y')
 		grand_total = seles_data.grand_total
 		company_address = seles_data.company_address
 		customer_type = seles_data.customer_type
 		port_code = seles_data.port_code
 		shipping_bill_number = seles_data.shipping_bill_number
 		shipping_bill_date = seles_data.shipping_bill_date
+		if shipping_bill_date is not None:
+			shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
 		export_type = seles_data.export_type
 		is_return = seles_data.is_return
 		return_against = seles_data.return_against
-		
 		account_head = ""
 		modified = seles_data.modified
+		modified = modified.date()
+		modified = modified.strftime('%d-%m-%Y')
 		amended_from = seles_data.amended_from
-		#print "amended_from--------------1--------",amended_from
 		sales_item = sales_item_details(invoice_id)
 		for item in sales_item:
 			item_code = item.item_code
