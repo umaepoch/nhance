@@ -8,9 +8,9 @@ const d = new Date();
 var currentMonth = monthNames[d.getMonth()];
 var currentYear = yearNames[d.getYear()];
 console.log("currentYear----------"+currentYear);
-var company_gstino = fun_gstin();
+//var company_gstino = fun_gstin();
 //console.log("company_gstino----------"+company_gstino);
-frappe.query_reports["GSTR-3B"] = {
+frappe.query_reports["GSTR_3B"] = {
 	"filters": [
 		{
 			"fieldname":"company",
@@ -47,6 +47,7 @@ frappe.query_reports["GSTR-3B"] = {
 		}
 	]
 }
+/*
 var company_gstin = "";
 function fun_gstin(){
 	
@@ -66,3 +67,4 @@ function fun_gstin(){
 	
 	return company_gstin
 }
+*/

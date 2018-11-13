@@ -528,13 +528,13 @@ def get_columns():
 		_("State/UT Tax ") + "::120",
 		_("Cess ") + "::120"
 	]
-
+'''
 @frappe.whitelist()
 def for_gstin():
 	purchase_invoice = frappe.db.sql ("""select company_gstin from `tabPurchase Invoice""",as_dict = 1)
 	
 	return purchase_invoice
-
+'''
 def purchase_invoice_for():
 	purchase_details = frappe.db.sql("""select name , net_total from `tabPurchase Invoice` where invoice_type = 'Import' AND eligibility_for_itc = 'input' AND posting_date >= %s AND posting_date <= %s""",(start_date, end_date), as_dict=1)
 	return purchase_details
@@ -558,7 +558,7 @@ def purchase_reverse_tx(name):
 	tax_servce = frappe.db.sql("""select account_head, tax_amount from `tabPurchase Taxes and Charges` where parent = %s""",(name),as_dict = 1)
 	return tax_servce
 def purchase_not_composite():
-	no_composite = frappe.db.sql(""" select name, net_total from `tabPurchase Invoice` where invoice_type = "Regular" AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s AND supplier NOT IN(select supplier_name from `tabSupplier` where india_gst_supplier_status_ IN("Composite Dealer"))""",(start_date, end_date), as_dict=1)
+	no_composite = frappe.db.sql(""" select name, net_total from `tabPurchase Invoice` where invoice_type = "Regular" AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s AND supplier NOT IN(select supplier_name from `tabSupplier` where india_gst_supplier_status IN("Composite Dealer"))""",(start_date, end_date), as_dict=1)
 	return no_composite
 def no_composite(name):
 	tax_servce = frappe.db.sql("""select account_head, tax_amount from `tabPurchase Taxes and Charges` where parent = %s""",(name),as_dict = 1)
@@ -623,8 +623,7 @@ def get_columns2():
 	]
 
 def sales_invoice():
-	invoices = frappe.db.sql("""select place_of_supply,billto_state,customer_address,name,net_total,posting_date from `tabSales Invoice` where posting_date >= %s AND posting_date <= %s AND customer_type IN (select customer_type from `tabCustomer` where customer_type = "Individual")
-""",(start_date, end_date), as_dict = 1)
+	invoices = frappe.db.sql("""select si.place_of_supply,si.billto_state,si.customer_address,si.name,si.net_total,si.posting_date from `tabSales Invoice` si , `tabCustomer` c where si.customer = c.name AND si.posting_date >= %s AND si.posting_date <= %s AND c.customer_type = 'Individual'""",(start_date, end_date), as_dict = 1)
 	return invoices
 def sales_payment(state):
 	payment = frappe.db.sql(""" select st.account_head,st.tax_amount,si.name,si.place_of_supply from `tabSales Invoice` si, `tabSales Taxes and Charges` st where si.name = st.parent AND si.place_of_supply = %s AND si.posting_date >= %s AND si.posting_date <= %s AND customer IN(select name from `tabCustomer` where customer_type = "Individual")  """,(state,start_date, end_date), as_dict = 1)
