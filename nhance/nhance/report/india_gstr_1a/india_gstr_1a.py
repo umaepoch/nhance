@@ -809,14 +809,14 @@ def sales_item_details(invoice_id):
 def sales_tax(item_code,invoice_id):
 	
 	if item_code:
-		items = frappe.db.sql("""select distinct si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type from `tabSales Invoice Item` si, `tabItem Tax` it where si.item_code = '"""+ str(item_code)+"""' AND it.parent = si.item_code AND it.tax_type like '%IGST%' AND si.parent = '"""+ str(invoice_id)+"""'""", as_dict = 1)
+		items = frappe.db.sql("""select distinct si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type from `tabSales Invoice Item` si, `tabItem Tax` it where si.item_code = %s AND si.parent = %s AND it.parent = si.item_code AND it.tax_type in ("IGST") """,(item_code,invoice_id), as_dict = 1)
 		#print "items-----------",items
 	return items
 
 def sales_tax_hsn(item_code,invoice_id):
 	
 	if item_code:
-		items_hsn = frappe.db.sql("""select distinct si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type from `tabSales Invoice Item` si, `tabItem Tax` it where si.item_code = '"""+ str(item_code)+"""' AND it.parent = si.item_code AND si.parent = '"""+ str(invoice_id)+"""'""", as_dict = 1)
+		items_hsn = frappe.db.sql("""select distinct si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type from `tabSales Invoice Item` si, `tabItem Tax` it where si.item_code = %s AND si.parent = %s AND it.parent = si.item_code '""",(item_code,invoice_id), as_dict = 1)
 		#print "items-----------",items
 	return items_hsn	
 
