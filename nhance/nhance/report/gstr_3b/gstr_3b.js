@@ -3,14 +3,13 @@
 const monthNames = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
-const yearNames = [2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
 const d = new Date();
 var currentMonth = monthNames[d.getMonth()];
-var currentYear = yearNames[d.getYear()];
+var currentYear = d.getFullYear();
 console.log("currentYear----------"+currentYear);
 //var company_gstino = fun_gstin();
 //console.log("company_gstino----------"+company_gstino);
-frappe.query_reports["GSTR_3B"] = {
+frappe.query_reports["GSTR-3B"] = {
 	"filters": [
 		{
 			"fieldname":"company",
@@ -25,7 +24,7 @@ frappe.query_reports["GSTR_3B"] = {
 			"label": __("Year"),
 			"fieldtype": "Select",
 			"options": ["2014","2015","2016","2017","2018","2019","2020", "2021", "2022","2023", "2024","2025","2026"],
-			"default": "2018"
+			"default": currentYear
 		},
 		{
 			"fieldname":"month",
