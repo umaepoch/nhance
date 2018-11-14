@@ -316,6 +316,7 @@ def execute(filters=None):
 		integrated_tax =0.0
 		central_tax =0.0
 		cess =0.0
+		state_ut_tax = 0.0
 		for rule in rule_gst:
 			total_taxable_value = rule.taxable_value
 			integrated_tax = rule.integrated_tax
@@ -400,7 +401,6 @@ def execute(filters=None):
 
 	elif type_of_taxes == "State Supplier Taxes":
 		columns=get_columns3()
-		summ_data.append(["","Total Taxable value","Amount of Integrated Tax","","Total Taxable value","Amount of Integrated Tax","","Total Taxable value","Amount of Integrated Tax"])
 		invoice_id = ""
 		invoice = sales_invoice()
 		state = ""
@@ -471,9 +471,9 @@ def execute(filters=None):
 				else: 
 					uin_tax_amount = 0.0
 					customer_uin_tax_total = customer_uin_tax_total + uin_tax_amount
-				summ_data.append([state,net_total,tax_amount,"",composit_amount,compo_tax_amount,"",uin_net_total,uin_tax_amount])
+				summ_data.append([state,net_total,tax_amount,composit_amount,compo_tax_amount,uin_net_total,uin_tax_amount])
 		summ_data.append(["","","","",""])
-		summ_data.append(["Total",customer_individual_net_total,customer_individual_tax_total,"",composite_net_total,composite_tax_total,"",customer_uin_net_total,customer_uin_tax_total])
+		summ_data.append(["Total",customer_individual_net_total,customer_individual_tax_total,composite_net_total,composite_tax_total,customer_uin_net_total,customer_uin_tax_total])
 	return columns, summ_data
 
 
@@ -558,7 +558,7 @@ def purchase_reverse_tx(name):
 	tax_servce = frappe.db.sql("""select account_head, tax_amount from `tabPurchase Taxes and Charges` where parent = %s""",(name),as_dict = 1)
 	return tax_servce
 def purchase_not_composite():
-	no_composite = frappe.db.sql(""" select name, net_total from `tabPurchase Invoice` where invoice_type = "Regular" AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s AND supplier NOT IN(select supplier_name from `tabSupplier` where india_gst_supplier_status IN("Composite Dealer"))""",(start_date, end_date), as_dict=1)
+	no_composite = frappe.db.sql(""" select name, net_total from `tabPurchase Invoice` where invoice_type = "Regular" AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s AND supplier NOT IN(select supplier_name from `tabSupplier` where india_gst_supplier_status_ IN("Composite Dealer"))""",(start_date, end_date), as_dict=1)
 	return no_composite
 def no_composite(name):
 	tax_servce = frappe.db.sql("""select account_head, tax_amount from `tabPurchase Taxes and Charges` where parent = %s""",(name),as_dict = 1)
@@ -764,14 +764,12 @@ def get_tax_for_uin(payment_uin):
 def get_columns3():
 	return [
 		_("Place of Supply(State/UT)") + "::250", 
-		_("Supplies made to Unregistered Persons ") + "::250",
-		_("---") + "::150",
-		_("-") + "::20",
-		_("Supplies made to Composition Taxable Persons ") + "::250",
-		_("----") + "::150",
-		_("--") + "::20",
-		_("Supplies made to UIN holders ") + "::250",
-		_("-----") + "::150"
+		_("Taxable value(Unregistered Persons)") + "::250",
+		_("Integrated Tax(Unregistered Persons) ") + "::250",
+		_("Taxable value(Composition Persons)") + "::250",
+		_("Integrated Tax(Composition Persons) ") + "::250",
+		_("Total Taxable value(UIN holders)") + "::250",
+		_("Integrated Tax(UIN holders) ") + "::230"
 		
 	]
 def get_columns4():
