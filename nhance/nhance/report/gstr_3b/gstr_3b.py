@@ -557,9 +557,11 @@ def purchase_reverse_charge():
 def purchase_reverse_tx(name):
 	tax_servce = frappe.db.sql("""select account_head, tax_amount from `tabPurchase Taxes and Charges` where parent = %s""",(name),as_dict = 1)
 	return tax_servce
+
 def purchase_not_composite():
-	no_composite = frappe.db.sql(""" select name, net_total from `tabPurchase Invoice` where invoice_type = "Regular" AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s AND supplier NOT IN(select supplier_name from `tabSupplier` where india_gst_supplier_status_ IN("Composite Dealer"))""",(start_date, end_date), as_dict=1)
+	no_composite = frappe.db.sql(""" select pi.name, pi.net_total from `tabPurchase Invoice` pi , `tabSupplier` su where pi.supplier = su.supplier_name AND  pi.invoice_type = "Regular" AND pi.eligibility_for_itc = "ineligible" AND pi.posting_date >= %s AND pi.posting_date <= %s AND su.india_gst_supplier_status  NOT IN( "Composite Dealer")""",(start_date, end_date), as_dict=1)
 	return no_composite
+
 def no_composite(name):
 	tax_servce = frappe.db.sql("""select account_head, tax_amount from `tabPurchase Taxes and Charges` where parent = %s""",(name),as_dict = 1)
 	return tax_servce
@@ -592,7 +594,7 @@ def get_columns1():
 	]
 
 def purchase_invoice_tax():
-	purchase = frappe.db.sql("""select name,net_total,supplier_address,shipping_address,posting_date from `tabPurchase Invoice` where supplier IN (select name from `tabSupplier` where supplier_status IN ("Composite Dealer","Exempt","Nil Rated")) AND invoice_type = "Regular"AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s
+	purchase = frappe.db.sql("""select name,net_total,supplier_address,shipping_address,posting_date from `tabPurchase Invoice` where supplier IN (select name from `tabSupplier` where india_gst_supplier_status IN ("Composite Dealer","Exempt","Nil Rated")) AND invoice_type = "Regular"AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s
 """, (start_date, end_date), as_dict=1)
 	
 	return purchase
@@ -606,7 +608,7 @@ def shipping_address(company_address):
 	
 	return company
 def purchase_detail_ex():
-	purchase_de = frappe.db.sql("""select name,net_total,supplier_address from `tabPurchase Invoice` where supplier IN (select name from `tabSupplier` where supplier_status IN ("Non-GST"))AND invoice_type = "Regular"AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s
+	purchase_de = frappe.db.sql("""select name,net_total,supplier_address from `tabPurchase Invoice` where supplier IN (select name from `tabSupplier` where india_gst_supplier_status IN ("Non-GST"))AND invoice_type = "Regular"AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s
 """, (start_date, end_date), as_dict=1)
 	return purchase_de
 def address_detail(supplier_address):
@@ -763,7 +765,7 @@ def get_tax_for_uin(payment_uin):
 
 def get_columns3():
 	return [
-		_("Place of Supply(State/UT)") + "::250", 
+		_("Place of Supply(State/UT)") + "::250",
 		_("Taxable value(Unregistered Persons)") + "::250",
 		_("Integrated Tax(Unregistered Persons) ") + "::250",
 		_("Taxable value(Composition Persons)") + "::250",
@@ -783,5 +785,3 @@ def get_columns4():
 def intrest_details():
 	intrest_data = frappe.db.sql("""select taxable_value,integrated_tax,central_tax,state_ut_tax,cess from `tabGSTR 3B INTEREST AND RULES`""",as_dict = 1)
 	return intrest_data
-
-
