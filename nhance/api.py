@@ -9,6 +9,7 @@ from erpnext.accounts.party import get_party_account_currency
 from frappe.desk.notifications import clear_doctype_notifications
 from datetime import datetime
 import sys
+import os
 import operator
 import frappe
 import json
@@ -1156,4 +1157,15 @@ def fetch_stopped_po_items(stopped_po):
 		return items
 	else:
 		return items
+
+@frappe.whitelist()
+def for_item_code():
+	item_code_details = frappe.db.sql("""select name,current from `tabSeries` where name='FI-'""",as_dict=1)
+	return item_code_details
+
+
+@frappe.whitelist()
+def series_update(current_num,name):
+	updated = frappe.db.sql("""UPDATE `tabSeries` SET current = '"""+current_num+"""' where name = %s""",(name),as_dict=1)
+	return updated
 
