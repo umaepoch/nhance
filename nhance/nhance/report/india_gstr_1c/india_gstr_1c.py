@@ -96,6 +96,7 @@ class IndiaGstr1C(object):
 							tax_rate = taxes.rate
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
+					invoice_value = round(invoice_value)
 					grand_total_taxable = grand_total_taxable + taxable_value
 					grand_total_invoice = grand_total_invoice + invoice_value
 					self.data.append([billing_address_gstin,customer_address,invoice_id,manual_serial_number,posting_date,
@@ -163,6 +164,7 @@ class IndiaGstr1C(object):
 							tax_rate = taxes.rate
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
+					invoice_value = round(invoice_value)
 					grand_total_taxable = grand_total_taxable + taxable_value
 					grand_total_invoice = grand_total_invoice + invoice_value
 					self.data.append([billing_address_gstin,customer_address,amended_from,manual_serial_number,
@@ -232,11 +234,13 @@ class IndiaGstr1C(object):
 							tax_rate = tax_rate + taxes.rate
 						elif "IGST" in account_head:
 							tax_rate = taxes.rate
-					amount_by_gst =  taxable_value * tax_rate/100
-					invoice_value = amount_by_gst + taxable_value
-					grand_total_taxable = grand_total_taxable + taxable_value
-					grand_total_invoice = grand_total_invoice + invoice_value
+					
 					if grand_total > float(b2c_limit) and address_details != gst_state_number:
+						amount_by_gst =  taxable_value * tax_rate/100
+						invoice_value = amount_by_gst + taxable_value
+						invoice_value = round(invoice_value)
+						grand_total_taxable = grand_total_taxable + taxable_value
+						grand_total_invoice = grand_total_invoice + invoice_value
 						self.data.append([invoice_id,
 							posting_date,invoice_value,place_of_supply,"",
 							tax_rate,taxable_value,cess_amount,ecommerce_gstin])
@@ -305,11 +309,13 @@ class IndiaGstr1C(object):
 							tax_rate = tax_rate + taxes.rate
 						elif "IGST" in account_head:
 							tax_rate = taxes.rate
-					amount_by_gst =  taxable_value * tax_rate/100
-					invoice_value = amount_by_gst + taxable_value
-					grand_total_taxable = grand_total_taxable + taxable_value
-					grand_total_invoice = grand_total_invoice + invoice_value
+					
 					if grand_total > float(b2c_limit) and address_details != gst_state_number:
+						amount_by_gst =  taxable_value * tax_rate/100
+						invoice_value = amount_by_gst + taxable_value
+						invoice_value = round(invoice_value)
+						grand_total_taxable = grand_total_taxable + taxable_value
+						grand_total_invoice = grand_total_invoice + invoice_value
 						self.data.append([amended_from,posting_date,original_place_of_supply,invoice_id,
 								modified,invoice_value,"",tax_rate,taxable_value,cess_amount,ecommerce_gstin])
 			self.data.append(["","","","",""])
@@ -335,6 +341,7 @@ class IndiaGstr1C(object):
 					ecommerce_gstin = b2cs_detail["mapped_items"][b2cs_d]["ecommerce_gstin"]
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
+					invoice_value = round(invoice_value)
 					grand_total_taxable = grand_total_taxable + taxable_value
 					grand_total_invoice = grand_total_invoice + invoice_value
 					self.data.append([customer_type,place_of_supply,invoice_value,"",tax_rate,taxable_value,
@@ -443,7 +450,6 @@ class IndiaGstr1C(object):
 					creadit_return_date = ""
 					document_type = ""
 					payment_entry = get_Advance_Payment_details(invoice_id)
-					print "payment_entry--------",len(payment_entry)
 					if len(payment_entry) != 0:
 						for payment in payment_entry:
 							payment_number = payment.name
@@ -539,7 +545,6 @@ class IndiaGstr1C(object):
 					creadit_return_date = ""
 					document_type = ""
 					payment_entry = get_Advance_Payment_details(invoice_id)
-					print "payment_entry--------",len(payment_entry)
 					if len(payment_entry) != 0:
 						for payment in payment_entry:
 							payment_number = payment.name
@@ -628,6 +633,7 @@ class IndiaGstr1C(object):
 						tax_rate = taxes.rate
 				amount_by_gst =  taxable_value * tax_rate/100
 				invoice_value = amount_by_gst + taxable_value
+				invoice_value = round(invoice_value)
 				grand_total_taxable = grand_total_taxable + taxable_value
 				grand_total_invoice = grand_total_invoice + invoice_value
 				self.data.append([export_type,invoice_id,posting_date,invoice_value,
@@ -635,12 +641,31 @@ class IndiaGstr1C(object):
 						,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","",grand_total_invoice,"","","","","",grand_total_taxable,grand_total_cess])
+
 		elif self.filters.get("type_of_business") == "EXEMP":
 			invoice_map = {}
 			grand_total_nill = 0.0
 			grand_total_non = 0.0
 			grand_total_exmp = 0.0
 			columns = self.get_columns_exemp()
+			exempt_items = sales_invoice_item_expem(from_date,to_date)
+			exempt_item_data = sales_exepted_nill(exempt_items)
+			for exem in exempt_item_data:
+				exempt_details = exempt_item_data[exem]
+				item_name = exempt_details.item_name
+				non_net_amount = exempt_details.non_net_amount
+				non_net_amount = round(non_net_amount)
+				exempt_net_amount = exempt_details.exempt_net_amount
+				exempt_net_amount = round(exempt_net_amount)
+				nill_net_amount = exempt_details.nill_net_amount
+				nill_net_amount = round(nill_net_amount)
+				india_gst_item_status = exempt_details.india_gst_item_status
+				grand_total_nill = grand_total_nill + nill_net_amount
+				grand_total_non = grand_total_non + non_net_amount
+				grand_total_exmp = grand_total_exmp + exempt_net_amount
+				self.data.append([item_name,nill_net_amount,exempt_net_amount,non_net_amount])
+			self.data.append(["","","","",""])
+			self.data.append(["Total",grand_total_nill,grand_total_exmp,grand_total_non])
 
 		elif self.filters.get("type_of_business") == "HSN":
 			grand_total_value = 0.0
@@ -650,16 +675,261 @@ class IndiaGstr1C(object):
 			grand_total_state = 0.0
 			grand_total_cess = 0.0
 			columns = self.get_columns_hsn()
+			hsn_code_uqc_details = hsn_code_uqc_code(from_date,to_date)
+			hsn_uqc_unique = get_hsn_uqc_list(hsn_code_uqc_details)
+			description = ""
+			for unique_hsn in hsn_uqc_unique:
+				hsn_detials = hsn_uqc_unique[unique_hsn]
+				gst_hsn_code = hsn_detials.gst_hsn_code
+				description_of_hsn = gst_hsn_doc(gst_hsn_code)
+				for desc in description_of_hsn:
+					if gst_hsn_code == desc.name:
+						description =  desc.description
+				uom = hsn_detials.uom
+				uqc_details = gst_uqc_doc(uom)
+				if uqc_details is not None:
+					for uqc in uqc_details:
+						uqc_code = uqc.uqc_code
+						quantity = uqc.quantity
+					uqc_name = uqc_code+"-"+quantity
+				else:
+					uqc_name = "OTH-OTHER"
+				net_amount = hsn_detials.net_amount
+				net_amount = round(net_amount)
+				state_tax_amount = hsn_detials.state_tax_amount
+				state_tax_amount = round(state_tax_amount)
+				integrated_tax_amount = hsn_detials.integrated_tax_amount
+				integrated_tax_amount = round(integrated_tax_amount)
+				total_value_tax = net_amount*hsn_detials.tax_rate/100
+				total_value = total_value_tax+net_amount
+				total_value = round(total_value)
+				grand_total_value = grand_total_value + total_value
+				grand_total_net_amount = grand_total_net_amount + net_amount
+				qty = hsn_detials.qty
+				central_tax_amount = hsn_detials.central_tax_amount
+				central_tax_amount = round(central_tax_amount)
+				grand_total_central = grand_total_central + central_tax_amount
+				grand_total_integrated = grand_total_integrated + integrated_tax_amount
+				grand_total_state = grand_total_state + state_tax_amount
+				self.data.append([gst_hsn_code,description,uqc_name,qty,total_value,
+					net_amount,integrated_tax_amount,central_tax_amount,state_tax_amount])
+			self.data.append(["","","","",""])
+			self.data.append(["Total","","","",grand_total_value,grand_total_net_amount,grand_total_integrated,grand_total_central,
+						grand_total_state,grand_total_cess])
 
 		elif self.filters.get("type_of_business") == "AT":
 			columns = self.get_columns_at()
-
+			at_sales = payment_and_sales(from_date,to_date)
+			total_ad_recieve = 0.0
+			total_ad_adjusted = 0.0
+			totla_pending = 0.0
+			total_taxable = 0.0
+			total_isgt = 0.0
+			total_ssgt = 0.0
+			total_csgt = 0.0
+			for seles_data in at_sales:
+				invoice_id = seles_data.name
+				allocated_amount = seles_data.allocated_amount
+				advance_paid = seles_data.advance_paid
+				grand_total = seles_data.grand_total
+				place_of_supply = seles_data.state
+				net_total = seles_data.net_total
+				additional_discount_percentage = seles_data.additional_discount_percentage
+				selas_taxes = sales_taxes_charges(invoice_id)
+				payment_entry_id = seles_data.entry_id
+				creation = seles_data.creation
+				creation = creation.date()
+				creation = creation.strftime('%d-%m-%Y')
+				gstin = seles_data.gstin
+				customer_address = seles_data.customer_address
+				taxable_value = 0.0
+				tax_rate = 0.0
+				tax_rate_sgst = 0.0
+				tax_rate_cgst = 0.0
+				tax_rate_igst = 0.0
+				cess_amount = 0.0
+				advance_adjust = 0.0
+				total_ad_recieve = total_ad_recieve + allocated_amount
+				total_ad_adjusted = total_ad_adjusted + advance_adjust
+				advance_pending = allocated_amount - advance_adjust
+				totla_pending = totla_pending + advance_pending
+				for taxes in selas_taxes:
+					account_head = taxes.account_head
+					if "SGST" in account_head:
+						tax_rate = tax_rate + taxes.rate
+						tax_rate_sgst = taxes.rate	
+					elif "CGST" in account_head:
+						tax_rate = tax_rate + taxes.rate
+						tax_rate_cgst = taxes.rate
+					elif "IGST" in account_head:
+						tax_rate = taxes.rate
+						tax_rate_igst = taxes.rate
+				taxable_value = advance_pending/(1 + tax_rate/100)
+				taxable_value = round(taxable_value)
+				total_taxable = total_taxable + taxable_value
+				igst_amount = (taxable_value * tax_rate_igst)/100
+				igst_amount = round(igst_amount)
+				sgst_amount = (taxable_value * tax_rate_sgst)/100
+				sgst_amount = round(sgst_amount)
+				cgst_amount = (taxable_value * tax_rate_cgst)/100
+				cgst_amount = round(cgst_amount)
+				total_isgt = total_isgt + igst_amount
+				total_ssgt = total_ssgt + sgst_amount
+				total_csgt = total_csgt + cgst_amount
+				self.data.append([creation,payment_entry_id,gstin,customer_address,place_of_supply,invoice_id,
+						tax_rate,allocated_amount,advance_adjust,advance_pending,taxable_value,igst_amount,
+						cgst_amount,sgst_amount])
+			self.data.append(["","","","","","","",""])
+			self.data.append(["","","","","","","Total",total_ad_recieve,total_ad_adjusted,
+					totla_pending,total_taxable,total_isgt,total_csgt,total_ssgt])
 		elif self.filters.get("type_of_business") == "ATA":
 			columns = self.get_columns_ata()
+			ata_sales = payment_and_sales_amended(from_date,to_date)
+			total_ad_recieve = 0.0
+			total_ad_adjusted = 0.0
+			totla_pending = 0.0
+			total_taxable = 0.0
+			total_isgt = 0.0
+			total_ssgt = 0.0
+			total_csgt = 0.0
+			for seles_data in ata_sales:
+				sales_doc = seles_data.sales_doc
+				payment_doc = seles_data.payment_doc
+				payment_amended_from = seles_data.payment_amended
+				if payment_amended_from is not None:
+					payment_entry_details = payment_entry_amended(payment_amended_from)
+					original_voucher_no = ""
+					original_date = ""
+					original_state = ""
+					for pay in payment_entry_details:
+						original_voucher_no = pay.name
+						original_date = pay.creation
+						original_date = original_date.date()
+						financial_year = original_date.year
+						finalcial_month = original_date.strftime("%b")
+						original_date = original_date.strftime('%d-%m-%Y')
+					invoice_id = seles_data.sales_id
+					sales_amended_from = seles_data.sales_amended
+					customer_address = seles_data.customer_address
+					if sales_amended_from is not None:
+						customer_address_amended = seles_data.customer_address
+						original_state = amended_sales_order(customer_address_amended)
+					else:
+						original_state = seles_data.state
+					allocated_amount = seles_data.allocated_amount
+					advance_paid = seles_data.advance_paid
+					grand_total = seles_data.grand_total
+					place_of_supply = seles_data.state
+					net_total = seles_data.net_total
+					additional_discount_percentage = seles_data.additional_discount_percentage
+					selas_taxes = sales_taxes_charges(invoice_id)
+					payment_entry_id = seles_data.entry_id
+					creation = seles_data.creation
+					creation = creation.date()
+					fiscal_year = frappe.defaults.get_user_default("fiscal_year")
+					creation = creation.strftime('%d-%m-%Y')
+					modified = seles_data.modified
+					modified = modified.date()
+					modified = modified.strftime('%d-%m-%Y')
+					gstin = seles_data.gstin
+					taxable_value = 0.0
+					tax_rate = 0.0
+					tax_rate_sgst = 0.0
+					tax_rate_cgst = 0.0
+					tax_rate_igst = 0.0
+					cess_amount = 0.0
+					advance_adjust = 0.0
+					total_ad_recieve = total_ad_recieve + allocated_amount
+					total_ad_adjusted = total_ad_adjusted + advance_adjust
+					advance_pending = allocated_amount - advance_adjust
+					totla_pending = totla_pending + advance_pending
+					for taxes in selas_taxes:
+						account_head = taxes.account_head
+						if "SGST" in account_head:
+							tax_rate = tax_rate + taxes.rate
+							tax_rate_sgst = taxes.rate	
+						elif "CGST" in account_head:
+							tax_rate = tax_rate + taxes.rate
+							tax_rate_cgst = taxes.rate
+						elif "IGST" in account_head:
+							tax_rate = taxes.rate
+							tax_rate_igst = taxes.rate
+					taxable_value = advance_pending/(1 + tax_rate/100)
+					total_taxable = total_taxable + taxable_value
+					igst_amount = (taxable_value * tax_rate_igst)/100
+					sgst_amount = (taxable_value * tax_rate_sgst)/100
+					cgst_amount = (taxable_value * tax_rate_cgst)/100
+					total_isgt = total_isgt + igst_amount
+					total_ssgt = total_ssgt + sgst_amount
+					total_csgt = total_csgt + cgst_amount
+
+					self.data.append([str(fiscal_year),str(finalcial_month)+"-"+str(financial_year),str(original_state),
+							str(original_date),str(original_voucher_no),str(creation),str(payment_entry_id),str(gstin),
+							str(customer_address),str(place_of_supply),str(invoice_id),str(tax_rate),str(allocated_amount),str(advance_adjust),
+							str(advance_pending),str(taxable_value),str(igst_amount),str(sgst_amount),str(cgst_amount)])
+			self.data.append(["","","","","","","",""])
+			self.data.append(["","","","","","","","","","","","Total",total_ad_recieve,total_ad_adjusted,
+					totla_pending,total_taxable,total_isgt,total_ssgt,total_csgt])
 
 		elif self.filters.get("type_of_business") == "ATADJ":
-			columns = self.get_columns_at()
-
+			cess_amount = 0.0
+			total_ad_recieve = 0.0
+			total_ad_adjusted = 0.0
+			totla_pending = 0.0
+			total_taxable = 0.0
+			total_isgt = 0.0
+			total_ssgt = 0.0
+			total_csgt = 0.0
+			pending_amount = 0.0
+			columns = self.get_columns_atadj()
+			atadj_sales = order_invoice_sales(from_date,to_date)
+			for atadj in atadj_sales:
+				order_total = atadj.order_total
+				invoice_total = atadj.invoice_total
+				if order_total > invoice_total:
+					order_id = atadj.order_id
+					invoice_id = atadj.invoice_id
+					grand_total = atadj.grand_total
+					allocated_amount = atadj.allocated_amount
+					payment_entry = atadj.parent
+					customer_address = atadj.customer_address
+					selas_taxes = sales_taxes_charges(invoice_id)
+					tax_rate = 0.0
+					tax_rate_sgst = 0.0
+					tax_rate_cgst = 0.0
+					tax_rate_igst = 0.0
+					for taxes in selas_taxes:
+						account_head = taxes.account_head
+						if "SGST" in account_head:
+							tax_rate = tax_rate + taxes.rate
+							tax_rate_sgst = taxes.rate	
+						elif "CGST" in account_head:
+							tax_rate = tax_rate + taxes.rate
+							tax_rate_cgst = taxes.rate
+						elif "IGST" in account_head:
+							tax_rate = taxes.rate
+							tax_rate_igst = taxes.rate
+					state = atadj.state
+					gstin = atadj.gstin
+					creation = atadj.creation
+					creation = creation.date()
+					creation = creation.strftime('%d-%m-%Y')
+					igst_amount = (grand_total * tax_rate_igst)/100
+					igst_amount = round(igst_amount)
+					sgst_amount = (grand_total * tax_rate_sgst)/100
+					sgst_amount = round(sgst_amount)
+					cgst_amount = (grand_total * tax_rate_cgst)/100
+					cgst_amount = round(cgst_amount)
+					total_ad_adjusted = total_ad_adjusted + grand_total
+					total_ad_recieve = total_ad_recieve + allocated_amount
+					total_isgt = total_isgt + igst_amount
+					total_ssgt = total_ssgt + sgst_amount
+					total_csgt = total_csgt + cgst_amount
+					self.data.append([creation,payment_entry,gstin,customer_address,state,order_id,tax_rate,
+							allocated_amount,pending_amount,grand_total,igst_amount,cgst_amount,sgst_amount])
+			self.data.append(["","","","","","","",""])
+			self.data.append(["","","","","","","Total",total_ad_recieve,
+					totla_pending,total_ad_adjusted,total_isgt,total_ssgt,total_csgt])
 		elif self.filters.get("type_of_business") == "ATADJA":
 			columns = self.get_columns_ata()
 
@@ -837,24 +1107,59 @@ class IndiaGstr1C(object):
 		]
 	def get_columns_at(self):
 		return [
-			_("Sales Order Number") + ":Link/Sales Order:150",
-			_("Place Of Supply") + "::150",
-			_("Applicable % of Tax Rate") + "::250",
-			_("Rate ") + "::150",
-			_("Gross Advance Received") + "::150",
-			_("Cess Amount") + "::150"
+			_("Date") + "::150",
+			_("Voucher No.") + ":Link/Payment Entry:150",
+			_("GSTIN No.") + "::250",
+			_("Party ") + "::150",
+			_("Place of Supply") + "::150",
+			_("Reference No.") + ":Link/Sales Order:150",
+			_("Rate") + "::150",
+			_("Advance Received") + "::150",
+			_("Advance Adjusted") + "::250",
+			_("Advance Pending ") + "::150",
+			_("Taxable Amount") + "::150",
+			_("IGST Amt") + "::150",
+			_("CGST Amt") + "::150",
+			_("SGST Amt") + "::150"
 		
 		]
 	def get_columns_ata(self):
 		return [
-			_("Sales Order Number") + ":Link/Sales Order:150",
-			_("Financial Year") + "::150",
-			_("Original Month") + "::250",
+			_("financial Year") + "::150",
+			_("Original Month") + "::150",
 			_("Original Place Of Supply") + "::150",
-			_("Applicable % of Tax Rate") + "::250",
-			_("Rate ") + "::150",
-			_("Gross Advance Received") + "::150",
-			_("Cess Amount") + "::150"
+			_("Original Date") + "::150",
+			_("Original Voucher Number") +":Link/Payment Entry:150",
+			_("Date")+"::150",
+			_("Voucherch No")+":Link/Payment Entry:150",
+			_("GSTIN No.") + "::250",
+			_("Party ") + "::150",
+			_("Place of Supply") + "::150",
+			_("Reference No.") + "::150",
+			_("Rate") + "::150",
+			_("Advance Received") + "::150",
+			_("Advance Adjusted") + "::250",
+			_("Advance Pending ") + "::150",
+			_("Taxable Amount") + "::150",
+			_("IGST Amt") + "::150",
+			_("CGST Amt") + "::150",
+			_("SGST Amt") + "::150"
+		]
+	def get_columns_atadj(self):
+		return [
+			_("Date") + "::150",
+			_("Voucher No.") + ":Link/Payment Entry:150",
+			_("GSTIN No.") + "::250",
+			_("Party ") + "::150",
+			_("Place of Supply") + "::150",
+			_("Reference No.") + ":Link/Sales Order:150",
+			_("Rate") + "::150",
+			_("Advance Received") + "::150",
+			_("Advance Pending ") + "::150",
+			_("Advance Adjusted") + "::150",
+			_("IGST Amt") + "::150",
+			_("CGST Amt") + "::150",
+			_("SGST Amt") + "::150"
 		
 		]
 
@@ -941,6 +1246,97 @@ def sales_invoice_exp(from_date,to_date):
 					AND docstatus = 1""",(from_date,to_date), as_dict = 1)
 	return sales_invoice_ex
 
+def sales_invoice_item_expem(from_date,to_date):
+	exempt_item = frappe.db.sql(""" select sii.name,si.parent,si.item_name,si.item_code,si.net_amount,i.india_gst_item_status 
+					from `tabSales Invoice` sii, `tabSales Invoice Item` si , `tabItem` i 
+					where sii.name = si.parent AND si.item_code = i.name 
+					AND i.india_gst_item_status IN ("Nil Rated Item","Exempt Item","Non-GST Item") 
+					AND sii.posting_date >= %s AND sii.posting_date <=%s
+				 	AND sii.docstatus = 1""",(from_date,to_date), as_dict = 1)
+		
+	return exempt_item
+
+def hsn_code_uqc_code(from_date,to_date):
+	hsn_uqc = frappe.db.sql(""" select s.name,si.item_name,si.item_code,si.net_amount,si.uom,si.qty,si.gst_hsn_code
+					from `tabSales Invoice` s, `tabSales Invoice Item` si
+					where s.name = si.parent AND s.posting_date >= %s AND s.posting_date <= %s""",
+					(from_date,to_date), as_dict = 1)
+	return hsn_uqc
+def sales_tax_hsn(item_code,invoice_id):
+	if item_code:
+		items_hsn = frappe.db.sql("""select si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type 
+					from `tabSales Invoice Item` si, `tabItem Tax` it
+					where si.item_code = %s AND si.parent = %s AND it.parent = si.item_code 
+					""",(item_code,invoice_id), as_dict = 1)
+	return items_hsn
+def sales_account_tax(invoice_id):
+	if invoice_id:
+		account_tax = frappe.db.sql("""select account_head,rate,item_wise_tax_detail
+						from `tabSales Taxes and Charges` where parent = %s """,(invoice_id),as_dict =1)
+	return account_tax
+
+def gst_hsn_doc(gst_hsn_code):
+	hsn_doc = frappe.db.sql("""select name,description from `tabGST HSN Code` where  name = %s""",(gst_hsn_code), as_dict = 1)
+	return hsn_doc
+
+def gst_uqc_doc(uom):
+	uqc_doc = frappe.db.sql("""select uqc_code,quantity from `tabUQC Item` where erpnext_uom_link = %s""",(uom), as_dict = 1)
+	return uqc_doc
+
+def payment_and_sales(from_date,to_date):
+	temp_from_time = " 00:00:00"
+	temp_to_time = " 23:59:59"
+	tmp_from_date = str(from_date)+ (temp_from_time)
+	tmp_to_date = str(to_date)+(temp_to_time)
+	payment_sale = frappe.db.sql(""" select so.name,so.advance_paid,pr.parent,pr.allocated_amount,ad.state,so.amended_from,so.net_total
+					,so.additional_discount_percentage,so.grand_total,so.creation,
+					pe.name as entry_id,ad.gstin,so.customer_address
+					from `tabSales Order` so, `tabPayment Entry Reference` pr, `tabAddress` ad,
+					`tabPayment Entry` pe
+					where so.name = pr.reference_name AND so.customer_address = ad.name AND 
+					pe.name = pr.parent AND pe.amended_from is NULL
+					AND so.creation >= %s AND so.creation <= %s AND so.amended_from is NULL AND so.docstatus = 1 AND 						pe.docstatus = 1
+					""",(tmp_from_date,tmp_to_date), as_dict = 1)
+	return payment_sale
+
+def payment_and_sales_amended(from_date,to_date):
+	temp_from_time = " 00:00:00"
+	temp_to_time = " 23:59:59"
+	tmp_from_date = str(from_date)+ (temp_from_time)
+	tmp_to_date = str(to_date)+(temp_to_time)
+	payment_sale_amend = frappe.db.sql(""" select pe.name,per.parent,per.allocated_amount,so.name as sales_id,so.amended_from
+						as sales_amended,pe.amended_from as payment_amended,so.advance_paid,pe.creation,pe.modified,
+						so.docstatus as sales_doc,pe.docstatus as payment_doc,pe.creation,ad.gstin,so.customer_address,
+						so.additional_discount_percentage,so.grand_total,ad.state,pe.name as entry_id
+						from `tabPayment Entry` pe , `tabPayment Entry Reference` per, `tabSales Order` so 
+						, `tabAddress` ad
+						where pe.name = per.parent AND so.name = per.reference_name  AND
+						 so.customer_address = ad.name AND pe.amended_from is not NULL AND
+						so.docstatus IN (1) AND pe.docstatus IN (1) AND so.creation >= %s AND so.creation <= %s
+						""",(tmp_from_date,tmp_to_date), as_dict = 1)
+	return payment_sale_amend
+
+def payment_entry_amended(payment_amended_from):
+	payment = frappe.db.sql("""select name,creation from `tabPayment Entry` where name = %s""",(payment_amended_from), as_dict =1)
+	return payment
+
+def amended_sales_order(customer_address):
+	original_state = frappe.db.get_value('Address',customer_address,['state'])
+	return original_state
+def order_invoice_sales(from_date,to_date):
+	temp_from_time = " 00:00:00"
+	temp_to_time = " 23:59:59"
+	tmp_from_date = str(from_date)+ (temp_from_time)
+	tmp_to_date = str(to_date)+(temp_to_time)
+	partially = frappe.db.sql("""select so.name as order_id,si.name as invoice_id,so.net_total as order_total,
+				si.net_total as invoice_total,pr.allocated_amount,ad.state,ad.gstin,
+				pr.parent,si.grand_total,so.creation,so.customer_address 
+				from `tabSales Order` so, `tabSales Invoice` si, `tabPayment Entry Reference` pr,`tabAddress` ad
+				where so.name = si.sales_order AND si.name = pr.reference_name AND so.customer_address = ad.name AND
+				so.creation >= %s AND so.creation <= %s AND so.docstatus = 1 AND si.docstatus = 1""",
+				(tmp_from_date,tmp_to_date), as_dict=1)
+	return partially
+
 def get_unique_state_list(sales):
 	invoice_map = {}
 	for seles_data in sales:
@@ -980,8 +1376,7 @@ def get_unique_state_list(sales):
 			address_details = address_gst_number(company_address)
 			if (grand_total <= float(b2c_limit) and address_details != gst_state_number)\
 			or (grand_total <= float(b2c_limit) and address_details == gst_state_number) \
-			or (grand_total >= float(b2c_limit) and address_details == gst_state_number): 
-				
+			or (grand_total >= float(b2c_limit) and address_details == gst_state_number):
 				selas_taxes = sales_taxes_charges(invoice_id)
 				if len(selas_taxes) != 0:
 					taxable_value = 0.0
@@ -1112,10 +1507,8 @@ def get_unique_state_list_amended(sales):
 			if (grand_total <= float(b2c_limit) and address_details != gst_state_number)\
 			or (grand_total <= float(b2c_limit) and address_details == gst_state_number) \
 			or (grand_total >= float(b2c_limit) and address_details == gst_state_number): 
-				
 				selas_taxes = sales_taxes_charges(invoice_id)
 				if len(selas_taxes) != 0:
-					print "invoice_id-----------",invoice_id
 					taxable_value = 0.0
 					tax_rate = 0.0
 					for taxes in selas_taxes:
@@ -1202,5 +1595,199 @@ def get_unique_state_list_amended(sales):
 						invoice_map[key] = frappe._dict({
 							    "mapped_items": item_list
 								})
+	return invoice_map
+def sales_exepted_nill(exempted_items):
+	payment_tax = {}
+	item_unieq_name1 = []
+	item_unieq_name2 = []
+	item_unieq_name3 = []
+	for exempt in exempted_items:
+		india_gst_item_status = exempt.india_gst_item_status
+		if str(india_gst_item_status) == "Nil Rated Item":
+			item_name = exempt.item_name
+			net_amount = exempt.net_amount
+			exempt_net_amount = 0.0
+			non_net_amount = 0.0
+			key = item_name
+			if key in payment_tax:						
+				item_entry = payment_tax[key]
+				item_unieq_name1.append(item_entry["item_name"])
+				uniue_name = list(set(item_unieq_name1))
+				if item_name in uniue_name:
+					if item_name == item_entry["item_name"]:
+						qty_temp = item_entry["nill_net_amount"]
+						item_entry["nill_net_amount"] = (qty_temp) + (net_amount)
+				else:
+					payment_tax[key] = frappe._dict({
+						"item_name": key, 
+						"nill_net_amount": net_amount,
+						"india_gst_item_status":india_gst_item_status,
+						"non_net_amount":non_net_amount,
+						"exempt_net_amount":exempt_net_amount
+						})
+			else:
+				payment_tax[key] = frappe._dict({
+					"item_name": key, 
+					"nill_net_amount": net_amount,
+					"india_gst_item_status":india_gst_item_status,
+					"non_net_amount":non_net_amount,
+					"exempt_net_amount":exempt_net_amount
+					})		
+		elif str(india_gst_item_status) == "Exempt Item":
+			item_name = exempt.item_name
+			net_amount = exempt.net_amount
+			non_net_amount = 0.0
+			nill_net_amount = 0.0
+			key = item_name
+			if key in payment_tax:						
+				item_entry = payment_tax[key]
+				item_unieq_name2.append(item_entry["item_name"])
+				uniue_name = list(set(item_unieq_name2))
+				if item_name in uniue_name:
+					if item_name == item_entry["item_name"]:
+						qty_temp = item_entry["exempt_net_amount"]
+						item_entry["exempt_net_amount"] = (qty_temp) + (net_amount)
+				else:
+					payment_tax[key] = frappe._dict({
+						"item_name": key, 
+						"exempt_net_amount": net_amount,
+						"india_gst_item_status":india_gst_item_status,
+						"non_net_amount":non_net_amount,
+						"nill_net_amount":nill_net_amount
+						})
+			else:
+				payment_tax[key] = frappe._dict({
+					"item_name": key, 
+					"exempt_net_amount": net_amount,
+					"india_gst_item_status":india_gst_item_status,
+					"non_net_amount":non_net_amount,
+					"nill_net_amount":nill_net_amount
+					})
+			
+		elif str(india_gst_item_status) == "Non-GST Item":
+			item_name = exempt.item_name
+			net_amount = exempt.net_amount
+			exempt_net_amount = 0.0
+			nill_net_amount = 0.0
+			key = item_name
+			if key in payment_tax:						
+				item_entry = payment_tax[key]
+				item_unieq_name3.append(item_entry["item_name"])
+				uniue_name = list(set(item_unieq_name3))
+				if item_name in uniue_name:
+					if item_name == item_entry["item_name"]:
+						qty_temp = item_entry["non_net_amount"]
+						item_entry["non_net_amount"] = (qty_temp) + (net_amount)
+				else:
+					payment_tax[key] = frappe._dict({
+						"item_name": key, 
+						"non_net_amount": net_amount,
+						"india_gst_item_status":india_gst_item_status,
+						"exempt_net_amount":exempt_net_amount,
+						"non_net_amount":non_net_amount
+						})
+			else:
+				payment_tax[key] = frappe._dict({
+					"item_name": key, 
+					"non_net_amount": net_amount,
+					"india_gst_item_status":india_gst_item_status,
+					"exempt_net_amount":exempt_net_amount,
+					"nill_net_amount":nill_net_amount
+					})
+
+	
+	return payment_tax
+def get_hsn_uqc_list(sales):
+	invoice_map = {}
+	item_tax_rate = 0.0
+	integrated_tax_amount = 0.0
+	central_tax_amount = 0.0
+	state_tax_amount = 0.0
+	total_value = 0.0
+	for seles_data in sales:
+		invoice_id = seles_data.name
+		item_name = seles_data.itme_name
+		item_code = seles_data.item_code
+		net_amount = seles_data.net_amount
+		gst_hsn_code = seles_data.gst_hsn_code
+		uom = seles_data.uom
+		qty = seles_data.qty
+		tax_data = sales_tax_hsn(item_code,invoice_id)
+		sales_invoice_tax_data = sales_account_tax(invoice_id)
+		tax_rate_list = []
+		if gst_hsn_code is not None:
+			if len(tax_data) != 0:
+				for data in tax_data:
+					tax_rate = data.tax_rate
+					tax_type = data.tax_type
+					key = gst_hsn_code
+					if "SGST" in tax_type or "CGST" in tax_type:
+						if  "SGST" in tax_type:
+							state_tax_amount = net_amount * data.tax_rate/100
+						elif "CGST" in tax_type:
+							central_tax_amount = net_amount * data.tax_rate/100
+					elif "IGST" in tax_type:
+						
+						item_tax_rate = data.tax_rate
+						integrated_tax_amount = net_amount * data.tax_rate/100
+				if key in invoice_map:
+				    	item_entry = invoice_map[key]
+					qty_temp = item_entry["net_amount"]
+					qty_count = item_entry["qty"]
+					item_entry["net_amount"] = (qty_temp) + (net_amount)
+					item_entry["qty"] = (qty_count) + (qty)
+				else :
+				
+					invoice_map[key] = frappe._dict({
+							"tax_rate": item_tax_rate,
+							"net_amount": net_amount,
+							"gst_hsn_code": key,
+							"state_tax_amount":state_tax_amount,
+							"central_tax_amount":central_tax_amount,
+							"integrated_tax_amount":integrated_tax_amount,
+							"uom":uom,
+							"qty":qty,
+							"item_code":item_code
+							})
+			else:
+				sales_tax_rate = 0
+				total_amount = 0.0
+				if len(sales_invoice_tax_data) != 0:
+					for invoice_tax_data in sales_invoice_tax_data:
+						account_head = invoice_tax_data.account_head
+						item_wise_tax_detail = invoice_tax_data.item_wise_tax_detail
+						converted = ast.literal_eval(item_wise_tax_detail)
+						if item_code in converted:
+							details = converted[item_code]
+							if "SGST" in account_head or "CGST" in account_head:
+								if "SGST" in account_head:
+									sales_tax_rate = sales_tax_rate + details[0]
+									state_tax_amount = state_tax_amount * details[0]/100
+								elif  "CGST" in account_head:
+									sales_tax_rate = sales_tax_rate + details[0]
+									central_tax_amount = central_tax_amount * details[0]/100
+							elif "IGST" in account_head:
+								sales_tax_rate = details[0]
+								integrated_tax_amount = net_amount * details[0]/100
+							
+					if gst_hsn_code in invoice_map:
+						item_entry = invoice_map[gst_hsn_code]
+					
+						qty_temp = item_entry["net_amount"]
+						qty_count = item_entry["qty"]
+						item_entry["net_amount"] = (qty_temp) + (net_amount)
+						item_entry["qty"] = (qty_count) + (qty)
+					else:
+						invoice_map[gst_hsn_code] = frappe._dict({
+							"tax_rate": sales_tax_rate,
+							"net_amount": net_amount,
+							"gst_hsn_code": gst_hsn_code,
+							"state_tax_amount":state_tax_amount,
+							"central_tax_amount":central_tax_amount,
+							"integrated_tax_amount":integrated_tax_amount,
+							"uom":uom,
+							"qty":qty,
+							"item_code":item_code
+							})	
 	return invoice_map
 	
