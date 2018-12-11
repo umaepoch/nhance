@@ -46,62 +46,66 @@ class IndiaGstr1C(object):
 			for sales in b2b_sales:
 				amended_from = sales.amended_from
 				if amended_from is None:
-					billing_address_gstin = sales.billing_address_gstin
 					invoice_id = sales.name
-					manual_serial_number = sales.manual_serial_number
-					customer_address = sales.customer_address
-					place_of_supply = sales.place_of_supply
-					reverse_charge = sales.reverse_charge
-					invoice_type = sales.invoice_type
-					customer_name = sales.customer_name
-					ecommerce_gstin = sales.ecommerce_gstin
-					posting_date = sales.posting_date
-					posting_date = posting_date.strftime('%d-%m-%Y')
-					grand_total = sales.grand_total
-					company_address = sales.company_address
-					customer_type = sales.customer_type
-					port_code = sales.port_code
-					shipping_bill_number = sales.shipping_bill_number
-					shipping_bill_date = sales.shipping_bill_date
-					if shipping_bill_date is not None:
-						shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
-					export_type = sales.export_type
-					is_return = sales.is_return
-					return_against = sales.return_against
-					account_head = ""
-					modified = sales.modified
-					modified = modified.date()
-					modified = modified.strftime('%d-%m-%Y')
-					amended_from = sales.amended_from
-					net_total = sales.net_total
+					invoice_no = ""
 					selas_taxes = sales_taxes_charges(invoice_id)
-					taxable_value = 0.0
-					tax_rate = 0.0
-					cess_amount = 0.0
-					for taxes in selas_taxes:
-						charge_type = taxes.charge_type
-						if "On Net Total" in charge_type:
-							taxable_value = net_total
-						elif "On Previous Row Total" in charge_type:
-							row_id = taxes.row_id
-							get_amount_tax = sales_tax_amount(row_id,invoice_id)
-							for amount in get_amount_tax:
-								taxable_value = amount.total
-						account_head = taxes.account_head
-						if "SGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "CGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "IGST" in account_head:
-							tax_rate = taxes.rate
-					amount_by_gst =  taxable_value * tax_rate/100
-					invoice_value = amount_by_gst + taxable_value
-					invoice_value = round(invoice_value)
-					grand_total_taxable = grand_total_taxable + taxable_value
-					grand_total_invoice = grand_total_invoice + invoice_value
-					self.data.append([billing_address_gstin,customer_address,invoice_id,manual_serial_number,posting_date,
-							invoice_value,place_of_supply,reverse_charge,"",invoice_type,
-							ecommerce_gstin,tax_rate,taxable_value,cess_amount])
+					if invoice_id != invoice_no and len(selas_taxes)!= 0:
+						invoice_no = invoice_id
+						billing_address_gstin = sales.billing_address_gstin
+						manual_serial_number = sales.manual_serial_number
+						customer_address = sales.customer_address
+						place_of_supply = sales.place_of_supply
+						reverse_charge = sales.reverse_charge
+						invoice_type = sales.invoice_type
+						customer_name = sales.customer_name
+						ecommerce_gstin = sales.ecommerce_gstin
+						posting_date = sales.posting_date
+						posting_date = posting_date.strftime('%d-%m-%Y')
+						grand_total = sales.grand_total
+						company_address = sales.company_address
+						customer_type = sales.customer_type
+						port_code = sales.port_code
+						shipping_bill_number = sales.shipping_bill_number
+						shipping_bill_date = sales.shipping_bill_date
+						if shipping_bill_date is not None:
+							shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
+						export_type = sales.export_type
+						is_return = sales.is_return
+						return_against = sales.return_against
+						account_head = ""
+						modified = sales.modified
+						modified = modified.date()
+						modified = modified.strftime('%d-%m-%Y')
+						amended_from = sales.amended_from
+						net_total = sales.net_total
+						
+						taxable_value = 0.0
+						tax_rate = 0.0
+						cess_amount = 0.0
+						for taxes in selas_taxes:
+							charge_type = taxes.charge_type
+							if "On Net Total" in charge_type:
+								taxable_value = net_total
+							elif "On Previous Row Total" in charge_type:
+								row_id = taxes.row_id
+								get_amount_tax = sales_tax_amount(row_id,invoice_id)
+								for amount in get_amount_tax:
+									taxable_value = amount.total
+							account_head = taxes.account_head
+							if "SGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "CGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "IGST" in account_head:
+								tax_rate = taxes.rate
+						amount_by_gst =  taxable_value * tax_rate/100
+						invoice_value = amount_by_gst + taxable_value
+						invoice_value = round(invoice_value)
+						grand_total_taxable = grand_total_taxable + taxable_value
+						grand_total_invoice = grand_total_invoice + invoice_value
+						self.data.append([billing_address_gstin,customer_address,invoice_id,manual_serial_number,posting_date,
+								invoice_value,place_of_supply,reverse_charge,"",invoice_type,
+								ecommerce_gstin,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","",grand_total_invoice,"","","","",
 					"","",grand_total_taxable,grand_total_cess,""])
@@ -114,62 +118,65 @@ class IndiaGstr1C(object):
 			for sales in b2b_sales:
 				amended_from = sales.amended_from
 				if amended_from is not None:
-					billing_address_gstin = sales.billing_address_gstin
 					invoice_id = sales.name
-					manual_serial_number = sales.manual_serial_number
-					customer_address = sales.customer_address
-					place_of_supply = sales.place_of_supply
-					reverse_charge = sales.reverse_charge
-					invoice_type = sales.invoice_type
-					customer_name = sales.customer_name
-					ecommerce_gstin = sales.ecommerce_gstin
-					posting_date = sales.posting_date
-					posting_date = posting_date.strftime('%d-%m-%Y')
-					grand_total = sales.grand_total
-					company_address = sales.company_address
-					customer_type = sales.customer_type
-					port_code = sales.port_code
-					shipping_bill_number = sales.shipping_bill_number
-					shipping_bill_date = sales.shipping_bill_date
-					if shipping_bill_date is not None:
-						shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
-					export_type = sales.export_type
-					is_return = sales.is_return
-					return_against = sales.return_against
-					account_head = ""
-					modified = sales.modified
-					modified = modified.date()
-					modified = modified.strftime('%d-%m-%Y')
-					amended_from = sales.amended_from
-					net_total = sales.net_total
+					invoice_no = ""
 					selas_taxes = sales_taxes_charges(invoice_id)
-					taxable_value = 0.0
-					tax_rate = 0.0
-					cess_amount = 0.0
-					for taxes in selas_taxes:
-						charge_type = taxes.charge_type
-						if "On Net Total" in charge_type:
-							taxable_value = net_total
-						elif "On Previous Row Total" in charge_type:
-							row_id = taxes.row_id
-							get_amount_tax = sales_tax_amount(row_id,invoice_id)
-							for amount in get_amount_tax:
-								taxable_value = amount.total
-						account_head = taxes.account_head
-						if "SGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "CGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "IGST" in account_head:
-							tax_rate = taxes.rate
-					amount_by_gst =  taxable_value * tax_rate/100
-					invoice_value = amount_by_gst + taxable_value
-					invoice_value = round(invoice_value)
-					grand_total_taxable = grand_total_taxable + taxable_value
-					grand_total_invoice = grand_total_invoice + invoice_value
-					self.data.append([billing_address_gstin,customer_address,amended_from,manual_serial_number,
-							posting_date,invoice_id,modified,invoice_value,place_of_supply,
-							reverse_charge,"",invoice_type,ecommerce_gstin,tax_rate,taxable_value,cess_amount])
+					if invoice_id != invoice_no and len(selas_taxes)!= 0:
+						invoice_no = invoice_id
+						billing_address_gstin = sales.billing_address_gstin
+						manual_serial_number = sales.manual_serial_number
+						customer_address = sales.customer_address
+						place_of_supply = sales.place_of_supply
+						reverse_charge = sales.reverse_charge
+						invoice_type = sales.invoice_type
+						customer_name = sales.customer_name
+						ecommerce_gstin = sales.ecommerce_gstin
+						posting_date = sales.posting_date
+						posting_date = posting_date.strftime('%d-%m-%Y')
+						grand_total = sales.grand_total
+						company_address = sales.company_address
+						customer_type = sales.customer_type
+						port_code = sales.port_code
+						shipping_bill_number = sales.shipping_bill_number
+						shipping_bill_date = sales.shipping_bill_date
+						if shipping_bill_date is not None:
+							shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
+						export_type = sales.export_type
+						is_return = sales.is_return
+						return_against = sales.return_against
+						account_head = ""
+						modified = sales.modified
+						modified = modified.date()
+						modified = modified.strftime('%d-%m-%Y')
+						amended_from = sales.amended_from
+						net_total = sales.net_total
+						taxable_value = 0.0
+						tax_rate = 0.0
+						cess_amount = 0.0
+						for taxes in selas_taxes:
+							charge_type = taxes.charge_type
+							if "On Net Total" in charge_type:
+								taxable_value = net_total
+							elif "On Previous Row Total" in charge_type:
+								row_id = taxes.row_id
+								get_amount_tax = sales_tax_amount(row_id,invoice_id)
+								for amount in get_amount_tax:
+									taxable_value = amount.total
+							account_head = taxes.account_head
+							if "SGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "CGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "IGST" in account_head:
+								tax_rate = taxes.rate
+						amount_by_gst =  taxable_value * tax_rate/100
+						invoice_value = amount_by_gst + taxable_value
+						invoice_value = round(invoice_value)
+						grand_total_taxable = grand_total_taxable + taxable_value
+						grand_total_invoice = grand_total_invoice + invoice_value
+						self.data.append([billing_address_gstin,customer_address,amended_from,manual_serial_number,
+								posting_date,invoice_id,modified,invoice_value,place_of_supply,
+								reverse_charge,"",invoice_type,ecommerce_gstin,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","","","",grand_total_invoice,"","","","",
 					"","",grand_total_taxable,grand_total_cess,""])
@@ -183,67 +190,71 @@ class IndiaGstr1C(object):
 			for sales in b2cl_details:
 				amended_from = sales.amended_from
 				if amended_from is None:
-					billing_address_gstin = sales.billing_address_gstin
 					invoice_id = sales.name
-					manual_serial_number = sales.manual_serial_number
-					customer_address = sales.customer_address
-					place_of_supply = sales.place_of_supply
-					reverse_charge = sales.reverse_charge
-					invoice_type = sales.invoice_type
-					customer_name = sales.customer_name
-					ecommerce_gstin = sales.ecommerce_gstin
-					posting_date = sales.posting_date
-					posting_date = posting_date.strftime('%d-%m-%Y')
-					grand_total = sales.grand_total
-					company_address = sales.company_address
-					customer_type = sales.customer_type
-					port_code = sales.port_code
-					shipping_bill_number = sales.shipping_bill_number
-					shipping_bill_date = sales.shipping_bill_date
-					if shipping_bill_date is not None:
-						shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
-					export_type = sales.export_type
-					is_return = sales.is_return
-					return_against = sales.return_against
-					account_head = ""
-					modified = sales.modified
-					modified = modified.date()
-					modified = modified.strftime('%d-%m-%Y')
-					amended_from = sales.amended_from
-					net_total = sales.net_total
+					invoice_no = ""
 					selas_taxes = sales_taxes_charges(invoice_id)
-					taxable_value = 0.0
-					tax_rate = 0.0
-					cess_amount = 0.0
-					b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
-					gst_state_number = get_contact_details(customer_address)
-					address_details = address_gst_number(company_address)
-					for taxes in selas_taxes:
-						charge_type = taxes.charge_type
-						if "On Net Total" in charge_type:
-							taxable_value = net_total
-						elif "On Previous Row Total" in charge_type:
-							row_id = taxes.row_id
-							get_amount_tax = sales_tax_amount(row_id,invoice_id)
-							for amount in get_amount_tax:
-								taxable_value = amount.total
-						account_head = taxes.account_head
-						if "SGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "CGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "IGST" in account_head:
-							tax_rate = taxes.rate
-					
-					if grand_total > float(b2c_limit) and address_details != gst_state_number:
-						amount_by_gst =  taxable_value * tax_rate/100
-						invoice_value = amount_by_gst + taxable_value
-						invoice_value = round(invoice_value)
-						grand_total_taxable = grand_total_taxable + taxable_value
-						grand_total_invoice = grand_total_invoice + invoice_value
-						self.data.append([invoice_id,
-							posting_date,invoice_value,place_of_supply,"",
-							tax_rate,taxable_value,cess_amount,ecommerce_gstin])
+					if invoice_id != invoice_no and len(selas_taxes)!= 0:
+						invoice_no = invoice_id
+						billing_address_gstin = sales.billing_address_gstin
+						invoice_id = sales.name
+						manual_serial_number = sales.manual_serial_number
+						customer_address = sales.customer_address
+						place_of_supply = sales.place_of_supply
+						reverse_charge = sales.reverse_charge
+						invoice_type = sales.invoice_type
+						customer_name = sales.customer_name
+						ecommerce_gstin = sales.ecommerce_gstin
+						posting_date = sales.posting_date
+						posting_date = posting_date.strftime('%d-%m-%Y')
+						grand_total = sales.grand_total
+						company_address = sales.company_address
+						customer_type = sales.customer_type
+						port_code = sales.port_code
+						shipping_bill_number = sales.shipping_bill_number
+						shipping_bill_date = sales.shipping_bill_date
+						if shipping_bill_date is not None:
+							shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
+						export_type = sales.export_type
+						is_return = sales.is_return
+						return_against = sales.return_against
+						account_head = ""
+						modified = sales.modified
+						modified = modified.date()
+						modified = modified.strftime('%d-%m-%Y')
+						amended_from = sales.amended_from
+						net_total = sales.net_total
+						selas_taxes = sales_taxes_charges(invoice_id)
+						taxable_value = 0.0
+						tax_rate = 0.0
+						cess_amount = 0.0
+						b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
+						gst_state_number = get_contact_details(customer_address)
+						address_details = address_gst_number(company_address)
+						for taxes in selas_taxes:
+							charge_type = taxes.charge_type
+							if "On Net Total" in charge_type:
+								taxable_value = net_total
+							elif "On Previous Row Total" in charge_type:
+								row_id = taxes.row_id
+								get_amount_tax = sales_tax_amount(row_id,invoice_id)
+								for amount in get_amount_tax:
+									taxable_value = amount.total
+							account_head = taxes.account_head
+							if "SGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "CGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "IGST" in account_head:
+								tax_rate = taxes.rate
+						if grand_total > float(b2c_limit) and address_details != gst_state_number:
+							amount_by_gst =  taxable_value * tax_rate/100
+							invoice_value = amount_by_gst + taxable_value
+							invoice_value = round(invoice_value)
+							grand_total_taxable = grand_total_taxable + taxable_value
+							grand_total_invoice = grand_total_invoice + invoice_value
+							self.data.append([invoice_id,
+								posting_date,invoice_value,place_of_supply,"",
+								tax_rate,taxable_value,cess_amount,ecommerce_gstin])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","",grand_total_invoice,"",
 					"","",grand_total_taxable,grand_total_cess,""])
@@ -257,67 +268,72 @@ class IndiaGstr1C(object):
 			for sales in b2cl_details:
 				amended_from = sales.amended_from
 				if amended_from is not None:
-					original_place_of_supply = frappe.db.get_value('Sales Invoice',amended_from,'place_of_supply')
-					billing_address_gstin = sales.billing_address_gstin
 					invoice_id = sales.name
-					manual_serial_number = sales.manual_serial_number
-					customer_address = sales.customer_address
-					place_of_supply = sales.place_of_supply
-					reverse_charge = sales.reverse_charge
-					invoice_type = sales.invoice_type
-					customer_name = sales.customer_name
-					ecommerce_gstin = sales.ecommerce_gstin
-					posting_date = sales.posting_date
-					posting_date = posting_date.strftime('%d-%m-%Y')
-					grand_total = sales.grand_total
-					company_address = sales.company_address
-					customer_type = sales.customer_type
-					port_code = sales.port_code
-					shipping_bill_number = sales.shipping_bill_number
-					shipping_bill_date = sales.shipping_bill_date
-					if shipping_bill_date is not None:
-						shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
-					export_type = sales.export_type
-					is_return = sales.is_return
-					return_against = sales.return_against
-					account_head = ""
-					modified = sales.modified
-					modified = modified.date()
-					modified = modified.strftime('%d-%m-%Y')
-					amended_from = sales.amended_from
-					net_total = sales.net_total
+					invoice_no = ""
 					selas_taxes = sales_taxes_charges(invoice_id)
-					taxable_value = 0.0
-					tax_rate = 0.0
-					cess_amount = 0.0
-					b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
-					gst_state_number = get_contact_details(customer_address)
-					address_details = address_gst_number(company_address)
-					for taxes in selas_taxes:
-						charge_type = taxes.charge_type
-						if "On Net Total" in charge_type:
-							taxable_value = net_total
-						elif "On Previous Row Total" in charge_type:
-							row_id = taxes.row_id
-							get_amount_tax = sales_tax_amount(row_id,invoice_id)
-							for amount in get_amount_tax:
-								taxable_value = amount.total
-						account_head = taxes.account_head
-						if "SGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "CGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "IGST" in account_head:
-							tax_rate = taxes.rate
+					if invoice_id != invoice_no and len(selas_taxes)!= 0:
+						invoice_no = invoice_id
+						original_place_of_supply = frappe.db.get_value('Sales Invoice',amended_from,'place_of_supply')
+						billing_address_gstin = sales.billing_address_gstin
+						invoice_id = sales.name
+						manual_serial_number = sales.manual_serial_number
+						customer_address = sales.customer_address
+						place_of_supply = sales.place_of_supply
+						reverse_charge = sales.reverse_charge
+						invoice_type = sales.invoice_type
+						customer_name = sales.customer_name
+						ecommerce_gstin = sales.ecommerce_gstin
+						posting_date = sales.posting_date
+						posting_date = posting_date.strftime('%d-%m-%Y')
+						grand_total = sales.grand_total
+						company_address = sales.company_address
+						customer_type = sales.customer_type
+						port_code = sales.port_code
+						shipping_bill_number = sales.shipping_bill_number
+						shipping_bill_date = sales.shipping_bill_date
+						if shipping_bill_date is not None:
+							shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
+						export_type = sales.export_type
+						is_return = sales.is_return
+						return_against = sales.return_against
+						account_head = ""
+						modified = sales.modified
+						modified = modified.date()
+						modified = modified.strftime('%d-%m-%Y')
+						amended_from = sales.amended_from
+						net_total = sales.net_total
+						selas_taxes = sales_taxes_charges(invoice_id)
+						taxable_value = 0.0
+						tax_rate = 0.0
+						cess_amount = 0.0
+						b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
+						gst_state_number = get_contact_details(customer_address)
+						address_details = address_gst_number(company_address)
+						for taxes in selas_taxes:
+							charge_type = taxes.charge_type
+							if "On Net Total" in charge_type:
+								taxable_value = net_total
+							elif "On Previous Row Total" in charge_type:
+								row_id = taxes.row_id
+								get_amount_tax = sales_tax_amount(row_id,invoice_id)
+								for amount in get_amount_tax:
+									taxable_value = amount.total
+							account_head = taxes.account_head
+							if "SGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "CGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "IGST" in account_head:
+								tax_rate = taxes.rate
 					
-					if grand_total > float(b2c_limit) and address_details != gst_state_number:
-						amount_by_gst =  taxable_value * tax_rate/100
-						invoice_value = amount_by_gst + taxable_value
-						invoice_value = round(invoice_value)
-						grand_total_taxable = grand_total_taxable + taxable_value
-						grand_total_invoice = grand_total_invoice + invoice_value
-						self.data.append([amended_from,posting_date,original_place_of_supply,invoice_id,
-								modified,invoice_value,"",tax_rate,taxable_value,cess_amount,ecommerce_gstin])
+						if grand_total > float(b2c_limit) and address_details != gst_state_number:
+							amount_by_gst =  taxable_value * tax_rate/100
+							invoice_value = amount_by_gst + taxable_value
+							invoice_value = round(invoice_value)
+							grand_total_taxable = grand_total_taxable + taxable_value
+							grand_total_invoice = grand_total_invoice + invoice_value
+							self.data.append([amended_from,posting_date,original_place_of_supply,invoice_id,
+									modified,invoice_value,"",tax_rate,taxable_value,cess_amount,ecommerce_gstin])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","",grand_total_invoice,
 					"","",grand_total_taxable,grand_total_cess,""])
@@ -863,10 +879,13 @@ class IndiaGstr1C(object):
 					total_ssgt = total_ssgt + sgst_amount
 					total_csgt = total_csgt + cgst_amount
 
-					self.data.append([str(fiscal_year),str(finalcial_month)+"-"+str(financial_year),str(original_state),
-							str(original_date),str(original_voucher_no),str(creation),str(payment_entry_id),str(gstin),
-							str(customer_address),str(place_of_supply),str(invoice_id),str(tax_rate),str(allocated_amount),str(advance_adjust),
-							str(advance_pending),str(taxable_value),str(igst_amount),str(sgst_amount),str(cgst_amount)])
+					self.data.append([str(fiscal_year),str(finalcial_month)+"-"+str(financial_year),
+							str(original_state),str(original_date),str(original_voucher_no),
+							str(creation),str(payment_entry_id),str(gstin),
+							str(customer_address),str(place_of_supply),str(invoice_id),
+							str(tax_rate),str(allocated_amount),str(advance_adjust),
+							str(advance_pending),str(taxable_value),str(igst_amount),
+							str(sgst_amount),str(cgst_amount)])
 			self.data.append(["","","","","","","",""])
 			self.data.append(["","","","","","","","","","","","Total",total_ad_recieve,total_ad_adjusted,
 					totla_pending,total_taxable,total_isgt,total_ssgt,total_csgt])
