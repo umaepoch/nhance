@@ -1169,3 +1169,8 @@ def series_update(current_num,name):
 	updated = frappe.db.sql("""UPDATE `tabSeries` SET current = '"""+current_num+"""' where name = %s""",(name),as_dict=1)
 	return updated
 
+@frappe.whitelist()
+def get_bom_list_for_so(item_code):
+	records = frappe.db.sql("""select name  from `tabBOM` where item=%s and docstatus=1""", (item_code), as_dict=1);
+	return records
+
