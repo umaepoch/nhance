@@ -43,11 +43,11 @@ class IndiaGstr1C(object):
 			grand_total_invoice = 0.0
 			grand_total_cess = 0.0
 			b2b_sales = sales_invoice_details(from_date,to_date)
+			invoice_no = ""
 			for sales in b2b_sales:
 				amended_from = sales.amended_from
 				if amended_from is None:
 					invoice_id = sales.name
-					invoice_no = ""
 					selas_taxes = sales_taxes_charges(invoice_id)
 					if invoice_id != invoice_no and len(selas_taxes)!= 0:
 						invoice_no = invoice_id
@@ -78,7 +78,6 @@ class IndiaGstr1C(object):
 						modified = modified.strftime('%d-%m-%Y')
 						amended_from = sales.amended_from
 						net_total = sales.net_total
-						
 						taxable_value = 0.0
 						tax_rate = 0.0
 						cess_amount = 0.0
@@ -103,8 +102,8 @@ class IndiaGstr1C(object):
 						invoice_value = round(invoice_value)
 						grand_total_taxable = grand_total_taxable + taxable_value
 						grand_total_invoice = grand_total_invoice + invoice_value
-						self.data.append([billing_address_gstin,customer_address,invoice_id,manual_serial_number,posting_date,
-								invoice_value,place_of_supply,reverse_charge,"",invoice_type,
+						self.data.append([billing_address_gstin,customer_address,invoice_id,manual_serial_number,
+								posting_date,invoice_value,place_of_supply,reverse_charge,"",invoice_type,
 								ecommerce_gstin,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","",grand_total_invoice,"","","","",
@@ -115,11 +114,11 @@ class IndiaGstr1C(object):
 			grand_total_invoice = 0.0
 			grand_total_cess = 0.0
 			b2b_sales = sales_invoice_details(from_date,to_date)
+			invoice_no = ""
 			for sales in b2b_sales:
 				amended_from = sales.amended_from
 				if amended_from is not None:
 					invoice_id = sales.name
-					invoice_no = ""
 					selas_taxes = sales_taxes_charges(invoice_id)
 					if invoice_id != invoice_no and len(selas_taxes)!= 0:
 						invoice_no = invoice_id
@@ -175,8 +174,8 @@ class IndiaGstr1C(object):
 						grand_total_taxable = grand_total_taxable + taxable_value
 						grand_total_invoice = grand_total_invoice + invoice_value
 						self.data.append([billing_address_gstin,customer_address,amended_from,manual_serial_number,
-								posting_date,invoice_id,modified,invoice_value,place_of_supply,
-								reverse_charge,"",invoice_type,ecommerce_gstin,tax_rate,taxable_value,cess_amount])
+							posting_date,invoice_id,modified,invoice_value,place_of_supply,
+							reverse_charge,"",invoice_type,ecommerce_gstin,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","","","",grand_total_invoice,"","","","",
 					"","",grand_total_taxable,grand_total_cess,""])
