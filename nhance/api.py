@@ -1171,6 +1171,66 @@ def series_update(current_num,name):
 
 @frappe.whitelist()
 def get_bom_list_for_so(item_code):
-	records = frappe.db.sql("""select name  from `tabBOM` where item=%s and docstatus=1""", (item_code), as_dict=1);
+	records = frappe.db.sql("""select name  from `tabBOM` where item=%s and docstatus=1""", (item_code), as_dict=1)
 	return records
+
+@frappe.whitelist()
+def make_prnfile(invoice,ncopies,label):
+	print "-------invoice-------------", invoice
+	invoice_data = frappe.get_doc("Purchase Invoice", invoice)
+	printer_details = frappe.get_doc("Label Printer", label)
+	address = printer_details.address
+	split_address = address.split("\n")
+	items_list = invoice_data.items
+	path = os.path.expanduser('~') +'/ERPNext_PINV_PRN.PRN'
+	print "path--------", path
+	prn_file = open(path,'wb+')
+	posting_date = invoice_data.posting_date
+	date_of_import = posting_date.strftime("%m/%y")
+
+	for items in items_list:
+		copies = 1
+		qty = items.qty
+		total_copies = int(qty) * int(ncopies)
+		item_record = frappe.get_doc("Item", items.item_code)
+		price_list = frappe.get_doc("Item Price", {"item_code": items.item_code, "price_list": "Standard Selling"}, "price_list_rate")
+
+		for copies in xrange(total_copies):
+			prn_file.write("<xpml><page quantity='0' pitch='50.8 mm'></xpml>G0\015" +"\n")
+			prn_file.write("n\015"+"\n") 
+			prn_file.write("M0500\015"+"\n") 
+			prn_file.write("MT\015"+"\n") 
+			prn_file.write("O0214\015"+"\n") 
+			prn_file.write("V0\015"+"\n") 
+			prn_file.write("t1\015"+"\n") 
+			prn_file.write("Kf0070\015"+"\n") 
+			prn_file.write("SG\015"+"\n") 
+			prn_file.write("c0000\015"+"\n") 
+			prn_file.write("e\015"+"\n") 
+			prn_file.write("<xpml></page></xpml><xpml><page quantity='1' pitch='50.8 mm'></xpml>L\015"+"\n") 
+			prn_file.write("D11\015"+"\n"+"H14\015"+"\n"+"PG\015"+"\n"+"PG\015"+"\n"+"SG\015"+"\n"+"ySPM\015"+"\n"+"A2\015"+"\n") 
+			prn_file.write("1911C1001760021" + str(items.item_name)+"\015"+"\n") #product-name
+			prn_file.write("4911C0801000013" + str(items.item_code)+"\015"+"\n") #Barcode
+			prn_file.write("1e8404201270018C0201&E0$2" + str(items.item_code)+"\015"+"\n") #ProductCode
+			#prn_file.write("1911C1001570260" + "Black"+"\n") #item-color
+			#prn_file.write("1911C1001570260" + "L" +"\n") #item-size
+			prn_file.write("1911C1001050019Month & Yr of Import" +"\015"+ "\n") 
+			prn_file.write("1911C10010501600" + str(date_of_import) + "\015"+ "\n") 
+			prn_file.write("1911C1200800019M.R.P." +"\015"+ "\n") 
+			prn_file.write("1911C1200800105" + str(price_list.price_list_rate) +"\015"+"\n") #selling price
+			prn_file.write("1911A0800670148Inclusive of all taxes" +"\015"+ "\n") 
+			prn_file.write("1911A0800990227Qty" +"\015"+ "\n") 
+			prn_file.write("1911A0800830227" + str(items.qty) + " " +str(items.stock_uom) +"\015"+ "\n") # Qty and UOM
+			if len(split_address)!=0:
+				if len(split_address) == 3:
+					prn_file.write("1911C0800400012" + str(split_address[0]) +"\015"+ "\n") 
+					prn_file.write("1911C08002500206,"+ str(split_address[1]) +"\015"+ "\n") 
+					prn_file.write("1911C0800090005"+str(split_address[2]) +"\015"+ "\n") 
+				else:
+					prn_file.write("1911C0800400012" + str(split_address[0]) +"\015"+ "\n")
+			prn_file.write("Q0001\015"+"\n") 
+			prn_file.write("E\015"+"\n") 
+			prn_file.write("<xpml></page></xpml><xpml><end/></xpml>\015"+"\n") 
+	prn_file.close()
+	frappe.msgprint(_("ERPNext PRN file Generated in - " +path))
 
