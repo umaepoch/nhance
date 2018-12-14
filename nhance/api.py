@@ -1157,7 +1157,7 @@ def fetch_stopped_po_items(stopped_po):
 		return items
 	else:
 		return items
-
+#####for item code naming series required code #######################################
 @frappe.whitelist()
 def for_item_code():
 	item_code_details = frappe.db.sql("""select name,current from `tabSeries` where name='FI-'""",as_dict=1)
@@ -1168,6 +1168,12 @@ def for_item_code():
 def series_update(current_num,name):
 	updated = frappe.db.sql("""UPDATE `tabSeries` SET current = '"""+current_num+"""' where name = %s""",(name),as_dict=1)
 	return updated
+@frappe.whitelist()
+def user_details(user):
+	user_data = frappe.db.sql("""select role from `tabHas Role` where parent = '"""+user+"""' AND role ='Sales Prospactor' """,as_dict=1)
+	
+	return user_data
+####end item code naming series #################################################################
 
 @frappe.whitelist()
 def get_bom_list_for_so(item_code):
