@@ -58,6 +58,7 @@ class IndiaGstr1A(object):
 					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
 					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
 					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					tot_net_amount = round(tot_net_amount)
 					billing_address_gstin = map_data["mapped_items"][map_d]["billing_address_gstin"]
 					customer_address = map_data["mapped_items"][map_d]["customer_address"]
 					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
@@ -69,7 +70,7 @@ class IndiaGstr1A(object):
 					manual_serial_number =map_data["mapped_items"][map_d]["manual_serial_number"]
 					invoice_value = tot_net_amount * rate_of_tax /100
 					grand_total = invoice_value + tot_net_amount
-					
+					grand_total = round(grand_total)
 					if amended_from is None:
 						total_taxable_vlaue = total_taxable_vlaue + tot_net_amount
 						total_invoice_value = total_invoice_value +grand_total
@@ -137,6 +138,7 @@ class IndiaGstr1A(object):
 					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
 					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
 					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					tot_net_amount = round(tot_net_amount)
 					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
 					posting_date = map_data["mapped_items"][map_d]["posting_date"]
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
@@ -149,6 +151,7 @@ class IndiaGstr1A(object):
 					address_details = self.address_gst_number()
 					invoice_value = tot_net_amount * rate_of_tax /100
 					invoice_grand_total = invoice_value + tot_net_amount
+					invoice_grand_total = round(invoice_grand_total)
 					if amended_from is None:
 						if grand_total > float(b2c_limit) and address_details != gst_state_number:
 							grand_total_invoice = grand_total_invoice + invoice_grand_total
@@ -173,6 +176,7 @@ class IndiaGstr1A(object):
 					invoice_no = map_data["mapped_items"][map_d]["invoice_id"]
 					rate_of_tax = map_data["mapped_items"][map_d]["tax_rate"]
 					tot_net_amount = map_data["mapped_items"][map_d]["net_amount"]
+					tot_net_amount = round(tot_net_amount)
 					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
 					posting_date = map_data["mapped_items"][map_d]["posting_date"]
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
@@ -184,10 +188,12 @@ class IndiaGstr1A(object):
 					b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
 					gst_state_number = self.get_contact_details()
 					address_details = self.address_gst_number()
-					invoice_value = tot_net_amount * rate_of_tax /100
-					invoice_grand_total = invoice_value + tot_net_amount
+					
 					if amended_from is not None:
 						if grand_total > float(b2c_limit) and address_details != gst_state_number:
+							invoice_value = tot_net_amount * rate_of_tax /100
+							invoice_grand_total = invoice_value + tot_net_amount
+							invoice_grand_total = round(invoice_grand_total)
 							grand_total_invoice = grand_total_invoice + invoice_grand_total
 							grand_total_taxable = grand_total_taxable + tot_net_amount
 							self.data.append([amended_from,posting_date,place_of_supply,invoice_no,
@@ -219,20 +225,24 @@ class IndiaGstr1A(object):
 					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
 					customer_type = map_data["mapped_items"][map_d]["customer_type"]
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					tot_net_amount = round(tot_net_amount)
 					invoice_value = tot_net_amount * rate_of_tax /100
 					invoice_grand_total = invoice_value + tot_net_amount
+					#invoice_grand_total = round(invoice_grand_total)
 					grand_invoice_total += invoice_grand_total
+					grand_invoice_total = round(grand_invoice_total)
 					grand_total_taxable = grand_total_taxable + tot_net_amount
 					self.data.append([customer_type,place_of_supply,invoice_grand_total,""
 					,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
 			self.data.append(["","","","",""])
-			self.data.append(["Total","",grand_invoice_total,"",grand_total_taxable,grand_total_cess,""])	
+			self.data.append(["Total","",grand_invoice_total,"","",grand_total_taxable,grand_total_cess,""])	
 
 		elif self.filters.get("type_of_business") == "B2CSA":
 			columns = self.get_columns_b2bcsa()
 			invoice_map = {}
 			grand_total_taxable = 0.0
 			grand_total_cess = 0.0
+			invoice_value_total =0.0
 			now = datetime.datetime.now()
 			current_year = now.year
 			sales_b = self.sales_invoice_b2bl()
@@ -256,12 +266,14 @@ class IndiaGstr1A(object):
 					posting_date = map_data["mapped_items"][map_d]["posting_date"]
 					invoice_value = tot_net_amount * rate_of_tax /100
 					invoice_grand_total = invoice_value + tot_net_amount
-					rand_total_taxable = grand_total_taxable + tot_net_amount
+					invoice_grand_total = round(invoice_grand_total)
+					invoice_value_total += invoice_grand_total
+					grand_total_taxable = grand_total_taxable + tot_net_amount
 					self.data.append([str(current_year)+"-"+str(current_year+1),posting_date,
-					place_of_supply,customer_type,""
+					customer_type,place_of_supply,invoice_grand_total,""
 					,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
 			self.data.append(["","","","",""])
-			self.data.append(["Total","","","","","",grand_total_taxable,grand_total_cess,""])	
+			self.data.append(["Total","","","",invoice_value_total,"","",grand_total_taxable,grand_total_cess,""])	
 		elif self.filters.get("type_of_business") == "CDNR":
 			invoice_map = {}
 			grand_total_invoice = 0.0
@@ -441,6 +453,9 @@ class IndiaGstr1A(object):
 				non_net_amount = exempt_details.non_net_amount
 				exempt_net_amount = exempt_details.exempt_net_amount
 				nill_net_amount = exempt_details.nill_net_amount
+				non_net_amount = round(non_net_amount)
+				exempt_net_amount = round(exempt_net_amount)
+				nill_net_amount = round(nill_net_amount)
 				india_gst_item_status = exempt_details.india_gst_item_status
 				grand_total_nill = grand_total_nill + nill_net_amount
 				grand_total_non = grand_total_non + non_net_amount
@@ -476,14 +491,19 @@ class IndiaGstr1A(object):
 				else:
 					uqc_name = "OTH-OTHER"
 				net_amount = hsn_detials.net_amount
+				net_amount = round(net_amount)
 				state_tax_amount = hsn_detials.state_tax_amount
+				state_tax_amount = round(state_tax_amount)
 				integrated_tax_amount = hsn_detials.integrated_tax_amount
+				integrated_tax_amount = round(integrated_tax_amount)
 				total_value_tax = net_amount*hsn_detials.tax_rate/100
 				total_value = total_value_tax+net_amount
+				total_value = round(total_value)
 				grand_total_value = grand_total_value + total_value
 				grand_total_net_amount = grand_total_net_amount + net_amount
 				qty = hsn_detials.qty
 				central_tax_amount = hsn_detials.central_tax_amount
+				central_tax_amount = round(central_tax_amount)
 				grand_total_central = grand_total_central + central_tax_amount
 				grand_total_integrated = grand_total_integrated + integrated_tax_amount
 				grand_total_state = grand_total_state + state_tax_amount
@@ -566,6 +586,7 @@ class IndiaGstr1A(object):
 		return [
 			_("Type") + "::150",
 			_("Place Of Supply") + "::150",
+			_("Invoice Value") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
 			_("Rate") + "::150",
 			_("Taxable Value") + "::150",
@@ -579,6 +600,7 @@ class IndiaGstr1A(object):
 			_("Original Month") + "::150",
 			_("Type ") + "::150",
 			_("Place Of Supply") + "::150",
+			_("Invoice Value") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
 			_("Rate") + "::150",
 			_("Taxable Value") + "::150",
