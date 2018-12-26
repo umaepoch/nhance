@@ -101,6 +101,7 @@ frappe.query_reports["India GSTR-1A"] = {
         console.log("onload.............");
         report.page.add_inner_button(__("Previous"),
             function() {
+                var reporter = frappe.query_reports["Test Report For GSTR"];
                 var filters = report.get_values();
                 var from_date = filters.from_date;
                 var to_date = filters.to_date;
@@ -152,6 +153,7 @@ frappe.query_reports["India GSTR-1A"] = {
             });
         report.page.add_inner_button(__("Next"),
             function() {
+                var reporter = frappe.query_reports["Test Report For GSTR"];
                 var filters = report.get_values();
                 var from_date = filters.from_date;
                 var to_date = filters.to_date;
@@ -224,6 +226,7 @@ frappe.query_reports["India GSTR-1A"] = {
             });
 	report.page.add_inner_button(__("Fetch All"),
             function() {
+                var reporter = frappe.query_reports["Test Report For GSTR"];
 		console.log("Fetch All entered.............!");
 		var temp_from_date_filter = frappe.query_report_filters_by_name.temp_from_date;
                 var temp_to_date_filter = frappe.query_report_filters_by_name.temp_to_date;
