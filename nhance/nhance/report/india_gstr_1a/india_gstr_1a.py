@@ -45,6 +45,9 @@ class IndiaGstr1A(object):
 			total_invoice_value = 0.0
 			total_cess_amount = 0.0
 			total_cess = 0.0
+			total_igst_amount = 0.0
+			total_sgst_amount = 0.0
+			total_cgst_amount = 0.0
 			invoice_map = {}
 			for sale in sales_count:
 				amended_from = sale.amended_from
@@ -68,17 +71,28 @@ class IndiaGstr1A(object):
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
 					amended_from = map_data["mapped_items"][map_d]["amended_from"]
 					manual_serial_number =map_data["mapped_items"][map_d]["manual_serial_number"]
+					igst_tax_rate = map_data["mapped_items"][map_d]["igst_tax_rate"]
+					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
+					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
 					invoice_value = tot_net_amount * rate_of_tax /100
 					grand_total = invoice_value + tot_net_amount
+					igst_tax_amount = tot_net_amount * igst_tax_rate /100
+					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
+					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					total_igst_amount += igst_tax_amount
+					total_sgst_amount += sgst_tax_amount
+					total_cgst_amount += cgst_tax_amount
 					grand_total = round(grand_total)
 					if amended_from is None:
 						total_taxable_vlaue = total_taxable_vlaue + tot_net_amount
 						total_invoice_value = total_invoice_value +grand_total
 						self.data.append([billing_address_gstin,customer_address,invoice_no,manual_serial_number,
 							posting_date,grand_total,place_of_supply,reverse_charge,"",
-							invoice_type,ecommerce_gstin,rate_of_tax,tot_net_amount,""])
+							invoice_type,ecommerce_gstin,rate_of_tax,tot_net_amount,"",
+							igst_tax_amount,sgst_tax_amount,cgst_tax_amount])
 			self.data.append(["","","","","",""])
-			self.data.append(["Total","","","","",total_invoice_value,"","","","","","",total_taxable_vlaue,total_cess])
+			self.data.append(["Total","","","","",total_invoice_value,"","","","","","",total_taxable_vlaue,
+			total_cess,total_igst_amount,total_sgst_amount,total_cgst_amount])
 		
 		elif self.filters.get("type_of_business") == "B2BA":
 			invoice_map = {}
@@ -90,6 +104,9 @@ class IndiaGstr1A(object):
 			total_taxable_vlaue = 0.0
 			total_invoice_value = 0.0
 			total_cess_amount = 0.0
+			total_igst_amount = 0.0
+			total_sgst_amount = 0.0
+			total_cgst_amount = 0.0
 			for sale in sales_count:
 				amended_from = sale.amended_from
 				total_bill_gstin = sale.bill_gstin
@@ -111,24 +128,37 @@ class IndiaGstr1A(object):
 					amended_from = map_data["mapped_items"][map_d]["amended_from"]
 					manual_serial_number =map_data["mapped_items"][map_d]["manual_serial_number"]
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					igst_tax_rate = map_data["mapped_items"][map_d]["igst_tax_rate"]
+					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
+					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
 					invoice_value = tot_net_amount * rate_of_tax /100
 					grand_total = invoice_value + tot_net_amount
+					igst_tax_amount = tot_net_amount * igst_tax_rate /100
+					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
+					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					
 					if amended_from is not None:
 						total_taxable_vlaue = total_taxable_vlaue + tot_net_amount
 						total_invoice_value = total_invoice_value +grand_total
-					if amended_from is not None:
+						total_igst_amount += igst_tax_amount
+						total_sgst_amount += sgst_tax_amount
+						total_cgst_amount += cgst_tax_amount
 						self.data.append([billing_address_gstin,customer_address,amended_from,manual_serial_number,
 							posting_date,invoice_no,modified,grand_total,place_of_supply,reverse_charge,"",
-							invoice_type,ecommerce_gstin,rate_of_tax,tot_net_amount,""])	
+							invoice_type,ecommerce_gstin,rate_of_tax,tot_net_amount,"",
+							igst_tax_amount,sgst_tax_amount,cgst_tax_amount])	
 			self.data.append(["","","","","",""])
 			self.data.append(["Total","","","","","","",total_invoice_value,"","","","","","",
-					total_taxable_vlaue,total_cess_amount])
+					total_taxable_vlaue,total_cess_amount,total_igst_amount,total_sgst_amount,total_cgst_amount])
 		
 		elif self.filters.get("type_of_business") == "B2CL":
 			invoice_map = {}
 			grand_total_invoice = 0.0
 			grand_total_taxable = 0.0
 			grand_total_cess = 0.0
+			total_igst_amount = 0.0
+			total_sgst_amount = 0.0
+			total_cgst_amount = 0.0
 			columns = self.get_columns_b2bl()
 			sales_b = self.sales_invoice_b2bl()
 			invoice_map = get_business_type_details(sales_b)
@@ -146,27 +176,41 @@ class IndiaGstr1A(object):
 					self.customer_address = map_data["mapped_items"][map_d]["customer_address"]
 					self.company_address = map_data["mapped_items"][map_d]["company_address"]
 					grand_total = map_data["mapped_items"][map_d]["grand_total"]
+					igst_tax_rate = map_data["mapped_items"][map_d]["igst_tax_rate"]
+					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
+					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
 					b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
 					gst_state_number = self.get_contact_details()
 					address_details = self.address_gst_number()
 					invoice_value = tot_net_amount * rate_of_tax /100
 					invoice_grand_total = invoice_value + tot_net_amount
+					igst_tax_amount = tot_net_amount * igst_tax_rate /100
+					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
+					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
 					invoice_grand_total = round(invoice_grand_total)
 					if amended_from is None:
 						if grand_total > float(b2c_limit) and address_details != gst_state_number:
+							total_igst_amount += igst_tax_amount
+							total_sgst_amount += sgst_tax_amount
+							total_cgst_amount += cgst_tax_amount
 							grand_total_invoice = grand_total_invoice + invoice_grand_total
 							grand_total_taxable = grand_total_taxable + tot_net_amount
 							self.data.append([invoice_no,
 								posting_date,invoice_grand_total,place_of_supply,""
-								,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
+								,rate_of_tax,tot_net_amount,"",ecommerce_gstin,
+								igst_tax_amount,sgst_tax_amount,cgst_tax_amount])
 			self.data.append(["","","","",""])
-			self.data.append(["Total","",grand_total_invoice,"","","",grand_total_taxable,grand_total_cess,""])
+			self.data.append(["Total","",grand_total_invoice,"","","",grand_total_taxable,grand_total_cess,"",
+			total_igst_amount,total_sgst_amount,total_cgst_amount])
 
 		elif self.filters.get("type_of_business") == "B2CLA":
 			invoice_map = {}
 			grand_total_invoice = 0.0
 			grand_total_taxable = 0.0
 			grand_total_cess = 0.0
+			total_igst_amount = 0.0
+			total_sgst_amount = 0.0
+			total_cgst_amount = 0.0
 			columns = self.get_columns_b2bla()
 			sales_b = self.sales_invoice_b2bl()
 			invoice_map = get_business_type_details(sales_b)
@@ -188,9 +232,17 @@ class IndiaGstr1A(object):
 					b2c_limit = frappe.db.get_value('GST Settings',self.customer_address,'b2c_limit')
 					gst_state_number = self.get_contact_details()
 					address_details = self.address_gst_number()
-					
+					igst_tax_rate = map_data["mapped_items"][map_d]["igst_tax_rate"]
+					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
+					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
 					if amended_from is not None:
 						if grand_total > float(b2c_limit) and address_details != gst_state_number:
+							igst_tax_amount = tot_net_amount * igst_tax_rate /100
+							sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
+							cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+							total_igst_amount += igst_tax_amount
+							total_sgst_amount += sgst_tax_amount
+							total_cgst_amount += cgst_tax_amount
 							invoice_value = tot_net_amount * rate_of_tax /100
 							invoice_grand_total = invoice_value + tot_net_amount
 							invoice_grand_total = round(invoice_grand_total)
@@ -198,15 +250,20 @@ class IndiaGstr1A(object):
 							grand_total_taxable = grand_total_taxable + tot_net_amount
 							self.data.append([amended_from,posting_date,place_of_supply,invoice_no,
 								modified_date,invoice_grand_total,""
-								,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
+								,rate_of_tax,tot_net_amount,"",ecommerce_gstin,igst_tax_amount,
+								sgst_tax_amount,cgst_tax_amount])
 
 			self.data.append(["","","","",""])
-			self.data.append(["Total","","","","",grand_total_invoice,"","",grand_total_taxable,grand_total_cess,""])	
+			self.data.append(["Total","","","","",grand_total_invoice,"","",grand_total_taxable,grand_total_cess,""
+			,total_igst_amount,total_sgst_amount,total_cgst_amount])	
 		elif self.filters.get("type_of_business") == "B2CS":
 			invoice_map = {}
 			grand_total_taxable = 0.0
 			grand_invoice_total = 0.0
 			grand_total_cess = 0.0
+			total_igst_amount = 0.0
+			total_sgst_amount = 0.0
+			total_cgst_amount = 0.0
 			columns = self.get_columns_b2bcs()
 			sales_b = self.sales_invoice_b2bl()
 			invoice_map = get_unique_state_list(sales_b)
@@ -225,17 +282,26 @@ class IndiaGstr1A(object):
 					place_of_supply = map_data["mapped_items"][map_d]["place_of_supply"]
 					customer_type = map_data["mapped_items"][map_d]["customer_type"]
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
+					igst_tax_rate = map_data["mapped_items"][map_d]["igst_tax_rate"]
+					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
+					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
+					igst_tax_amount = tot_net_amount * igst_tax_rate /100
+					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
+					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					total_igst_amount += igst_tax_amount
+					total_sgst_amount += sgst_tax_amount
+					total_cgst_amount += cgst_tax_amount
 					tot_net_amount = round(tot_net_amount)
 					invoice_value = tot_net_amount * rate_of_tax /100
 					invoice_grand_total = invoice_value + tot_net_amount
-					#invoice_grand_total = round(invoice_grand_total)
 					grand_invoice_total += invoice_grand_total
 					grand_invoice_total = round(grand_invoice_total)
 					grand_total_taxable = grand_total_taxable + tot_net_amount
 					self.data.append([customer_type,place_of_supply,invoice_grand_total,""
-					,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
+					,rate_of_tax,tot_net_amount,"",ecommerce_gstin,igst_tax_amount,sgst_tax_amount,cgst_tax_amount])
 			self.data.append(["","","","",""])
-			self.data.append(["Total","",grand_invoice_total,"","",grand_total_taxable,grand_total_cess,""])	
+			self.data.append(["Total","",grand_invoice_total,"","",grand_total_taxable,grand_total_cess,"",total_igst_amount
+						,total_sgst_amount,total_cgst_amount])	
 
 		elif self.filters.get("type_of_business") == "B2CSA":
 			columns = self.get_columns_b2bcsa()
@@ -243,6 +309,9 @@ class IndiaGstr1A(object):
 			grand_total_taxable = 0.0
 			grand_total_cess = 0.0
 			invoice_value_total =0.0
+			total_igst_amount = 0.0
+			total_sgst_amount = 0.0
+			total_cgst_amount = 0.0
 			now = datetime.datetime.now()
 			current_year = now.year
 			sales_b = self.sales_invoice_b2bl()
@@ -264,6 +333,15 @@ class IndiaGstr1A(object):
 					ecommerce_gstin = map_data["mapped_items"][map_d]["ecommerce_gstin"]
 					amended_from = map_data["mapped_items"][map_d]["amended_from"]
 					posting_date = map_data["mapped_items"][map_d]["posting_date"]
+					igst_tax_rate = map_data["mapped_items"][map_d]["igst_tax_rate"]
+					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
+					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
+					igst_tax_amount = tot_net_amount * igst_tax_rate /100
+					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
+					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					total_igst_amount += igst_tax_amount
+					total_sgst_amount += sgst_tax_amount
+					total_cgst_amount += cgst_tax_amount
 					invoice_value = tot_net_amount * rate_of_tax /100
 					invoice_grand_total = invoice_value + tot_net_amount
 					invoice_grand_total = round(invoice_grand_total)
@@ -271,9 +349,10 @@ class IndiaGstr1A(object):
 					grand_total_taxable = grand_total_taxable + tot_net_amount
 					self.data.append([str(current_year)+"-"+str(current_year+1),posting_date,
 					customer_type,place_of_supply,invoice_grand_total,""
-					,rate_of_tax,tot_net_amount,"",ecommerce_gstin])
+					,rate_of_tax,tot_net_amount,"",ecommerce_gstin,igst_tax_amount,sgst_tax_amount,cgst_tax_amount])
 			self.data.append(["","","","",""])
-			self.data.append(["Total","","","",invoice_value_total,"","",grand_total_taxable,grand_total_cess,""])	
+			self.data.append(["Total","","","",invoice_value_total,"","",grand_total_taxable,grand_total_cess,"",total_igst_amount
+						,total_sgst_amount,total_cgst_amount])	
 		elif self.filters.get("type_of_business") == "CDNR":
 			invoice_map = {}
 			grand_total_invoice = 0.0
@@ -531,7 +610,10 @@ class IndiaGstr1A(object):
 			_("E-Commerce GSTIN") + "::150",
 			_("Rate") + "::150",
 			_("Taxable Value") + "::160", 
-			_("Cess Amount") + "::120"
+			_("Cess Amount") + "::120",
+			_("IGST Tax Amount") + "::150",
+			_("SGST Tax Amount") + "::160", 
+			_("CGST Tax Amount") + "::120"
 		
 		]
 	def get_columns_b2ba(self):
@@ -551,7 +633,11 @@ class IndiaGstr1A(object):
 			_("E-Commerce GSTIN") + "::150",
 			_("Rate") + "::150",
 			_("Taxable Value") + "::160", 
-			_("Cess Amount") + "::120"
+			_("Cess Amount") + "::120",
+			_("IGST Tax Amount") + "::150",
+			_("SGST Tax Amount") + "::160", 
+			_("CGST Tax Amount") + "::120"
+		
 		
 		]
 	def get_columns_b2bl(self):
@@ -564,7 +650,10 @@ class IndiaGstr1A(object):
 			_("Rate") + "::150",
 			_("Taxable Value") + "::180",
 			_("Cess Amount") + "::150",
-			_("E-Commerce GSTIN") + "::150"
+			_("E-Commerce GSTIN") + "::150",
+			_("IGST Tax Amount") + "::150",
+			_("SGST Tax Amount") + "::160", 
+			_("CGST Tax Amount") + "::120"
 		
 		]
 	def get_columns_b2bla(self):
@@ -579,7 +668,10 @@ class IndiaGstr1A(object):
 			_("Rate") + "::150",
 			_("Taxable Value") + "::180",
 			_("Cess Amount") + "::150",
-			_("E-Commerce GSTIN") + "::150"
+			_("E-Commerce GSTIN") + "::150",
+			_("IGST Tax Amount") + "::150",
+			_("SGST Tax Amount") + "::160", 
+			_("CGST Tax Amount") + "::120"
 		
 		]
 	def get_columns_b2bcs(self):
@@ -591,7 +683,10 @@ class IndiaGstr1A(object):
 			_("Rate") + "::150",
 			_("Taxable Value") + "::150",
 			_("Cess Amount") + "::150",
-			_("E-Commerce GSTIN") + "::150"
+			_("E-Commerce GSTIN") + "::150",
+			_("IGST Tax Amount") + "::150",
+			_("SGST Tax Amount") + "::160", 
+			_("CGST Tax Amount") + "::120"
 		
 		]
 	def get_columns_b2bcsa(self):
@@ -605,7 +700,10 @@ class IndiaGstr1A(object):
 			_("Rate") + "::150",
 			_("Taxable Value") + "::150",
 			_("Cess Amount") + "::150",
-			_("E-Commerce GSTIN") + "::150"
+			_("E-Commerce GSTIN") + "::150",
+			_("IGST Tax Amount") + "::150",
+			_("SGST Tax Amount") + "::160", 
+			_("CGST Tax Amount") + "::120"
 		
 		]
 	def get_columns_exp(self):
@@ -829,7 +927,8 @@ def sales_tax(item_code,invoice_id):
 					from `tabSales Invoice Item` si, `tabItem Tax` it 
 					where si.item_code = '"""+item_code+"""' AND 
 					si.parent = '"""+invoice_id+"""' AND it.parent = si.item_code 
-					AND it.tax_type LIKE ('%IGST%') """, as_dict = 1)
+					order by it.idx
+					""", as_dict = 1)
 	return items
 def sales_tax_so(item_code,invoice_id):
 	if item_code:
@@ -908,32 +1007,49 @@ def get_business_type_details(sales):
 		sales_item = sales_item_details(invoice_id)
 		for item in sales_item:
 			item_code = item.item_code
+			print "item_code----------",item_code
 			item_net_amount = item.net_amount
 			tax_data = sales_tax(item_code,invoice_id)
-			print "tax_data--------------",tax_data
+			igst_tax_rate = 0
+			sgst_tax_rate = 0
+			cgst_tax_rate = 0
+			tax_rate = 0
+			if len(tax_data) != 0:
+				for data in tax_data:
+					tax_type = data.tax_type
+					if "IGST" in tax_type:
+						igst_tax_rate = data.tax_rate
+						tax_rate = data.tax_rate
+					elif "SGST" in tax_type:
+						sgst_tax_rate = data.tax_rate
+						tax_rate += data.tax_rate
+					elif "CGST" in tax_type:
+						cgst_tax_rate = data.tax_rate
+						tax_rate += data.tax_rate
+					net_amount = data.net_amount
+				
 			sales_invoice_tax_data = sales_account_tax(invoice_id)
 			tax_rate_list = []
 			if len(tax_data) != 0:
-				for data in tax_data:
-					tax_rate = data.tax_rate
-					print "tax_rate------------",tax_rate
-					net_amount = data.net_amount
-					key = invoice_id
-					if key in invoice_map:
-				    		item_entry = invoice_map[key]
-						mapped_items_list = item_entry["mapped_items"]
-						new_list = []
-						for mapped_items in mapped_items_list:
-					    		tax_rate_list.append(mapped_items["tax_rate"])
-							data_rate = list(set(tax_rate_list))
-						if tax_rate in data_rate:
-						    	for items in mapped_items_list:
-						   		 if float(tax_rate) == float(items["tax_rate"]):
-						    			qty_temp = items["net_amount"]
-									items["net_amount"] = (qty_temp) + (net_amount)
-						else :
-							new_list.append({
+				key = invoice_id
+				if key in invoice_map:
+					item_entry = invoice_map[key]
+					mapped_items_list = item_entry["mapped_items"]
+					new_list = []
+					for mapped_items in mapped_items_list:
+				    		tax_rate_list.append(mapped_items["tax_rate"])
+						data_rate = list(set(tax_rate_list))
+					if tax_rate in data_rate:
+					    	for items in mapped_items_list:
+					   		 if float(tax_rate) == float(items["tax_rate"]):
+					    			qty_temp = items["net_amount"]
+								items["net_amount"] = (qty_temp) + (net_amount)
+					else :
+						new_list.append({
 									"tax_rate": tax_rate,
+									"igst_tax_rate":igst_tax_rate,
+									"sgst_tax_rate":sgst_tax_rate,
+									"cgst_tax_rate":cgst_tax_rate,
 									"net_amount": net_amount,
 									"invoice_id": key,
 									"billing_address_gstin": billing_address_gstin,
@@ -957,11 +1073,14 @@ def get_business_type_details(sales):
 									"return_against":return_against,
 									"manual_serial_number":manual_serial_number
 								    })
-							item_entry["mapped_items"] = mapped_items_list + new_list
-					else :
-						item_list = []
-						item_list.append({
+						item_entry["mapped_items"] = mapped_items_list + new_list
+				else :
+					item_list = []
+					item_list.append({
 							"tax_rate": tax_rate,
+							"igst_tax_rate":igst_tax_rate,
+							"sgst_tax_rate":sgst_tax_rate,
+							"cgst_tax_rate":cgst_tax_rate,
 							"net_amount": net_amount,
 							"invoice_id": key,
 							"billing_address_gstin": billing_address_gstin,
@@ -985,12 +1104,15 @@ def get_business_type_details(sales):
 							"return_against":return_against,
 							"manual_serial_number":manual_serial_number
 						})
-						invoice_map[key] = frappe._dict({
+					invoice_map[key] = frappe._dict({
 						    "mapped_items": item_list
-						})
+					})
 			else:
 				sales_tax_rate = 0
 				total_amount = 0.0
+				igst_tax_rate = 0
+				sgst_tax_rate = 0
+				cgst_tax_rate = 0
 				if len(sales_invoice_tax_data) != 0:
 					for invoice_tax_data in sales_invoice_tax_data:
 						account_head = invoice_tax_data.account_head
@@ -998,11 +1120,15 @@ def get_business_type_details(sales):
 						converted = ast.literal_eval(item_wise_tax_detail)
 						if item_code in converted:
 							details = converted[item_code]
-							if "SGST" in account_head or "CGST" in account_head:
+							if "SGST" in account_head:
 								sales_tax_rate = sales_tax_rate + details[0]
-							
+								sgst_tax_rate = details[0]
+							elif "CGST" in account_head:
+								sales_tax_rate = sales_tax_rate + details[0]
+								cgst_tax_rate = details[0]
 							elif "IGST" in account_head:
 								sales_tax_rate = details[0]
+								igst_tax_rate = details[0]
 					if invoice_id in invoice_map:
 						item_entry = invoice_map[invoice_id]
 						mapped_items_list = item_entry["mapped_items"]
@@ -1016,7 +1142,10 @@ def get_business_type_details(sales):
 									items["net_amount"] = (qty_temp) + (item_net_amount)
 						else:
 							mapped_items_list.append({
-										"tax_rate": sales_tax_rate, 
+										"tax_rate": sales_tax_rate,
+										"igst_tax_rate":igst_tax_rate,
+										"sgst_tax_rate":sgst_tax_rate,
+										"cgst_tax_rate":cgst_tax_rate,
 								  		"net_amount": item_net_amount,
 								                "invoice_id": invoice_id,
 										"billing_address_gstin":billing_address_gstin,
@@ -1044,7 +1173,10 @@ def get_business_type_details(sales):
 					else:
 						item_list = []
 						item_list.append({
-								"tax_rate": sales_tax_rate, 
+								"tax_rate": sales_tax_rate,
+								"igst_tax_rate":igst_tax_rate,
+								"sgst_tax_rate":sgst_tax_rate,
+								"cgst_tax_rate":cgst_tax_rate,
 								"net_amount": item_net_amount,
 								"invoice_id": invoice_id,
 								"billing_address_gstin":billing_address_gstin,
@@ -1112,28 +1244,47 @@ def get_unique_state_list(sales):
 					item_code = item.item_code
 					item_net_amount = item.net_amount
 					tax_data = sales_tax(item_code,invoice_id)
+					igst_tax_rate = 0
+					sgst_tax_rate = 0
+					cgst_tax_rate = 0
+					tax_rate = 0
+					print "tax_data------------",tax_data
+					if len(tax_data) != 0:
+						for data in tax_data:
+							tax_type = data.tax_type
+							if "IGST" in tax_type:
+								igst_tax_rate = data.tax_rate
+								tax_rate = data.tax_rate
+							elif "SGST" in tax_type:
+								sgst_tax_rate = data.tax_rate
+								tax_rate += data.tax_rate
+							elif "CGST" in tax_type:
+								cgst_tax_rate = data.tax_rate
+								tax_rate += data.tax_rate
+							net_amount = data.net_amount
+					print "tax_rate-------------",tax_rate
 					sales_invoice_tax_data = sales_account_tax(invoice_id)
 					tax_rate_list = []
 					if len(tax_data) != 0:
-						for data in tax_data:
-							tax_rate = data.tax_rate
-							net_amount = data.net_amount
-							key = place_of_supply
-							if key in invoice_map:
-						    		item_entry = invoice_map[key]
-								mapped_items_list = item_entry["mapped_items"]
-								new_list = []
-								for mapped_items in mapped_items_list:
-							    		tax_rate_list.append(mapped_items["tax_rate"])
-									data_rate = list(set(tax_rate_list))
-								if tax_rate in data_rate:
-								    	for items in mapped_items_list:
-								   		if float(tax_rate) == float(items["tax_rate"]):
-								    			qty_temp = items["net_amount"]
-											items["net_amount"] = (qty_temp) + (net_amount)
-								else :
-									new_list.append({
+						key = place_of_supply
+						if key in invoice_map:
+							item_entry = invoice_map[key]
+							mapped_items_list = item_entry["mapped_items"]
+							new_list = []
+							for mapped_items in mapped_items_list:
+						    		tax_rate_list.append(mapped_items["tax_rate"])
+								data_rate = list(set(tax_rate_list))
+							if tax_rate in data_rate:
+							    	for items in mapped_items_list:
+							   		if float(tax_rate) == float(items["tax_rate"]):
+							    			qty_temp = items["net_amount"]
+										items["net_amount"] = (qty_temp) + (net_amount)
+							else :
+								new_list.append({
 											"tax_rate": tax_rate,
+											"igst_tax_rate":igst_tax_rate,
+											"sgst_tax_rate":sgst_tax_rate,
+											"cgst_tax_rate":cgst_tax_rate,
 											"net_amount": net_amount,
 											"billing_address_gstin": billing_address_gstin,
 											"customer_address": customer_address,
@@ -1156,11 +1307,14 @@ def get_unique_state_list(sales):
 											"return_against":return_against
 									
 										    })
-									item_entry["mapped_items"] = mapped_items_list + new_list
-							else :
-								item_list = []
-								item_list.append({
+								item_entry["mapped_items"] = mapped_items_list + new_list
+						else :
+							item_list = []
+							item_list.append({
 									"tax_rate": tax_rate,
+									"igst_tax_rate":igst_tax_rate,
+									"sgst_tax_rate":sgst_tax_rate,
+									"cgst_tax_rate":cgst_tax_rate,
 									"net_amount": net_amount,
 									"billing_address_gstin": billing_address_gstin,
 									"customer_address": customer_address,
@@ -1182,12 +1336,15 @@ def get_unique_state_list(sales):
 									"is_return":is_return,
 									"return_against":return_against
 								})
-								invoice_map[key] = frappe._dict({
+							invoice_map[key] = frappe._dict({
 								    "mapped_items": item_list
-								})
+							})
 					else:
 						sales_tax_rate = 0
 						total_amount = 0.0
+						igst_tax_rate = 0
+						sgst_tax_rate = 0
+						cgst_tax_rate = 0
 						if len(sales_invoice_tax_data) != 0:
 							for invoice_tax_data in sales_invoice_tax_data:
 								account_head = invoice_tax_data.account_head
@@ -1195,10 +1352,14 @@ def get_unique_state_list(sales):
 								converted = ast.literal_eval(item_wise_tax_detail)
 								if item_code in converted:
 									details = converted[item_code]
-									if "SGST" in account_head or "CGST" in account_head:
+									if "SGST" in account_head:
+										sgst_tax_rate = details[0] 
 										sales_tax_rate = sales_tax_rate + details[0]
-							
+									elif  "CGST" in account_head:
+										cgst_tax_rate = details[0] 
+										sales_tax_rate = sales_tax_rate + details[0]
 									elif "IGST" in account_head:
+										igst_tax_rate = details[0] 
 										sales_tax_rate = details[0]
 							if place_of_supply in invoice_map:
 								item_entry = invoice_map[place_of_supply]
@@ -1214,7 +1375,10 @@ def get_unique_state_list(sales):
 											items["net_amount"] = (qty_temp) + (item_net_amount)
 								else:
 									mapped_items_list.append({
-												"tax_rate": sales_tax_rate, 
+												"tax_rate": sales_tax_rate,
+												"igst_tax_rate":igst_tax_rate,
+												"sgst_tax_rate":sgst_tax_rate,
+												"cgst_tax_rate":cgst_tax_rate,
 										  		"net_amount": item_net_amount,
 												"billing_address_gstin":billing_address_gstin,
 												"customer_address":customer_address,
@@ -1240,7 +1404,10 @@ def get_unique_state_list(sales):
 							else:
 								item_list = []
 								item_list.append({
-										"tax_rate": sales_tax_rate, 
+										"tax_rate": sales_tax_rate,
+										"igst_tax_rate":igst_tax_rate,
+										"sgst_tax_rate":sgst_tax_rate,
+										"cgst_tax_rate":cgst_tax_rate,
 										"net_amount": item_net_amount,
 										"billing_address_gstin":billing_address_gstin,
 										"customer_address":customer_address,
@@ -1306,28 +1473,45 @@ def get_unique_state_list_amended(sales):
 					item_code = item.item_code
 					item_net_amount = item.net_amount
 					tax_data = sales_tax(item_code,invoice_id)
+					igst_tax_rate = 0
+					sgst_tax_rate = 0
+					cgst_tax_rate = 0
+					tax_rate = 0
+					if len(tax_data) != 0:
+						for data in tax_data:
+							tax_type = data.tax_type
+							if "IGST" in tax_type:
+								igst_tax_rate = data.tax_rate
+								tax_rate = data.tax_rate
+							elif "SGST" in tax_type:
+								sgst_tax_rate = data.tax_rate
+								tax_rate += data.tax_rate
+							elif "CGST" in tax_type:
+								cgst_tax_rate = data.tax_rate
+								tax_rate += data.tax_rate
+							net_amount = data.net_amount
 					sales_invoice_tax_data = sales_account_tax(invoice_id)
 					tax_rate_list = []
 					if len(tax_data) != 0:
-						for data in tax_data:
-							tax_rate = data.tax_rate
-							net_amount = data.net_amount
-							key = place_of_supply
-							if key in invoice_map:
-						    		item_entry = invoice_map[key]
-								mapped_items_list = item_entry["mapped_items"]
-								new_list = []
-								for mapped_items in mapped_items_list:
-							    		tax_rate_list.append(mapped_items["tax_rate"])
-									data_rate = list(set(tax_rate_list))
-								if tax_rate in data_rate:
-								    	for items in mapped_items_list:
-								   		if float(tax_rate) == float(items["tax_rate"]):
-								    			qty_temp = items["net_amount"]
-											items["net_amount"] = (qty_temp) + (net_amount)
-								else :
-									new_list.append({
+						key = place_of_supply
+						if key in invoice_map:
+							item_entry = invoice_map[key]
+							mapped_items_list = item_entry["mapped_items"]
+							new_list = []
+							for mapped_items in mapped_items_list:
+						    		tax_rate_list.append(mapped_items["tax_rate"])
+								data_rate = list(set(tax_rate_list))
+							if tax_rate in data_rate:
+							    	for items in mapped_items_list:
+							   		if float(tax_rate) == float(items["tax_rate"]):
+							    			qty_temp = items["net_amount"]
+										items["net_amount"] = (qty_temp) + (net_amount)
+							else :
+								new_list.append({
 											"tax_rate": tax_rate,
+											"igst_tax_rate":igst_tax_rate,
+											"sgst_tax_rate":sgst_tax_rate,
+											"cgst_tax_rate":cgst_tax_rate,
 											"net_amount": net_amount,
 											"billing_address_gstin": billing_address_gstin,
 											"customer_address": customer_address,
@@ -1350,11 +1534,14 @@ def get_unique_state_list_amended(sales):
 											"return_against":return_against
 									
 										    })
-									item_entry["mapped_items"] = mapped_items_list + new_list
-							else :
-								item_list = []
-								item_list.append({
+								item_entry["mapped_items"] = mapped_items_list + new_list
+						else :
+							item_list = []
+							item_list.append({
 									"tax_rate": tax_rate,
+									"igst_tax_rate":igst_tax_rate,
+									"sgst_tax_rate":sgst_tax_rate,
+									"cgst_tax_rate":cgst_tax_rate,
 									"net_amount": net_amount,
 									"billing_address_gstin": billing_address_gstin,
 									"customer_address": customer_address,
@@ -1376,9 +1563,9 @@ def get_unique_state_list_amended(sales):
 									"is_return":is_return,
 									"return_against":return_against
 								})
-								invoice_map[key] = frappe._dict({
+							invoice_map[key] = frappe._dict({
 								    "mapped_items": item_list
-								})
+							})
 					else:
 						sales_tax_rate = 0
 						total_amount = 0.0
@@ -1389,10 +1576,14 @@ def get_unique_state_list_amended(sales):
 								converted = ast.literal_eval(item_wise_tax_detail)
 								if item_code in converted:
 									details = converted[item_code]
-									if "SGST" in account_head or "CGST" in account_head:
+									if "SGST" in account_head:
+										sgst_tax_rate = details[0]
 										sales_tax_rate = sales_tax_rate + details[0]
-							
+									elif "CGST" in account_head:
+										cgst_tax_rate = details[0]
+										sales_tax_rate = sales_tax_rate + details[0]
 									elif "IGST" in account_head:
+										igst_tax_rate = details[0]
 										sales_tax_rate = details[0]
 							if place_of_supply in invoice_map:
 								item_entry = invoice_map[place_of_supply]
@@ -1408,7 +1599,10 @@ def get_unique_state_list_amended(sales):
 											items["net_amount"] = (qty_temp) + (item_net_amount)
 								else:
 									mapped_items_list.append({
-												"tax_rate": sales_tax_rate, 
+												"tax_rate": sales_tax_rate,
+												"igst_tax_rate":igst_tax_rate,
+												"sgst_tax_rate":sgst_tax_rate,
+												"cgst_tax_rate":cgst_tax_rate,
 										  		"net_amount": item_net_amount,
 												"billing_address_gstin":billing_address_gstin,
 												"customer_address":customer_address,
@@ -1434,7 +1628,10 @@ def get_unique_state_list_amended(sales):
 							else:
 								item_list = []
 								item_list.append({
-										"tax_rate": sales_tax_rate, 
+										"tax_rate": sales_tax_rate,
+										"igst_tax_rate":igst_tax_rate,
+										"sgst_tax_rate":sgst_tax_rate,
+										"cgst_tax_rate":cgst_tax_rate,
 										"net_amount": item_net_amount,
 										"billing_address_gstin":billing_address_gstin,
 										"customer_address":customer_address,
