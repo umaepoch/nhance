@@ -79,6 +79,9 @@ class IndiaGstr1A(object):
 					igst_tax_amount = tot_net_amount * igst_tax_rate /100
 					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
 					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					igst_tax_amount = round(igst_tax_amount)
+					sgst_tax_amount = round(sgst_tax_amount)
+					cgst_tax_amount = round(cgst_tax_amount)
 					total_igst_amount += igst_tax_amount
 					total_sgst_amount += sgst_tax_amount
 					total_cgst_amount += cgst_tax_amount
@@ -136,7 +139,9 @@ class IndiaGstr1A(object):
 					igst_tax_amount = tot_net_amount * igst_tax_rate /100
 					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
 					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
-					
+					igst_tax_amount = round(igst_tax_amount)
+					sgst_tax_amount = round(sgst_tax_amount)
+					cgst_tax_amount = round(cgst_tax_amount)
 					if amended_from is not None:
 						total_taxable_vlaue = total_taxable_vlaue + tot_net_amount
 						total_invoice_value = total_invoice_value +grand_total
@@ -187,6 +192,9 @@ class IndiaGstr1A(object):
 					igst_tax_amount = tot_net_amount * igst_tax_rate /100
 					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
 					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					igst_tax_amount = round(igst_tax_amount)
+					sgst_tax_amount = round(sgst_tax_amount)
+					cgst_tax_amount = round(cgst_tax_amount)
 					invoice_grand_total = round(invoice_grand_total)
 					if amended_from is None:
 						if grand_total > float(b2c_limit) and address_details != gst_state_number:
@@ -235,6 +243,9 @@ class IndiaGstr1A(object):
 					igst_tax_rate = map_data["mapped_items"][map_d]["igst_tax_rate"]
 					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
 					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
+					igst_tax_amount = round(igst_tax_amount)
+					sgst_tax_amount = round(sgst_tax_amount)
+					cgst_tax_amount = round(cgst_tax_amount)
 					if amended_from is not None:
 						if grand_total > float(b2c_limit) and address_details != gst_state_number:
 							igst_tax_amount = tot_net_amount * igst_tax_rate /100
@@ -288,6 +299,9 @@ class IndiaGstr1A(object):
 					igst_tax_amount = tot_net_amount * igst_tax_rate /100
 					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
 					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					igst_tax_amount = round(igst_tax_amount)
+					sgst_tax_amount = round(sgst_tax_amount)
+					cgst_tax_amount = round(cgst_tax_amount)
 					total_igst_amount += igst_tax_amount
 					total_sgst_amount += sgst_tax_amount
 					total_cgst_amount += cgst_tax_amount
@@ -339,6 +353,9 @@ class IndiaGstr1A(object):
 					igst_tax_amount = tot_net_amount * igst_tax_rate /100
 					sgst_tax_amount = tot_net_amount * sgst_tax_rate /100
 					cgst_tax_amount = tot_net_amount * cgst_tax_rate /100
+					igst_tax_amount = round(igst_tax_amount)
+					sgst_tax_amount = round(sgst_tax_amount)
+					cgst_tax_amount = round(cgst_tax_amount)
 					total_igst_amount += igst_tax_amount
 					total_sgst_amount += sgst_tax_amount
 					total_cgst_amount += cgst_tax_amount
@@ -924,11 +941,13 @@ def sales_item_details_order(invoice_id):
 
 def sales_tax(item_code,invoice_id):
 	items = frappe.db.sql("""select si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type 
-					from `tabSales Invoice Item` si, `tabItem Tax` it 
-					where si.item_code = '"""+item_code+"""' AND 
-					si.parent = '"""+invoice_id+"""' AND it.parent = si.item_code 
-					order by it.idx
-					""", as_dict = 1)
+						from `tabSales Invoice Item` si, `tabItem Tax` it , `tabSales Taxes and Charges` st 
+						where si.item_code = '"""+item_code+"""' AND 
+						si.parent = '"""+invoice_id+"""' AND it.parent = si.item_code AND 
+						st.parent = '"""+invoice_id+"""' AND it.tax_type = st.account_head
+						order by it.idx
+						""", as_dict = 1)
+	print "items-------------",items
 	return items
 def sales_tax_so(item_code,invoice_id):
 	if item_code:
@@ -1005,9 +1024,9 @@ def get_business_type_details(sales):
 		modified = modified.strftime('%d-%m-%Y')
 		amended_from = seles_data.amended_from
 		sales_item = sales_item_details(invoice_id)
+		sales_account_head = ""
 		for item in sales_item:
 			item_code = item.item_code
-			print "item_code----------",item_code
 			item_net_amount = item.net_amount
 			tax_data = sales_tax(item_code,invoice_id)
 			igst_tax_rate = 0
