@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import cint, flt, cstr, comma_or, getdate, add_days, getdate, rounded, date_diff, money_in_words
 from frappe import _, throw, msgprint, utils
+from frappe.utils import cint, flt, cstr, comma_or, getdate, add_days, getdate, rounded, date_diff, money_in_words
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.naming import make_autoname
 from erpnext.utilities.transaction_base import TransactionBase
@@ -15,6 +15,7 @@ import frappe
 import json
 import time
 import math
+import base64
 import ast
 
 @frappe.whitelist()
@@ -1157,7 +1158,7 @@ def fetch_stopped_po_items(stopped_po):
 		return items
 	else:
 		return items
-#####for item code naming series required code #######################################
+
 @frappe.whitelist()
 def for_item_code():
 	item_code_details = frappe.db.sql("""select name,current from `tabSeries` where name='FI-'""",as_dict=1)
@@ -1173,7 +1174,6 @@ def series_update(current_num,name):
 def user_details(user):
 	user_data = frappe.db.sql("""select role from `tabHas Role` where parent = '"""+user+"""' AND role ='Sales Prospector' """,as_dict=1)
 	return user_data
-####end item code naming series #################################################################
 
 @frappe.whitelist()
 def get_bom_list_for_so(item_code):
@@ -1188,12 +1188,21 @@ def make_prnfile(invoice,ncopies,label):
 	address = printer_details.address
 	split_address = address.split("\n")
 	items_list = invoice_data.items
-	path = os.path.expanduser('~') +'/ERPNext_PINV_PRN.PRN'
-	print "path--------", path
-	prn_file = open(path,'wb+')
 	posting_date = invoice_data.posting_date
 	date_of_import = posting_date.strftime("%m/%y")
+	#file_path = os.path.expanduser('~') +'/ERPNext_PINV_PRN.PRN'
 
+	fname = str(invoice) + "_" + str(posting_date) +".PRN"
+	save_path = 'site1.local/private/files'
+	file_name = os.path.join(save_path, fname)
+	ferp = frappe.new_doc("File")
+	ferp.file_name = fname
+	ferp.folder = "Home/Labels"
+	ferp.is_private = 1
+	ferp.file_url = "/private/files/"+fname
+
+	prn_file = open(file_name,"w+")
+	
 	for items in items_list:
 		copies = 1
 		qty = items.qty
@@ -1237,6 +1246,7 @@ def make_prnfile(invoice,ncopies,label):
 			prn_file.write("Q0001\015"+"\n") 
 			prn_file.write("E\015"+"\n") 
 			prn_file.write("<xpml></page></xpml><xpml><end/></xpml>\015"+"\n") 
+	ferp.save()
 	prn_file.close()
-	frappe.msgprint(_("ERPNext PRN file Generated in - " +path))
+	frappe.msgprint(_("PRN File created - Please check File List to download the file"))
 

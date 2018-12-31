@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 from __future__ import unicode_literals
 import frappe
-from frappe import _, msgprint
-#from frappe.utils import flt, getdate, datetime,comma_and
+from frappe import _, msgprint, utils
+from frappe.utils import flt, getdate, datetime,comma_and
 from erpnext.stock.stock_balance import get_balance_qty_from_sle
 from datetime import datetime
 import time
@@ -57,14 +57,26 @@ def get_conditions(filters):
 
 @frappe.whitelist()
 def make_prnfile(ncopies,label,date_of_import):
-	path = os.path.expanduser('~') +'/ERPNext_MASTER_ITEMS_PRN.PRN'
-	prn_file = open(path,'wb+')
+	#path = os.path.expanduser('~') +'/ERPNext_MASTER_ITEMS_PRN.PRN'
+	#prn_file = open(path,'wb+')
 	printer_details = frappe.get_doc("Label Printer", label)
 	address = printer_details.address
 	report_data_size = len(data_summary)
 	print "report_data_size-------", report_data_size
 	split_address = address.split("\n")
 	print "len of address_details-----", len(split_address)
+
+	curr_date = utils.today()
+	fname = "ITEM_"+ str(curr_date) +".PRN"
+	save_path = 'site1.local/private/files'
+	file_name = os.path.join(save_path, fname)
+	ferp = frappe.new_doc("File")
+	ferp.file_name = fname
+	ferp.folder = "Home/Labels"
+	ferp.is_private = 1
+	ferp.file_url = "/private/files/"+fname
+
+	prn_file = open(file_name,"w+")
 	
 	for report_data in data_summary:
 		qty = 1
@@ -116,6 +128,7 @@ def make_prnfile(ncopies,label,date_of_import):
 			prn_file.write("E\015"+"\n") 
 			prn_file.write("<xpml></page></xpml><xpml><end/></xpml>\015"+"\n") 
 				
+	ferp.save()
 	prn_file.close()
-	frappe.msgprint(_("ERPNext MASTER ITEMS PRN file Generated in - " +path))
+	frappe.msgprint(_("PRN File created - Please check File List to download the file"))
 
