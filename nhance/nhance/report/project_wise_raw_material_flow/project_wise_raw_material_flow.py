@@ -102,7 +102,10 @@ def get_stock_entry_quantities(warehouse,item_code,project_start_date):
 	po_details = {}
 	qty_consumed_in_manufacture = 0
 	current_date = str(datetime.datetime.now())
-	details = frappe.db.sql("""select sed.item_code,sed.qty,se.purpose,se.production_order from  `tabStock Entry Detail` sed, 
+	if project_start_date is None or project_start_date is "":
+		project_start_date = "2000-01-01 00:00:00"
+	print "project_start_date-----", project_start_date
+	details = frappe.db.sql("""select sed.item_code,sed.qty,se.purpose from `tabStock Entry Detail` sed, 
 			`tabStock Entry` se where sed.item_code=%s and sed.s_warehouse=%s and se.purpose='Manufacture' and 
 			sed.modified >='""" + str(project_start_date) +"""'and sed.modified <='""" + current_date + """' and 
 			sed.parent=se.name and se.docstatus=1""", (item_code,warehouse), as_dict=1)
@@ -110,24 +113,13 @@ def get_stock_entry_quantities(warehouse,item_code,project_start_date):
 	if len(details)!=0:
 		#print "details------------", details
 		for entries in details:
-			if entries['production_order'] is None:
-				if entries['qty'] is None:
-					qty = 0
-				else:
-					qty = float(entries['qty'])
-				total_qty = total_qty + qty
+			if entries['qty'] is None:
+				qty = 0
 			else:
-				production_order = entries['production_order']
-				print "production_order-----------", production_order
-				status = get_production_order_status(production_order)
-				if status:
-					qty = float(entries['qty'])
-					if status == "Completed":
-						qty_consumed_in_manufacture = qty_consumed_in_manufacture + qty
-					else:
-						total_qty = total_qty + qty
-					print "qty_consumed_in_manufacture----details-------", qty_consumed_in_manufacture
-		po_details = {"total_qty":total_qty, "qty_consumed_in_manufacture": qty_consumed_in_manufacture}
+				qty = float(entries['qty'])
+			total_qty = total_qty + qty
+			
+		po_details = {"total_qty":total_qty, "qty_consumed_in_manufacture": total_qty}
 	return po_details
 
 def get_production_order_status(production_order):

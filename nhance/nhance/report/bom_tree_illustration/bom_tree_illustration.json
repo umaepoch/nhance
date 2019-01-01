@@ -1,0 +1,26 @@
+{
+ "add_total_row": 0, 
+ "creation": "2018-11-27 14:20:00.315408", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "test footer", 
+ "modified": "2018-11-27 14:20:44.429951", 
+ "modified_by": "Administrator", 
+ "module": "Nhance", 
+ "name": "BOM Tree Illustration", 
+ "owner": "Administrator", 
+ "ref_doctype": "Stock Ledger Entry", 
+ "report_name": "BOM Tree Illustration", 
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Stock User"
+  }, 
+  {
+   "role": "Accounts Manager"
+  }
+ ]
+}
