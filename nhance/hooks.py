@@ -99,6 +99,25 @@ app_license = "MIT"
 # 	]
 # }
 
+
+# Scheduled Tasks
+# ---------------
+
+#at 8am in morning*********************
+
+scheduler_events = {
+
+ 	"cron": {
+        
+        "10 8 * * *": [
+            "nhance.api.getPoData"
+        ]
+    }
+
+}
+
+#at 8am in morning*********************
+
 # Testing
 # -------
 

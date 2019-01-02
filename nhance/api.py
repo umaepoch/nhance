@@ -190,7 +190,6 @@ def set_missing_values(source, target_doc):
 
 
 @frappe.whitelist()
-
 def make_quotation(source_name, target_doc=None):
 	boq_record = frappe.get_doc("Bill of Quantity", source_name)
 	set_bom_level(boq_record)
@@ -1180,6 +1179,7 @@ def get_bom_list_for_so(item_code):
 	records = frappe.db.sql("""select name  from `tabBOM` where item=%s and docstatus=1""", (item_code), as_dict=1)
 	return records
 
+##- Start of making .PRN file for Purchase Invoice Doc.
 @frappe.whitelist()
 def make_prnfile(invoice,ncopies,label):
 	print "-------invoice-------------", invoice
@@ -1249,4 +1249,60 @@ def make_prnfile(invoice,ncopies,label):
 	ferp.save()
 	prn_file.close()
 	frappe.msgprint(_("PRN File created - Please check File List to download the file"))
+##- End of- making .PRN file for Purchase Invoice Doc.
+
+
+## Start of- Set up an Auto E-Mail report to Supplier.
+def send_mail_custom(recipient,content):
+	frappe.sendmail(recipients=[recipient],
+        sender="erptest@meritsystems.com",
+        subject="Purchase Order Alert", content=content)
+
+@frappe.whitelist()
+def getPoData():
+	send_email_check=frappe.db.get_single_value ('Stock Settings','send_daily_reminders_to_suppliers')
+	if send_email_check:
+		today_date = utils.today()
+		day_name = datetime.datetime.strptime(today_date,'%Y-%m-%d').strftime('%A')
+
+		if day_name == "Sunday":
+			print "The mails are not send on sunday"
+		elif day_name == "Saturday":
+			one_day_after = add_days(utils.today(),1)
+			two_days_after= add_days(utils.today(),2)
+			request_doc=frappe.db.sql("""select  name from `tabPurchase Order` where schedule_date in (%s,%s) and docstatus=1""", (one_day_after,two_days_after),as_dict = 1)
+
+			for doc in request_doc:
+				po_doc=frappe.get_doc("Purchase Order",doc['name'])
+				supplier_email=getSupplierEmail(po_doc.supplier)
+				content = getSupplierContent(doc.name)
+				send_mail_custom(supplier_email,content)
+		else:
+			request_doc=frappe.db.sql("""select  name from `tabPurchase Order` where schedule_date=%s and docstatus=1""",one_day_after,as_dict = 1) 
+			for doc in request_doc:
+				po_doc=frappe.get_doc("Purchase Order",doc['name'])
+				supplier_email=getSupplierEmail(po_doc.supplier)
+				content = getSupplierContent(doc.name)
+				send_mail_custom(supplier_email,content)	
+	else:
+		pass
+
+@frappe.whitelist()
+def getSupplierEmail(supplier):
+	supplier_doc=frappe.get_all("Contact",filters=[["Dynamic Link","link_doctype","=","Supplier"],["Dynamic Link","link_name","=",supplier]],fields=["email_id"])
+	return supplier_doc[0].email_id
+		
+
+@frappe.whitelist()
+def getSupplierContent(po_name):
+	content = ""
+	content ="<p> <h2>Following Items are need to be delivered for Purchase order :{0}</h2> </p><ol>".format(po_name)
+	content+="<table border=2px > <tr> <th> Sr No</th> <th>Product Description</th> <th> Qty</th> <th>UOM</th> <th>Rate</th> <th>Amount<th> </tr>"
+
+	po_items = frappe.db.sql("""select idx,description,qty,uom,rate,amount from `tabPurchase Order Item` where parent = %s order by idx """ , (po_name), as_dict=1)
+	for po_item in po_items:
+		content += "<tr> <td align='center'>{0}</td> <td align='center'>{1}</td> <td align='center'>{2}</td> <td align='center'>{3}</td> <td align='right'>{4}</td> <td align='right'>{5}</td> </tr>".format(po_item.idx,po_item.description, po_item.qty,po_item.uom,po_item.rate,po_item.amount)
+	return content
+## End of- Set up an Auto E-Mail report to Supplier
+
 
