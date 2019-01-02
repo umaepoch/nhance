@@ -356,7 +356,7 @@ class IndiaGstr1C(object):
 					ecommerce_gstin = b2cs_detail["mapped_items"][b2cs_d]["ecommerce_gstin"]
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
-					invoice_value = round(invoice_value)
+					invoice_value = round(invoice_value,2)
 					grand_total_taxable = grand_total_taxable + taxable_value
 					grand_total_invoice = grand_total_invoice + invoice_value
 					self.data.append([customer_type,place_of_supply,invoice_value,"",tax_rate,taxable_value,
@@ -1358,6 +1358,7 @@ def order_invoice_sales(from_date,to_date):
 def get_unique_state_list(sales):
 	invoice_map = {}
 	for seles_data in sales:
+		place_of_supply = ""
 		amended_from = seles_data.amended_from
 		if amended_from is None:
 			billing_address_gstin = seles_data.billing_address_gstin
@@ -1408,6 +1409,7 @@ def get_unique_state_list(sales):
 							get_amount_tax = sales_tax_amount(row_id,invoice_id)
 							for amount in get_amount_tax:
 								taxable_value = amount.total
+
 						account_head = taxes.account_head
 						if "SGST" in account_head:
 							tax_rate = tax_rate + taxes.rate
@@ -1415,6 +1417,8 @@ def get_unique_state_list(sales):
 							tax_rate = tax_rate + taxes.rate
 						elif "IGST" in account_head:
 							tax_rate = taxes.rate
+					print "taxable_value------------", taxable_value
+
 					tax_rate_list = []
 					key = place_of_supply
 					if key in invoice_map:
@@ -1478,11 +1482,12 @@ def get_unique_state_list(sales):
 									"export_type":export_type,
 									"customer_name":customer_name,
 									"is_return":is_return,
-										"return_against":return_against
+									"return_against":return_against
 							})
 						invoice_map[key] = frappe._dict({
 							    "mapped_items": item_list
 								})
+	print "invoice_map----------------", invoice_map
 	return invoice_map
 
 def get_unique_state_list_amended(sales):
