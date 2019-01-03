@@ -968,7 +968,7 @@ class IndiaGstr1C(object):
 			_("Invoice Type") + "::150",
 			_("E-Commerce GSTIN") + "::150",
 			_("Rate") + "::150",
-			_("Taxable Value") + "::160", 
+			_("Taxable Value") + ":Currancy:160", 
 			_("Cess Amount") + "::120"
 		
 			]
@@ -1357,136 +1357,139 @@ def order_invoice_sales(from_date,to_date):
 
 def get_unique_state_list(sales):
 	invoice_map = {}
+	invoice_no =""
 	for seles_data in sales:
 		place_of_supply = ""
 		amended_from = seles_data.amended_from
 		if amended_from is None:
 			billing_address_gstin = seles_data.billing_address_gstin
 			invoice_id = seles_data.name
-			manual_serial_number = seles_data.manual_serial_number
-			customer_address = seles_data.customer_address
-			place_of_supply = seles_data.place_of_supply
-			reverse_charge = seles_data.reverse_charge
-			invoice_type = seles_data.invoice_type
-			customer_name = seles_data.customer_name
-			ecommerce_gstin = seles_data.ecommerce_gstin
-			posting_date = seles_data.posting_date
-			posting_date = posting_date.strftime('%d-%m-%Y')
-			grand_total = seles_data.grand_total
-			company_address = seles_data.company_address
-			customer_type = seles_data.customer_type
-			port_code = seles_data.port_code
-			shipping_bill_number = seles_data.shipping_bill_number
-			shipping_bill_date = seles_data.shipping_bill_date
-			if shipping_bill_date is not None:
-				shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
-			export_type = seles_data.export_type
-			is_return = seles_data.is_return
-			return_against = seles_data.return_against
-			account_head = ""
-			modified = seles_data.modified
-			modified = modified.date()
-			modified = modified.strftime('%d-%m-%Y')
-			amended_from = seles_data.amended_from
-			net_total = seles_data.net_total
-			cess_amount = 0.0
-			b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
-			gst_state_number = get_contact_details(customer_address)
-			address_details = address_gst_number(company_address)
-			if (grand_total <= float(b2c_limit) and address_details != gst_state_number)\
-			or (grand_total <= float(b2c_limit) and address_details == gst_state_number) \
-			or (grand_total >= float(b2c_limit) and address_details == gst_state_number):
-				selas_taxes = sales_taxes_charges(invoice_id)
-				if len(selas_taxes) != 0:
-					taxable_value = 0.0
-					tax_rate = 0.0
-					for taxes in selas_taxes:
-						charge_type = taxes.charge_type
-						if "On Net Total" in charge_type:
-							taxable_value = net_total
-						elif "On Previous Row Total" in charge_type:
-							row_id = taxes.row_id
-							get_amount_tax = sales_tax_amount(row_id,invoice_id)
-							for amount in get_amount_tax:
-								taxable_value = amount.total
+			if invoice_id != invoice_no:
+				invoice_no = invoice_id
+				manual_serial_number = seles_data.manual_serial_number
+				customer_address = seles_data.customer_address
+				place_of_supply = seles_data.place_of_supply
+				reverse_charge = seles_data.reverse_charge
+				invoice_type = seles_data.invoice_type
+				customer_name = seles_data.customer_name
+				ecommerce_gstin = seles_data.ecommerce_gstin
+				posting_date = seles_data.posting_date
+				posting_date = posting_date.strftime('%d-%m-%Y')
+				grand_total = seles_data.grand_total
+				company_address = seles_data.company_address
+				customer_type = seles_data.customer_type
+				port_code = seles_data.port_code
+				shipping_bill_number = seles_data.shipping_bill_number
+				shipping_bill_date = seles_data.shipping_bill_date
+				if shipping_bill_date is not None:
+					shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
+				export_type = seles_data.export_type
+				is_return = seles_data.is_return
+				return_against = seles_data.return_against
+				account_head = ""
+				modified = seles_data.modified
+				modified = modified.date()
+				modified = modified.strftime('%d-%m-%Y')
+				amended_from = seles_data.amended_from
+				net_total = seles_data.net_total
+				cess_amount = 0.0
+				b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
+				gst_state_number = get_contact_details(customer_address)
+				address_details = address_gst_number(company_address)
+				if (grand_total <= float(b2c_limit) and address_details != gst_state_number)\
+				or (grand_total <= float(b2c_limit) and address_details == gst_state_number) \
+				or (grand_total >= float(b2c_limit) and address_details == gst_state_number):
+					selas_taxes = sales_taxes_charges(invoice_id)
+					if len(selas_taxes) != 0:
+						taxable_value = 0.0
+						tax_rate = 0.0
+						for taxes in selas_taxes:
+							charge_type = taxes.charge_type
+							if "On Net Total" in charge_type:
+								taxable_value = net_total
+							elif "On Previous Row Total" in charge_type:
+								row_id = taxes.row_id
+								get_amount_tax = sales_tax_amount(row_id,invoice_id)
+								for amount in get_amount_tax:
+									taxable_value = amount.total
 
-						account_head = taxes.account_head
-						if "SGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "CGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "IGST" in account_head:
-							tax_rate = taxes.rate
-					print "taxable_value------------", taxable_value
+							account_head = taxes.account_head
+							if "SGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "CGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "IGST" in account_head:
+								tax_rate = taxes.rate
+						print "taxable_value------------", taxable_value
 
-					tax_rate_list = []
-					key = place_of_supply
-					if key in invoice_map:
-						item_entry = invoice_map[key]
-						mapped_items_list = item_entry["mapped_items"]
-						new_list = []
-						for mapped_items in mapped_items_list:
-					    		tax_rate_list.append(mapped_items["tax_rate"])
-							data_rate = list(set(tax_rate_list))
-						if tax_rate in data_rate:
-						    	for items in mapped_items_list:
-						   		if float(tax_rate) == float(items["tax_rate"]):
-						   			qty_temp = items["taxable_value"]
-									items["taxable_value"] = (qty_temp) + (taxable_value)
-						else :
-							new_list.append({
-											"tax_rate": tax_rate,
-											"taxable_value": taxable_value,
-											"billing_address_gstin": billing_address_gstin,
-											"customer_address": customer_address,
-											"place_of_supply": key,
-											"reverse_charge": reverse_charge,
-											"invoice_type": invoice_type,
-											"posting_date": posting_date,
-											"ecommerce_gstin": ecommerce_gstin,
-											"modified":modified,
-											"amended_from":amended_from,
-											"grand_total":grand_total,
-											"company_address":company_address,
-											"customer_type":customer_type,
-											"port_code":port_code,
-											"shipping_bill_number":shipping_bill_number,
-											"shipping_bill_date":shipping_bill_date,
-											"export_type":export_type,
-											"customer_name":customer_name,
-											"is_return":is_return,
-											"return_against":return_against
+						tax_rate_list = []
+						key = place_of_supply
+						if key in invoice_map:
+							item_entry = invoice_map[key]
+							mapped_items_list = item_entry["mapped_items"]
+							new_list = []
+							for mapped_items in mapped_items_list:
+						    		tax_rate_list.append(mapped_items["tax_rate"])
+								data_rate = list(set(tax_rate_list))
+							if tax_rate in data_rate:
+							    	for items in mapped_items_list:
+							   		if float(tax_rate) == float(items["tax_rate"]):
+							   			qty_temp = items["taxable_value"]
+										items["taxable_value"] = (qty_temp) + (taxable_value)
+							else :
+								new_list.append({
+												"tax_rate": tax_rate,
+												"taxable_value": taxable_value,
+												"billing_address_gstin": billing_address_gstin,
+												"customer_address": customer_address,
+												"place_of_supply": key,
+												"reverse_charge": reverse_charge,
+												"invoice_type": invoice_type,
+												"posting_date": posting_date,
+												"ecommerce_gstin": ecommerce_gstin,
+												"modified":modified,
+												"amended_from":amended_from,
+												"grand_total":grand_total,
+												"company_address":company_address,
+												"customer_type":customer_type,
+												"port_code":port_code,
+												"shipping_bill_number":shipping_bill_number,
+												"shipping_bill_date":shipping_bill_date,
+												"export_type":export_type,
+												"customer_name":customer_name,
+												"is_return":is_return,
+												"return_against":return_against
 								
-									    })
-							item_entry["mapped_items"] = mapped_items_list + new_list
-					else :
-						item_list = []
-						item_list.append({
-									"tax_rate": tax_rate,
-									"taxable_value": taxable_value,
-									"billing_address_gstin": billing_address_gstin,
-									"customer_address": customer_address,
-									"place_of_supply": key,
-									"reverse_charge": reverse_charge,
-									"invoice_type": invoice_type,
-									"posting_date": posting_date,
-									"ecommerce_gstin": ecommerce_gstin,
-									"modified":modified,
-									"amended_from":amended_from,
-									"grand_total":grand_total,
-									"company_address":company_address,
-									"customer_type":customer_type,
-									"port_code":port_code,
-									"shipping_bill_number":shipping_bill_number,
-									"shipping_bill_date":shipping_bill_date,
-									"export_type":export_type,
-									"customer_name":customer_name,
-									"is_return":is_return,
-									"return_against":return_against
-							})
-						invoice_map[key] = frappe._dict({
-							    "mapped_items": item_list
+										    })
+								item_entry["mapped_items"] = mapped_items_list + new_list
+						else :
+							item_list = []
+							item_list.append({
+										"tax_rate": tax_rate,
+										"taxable_value": taxable_value,
+										"billing_address_gstin": billing_address_gstin,
+										"customer_address": customer_address,
+										"place_of_supply": key,
+										"reverse_charge": reverse_charge,
+										"invoice_type": invoice_type,
+										"posting_date": posting_date,
+										"ecommerce_gstin": ecommerce_gstin,
+										"modified":modified,
+										"amended_from":amended_from,
+										"grand_total":grand_total,
+										"company_address":company_address,
+										"customer_type":customer_type,
+										"port_code":port_code,
+										"shipping_bill_number":shipping_bill_number,
+										"shipping_bill_date":shipping_bill_date,
+										"export_type":export_type,
+										"customer_name":customer_name,
+										"is_return":is_return,
+										"return_against":return_against
 								})
+							invoice_map[key] = frappe._dict({
+								    "mapped_items": item_list
+									})
 	print "invoice_map----------------", invoice_map
 	return invoice_map
 
