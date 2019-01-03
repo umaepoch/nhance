@@ -1313,12 +1313,13 @@ def getSupplierContent(po_name):
 ## Start of- Stock Entry for Rounding and Charging.
 @frappe.whitelist()
 def make_stock_entry(materialIssueList,mterialReceiptList,company):
-	print "Entered -------------", company 
 	print "company-------------", company 
 	materialItemsIssue=eval(materialIssueList)
 	mterialItemsReceipt=eval(mterialReceiptList)
 	basic_rate = 0
 	ret = ""
+	difference_account = frappe.db.get_single_value("Stock Settings", "material_round_off_amounts_changed_to")
+	print "difference_account -------------", difference_account 
 	if(len(materialItemsIssue)!=0):
 		outerJson_Transfer = {
 			"naming_series": "STE-",
@@ -1340,6 +1341,8 @@ def make_stock_entry(materialIssueList,mterialReceiptList,company):
 				"basic_rate": basic_rate,
 				"doctype": "Stock Entry Detail"
 			}
+			if difference_account is not None:
+				innerJson_Transfer["expense_account"] = difference_account
 			outerJson_Transfer["items"].append(innerJson_Transfer)
 		print "########-Final make_stock_entry Json::", outerJson_Transfer
 		doc = frappe.new_doc("Stock Entry")
@@ -1370,6 +1373,8 @@ def make_stock_entry(materialIssueList,mterialReceiptList,company):
 				"basic_rate": basic_rate,
 				"doctype": "Stock Entry Detail"
 			}
+			if difference_account is not None:
+				innerJson_Transfer["expense_account"] = difference_account
 			outerJson_Transfer["items"].append(innerJson_Transfer)
 		print "########-Final make_stock_entry Json::", outerJson_Transfer
 		doc = frappe.new_doc("Stock Entry")
