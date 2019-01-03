@@ -1098,6 +1098,7 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 		rate = data['rate']
 		tax_amount = data["tax_amount"]
 		description = data["description"]
+			
 		inner_json_for_taxes = {
 			"charge_type" : charge_type,
 			"account_head":account_head,
@@ -1105,6 +1106,11 @@ def make_po_in_draft(purchase_items,purchase_taxes,purchase_order_details,paymen
 			"tax_amount": tax_amount,
 			"description" :description,
 		}
+
+		if "row_id" in data:
+			row_id = data["row_id"]
+			if row_id is not None:
+				inner_json_for_taxes["row_id"] = row_id
 		outer_json["taxes"].append(inner_json_for_taxes)
 	doc = frappe.new_doc("Purchase Order")
 	doc.update(outer_json)	
@@ -1251,7 +1257,6 @@ def make_prnfile(invoice,ncopies,label):
 	frappe.msgprint(_("PRN File created - Please check File List to download the file"))
 ##- End of- making .PRN file for Purchase Invoice Doc.
 
-
 ## Start of- Set up an Auto E-Mail report to Supplier.
 def send_mail_custom(recipient,content):
 	frappe.sendmail(recipients=[recipient],
@@ -1305,4 +1310,74 @@ def getSupplierContent(po_name):
 	return content
 ## End of- Set up an Auto E-Mail report to Supplier
 
+## Start of- Stock Entry for Rounding and Charging.
+@frappe.whitelist()
+def make_stock_entry(materialIssueList,mterialReceiptList,company):
+	print "Entered -------------", company 
+	print "company-------------", company 
+	materialItemsIssue=eval(materialIssueList)
+	mterialItemsReceipt=eval(mterialReceiptList)
+	basic_rate = 0
+	ret = ""
+	if(len(materialItemsIssue)!=0):
+		outerJson_Transfer = {
+			"naming_series": "STE-",
+			"doctype": "Stock Entry",
+			"title": "Material Issue",
+			"docstatus": 1,
+			"purpose": "Material Issue",
+			"company": company,
+			"items": []
+					}
+		for items in materialItemsIssue:
+			if items['rate'] is not None:
+				basic_rate = items['rate']
+
+			innerJson_Transfer =	{
+				"s_warehouse":items['warehouse'],
+				"qty":items['qty'],
+				"item_code":items['item_code'],
+				"basic_rate": basic_rate,
+				"doctype": "Stock Entry Detail"
+			}
+			outerJson_Transfer["items"].append(innerJson_Transfer)
+		print "########-Final make_stock_entry Json::", outerJson_Transfer
+		doc = frappe.new_doc("Stock Entry")
+		doc.update(outerJson_Transfer)
+		doc.save()
+		ret = doc.doctype
+		if ret:
+			frappe.msgprint("Stock entry is created for Material Issue : "+doc.name)
+
+	if(len(mterialItemsReceipt)!=0):
+		outerJson_Transfer = {
+			"naming_series": "STE-",
+			"doctype": "Stock Entry",
+			"title": "Material Receipt",
+			"docstatus": 1,
+			"purpose": "Material Receipt",
+			"company": company,
+			"items": [
+					]
+					}
+		for items in mterialItemsReceipt:
+			if items['rate'] is not None:
+				basic_rate = items['rate']
+			innerJson_Transfer =	{
+				"t_warehouse":items['warehouse'],
+				"qty":items['qty'],
+				"item_code":items['item_code'],
+				"basic_rate": basic_rate,
+				"doctype": "Stock Entry Detail"
+			}
+			outerJson_Transfer["items"].append(innerJson_Transfer)
+		print "########-Final make_stock_entry Json::", outerJson_Transfer
+		doc = frappe.new_doc("Stock Entry")
+		doc.update(outerJson_Transfer)
+		doc.save()
+		ret = doc.doctype
+		if ret:
+			frappe.msgprint("Stock entry is created for Material Receipt : "+doc.name)
+
+## End of- Stock Entry for Rounding and Charging.
 
