@@ -51,10 +51,21 @@ class IndiaGstr1C(object):
 					selas_taxes = sales_taxes_charges(invoice_id)
 					if invoice_id != invoice_no and len(selas_taxes)!= 0:
 						invoice_no = invoice_id
-						billing_address_gstin = sales.billing_address_gstin
+						gstin_and_place_of_supply = sales.gstin_and_place_of_supply
+						place_of_supply = ""
+						billing_address_gstin = ""
+						if gstin_and_place_of_supply == 1:
+							billing_address_gstin = sales.billing_address_gstin
+							place_of_supply = sales.billto_state
+						elif gstin_and_place_of_supply == 0:
+							if sales.shipto_state:
+								billing_address_gstin = sales.customer_gstin
+								place_of_supply = sales.shipto_state
+							else:
+								billing_address_gstin = sales.billing_address_gstin
+								place_of_supply = sales.billto_state
 						manual_serial_number = sales.manual_serial_number
 						customer_address = sales.customer_address
-						place_of_supply = sales.place_of_supply
 						reverse_charge = sales.reverse_charge
 						invoice_type = sales.invoice_type
 						customer_name = sales.customer_name
@@ -97,13 +108,11 @@ class IndiaGstr1C(object):
 								tax_rate = tax_rate + taxes.rate
 							elif "IGST" in account_head:
 								tax_rate = taxes.rate
-						amount_by_gst =  taxable_value * tax_rate/100
-						invoice_value = amount_by_gst + taxable_value
-						invoice_value = round(invoice_value)
+						
 						grand_total_taxable = grand_total_taxable + taxable_value
-						grand_total_invoice = grand_total_invoice + invoice_value
+						grand_total_invoice = grand_total_invoice + grand_total
 						self.data.append([billing_address_gstin,customer_address,invoice_id,manual_serial_number,
-								posting_date,invoice_value,place_of_supply,reverse_charge,"",invoice_type,
+								posting_date,grand_total,place_of_supply,reverse_charge,"",invoice_type,
 								ecommerce_gstin,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","",grand_total_invoice,"","","","",
@@ -119,13 +128,27 @@ class IndiaGstr1C(object):
 				amended_from = sales.amended_from
 				if amended_from is not None:
 					invoice_id = sales.name
+					
 					selas_taxes = sales_taxes_charges(invoice_id)
 					if invoice_id != invoice_no and len(selas_taxes)!= 0:
 						invoice_no = invoice_id
 						billing_address_gstin = sales.billing_address_gstin
 						manual_serial_number = sales.manual_serial_number
 						customer_address = sales.customer_address
-						place_of_supply = sales.place_of_supply
+						place_of_supply = ""
+						gstin_and_place_of_supply = sales.gstin_and_place_of_supply
+						place_of_supply = ""
+						billing_address_gstin = ""
+						if gstin_and_place_of_supply == 1:
+							billing_address_gstin = sales.billing_address_gstin
+							place_of_supply = sales.billto_state
+						elif gstin_and_place_of_supply == 0:
+							if sales.shipto_state:
+								billing_address_gstin = sales.customer_gstin
+								place_of_supply = sales.shipto_state
+							else:
+								billing_address_gstin = sales.billing_address_gstin
+								place_of_supply = sales.billto_state
 						reverse_charge = sales.reverse_charge
 						invoice_type = sales.invoice_type
 						customer_name = sales.customer_name
@@ -172,9 +195,9 @@ class IndiaGstr1C(object):
 						invoice_value = amount_by_gst + taxable_value
 						invoice_value = round(invoice_value)
 						grand_total_taxable = grand_total_taxable + taxable_value
-						grand_total_invoice = grand_total_invoice + invoice_value
+						grand_total_invoice = grand_total_invoice + grand_total
 						self.data.append([billing_address_gstin,customer_address,amended_from,manual_serial_number,
-							posting_date,invoice_id,modified,invoice_value,place_of_supply,
+							posting_date,invoice_id,modified,grand_total,place_of_supply,
 							reverse_charge,"",invoice_type,ecommerce_gstin,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","","","",grand_total_invoice,"","","","",
@@ -198,7 +221,19 @@ class IndiaGstr1C(object):
 						invoice_id = sales.name
 						manual_serial_number = sales.manual_serial_number
 						customer_address = sales.customer_address
-						place_of_supply = sales.place_of_supply
+						place_of_supply = ""
+						billing_address_gstin = ""
+						gstin_and_place_of_supply = sales.gstin_and_place_of_supply
+						if gstin_and_place_of_supply == 1:
+							billing_address_gstin = sales.billing_address_gstin
+							place_of_supply = sales.billto_state
+						elif gstin_and_place_of_supply == 0:
+							if sales.shipto_state:
+								billing_address_gstin = sales.customer_gstin
+								place_of_supply = sales.shipto_state
+							else:
+								billing_address_gstin = sales.billing_address_gstin
+								place_of_supply = sales.billto_state
 						reverse_charge = sales.reverse_charge
 						invoice_type = sales.invoice_type
 						customer_name = sales.customer_name
@@ -250,9 +285,9 @@ class IndiaGstr1C(object):
 							invoice_value = amount_by_gst + taxable_value
 							invoice_value = round(invoice_value)
 							grand_total_taxable = grand_total_taxable + taxable_value
-							grand_total_invoice = grand_total_invoice + invoice_value
+							grand_total_invoice = grand_total_invoice + grand_total
 							self.data.append([invoice_id,
-								posting_date,invoice_value,place_of_supply,"",
+								posting_date,grand_total,place_of_supply,"",
 								tax_rate,taxable_value,cess_amount,ecommerce_gstin])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","",grand_total_invoice,"",
@@ -272,12 +307,23 @@ class IndiaGstr1C(object):
 					selas_taxes = sales_taxes_charges(invoice_id)
 					if invoice_id != invoice_no and len(selas_taxes)!= 0:
 						invoice_no = invoice_id
-						original_place_of_supply = frappe.db.get_value('Sales Invoice',amended_from,'place_of_supply')
+						original_place_of_supply =""
+						billto_state,shipto_state,gstin_place_of_supply = frappe.db.get_value('Sales Invoice',
+						amended_from,['billto_state','shipto_state','gstin_and_place_of_supply'])
 						billing_address_gstin = sales.billing_address_gstin
 						invoice_id = sales.name
 						manual_serial_number = sales.manual_serial_number
 						customer_address = sales.customer_address
-						place_of_supply = sales.place_of_supply
+						place_of_supply = ""
+						billing_address_gstin = ""
+						gstin_and_place_of_supply = sales.gstin_and_place_of_supply
+						if gstin_place_of_supply == 1:
+							original_place_of_supply = billto_state
+						elif gstin_place_of_supply == 0:
+							if shipto_state:
+								original_place_of_supply = shipto_state
+							else:
+								original_place_of_supply = billto_state
 						reverse_charge = sales.reverse_charge
 						invoice_type = sales.invoice_type
 						customer_name = sales.customer_name
@@ -330,9 +376,9 @@ class IndiaGstr1C(object):
 							invoice_value = amount_by_gst + taxable_value
 							invoice_value = round(invoice_value)
 							grand_total_taxable = grand_total_taxable + taxable_value
-							grand_total_invoice = grand_total_invoice + invoice_value
-							self.data.append([amended_from,posting_date,original_place_of_supply,invoice_id,
-									modified,invoice_value,"",tax_rate,taxable_value,cess_amount,ecommerce_gstin])
+							grand_total_invoice = grand_total_invoice + grand_total
+							self.data.append([amended_from,posting_date,original_place_of_supply,
+							invoice_id,modified,grand_total,"",tax_rate,taxable_value,cess_amount,ecommerce_gstin])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","",grand_total_invoice,
 					"","",grand_total_taxable,grand_total_cess,""])
@@ -354,6 +400,7 @@ class IndiaGstr1C(object):
 					place_of_supply = b2cs_detail["mapped_items"][b2cs_d]["place_of_supply"]
 					customer_type = b2cs_detail["mapped_items"][b2cs_d]["customer_type"]
 					ecommerce_gstin = b2cs_detail["mapped_items"][b2cs_d]["ecommerce_gstin"]
+					grand_total = b2cs_detail["mapped_items"][b2cs_d]["grand_total"]
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
 					invoice_value = round(invoice_value,2)
@@ -385,11 +432,12 @@ class IndiaGstr1C(object):
 					customer_type = b2cs_detail["mapped_items"][b2cs_d]["customer_type"]
 					ecommerce_gstin = b2cs_detail["mapped_items"][b2cs_d]["ecommerce_gstin"]
 					posting_date = b2cs_detail["mapped_items"][b2cs_d]["posting_date"]
+					fiscal_year = frappe.defaults.get_user_default("fiscal_year")
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
 					grand_total_taxable = grand_total_taxable + taxable_value
 					grand_total_invoice = grand_total_invoice + invoice_value
-					self.data.append([str(current_year)+"-"+str(current_year+1),posting_date,place_of_supply,
+					self.data.append([str(fiscal_year),posting_date,place_of_supply,
 					customer_type,invoice_value,"",tax_rate,taxable_value,cess_amount,ecommerce_gstin])
 
 			self.data.append(["","","","",""])
@@ -410,7 +458,19 @@ class IndiaGstr1C(object):
 					invoice_id = sales.name
 					manual_serial_number = sales.manual_serial_number
 					customer_address = sales.customer_address
-					place_of_supply = sales.place_of_supply
+					place_of_supply = ""
+					billing_address_gstin = ""
+					gstin_and_place_of_supply = sales.gstin_and_place_of_supply
+					if gstin_and_place_of_supply == 1:
+						billing_address_gstin = sales.billing_address_gstin
+						place_of_supply = sales.billto_state
+					elif gstin_and_place_of_supply == 0:
+						if sales.shipto_state:
+							billing_address_gstin = sales.customer_gstin
+							place_of_supply = sales.shipto_state
+						else:
+							billing_address_gstin = sales.billing_address_gstin
+							place_of_supply = sales.billto_state
 					reverse_charge = sales.reverse_charge
 					invoice_type = sales.invoice_type
 					customer_name = sales.customer_name
@@ -458,7 +518,7 @@ class IndiaGstr1C(object):
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
 					grand_total_taxable = grand_total_taxable + taxable_value
-					grand_total_invoice = grand_total_invoice + invoice_value
+					grand_total_invoice = grand_total_invoice + grand_total
 					credit_invoice_id = ""
 					credit_invoice_id = ""
 					payment_date = ""
@@ -486,7 +546,7 @@ class IndiaGstr1C(object):
 						pre_gst = "N"
 					self.data.append([billing_address_gstin,customer_address,payment_number,
 							payment_date,credit_invoice_id,creadit_return_date,
-							document_type,place_of_supply,invoice_value,""
+							document_type,place_of_supply,grand_total,""
 							,tax_rate,taxable_value,cess_amount,pre_gst])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","","","","",grand_total_invoice,
@@ -501,11 +561,23 @@ class IndiaGstr1C(object):
 			for sales in cdnr_sales:
 				amended_from = sales.amended_from
 				if amended_from is not None:
-					billing_address_gstin = sales.billing_address_gstin
+					billing_address_gstin = ""
 					invoice_id = sales.name
 					manual_serial_number = sales.manual_serial_number
 					customer_address = sales.customer_address
-					place_of_supply = sales.place_of_supply
+					place_of_supply = ""
+					billing_address_gstin = ""
+					gstin_and_place_of_supply = sales.gstin_and_place_of_supply
+					if gstin_and_place_of_supply == 1:
+						billing_address_gstin = sales.billing_address_gstin
+						place_of_supply = sales.billto_state
+					elif gstin_and_place_of_supply == 0:
+						if sales.shipto_state:
+							billing_address_gstin = sales.customer_gstin
+							place_of_supply = sales.shipto_state
+						else:
+							billing_address_gstin = sales.billing_address_gstin
+							place_of_supply = sales.billto_state
 					reverse_charge = sales.reverse_charge
 					invoice_type = sales.invoice_type
 					customer_name = sales.customer_name
@@ -553,7 +625,7 @@ class IndiaGstr1C(object):
 					amount_by_gst =  taxable_value * tax_rate/100
 					invoice_value = amount_by_gst + taxable_value
 					grand_total_taxable = grand_total_taxable + taxable_value
-					grand_total_invoice = grand_total_invoice + invoice_value
+					grand_total_invoice = grand_total_invoice + grand_total
 					credit_invoice_id = ""
 					credit_invoice_id = ""
 					payment_date = ""
@@ -582,7 +654,7 @@ class IndiaGstr1C(object):
 					self.data.append([billing_address_gstin,customer_address,amended_from,
 							modified,payment_number,
 							payment_date,credit_invoice_id,creadit_return_date,
-							document_type,place_of_supply,invoice_value,""
+							document_type,place_of_supply,grand_total,""
 							,tax_rate,taxable_value,cess_amount,pre_gst])
 			self.data.append(["","","","",""])
 			self.data.append(["Total","","","","","","","","","",grand_total_invoice,
@@ -597,11 +669,23 @@ class IndiaGstr1C(object):
 			export_sales = sales_invoice_exp(from_date,to_date)
 			for sales in export_sales:
 				amended_from = sales.amended_from
-				billing_address_gstin = sales.billing_address_gstin
+				billing_address_gstin = ""
 				invoice_id = sales.name
 				manual_serial_number = sales.manual_serial_number
 				customer_address = sales.customer_address
-				place_of_supply = sales.place_of_supply
+				place_of_supply = ""
+				billing_address_gstin = ""
+				gstin_and_place_of_supply = sales.gstin_and_place_of_supply
+				if gstin_and_place_of_supply == 1:
+					billing_address_gstin = sales.billing_address_gstin
+					place_of_supply = sales.billto_state
+				elif gstin_and_place_of_supply == 0:
+					if sales.shipto_state:
+						billing_address_gstin = sales.customer_gstin
+						place_of_supply = sales.shipto_state
+					else:
+						billing_address_gstin = sales.billing_address_gstin
+						place_of_supply = sales.billto_state
 				reverse_charge = sales.reverse_charge
 				invoice_type = sales.invoice_type
 				customer_name = sales.customer_name
@@ -650,8 +734,8 @@ class IndiaGstr1C(object):
 				invoice_value = amount_by_gst + taxable_value
 				invoice_value = round(invoice_value)
 				grand_total_taxable = grand_total_taxable + taxable_value
-				grand_total_invoice = grand_total_invoice + invoice_value
-				self.data.append([export_type,invoice_id,posting_date,invoice_value,
+				grand_total_invoice = grand_total_invoice + grand_total
+				self.data.append([export_type,invoice_id,posting_date,grand_total,
 						port_code,shipping_bill_number,shipping_bill_date,""
 						,tax_rate,taxable_value,cess_amount])
 			self.data.append(["","","","",""])
@@ -747,7 +831,7 @@ class IndiaGstr1C(object):
 				allocated_amount = seles_data.allocated_amount
 				advance_paid = seles_data.advance_paid
 				grand_total = seles_data.grand_total
-				place_of_supply = seles_data.state
+				place_of_supply = seles_data.place_of_supply
 				net_total = seles_data.net_total
 				additional_discount_percentage = seles_data.additional_discount_percentage
 				selas_taxes = sales_taxes_charges(invoice_id)
@@ -961,14 +1045,14 @@ class IndiaGstr1C(object):
 			_("Invoice Number") + ":Link/Sales Invoice:150",
 			_("Manual Serial Number") + "::150",
 			_("Invoice date") + "::150",
-			_("Invoice Value") + "::180",
+			_("Invoice Value") + ":Currency:180",
 			_("Place Of Supply") + "::150",
 			_("Reverse Charge") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
 			_("Invoice Type") + "::150",
 			_("E-Commerce GSTIN") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + ":Currancy:160", 
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:160", 
 			_("Cess Amount") + "::120"
 		
 			]
@@ -981,14 +1065,14 @@ class IndiaGstr1C(object):
 			_("Original Invoice date") + "::150",
 			_("Revised Invoice Number") + ":Link/Sales Invoice:150",
 			_("Revised Invoice date") + "::150",
-			_("Invoice Value") + "::180",
+			_("Invoice Value") + ":Currency:180",
 			_("Place Of Supply") + "::150",
 			_("Reverse Charge") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
 			_("Invoice Type") + "::150",
 			_("E-Commerce GSTIN") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::160", 
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:160", 
 			_("Cess Amount") + "::120"
 	
 			]
@@ -996,11 +1080,11 @@ class IndiaGstr1C(object):
 		return [
 			_("Invoice Number") + ":Link/Sales Invoice:150",
 			_("Invoice date") + "::150",
-			_("Invoice Value") + "::150",
+			_("Invoice Value") + ":Currency:150",
 			_("Place Of Supply") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::180",
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:180",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
 	
@@ -1012,10 +1096,10 @@ class IndiaGstr1C(object):
 			_("Original Place Of Supply") + "::150",
 			_("Revised Invoice Number") + ":Link/Sales Invoice:150",
 			_("Revised Invoice date") + "::150",
-			_("Invoice Value") + "::150",
+			_("Invoice Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::180",
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:180",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
 		
@@ -1024,10 +1108,10 @@ class IndiaGstr1C(object):
 		return [
 			_("Type") + "::150",
 			_("Place Of Supply") + "::150",
-			_("Invoice Value") + "::150",
+			_("Invoice Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::150",
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
 
@@ -1038,10 +1122,10 @@ class IndiaGstr1C(object):
 			_("Original Month") + "::150",
 			_("Type ") + "::150",
 			_("Place Of Supply") + "::150",
-			_("Invoice Value") + "::150",
+			_("Invoice Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::150",
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
 	
@@ -1051,13 +1135,13 @@ class IndiaGstr1C(object):
 			_(" Export Type") + "::150",
 			_("Invoice Number") + ":Link/Sales Invoice:150",
 			_("Invoice date ") + "::150",
-			_("Invoice Value ") + "::150",
+			_("Invoice Value ") + ":Currency:150",
 			_("Port Code") + "::150",
 			_("Shipping Bill Number") + "::150",
 			_("Shipping Bill Date") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::150",
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150"
 		
 	
@@ -1072,10 +1156,10 @@ class IndiaGstr1C(object):
 			_("Note/Refund Voucher date") + "::150",
 			_("Document Type") + "::150",
 			_("Place Of Supply") + "::150",
-			_("Note/Refund Voucher Value") + "::150",
+			_("Note/Refund Voucher Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::150",
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("Pre GST") + "::150"
 	
@@ -1093,10 +1177,10 @@ class IndiaGstr1C(object):
 			_("Revised Note/Refund Voucher date") + "::150",
 			_("Document Type") + "::150",
 			_("Place Of Supply") + "::150",
-			_("Note/Refund Voucher Value") + "::150",
+			_("Note/Refund Voucher Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + "::150",
-			_("Taxable Value") + "::150",
+			_("Rate") + ":Currency:150",
+			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("Pre GST") + "::150"
 	
@@ -1105,9 +1189,9 @@ class IndiaGstr1C(object):
 	def get_columns_exemp(self):
 		return [
 			_("Description") + ":Link/Item:250",
-			_("Nil Rated Supplies") + "::150",
-			_("Exempted(other than nil rated/non GST supply)") + "::250",
-			_("Non-GST Supplies") + "::150"
+			_("Nil Rated Supplies") + ":Currency:150",
+			_("Exempted(other than nil rated/non GST supply)") + ":Currency:250",
+			_("Non-GST Supplies") + ":Currency:150"
 		]
 	def get_columns_hsn(self):
 		return [
@@ -1116,10 +1200,10 @@ class IndiaGstr1C(object):
 			_("UQC ") + "::150",
 			_("Total Quantity") + "::150",
 			_("Total Value") + "::150",
-			_("Taxable Value") + "::150",
-			_("Integrated Tax Amount") + "::150",
-			_("Central Tax Amount") + "::150",
-			_("State/UT Tax Amount") + "::150",
+			_("Taxable Value") + ":Currency:150",
+			_("Integrated Tax Amount") + ":Currency:150",
+			_("Central Tax Amount") + ":Currency:150",
+			_("State/UT Tax Amount") + ":Currency:150",
 			_("Cess Amount") + "::150"
 		
 		]
@@ -1131,14 +1215,14 @@ class IndiaGstr1C(object):
 			_("Party ") + "::150",
 			_("Place of Supply") + "::150",
 			_("Reference No.") + ":Link/Sales Order:150",
-			_("Rate") + "::150",
-			_("Advance Received") + "::150",
-			_("Advance Adjusted") + "::250",
-			_("Advance Pending ") + "::150",
-			_("Taxable Amount") + "::150",
-			_("IGST Amt") + "::150",
-			_("CGST Amt") + "::150",
-			_("SGST Amt") + "::150"
+			_("Rate") + ":Currency:150",
+			_("Advance Received") + ":Currency:150",
+			_("Advance Adjusted") + ":Currency:250",
+			_("Advance Pending ") + ":Currency:150",
+			_("Taxable Amount") + ":Currency:150",
+			_("IGST Amt") + ":Currency:150",
+			_("CGST Amt") + ":Currency:150",
+			_("SGST Amt") + ":Currency:150"
 		
 		]
 	def get_columns_ata(self):
@@ -1154,14 +1238,14 @@ class IndiaGstr1C(object):
 			_("Party ") + "::150",
 			_("Place of Supply") + "::150",
 			_("Reference No.") + "::150",
-			_("Rate") + "::150",
-			_("Advance Received") + "::150",
-			_("Advance Adjusted") + "::250",
-			_("Advance Pending ") + "::150",
-			_("Taxable Amount") + "::150",
-			_("IGST Amt") + "::150",
-			_("CGST Amt") + "::150",
-			_("SGST Amt") + "::150"
+			_("Rate") + ":Currency:150",
+			_("Advance Received") + ":Currency:150",
+			_("Advance Adjusted") + ":Currency:250",
+			_("Advance Pending ") + ":Currency:150",
+			_("Taxable Amount") + ":Currency:150",
+			_("IGST Amt") + ":Currency:150",
+			_("CGST Amt") + ":Currency:150",
+			_("SGST Amt") + ":Currency:150"
 		]
 	def get_columns_atadj(self):
 		return [
@@ -1171,21 +1255,22 @@ class IndiaGstr1C(object):
 			_("Party ") + "::150",
 			_("Place of Supply") + "::150",
 			_("Reference No.") + ":Link/Sales Order:150",
-			_("Rate") + "::150",
-			_("Advance Received") + "::150",
-			_("Advance Pending ") + "::150",
-			_("Advance Adjusted") + "::150",
-			_("IGST Amt") + "::150",
-			_("CGST Amt") + "::150",
-			_("SGST Amt") + "::150"
+			_("Rate") + ":Currency:150",
+			_("Advance Received") + ":Currency:150",
+			_("Advance Pending ") + ":Currency:150",
+			_("Advance Adjusted") + ":Currency:150",
+			_("IGST Amt") + ":Currency:150",
+			_("CGST Amt") + ":Currency:150",
+			_("SGST Amt") + ":Currency:150"
 		
 		]
 
 def sales_invoice_details(from_date,to_date):
-	sales_invoice = frappe.db.sql("""select si.billing_address_gstin,si.customer_address,si.name,si.customer_name,
-					si.posting_date,si.place_of_supply,si.is_return,si.return_against,si.manual_serial_number,
-					si.reverse_charge,si.invoice_type,si.ecommerce_gstin,si.posting_date,si.amended_from,
-					si.modified,si.grand_total,si.company_address,c.customer_type,si.net_total
+	sales_invoice = frappe.db.sql("""select si.billing_address_gstin,si.customer_address,si.name,si.customer_name,si.shipto_state,
+					si.billto_state,si.posting_date,si.place_of_supply,si.is_return,si.return_against
+					,si.manual_serial_number,si.reverse_charge,si.invoice_type,si.ecommerce_gstin,
+					si.posting_date,si.amended_from,si.modified,si.grand_total,si.company_address,
+					c.customer_type,si.net_total,si.gstin_and_place_of_supply,si.customer_gstin
 					from `tabSales Invoice` si, `tabCustomer` c
 					where si.posting_date >= %s AND si.posting_date <= %s AND si.invoice_type = "Regular"
 			 		AND c.customer_type = "Company" AND si.customer_name = c.customer_name
@@ -1210,7 +1295,8 @@ def sales_invoice_b2bl(from_date,to_date):
 	sales_invoice_b = frappe.db.sql("""select si.billing_address_gstin,si.customer_address,si.name,si.customer_name,si.net_total,
 					si.posting_date,si.place_of_supply,si.is_return,si.return_against,si.manual_serial_number,
 					si.reverse_charge,si.invoice_type,si.ecommerce_gstin,si.posting_date,si.amended_from,
-					si.modified,si.grand_total,si.company_address,c.customer_type
+					si.modified,si.grand_total,si.company_address,c.customer_type,si.billto_state,si.shipto_state
+					,si.gstin_and_place_of_supply,si.customer_gstin
 					from `tabSales Invoice` si, `tabCustomer` c
 					where si.posting_date >= %s AND si.posting_date <= %s AND si.invoice_type = "Regular"
 			 		AND c.customer_type = "Individual" AND si.customer_name = c.customer_name AND si.is_return = 0
@@ -1236,9 +1322,9 @@ def address_gst_number(company_address):
 
 def sales_invoice_cdrn(from_date,to_date):
 	sales_invoice_cd = frappe.db.sql("""select billing_address_gstin,customer_address,name,customer_name,net_total,
-					posting_date,place_of_supply,port_code,shipping_bill_number,shipping_bill_date,
-					export_type,reverse_charge,invoice_type,ecommerce_gstin,posting_date,amended_from,
-					modified,grand_total,company_address,is_return,return_against
+					posting_date,place_of_supply,port_code,shipping_bill_number,shipping_bill_date,shipto_state,
+					export_type,reverse_charge,invoice_type,ecommerce_gstin,posting_date,amended_from,billto_state,
+					modified,grand_total,company_address,is_return,return_against,gstin_and_place_of_supply,customer_gstin
 					from `tabSales Invoice`
 					where posting_date >= %s AND posting_date <= %s AND is_return = 1
 					AND docstatus = 1""",(from_date,to_date), as_dict = 1)
@@ -1258,7 +1344,8 @@ def sales_invoice_exp(from_date,to_date):
 	sales_invoice_ex = frappe.db.sql("""select billing_address_gstin,customer_address,name,customer_name,net_total,
 					posting_date,place_of_supply,port_code,shipping_bill_number,shipping_bill_date,
 					export_type,reverse_charge,invoice_type,ecommerce_gstin,posting_date,amended_from,
-					modified,grand_total,company_address,is_return,return_against
+					modified,grand_total,company_address,is_return,return_against,shipto_state,billto_state
+					,gstin_and_place_of_supply,customer_gstin
 					from `tabSales Invoice`
 					where posting_date >= %s AND posting_date <= %s AND invoice_type = "Export"
 					AND docstatus = 1""",(from_date,to_date), as_dict = 1)
@@ -1357,9 +1444,8 @@ def order_invoice_sales(from_date,to_date):
 
 def get_unique_state_list(sales):
 	invoice_map = {}
-	invoice_no =""
+	invoice_no = ""
 	for seles_data in sales:
-		place_of_supply = ""
 		amended_from = seles_data.amended_from
 		if amended_from is None:
 			billing_address_gstin = seles_data.billing_address_gstin
@@ -1368,7 +1454,19 @@ def get_unique_state_list(sales):
 				invoice_no = invoice_id
 				manual_serial_number = seles_data.manual_serial_number
 				customer_address = seles_data.customer_address
-				place_of_supply = seles_data.place_of_supply
+				place_of_supply = ""
+				billing_address_gstin = ""
+				gstin_and_place_of_supply = seles_data.gstin_and_place_of_supply
+				if gstin_and_place_of_supply == 1:
+					billing_address_gstin = seles_data.billing_address_gstin
+					place_of_supply = seles_data.billto_state
+				elif gstin_and_place_of_supply == 0:
+					if seles_data.shipto_state:
+						billing_address_gstin = seles_data.customer_gstin
+						place_of_supply = seles_data.shipto_state
+					else:
+						billing_address_gstin = seles_data.billing_address_gstin
+						place_of_supply = seles_data.billto_state
 				reverse_charge = seles_data.reverse_charge
 				invoice_type = seles_data.invoice_type
 				customer_name = seles_data.customer_name
@@ -1397,7 +1495,7 @@ def get_unique_state_list(sales):
 				gst_state_number = get_contact_details(customer_address)
 				address_details = address_gst_number(company_address)
 				if (grand_total <= float(b2c_limit) and address_details != gst_state_number)\
-				or (grand_total <= float(b2c_limit) and address_details == gst_state_number) \
+				or (grand_total <= float(b2c_limit) and address_details == gst_state_number)\
 				or (grand_total >= float(b2c_limit) and address_details == gst_state_number):
 					selas_taxes = sales_taxes_charges(invoice_id)
 					if len(selas_taxes) != 0:
@@ -1412,7 +1510,6 @@ def get_unique_state_list(sales):
 								get_amount_tax = sales_tax_amount(row_id,invoice_id)
 								for amount in get_amount_tax:
 									taxable_value = amount.total
-
 							account_head = taxes.account_head
 							if "SGST" in account_head:
 								tax_rate = tax_rate + taxes.rate
@@ -1420,8 +1517,6 @@ def get_unique_state_list(sales):
 								tax_rate = tax_rate + taxes.rate
 							elif "IGST" in account_head:
 								tax_rate = taxes.rate
-						print "taxable_value------------", taxable_value
-
 						tax_rate_list = []
 						key = place_of_supply
 						if key in invoice_map:
@@ -1434,33 +1529,33 @@ def get_unique_state_list(sales):
 							if tax_rate in data_rate:
 							    	for items in mapped_items_list:
 							   		if float(tax_rate) == float(items["tax_rate"]):
-							   			qty_temp = items["taxable_value"]
-										items["taxable_value"] = (qty_temp) + (taxable_value)
+										amount_temp = items["taxable_value"]
+										items["taxable_value"] = (amount_temp) + (taxable_value)
 							else :
 								new_list.append({
-												"tax_rate": tax_rate,
-												"taxable_value": taxable_value,
-												"billing_address_gstin": billing_address_gstin,
-												"customer_address": customer_address,
-												"place_of_supply": key,
-												"reverse_charge": reverse_charge,
-												"invoice_type": invoice_type,
-												"posting_date": posting_date,
-												"ecommerce_gstin": ecommerce_gstin,
-												"modified":modified,
-												"amended_from":amended_from,
-												"grand_total":grand_total,
-												"company_address":company_address,
-												"customer_type":customer_type,
-												"port_code":port_code,
-												"shipping_bill_number":shipping_bill_number,
-												"shipping_bill_date":shipping_bill_date,
-												"export_type":export_type,
-												"customer_name":customer_name,
-												"is_return":is_return,
-												"return_against":return_against
+										"tax_rate": tax_rate,
+										"taxable_value": taxable_value,
+										"billing_address_gstin": billing_address_gstin,
+										"customer_address": customer_address,
+										"place_of_supply": key,
+										"reverse_charge": reverse_charge,
+										"invoice_type": invoice_type,
+										"posting_date": posting_date,
+										"ecommerce_gstin": ecommerce_gstin,
+										"modified":modified,
+										"amended_from":amended_from,
+										"grand_total":grand_total,
+										"company_address":company_address,
+										"customer_type":customer_type,
+										"port_code":port_code,
+										"shipping_bill_number":shipping_bill_number,
+										"shipping_bill_date":shipping_bill_date,
+										"export_type":export_type,
+										"customer_name":customer_name,
+										"is_return":is_return,
+										"return_against":return_against
 								
-										    })
+									})
 								item_entry["mapped_items"] = mapped_items_list + new_list
 						else :
 							item_list = []
@@ -1490,137 +1585,151 @@ def get_unique_state_list(sales):
 							invoice_map[key] = frappe._dict({
 								    "mapped_items": item_list
 									})
-	print "invoice_map----------------", invoice_map
 	return invoice_map
 
 def get_unique_state_list_amended(sales):
 	invoice_map = {}
+	invoice_no = ""
 	for seles_data in sales:
 		amended_from = seles_data.amended_from
 		if amended_from is not None:
-			billing_address_gstin = seles_data.billing_address_gstin
 			invoice_id = seles_data.name
-			manual_serial_number = seles_data.manual_serial_number
-			customer_address = seles_data.customer_address
-			place_of_supply = seles_data.place_of_supply
-			reverse_charge = seles_data.reverse_charge
-			invoice_type = seles_data.invoice_type
-			customer_name = seles_data.customer_name
-			ecommerce_gstin = seles_data.ecommerce_gstin
-			posting_date = seles_data.posting_date
-			posting_date = posting_date.strftime('%d-%m-%Y')
-			grand_total = seles_data.grand_total
-			company_address = seles_data.company_address
-			customer_type = seles_data.customer_type
-			port_code = seles_data.port_code
-			shipping_bill_number = seles_data.shipping_bill_number
-			shipping_bill_date = seles_data.shipping_bill_date
-			if shipping_bill_date is not None:
-				shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
-			export_type = seles_data.export_type
-			is_return = seles_data.is_return
-			return_against = seles_data.return_against
-			account_head = ""
-			modified = seles_data.modified
-			modified = modified.date()
-			modified = modified.strftime('%d-%m-%Y')
-			amended_from = seles_data.amended_from
-			net_total = seles_data.net_total
-			cess_amount = 0.0
-			b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
-			gst_state_number = get_contact_details(customer_address)
-			address_details = address_gst_number(company_address)
-			if (grand_total <= float(b2c_limit) and address_details != gst_state_number)\
-			or (grand_total <= float(b2c_limit) and address_details == gst_state_number) \
-			or (grand_total >= float(b2c_limit) and address_details == gst_state_number): 
-				selas_taxes = sales_taxes_charges(invoice_id)
-				if len(selas_taxes) != 0:
-					taxable_value = 0.0
-					tax_rate = 0.0
-					for taxes in selas_taxes:
-						charge_type = taxes.charge_type
-						if "On Net Total" in charge_type:
-							taxable_value = net_total
-						elif "On Previous Row Total" in charge_type:
-							row_id = taxes.row_id
-							get_amount_tax = sales_tax_amount(row_id,invoice_id)
-							for amount in get_amount_tax:
-								taxable_value = amount.total
-						account_head = taxes.account_head
-						if "SGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "CGST" in account_head:
-							tax_rate = tax_rate + taxes.rate
-						elif "IGST" in account_head:
-							tax_rate = taxes.rate
-					tax_rate_list = []
-					key = place_of_supply
-					if key in invoice_map:
-						item_entry = invoice_map[key]
-						mapped_items_list = item_entry["mapped_items"]
-						new_list = []
-						for mapped_items in mapped_items_list:
-					    		tax_rate_list.append(mapped_items["tax_rate"])
-							data_rate = list(set(tax_rate_list))
-						if tax_rate in data_rate:
-						    	for items in mapped_items_list:
-						   		if float(tax_rate) == float(items["tax_rate"]):
-						   			qty_temp = items["taxable_value"]
-									items["taxable_value"] = (qty_temp) + (taxable_value)
-						else :
-							new_list.append({
-											"tax_rate": tax_rate,
-											"taxable_value": taxable_value,
-											"billing_address_gstin": billing_address_gstin,
-											"customer_address": customer_address,
-											"place_of_supply": key,
-											"reverse_charge": reverse_charge,
-											"invoice_type": invoice_type,
-											"posting_date": posting_date,
-											"ecommerce_gstin": ecommerce_gstin,
-											"modified":modified,
-											"amended_from":amended_from,
-											"grand_total":grand_total,
-											"company_address":company_address,
-											"customer_type":customer_type,
-											"port_code":port_code,
-											"shipping_bill_number":shipping_bill_number,
-											"shipping_bill_date":shipping_bill_date,
-											"export_type":export_type,
-											"customer_name":customer_name,
-											"is_return":is_return,
-											"return_against":return_against
-								
-									    })
-							item_entry["mapped_items"] = mapped_items_list + new_list
-					else :
-						item_list = []
-						item_list.append({
-									"tax_rate": tax_rate,
-									"taxable_value": taxable_value,
-									"billing_address_gstin": billing_address_gstin,
-									"customer_address": customer_address,
-									"place_of_supply": key,
-									"reverse_charge": reverse_charge,
-									"invoice_type": invoice_type,
-									"posting_date": posting_date,
-									"ecommerce_gstin": ecommerce_gstin,
-									"modified":modified,
-									"amended_from":amended_from,
-									"grand_total":grand_total,
-									"company_address":company_address,
-									"customer_type":customer_type,
-									"port_code":port_code,
-									"shipping_bill_number":shipping_bill_number,
-									"shipping_bill_date":shipping_bill_date,
-									"export_type":export_type,
-									"customer_name":customer_name,
-									"is_return":is_return,
+			if invoice_id != invoice_no:
+				invoice_no = invoice_id
+				billing_address_gstin = seles_data.billing_address_gstin
+				manual_serial_number = seles_data.manual_serial_number
+				customer_address = seles_data.customer_address
+				place_of_supply = ""
+				billing_address_gstin = ""
+				gstin_and_place_of_supply = seles_data.gstin_and_place_of_supply
+				if gstin_and_place_of_supply == 1:
+					billing_address_gstin = seles_data.billing_address_gstin
+					place_of_supply = seles_data.billto_state
+				elif gstin_and_place_of_supply == 0:
+					if seles_data.shipto_state:
+						billing_address_gstin = seles_data.customer_gstin
+						place_of_supply = seles_data.shipto_state
+					else:
+						billing_address_gstin = seles_data.billing_address_gstin
+						place_of_supply = seles_data.billto_state
+				reverse_charge = seles_data.reverse_charge
+				invoice_type = seles_data.invoice_type
+				customer_name = seles_data.customer_name
+				ecommerce_gstin = seles_data.ecommerce_gstin
+				posting_date = seles_data.posting_date
+				posting_date = posting_date.strftime('%d-%m-%Y')
+				grand_total = seles_data.grand_total
+				company_address = seles_data.company_address
+				customer_type = seles_data.customer_type
+				port_code = seles_data.port_code
+				shipping_bill_number = seles_data.shipping_bill_number
+				shipping_bill_date = seles_data.shipping_bill_date
+				if shipping_bill_date is not None:
+					shipping_bill_date = shipping_bill_date.strftime('%d-%m-%Y')
+				export_type = seles_data.export_type
+				is_return = seles_data.is_return
+				return_against = seles_data.return_against
+				account_head = ""
+				modified = seles_data.modified
+				modified = modified.date()
+				modified = modified.strftime('%d-%m-%Y')
+				amended_from = seles_data.amended_from
+				net_total = seles_data.net_total
+				cess_amount = 0.0
+				b2c_limit = frappe.db.get_value('GST Settings',customer_address,'b2c_limit')
+				gst_state_number = get_contact_details(customer_address)
+				address_details = address_gst_number(company_address)
+				if (grand_total <= float(b2c_limit) and address_details != gst_state_number)\
+				or (grand_total <= float(b2c_limit) and address_details == gst_state_number) \
+				or (grand_total >= float(b2c_limit) and address_details == gst_state_number): 
+					selas_taxes = sales_taxes_charges(invoice_id)
+					if len(selas_taxes) != 0:
+						taxable_value = 0.0
+						tax_rate = 0.0
+						for taxes in selas_taxes:
+							charge_type = taxes.charge_type
+							if "On Net Total" in charge_type:
+								taxable_value = net_total
+							elif "On Previous Row Total" in charge_type:
+								row_id = taxes.row_id
+								get_amount_tax = sales_tax_amount(row_id,invoice_id)
+								for amount in get_amount_tax:
+									taxable_value = amount.total
+							account_head = taxes.account_head
+							if "SGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "CGST" in account_head:
+								tax_rate = tax_rate + taxes.rate
+							elif "IGST" in account_head:
+								tax_rate = taxes.rate
+						tax_rate_list = []
+						key = place_of_supply
+						if key in invoice_map:
+							item_entry = invoice_map[key]
+							mapped_items_list = item_entry["mapped_items"]
+							new_list = []
+							for mapped_items in mapped_items_list:
+						    		tax_rate_list.append(mapped_items["tax_rate"])
+								data_rate = list(set(tax_rate_list))
+							if tax_rate in data_rate:
+							    	for items in mapped_items_list:
+							   		if float(tax_rate) == float(items["tax_rate"]):
+										amount_temp = items["taxable_value"]
+										items["taxable_value"] = (amount_temp) + (taxable_value)
+							else :
+								new_list.append({
+										"tax_rate": tax_rate,
+										"taxable_value": taxable_value,
+										"billing_address_gstin": billing_address_gstin,
+										"customer_address": customer_address,
+										"place_of_supply": key,
+										"reverse_charge": reverse_charge,
+										"invoice_type": invoice_type,
+										"posting_date": posting_date,
+										"ecommerce_gstin": ecommerce_gstin,
+										"modified":modified,
+										"amended_from":amended_from,
+										"grand_total":grand_total,
+										"company_address":company_address,
+										"customer_type":customer_type,
+										"port_code":port_code,
+										"shipping_bill_number":shipping_bill_number,
+										"shipping_bill_date":shipping_bill_date,
+										"export_type":export_type,
+										"customer_name":customer_name,
+										"is_return":is_return,
 										"return_against":return_against
-							})
-						invoice_map[key] = frappe._dict({
-							    "mapped_items": item_list
+								
+									})
+								item_entry["mapped_items"] = mapped_items_list + new_list
+						else :
+							item_list = []
+							item_list.append({
+										"tax_rate": tax_rate,
+										"taxable_value": taxable_value,
+										"billing_address_gstin": billing_address_gstin,
+										"customer_address": customer_address,
+										"place_of_supply": key,
+										"reverse_charge": reverse_charge,
+										"invoice_type": invoice_type,
+										"posting_date": posting_date,
+										"ecommerce_gstin": ecommerce_gstin,
+										"modified":modified,
+										"amended_from":amended_from,
+										"grand_total":grand_total,
+										"company_address":company_address,
+										"customer_type":customer_type,
+										"port_code":port_code,
+										"shipping_bill_number":shipping_bill_number,
+										"shipping_bill_date":shipping_bill_date,
+										"export_type":export_type,
+										"customer_name":customer_name,
+										"is_return":is_return,
+											"return_against":return_against
 								})
+							invoice_map[key] = frappe._dict({
+								    "mapped_items": item_list
+									})
 	return invoice_map
 def sales_exepted_nill(exempted_items):
 	payment_tax = {}
