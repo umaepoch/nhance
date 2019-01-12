@@ -81,7 +81,7 @@ frappe.query_reports["INDIA-GSTR-1C"] = {
             "label": __("Type of Business"),
             "fieldtype": "Select",
             "reqd": 1,
-            "options": ["B2B","B2BA", "B2CL","B2CLA","B2CS","B2CSA", "CDNR","CDNR-A", "EXPORT","EXEMP","HSN","AT","ATA","ATADJ","ATADJA"],
+            "options": ["B2B","B2BA", "B2CL","B2CLA","B2CS","B2CSA", "CDNR","CDNR-A", "EXPORT","EXEMP","HSN","AT","ATA","ATADJ"],
             "default": "B2B"
         },
         {
