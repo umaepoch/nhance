@@ -1388,7 +1388,7 @@ def make_stock_entry(materialIssueList,mterialReceiptList,company):
 
 @frappe.whitelist()
 def fetch_delivery_note_list(name):
-	delivery_note_list = frappe.db.sql("""select name from `tabDelivery Note` where sales_invoice=%s """, name, as_dict = 1) 
+	delivery_note_list = frappe.db.sql("""select name from `tabDelivery Note` where pch_sales_invoice=%s """, name, as_dict = 1) 
 	return delivery_note_list
 
 
