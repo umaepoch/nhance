@@ -7,7 +7,7 @@ import re, ast
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
 with open('requirements.txt') as f:
-install_requires = f.read().strip().split(’\n’)
+install_requires = f.read().strip().split('\n')
 
 with open('nhance/init.py', 'rb') as f:
 version = str(ast.literal_eval(_version_re.search(
