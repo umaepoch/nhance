@@ -757,7 +757,7 @@ def execute(filters=None):
 					net_amount,integrated_tax_amount,central_tax_amount,state_tax_amount])
 		data.append(["","","","",""])
 		data.append(["Total","","","",grand_total_value,grand_total_net_amount,grand_total_integrated,
-				central_tax_amount,grand_total_state])
+				grand_total_central,grand_total_state])
 	return columns, data
 
 def get_columns_b2b():
@@ -978,8 +978,8 @@ def purchase_invoice_imps(from_date,to_date):
 def purchase_invoice_impg(from_date,to_date):
 	impg_purchase = frappe.db.sql("""select 
 						pi.name,pi.posting_date,pi.supplier_address,pi.supplier_name,pi.eligibility_for_itc,
-						pi.itc_integrated_tax,pi.net_total,pi.itc_cess_amount,pi.pch_port_code,p
-						i.pch_bill_of_entry_date,pi.pch_bill_of_entry_number,pi.invoice_type
+						pi.itc_integrated_tax,pi.net_total,pi.itc_cess_amount,pi.pch_port_code,
+						pi.pch_bill_of_entry_date,pi.pch_bill_of_entry_number,pi.invoice_type
 					from `tabPurchase Invoice` pi , `tabSupplier` s
 					where pi.supplier_name = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s AND
 						pi.invoice_type = 'Import - Goods' AND pi.docstatus =1 AND pi.is_return = 0""",
@@ -1023,7 +1023,7 @@ def purchase_order_invoice_atadj(from_date,to_date):
 						po.name as purchase_order,pi.name as purchase_invoice,pi.grand_total as
 						invoice_total,po.grand_total as order_total,po.supplier_address,per.allocated_amount 
 					from `tabPurchase Order` po, `tabPurchase Invoice` pi, `tabPayment Entry Reference` per 
-					where po.name = pi.purchase_order AND pi.name = per.reference_name AND po.creation >= %s AND
+					where po.name = pi.pch_purchase_order AND pi.name = per.reference_name AND po.creation >= %s AND
 						 po.creation <= %s AND pi.docstatus =1""",
 					(tmp_from_date,tmp_to_date), as_dict=1)
 	return atadj_purchase
