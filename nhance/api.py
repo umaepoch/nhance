@@ -1310,7 +1310,7 @@ def getSupplierContent(po_name):
 	return content
 ## End of- Set up an Auto E-Mail report to Supplier
 
-## Start of- Stock Entry for Rounding and Charging.
+## Start of- Rounding and Charging Off for Purchase Receipt.
 @frappe.whitelist()
 def make_stock_entry(materialIssueList,mterialReceiptList,company):
 	print "company-------------", company 
@@ -1360,9 +1360,8 @@ def make_stock_entry(materialIssueList,mterialReceiptList,company):
 			"docstatus": 1,
 			"purpose": "Material Receipt",
 			"company": company,
-			"items": [
-					]
-					}
+			"items": []
+			}
 		for items in mterialItemsReceipt:
 			if items['rate'] is not None:
 				basic_rate = items['rate']
@@ -1383,13 +1382,18 @@ def make_stock_entry(materialIssueList,mterialReceiptList,company):
 		ret = doc.doctype
 		if ret:
 			frappe.msgprint("Stock entry is created for Material Receipt : "+doc.name)
-
-## End of- Stock Entry for Rounding and Charging.
+## End of- Rounding and Charging Off for Purchase Receipt.
 
 @frappe.whitelist()
 def fetch_delivery_note_list(name):
 	delivery_note_list = frappe.db.sql("""select name from `tabDelivery Note` where pch_sales_invoice=%s """, name, as_dict = 1) 
 	return delivery_note_list
 
-
+## Expense Account details of Stock Entry Begins...
+@frappe.whitelist()
+def match_item_code(purpose):
+	details = frappe.db.sql("""select purpose,expense_account from `tabStock Expense Account Details` where purpose = %s""",(purpose), as_dict=1)
+	print "details------", details
+	return details
+## Expense Account details of Stock Entry end...
 
