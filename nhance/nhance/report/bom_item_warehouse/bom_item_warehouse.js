@@ -119,19 +119,6 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "fieldname": "docIds",
             "label": __("Doc Ids"),
             "fieldtype": "Link",
-	    "get_query": function() {
-                var docstatus = 1;
-                var docName = frappe.query_report_filters_by_name.for.get_value();
-                if (docName == "Project") {
-                    docstatus = 0;
-                }
-                return {
-                    "doctype": docName,
-                    "filters": {
-                        "docstatus": docstatus,
-                    }
-                }
-            },
             "on_change": function(query_report) {
                 console.log("on_change....of docIds");
                 //var docId = frappe.query_report_filters_by_name.docIds.get_value();
