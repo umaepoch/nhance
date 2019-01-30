@@ -97,14 +97,15 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "on_change": function(query_report) {
                 console.log("on_change....of for");
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = "";
-		frappe.query_report.refresh();
+		frappe.query_reports["BOM Item Warehouse"].filters[6].refresh();
+		//frappe.query_report.refresh();
 		
 		var docName = frappe.query_report.get_filter_value("for");
 		var docIds_filter = frappe.query_report.get_filter_value("docIds");
 
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = docName;
 		console.log("on_change....of for docName"+docName);
-                frappe.query_report.refresh();
+                query_report.refresh();
             } //end of on_change function..
         },
         {
