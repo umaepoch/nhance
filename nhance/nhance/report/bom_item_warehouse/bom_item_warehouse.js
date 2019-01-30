@@ -96,19 +96,14 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "options": ["Sales Order", "Project", "BOM", "Production Order"],
             "on_change": function(query_report) {
                 console.log("on_change....of for");
-                //var docName = frappe.query_report_filters_by_name.for.get_value();
-                //var docIds_filter = frappe.query_report_filters_by_name.docIds;
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = "";
+		frappe.query_report.refresh();
 		
 		var docName = frappe.query_report.get_filter_value("for");
 		var docIds_filter = frappe.query_report.get_filter_value("docIds");
-		//frappe.query_report.set_filter_value("docIds", docName1);
+
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = docName;
 		console.log("on_change....of for docName"+docName);
-                //docIds_filter.options = docName1;
-                //docIds_filter.default = "";
-                //docIds_filter.refresh();
-                //docIds_filter.set_input(docIds_filter.default);
                 frappe.query_report.refresh();
             } //end of on_change function..
         },
