@@ -98,6 +98,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                 console.log("on_change....of for");
                 //var docName = frappe.query_report_filters_by_name.for.get_value();
                 //var docIds_filter = frappe.query_report_filters_by_name.docIds;
+		frappe.query_reports["BOM Item Warehouse"].filters[6].default = "";
 		
 		var docName = frappe.query_report.get_filter_value("for");
 		var docIds_filter = frappe.query_report.get_filter_value("docIds");
@@ -121,6 +122,19 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "fieldname": "docIds",
             "label": __("Doc Ids"),
             "fieldtype": "Link",
+	    "get_query": function() {
+                var docstatus = 1;
+                var docName = frappe.query_report_filters_by_name.for.get_value();
+                if (docName == "Project") {
+                    docstatus = 0;
+                }
+                return {
+                    "doctype": docName,
+                    "filters": {
+                        "docstatus": docstatus,
+                    }
+                }
+            },
             "on_change": function(query_report) {
                 console.log("on_change....of docIds");
                 //var docId = frappe.query_report_filters_by_name.docIds.get_value();
