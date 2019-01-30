@@ -97,8 +97,8 @@ frappe.query_reports["BOM Item Warehouse"] = {
                 console.log("on_change....of for");
                 //var docName = frappe.query_report_filters_by_name.for.get_value();
                 //var docIds_filter = frappe.query_report_filters_by_name.docIds;
-		var docName = frappe.query_report.get_filter_value(for);
-		var docIds_filter = frappe.query_report.get_filter_value(docIds);
+		var docName = frappe.query_report.get_filter_value("for");
+		var docIds_filter = frappe.query_report.get_filter_value("docIds");
 		console.log("on_change....of for docName"+docName);
                 docIds_filter.df.options = docName;
                 docIds_filter.df.default = "";
