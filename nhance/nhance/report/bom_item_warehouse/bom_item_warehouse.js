@@ -101,9 +101,9 @@ frappe.query_reports["BOM Item Warehouse"] = {
 		
 		docName1 = frappe.query_report.get_filter_value("for");
 		var docIds_filter = frappe.query_report.get_filter_value("docIds");
-		console.log("on_change....of for docName"+docName);
-                docIds_filter.options = docName1;
-                docIds_filter.default = "";
+		console.log("on_change....of for docName"+docName1);
+                //docIds_filter.options = docName1;
+                //docIds_filter.default = "";
                 //docIds_filter.refresh();
                 //docIds_filter.set_input(docIds_filter.default);
                 query_report.refresh();
