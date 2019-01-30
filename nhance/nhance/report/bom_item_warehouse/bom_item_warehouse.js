@@ -124,7 +124,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "fieldtype": "Link",
 	    "get_query": function() {
                 var docstatus = 1;
-                var docName = frappe.query_report_filters_by_name.for.get_value();
+                var docName = frappe.query_report.get_filter_value("for");
                 if (docName == "Project") {
                     docstatus = 0;
                 }
