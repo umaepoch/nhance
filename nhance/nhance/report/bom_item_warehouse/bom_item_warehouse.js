@@ -44,22 +44,23 @@ frappe.query_reports["BOM Item Warehouse"] = {
                 var bomList = "";
                 var bomNO = "";
                 var check_for_whole_number_flag;
-                var docName = frappe.query_report_filters_by_name.for.get_value();
-                var qty = frappe.query_report_filters_by_name.qty_to_make.get_value();
+                var docName = frappe.query_report.get_filter_value("for");
+                var qty = frappe.query_report.get_filter_value("qty_to_make");
+		
                 if (!jQuery.isNumeric(qty)) {
-                    frappe.query_report_filters_by_name.qty_to_make.set_input("1");
+		    frappe.query_report.set_filter_value("qty_to_make", "1");
                     frappe.throw("Quantity to Make value is not in proper format")
                 }
                 if (qty < 0) {
-                    frappe.query_report_filters_by_name.qty_to_make.set_input("1");
+		    frappe.query_report.set_filter_value("qty_to_make", "1");
                     frappe.throw("Quantity to Make cannot be nagative please input positive value")
                 }
                 if (qty < 1) {
-                    frappe.query_report_filters_by_name.qty_to_make.set_input("1");
+		    frappe.query_report.set_filter_value("qty_to_make", "1");
                     frappe.throw(" Quantity to Make should be greater than one")
                 }
                 if (docName == "Sales Order") {
-                    bomList = frappe.query_report_filters_by_name.hidden_bom.get_value();
+                    bomList = frappe.query_report.get_filter_value("hidden_bom");
                     bomList = bomList.split(",");
                     for (var i = 0; i < bomList.length; i++) {
                         bomNO = bomList[i];
@@ -70,15 +71,16 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         }
                     }
                 } else if (docName == "BOM") {
-                    bomNO = frappe.query_report_filters_by_name.docIds.get_value();
+			
+                    bomNO = frappe.query_report.get_filter_value("docIds");
                     console.log("bomNO::" + bomNO);
                     check_for_whole_number_flag = check_for_whole_number(bomNO, qty, query_report);
                 } else if (docName == "Project") {
-                    bomNO = frappe.query_report_filters_by_name.master_bom_hidden.get_value();
+                    bomNO = frappe.query_report.get_filter_value("master_bom_hidden");
                     console.log("master_bom::" + bomNO);
                     check_for_whole_number_flag = check_for_whole_number(bomNO, qty, query_report);
                 }else if (docName == "Production Order") {
-                    var productionID = frappe.query_report_filters_by_name.production_bom_hidden.get_value();
+                    var productionID = frappe.query_report.get_filter_value("production_bom_hidden");
 		    //bomNO = getProductionBOM(productionID);
 		    bomNO = productionID;
                     console.log("production_bom_hidden::" + productionID);
@@ -97,6 +99,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "on_change": function(query_report) {
                 console.log("on_change....of for");
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = "";
+		frappe.query_reports["BOM Item Warehouse"].filters[6].refresh;
 		query_report.refresh();
 		
 		var docName = frappe.query_report.get_filter_value("for");
@@ -132,9 +135,6 @@ frappe.query_reports["BOM Item Warehouse"] = {
             },
             "on_change": function(query_report) {
                 console.log("on_change....of docIds");
-                //var docId = frappe.query_report_filters_by_name.docIds.get_value();
-                //var docName = frappe.query_report_filters_by_name.for.get_value();
-
 		var docName = frappe.query_report.get_filter_value("for");
 		var docId = frappe.query_report.get_filter_value("docIds");
 		console.log("on_change....docName"+docName);
