@@ -103,7 +103,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                 docIds_filter.options = docName;
                 docIds_filter.default = "";
                 //docIds_filter.refresh();
-                docIds_filter.set_input(docIds_filter.default);
+                //docIds_filter.set_input(docIds_filter.default);
                 query_report.refresh();
             } //end of on_change function..
         },
