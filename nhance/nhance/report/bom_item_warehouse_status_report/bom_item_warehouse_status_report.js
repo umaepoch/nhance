@@ -25,7 +25,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 			//var docIds_filter = frappe.query_report_filters_by_name.docIds;
 			var docId = frappe.query_report.get_filter_value("docIds");
 			console.log("docIds....."+r.message);
-			frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = r.message;
+			frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = docName;
 			//docIds_filter.df.options = r.message;
 			//docIds_filter.df.default = "";
 			//docIds_filter.refresh();
@@ -39,7 +39,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 	{
 	   "fieldname":"docIds",
 	   "label": __("Doc Ids"),
-	   "fieldtype": "Select",
+	   "fieldtype": "Link",
 	   "get_query": function() {
                 var docName = frappe.query_report.get_filter_value("for");
 		if (docName == "BOM"){
