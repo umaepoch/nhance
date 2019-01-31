@@ -40,6 +40,27 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 	   "fieldname":"docIds",
 	   "label": __("Doc Ids"),
 	   "fieldtype": "Select",
+	   "get_query": function() {
+                var docName = frappe.query_report.get_filter_value("for");
+		if (docName == "BOM"){
+                	return {
+                    	"doctype": docName,
+                    	"filters": {
+                        	"docstatus": 1,
+                    	}
+                }
+		}else if (docName == "Project"){
+			return {
+                    	"doctype": docName,
+                    	"filters": {"status": ["not in", ["Completed","Cancelled"]]}
+			}
+		}else if (docName == "Sales Order"){
+			return {
+                    	"doctype": docName,
+                    	"filters": {"status": ["!=", "Cancelled"], "docstatus": 1}
+			}
+		}
+            },
 	   "on_change": function(query_report){
 		var docName = frappe.query_report.get_filter_value("for");
 		var docID = frappe.query_report.get_filter_value("docIds");
