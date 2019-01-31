@@ -11,29 +11,10 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
             "options": ["Sales Order", "BOM", "Project"],
 	    "reqd": 1,
 	    "on_change": function(query_report){
-		//var docName = frappe.query_report_filters_by_name.for.get_value();
 		var docName = frappe.query_report.get_filter_value("for");
 		console.log("on change...."+docName);
-		frappe.call({
-			method: 			    				    					"nhance.nhance.report.bom_item_warehouse_status_report.bom_item_warehouse_status_report.fetch_Records",
-			args: {
-         	 		"docName":docName,
-        	},
-		async: false,
-		callback: function(r) 
-      		 { 
-			//var docIds_filter = frappe.query_report_filters_by_name.docIds;
-			var docId = frappe.query_report.get_filter_value("docIds");
-			console.log("docIds....."+r.message);
-			frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = docName;
-			//docIds_filter.df.options = r.message;
-			//docIds_filter.df.default = "";
-			//docIds_filter.refresh();
-			//docIds_filter.set_input(docIds_filter.df.default);
-			query_report.refresh();
-			
-		}//end of call back fun..
-		});//end of frappe call..
+		frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = docName;
+		query_report.refresh();
 	    }//end of on_change..
         },
 	{

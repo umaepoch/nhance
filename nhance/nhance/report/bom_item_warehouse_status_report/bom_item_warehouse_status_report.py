@@ -37,6 +37,8 @@ def execute(filters=None):
 				  ])	
 	for rows in data:
 		summ_data.append([rows[0], rows[1], rows[2], rows[3], rows[4], rows[5], rows[6]])
+	if len(summ_data) == 0:
+		frappe.msgprint("Records Not Found For "+requested_by)
 
 	return columns, summ_data
 
@@ -53,25 +55,12 @@ def get_columns():
 		 ]
 		return columns
 
-@frappe.whitelist()
-def fetch_Records(docName):
-	records = []
-	if docName == "Sales Order":
-		records = frappe.db.sql("""select name from `tab"""+ docName +"""` where docstatus = 1 and status<>'Cancelled'""")
-		#print "##########-Doc Records::", records
-	elif docName == "Project":
-		records = frappe.db.sql("""select name from `tab"""+ docName +"""` where status not in('Completed','Cancelled')""")
-		#print "##########-Doc Records::", records 
-	elif docName == "BOM":
-		records = frappe.db.sql("""select name  from `tabBOM` where docstatus=1""");
-	return records
-
 def get_items_data(requested_by):
 	print "#####-requested_by::", requested_by
 	items_details = []
 	if requested_by != "null" and requested_by is not None:
 		records = frappe.db.sql("""select name,po_list from `tabStock Requisition` where requested_by =%s and docstatus=1""", (requested_by), as_dict=1)
-		#print "####-records::", records
+		print "####-records::", records, len(records)
 		if len(records)!=0:
 			check_flag = False
 			for name in records:
@@ -91,7 +80,8 @@ def get_items_data(requested_by):
 			if check_flag is not True:
 				frappe.msgprint("There is no Purchase Order For "+requested_by)
 		else:
-			frappe.msgprint("Records Not Found For "+requested_by)
+			pass
+			#frappe.msgprint("Records Not Found For "+requested_by)
 	else:
 		frappe.msgprint("Master BOM Not Found In The Project..")
 	return items_details
