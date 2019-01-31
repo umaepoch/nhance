@@ -13,6 +13,8 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 	    "on_change": function(query_report){
 		var docName = frappe.query_report.get_filter_value("for");
 		console.log("on change...."+docName);
+		frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = [];
+		frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].default = "";
 		frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = docName;
 		query_report.refresh();
 	    }//end of on_change..

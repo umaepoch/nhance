@@ -23,7 +23,7 @@ def execute(filters=None):
 	requested_by = filters.get("docIds")
 	if filters.get("for") == "Project":
 		requested_by = filters.get("master_bom_hidden")
-	if filters.get("for") is not None and requested_by is not None:
+	if filters.get("for") and requested_by:
 		items_data = get_items_data(requested_by)
 		if len(items_data)!=0:
 			for items in items_data:
