@@ -24,6 +24,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
       		 { 
 			//var docIds_filter = frappe.query_report_filters_by_name.docIds;
 			var docId = frappe.query_report.get_filter_value("docIds");
+			console.log("docIds....."+r.message);
 			frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = r.message;
 			//docIds_filter.df.options = r.message;
 			//docIds_filter.df.default = "";
