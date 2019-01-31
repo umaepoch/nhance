@@ -10,8 +10,9 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
             "fieldtype": "Select",
             "options": ["Sales Order", "BOM", "Project"],
 	    "reqd": 1,
-	    "on_change": function(){
-		var docName = frappe.query_report_filters_by_name.for.get_value();
+	    "on_change": function(query_report){
+		//var docName = frappe.query_report_filters_by_name.for.get_value();
+		var docName = frappe.query_report.get_filter_value("for");
 		console.log("on change...."+docName);
 		frappe.call({
 			method: 			    				    					"nhance.nhance.report.bom_item_warehouse_status_report.bom_item_warehouse_status_report.fetch_Records",
@@ -21,11 +22,14 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 		async: false,
 		callback: function(r) 
       		 { 
-			var docIds_filter = frappe.query_report_filters_by_name.docIds;
-			docIds_filter.df.options = r.message;
-			docIds_filter.df.default = "";
-			docIds_filter.refresh();
-			docIds_filter.set_input(docIds_filter.df.default);
+			//var docIds_filter = frappe.query_report_filters_by_name.docIds;
+			var docId = frappe.query_report.get_filter_value("docIds");
+			frappe.query_reports["BOM Item Warehouse Status Report"].filters[1].options = r.message;
+			//docIds_filter.df.options = r.message;
+			//docIds_filter.df.default = "";
+			//docIds_filter.refresh();
+			//docIds_filter.set_input(docIds_filter.df.default);
+			query_report.refresh();
 			
 		}//end of call back fun..
 		});//end of frappe call..
@@ -36,8 +40,8 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 	   "label": __("Doc Ids"),
 	   "fieldtype": "Select",
 	   "on_change": function(query_report){
-		var docName = frappe.query_report_filters_by_name.for.get_value();
-		var docID = frappe.query_report_filters_by_name.docIds.get_value();
+		var docName = frappe.query_report.get_filter_value("for");
+		var docID = frappe.query_report.get_filter_value("docIds");
 		if(docName=="Project"){
 		frappe.call({
 			method: 			    				    					"nhance.nhance.report.bom_item_warehouse_status_report.bom_item_warehouse_status_report.get_master_bom",
@@ -81,11 +85,17 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 }
 }
 function setMasterBOM_Value(masterBOM,query_report){
+
+frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].options = masterBOM;
+frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].default = masterBOM;
+
+/**
 var master_bom_hidden_filter = frappe.query_report_filters_by_name.master_bom_hidden;
 master_bom_hidden_filter.df.options = masterBOM;
 master_bom_hidden_filter.df.default = masterBOM;
 master_bom_hidden_filter.refresh();
 master_bom_hidden_filter.set_input(master_bom_hidden_filter.df.default);
+**/
 query_report.refresh();
 }
 

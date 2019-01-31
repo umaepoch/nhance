@@ -69,7 +69,7 @@ def fetch_Records(docName):
 def get_items_data(requested_by):
 	print "#####-requested_by::", requested_by
 	items_details = []
-	if requested_by != "null":
+	if requested_by != "null" and requested_by is not None:
 		records = frappe.db.sql("""select name,po_list from `tabStock Requisition` where requested_by =%s and docstatus=1""", (requested_by), as_dict=1)
 		#print "####-records::", records
 		if len(records)!=0:
