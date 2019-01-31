@@ -17,16 +17,17 @@ sys.setdefaultencoding('utf-8')
 def execute(filters=None):
 	global bom
 	global summ_data
+	data = []
+	summ_data = []
 	columns = get_columns()
 	requested_by = filters.get("docIds")
 	if filters.get("for") == "Project":
 		requested_by = filters.get("master_bom_hidden")
-	items_data = get_items_data(requested_by)
-	data = []
-	summ_data = []
-	if len(items_data)!=0:
-		for items in items_data:
-			data.append([
+	if filters.get("for") is not None and requested_by is not None:
+		items_data = get_items_data(requested_by)
+		if len(items_data)!=0:
+			for items in items_data:
+				data.append([
 				items['purchase_order'],
 				items['item_code'],
 				items['total_qty'],
@@ -35,10 +36,10 @@ def execute(filters=None):
 				items['expected_delivery_date'],
 				items['updated_delivery_date']
 				  ])	
-	for rows in data:
-		summ_data.append([rows[0], rows[1], rows[2], rows[3], rows[4], rows[5], rows[6]])
-	if len(summ_data) == 0:
-		frappe.msgprint("Records Not Found For "+requested_by)
+			for rows in data:
+				summ_data.append([rows[0], rows[1], rows[2], rows[3], rows[4], rows[5], rows[6]])
+			if len(summ_data) == 0:
+				frappe.msgprint("Records Not Found For "+requested_by)
 
 	return columns, summ_data
 
