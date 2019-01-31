@@ -70,10 +70,10 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 		});//end of frappe call..
 		}//end of if..
 		else if(docName=="BOM"){
-		query_report.refresh();
+		frappe.query_report.refresh();
 		}
 		else if(docName=="Sales Order"){
-		query_report.refresh();
+		frappe.query_report.refresh();
 		}
 	   }//end of on_change..
 	},
