@@ -38,8 +38,8 @@ def execute(filters=None):
 				  ])	
 			for rows in data:
 				summ_data.append([rows[0], rows[1], rows[2], rows[3], rows[4], rows[5], rows[6]])
-			if len(summ_data) == 0:
-				frappe.msgprint("Records Not Found For "+requested_by)
+		else:
+			frappe.msgprint("Records Not Found For "+requested_by)
 
 	return columns, summ_data
 
@@ -83,8 +83,6 @@ def get_items_data(requested_by):
 		else:
 			pass
 			#frappe.msgprint("Records Not Found For "+requested_by)
-	else:
-		frappe.msgprint("Master BOM Not Found In The Project..")
 	return items_details
 
 def get_po_items(po):
