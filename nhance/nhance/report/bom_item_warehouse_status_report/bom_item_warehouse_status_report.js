@@ -106,9 +106,9 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 }
 function setMasterBOM_Value(masterBOM,query_report){
 
-console.log("masterBOM-----:: "+masterBOM[0].master_bom);
-frappe.query_report.set_filter_value("master_bom_hidden", []);
-frappe.query_report.set_filter_value("master_bom_hidden", masterBOM[0].master_bom);
+console.log("masterBOM-----:: "+masterBOM);
+frappe.query_report.set_filter_value("master_bom_hidden", "");
+frappe.query_report.set_filter_value("master_bom_hidden", masterBOM);
 console.log("masterBOM--1---:: "+ frappe.query_report.get_filter_value("master_bom_hidden"));
 
 //frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].options = masterBOM[0].master_bom;
