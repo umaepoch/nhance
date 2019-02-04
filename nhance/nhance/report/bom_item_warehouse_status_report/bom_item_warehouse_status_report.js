@@ -70,10 +70,18 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 		});//end of frappe call..
 		}//end of if..
 		else if(docName=="BOM"){
-		frappe.query_report.refresh();
+			frappe.query_report.refresh();
+			var status = get_record_status();
+			if(status == -1){
+				frappe.msgprint(__("Records Not Found For "+docID));
+			}
 		}
 		else if(docName=="Sales Order"){
-		frappe.query_report.refresh();
+			frappe.query_report.refresh();
+			var status = get_record_status();
+			if(status == -1){
+				frappe.msgprint(__("Records Not Found For "+docID));
+			}
 		}
 	   }//end of on_change..
 	},
@@ -103,3 +111,15 @@ master_bom_hidden_filter.set_input(master_bom_hidden_filter.df.default);
 query_report.refresh();
 }
 
+function get_record_status() {
+    var status = 1;
+    frappe.call({
+        method: "nhance.nhance.report.bom_item_warehouse_status_report.bom_item_warehouse_status_report.get_record_status",
+        async: false,
+        callback: function(r) {
+		status = r.message;
+        } //end of call back fun..
+    }); //end of frappe call..
+console.log("status-----"+status);
+return status;
+}

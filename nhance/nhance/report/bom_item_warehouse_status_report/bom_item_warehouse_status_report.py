@@ -128,3 +128,11 @@ def get_master_bom(docId,docName):
 		records = "null"
 	return records
 
+@frappe.whitelist()
+def get_record_status():
+	record_length = len(summ_data)
+	if record_length != 0:
+		return 1
+	else:
+		return -1
+
