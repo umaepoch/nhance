@@ -132,16 +132,16 @@ frappe.query_reports["INDIA-GSTR-2"] = {
 
                     if (temp_from_date == "" || temp_from_date == null) {
                         var temp_from_date = frappe.datetime.add_days(to_date, -(fetch_days_data));
-			temp_from_date = moment(temp_from_date).format("DD/MM/YYYY")
-			frappe.query_report.set_filter_value("temp_from_date"," ");
+			//frappe.query_report.set_filter_value("temp_from_date"," ");
 			var temp_from_date = from_date;
+			temp_from_date = moment(temp_from_date).format("DD-MM-YYYY")
 			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
 			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
 			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
 
 			//frappe.query_report.set_filter_value("temp_to_date"," ");
 			var temp_to_date = to_date;
-			temp_to_date = moment(temp_to_date).format("DD/MM/YYYY")
+			temp_to_date = moment(temp_to_date).format("DD-MM-YYYY")
 			console.log("*******temp_to_date----" + temp_to_date);
 			frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
 			frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
@@ -167,11 +167,13 @@ frappe.query_reports["INDIA-GSTR-2"] = {
                         var temp_from_date = frappe.datetime.add_days(temp_from_date, -(fetch_days_data));
                         //frappe.query_report.set_filter_value("temp_from_date"," ");
 			var temp_from_date = from_date;
+			temp_from_date = moment(temp_from_date).format("DD-MM-YYYY")
 			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
 			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
 			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
 
                         var temp_to_date = frappe.datetime.add_days(to_date, -1);
+			temp_to_date = moment(temp_to_date).format("DD-MM-YYYY")
                         console.log("*******temp_to_date----" + temp_to_date);
 			frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
 			frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
