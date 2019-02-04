@@ -59,7 +59,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 		var masterBOM = r.message;
 		console.log("masterBOM....."+masterBOM);
 		if(masterBOM == "null"){
-		//frappe.msgprint(__("Master BOM Not Found In The Project."));
+		frappe.msgprint(__("Master BOM Not Found In The Project."));
 		setMasterBOM_Value(masterBOM,query_report);
 		}else{
 		console.log("success.."+masterBOM[0].master_bom);
@@ -86,10 +86,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 				frappe.msgprint(__("Records Not Found For "+docID));
 			}**/
 		}
-		var status = get_record_status();
-		if(status == -1){
-			frappe.msgprint(__("Records Not Found For "+docID));
-		}
+		
 	   }//end of on_change..
 	},
 	{
@@ -104,9 +101,11 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 }
 }
 function setMasterBOM_Value(masterBOM,query_report){
+frappe.query_report.set_filter_value("master_bom_hidden", []);
+frappe.query_report.set_filter_value("master_bom_hidden", masterBOM[0].master_bom);
 
-frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].options = masterBOM;
-frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].default = masterBOM;
+//frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].options = masterBOM[0].master_bom;
+//frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].default = masterBOM[0].master_bom;
 
 /**
 var master_bom_hidden_filter = frappe.query_report_filters_by_name.master_bom_hidden;
@@ -127,6 +126,6 @@ function get_record_status() {
 		status = r.message;
         } //end of call back fun..
     }); //end of frappe call..
-console.log("status-----"+status);
+console.log("status-----:: "+status);
 return status;
 }
