@@ -11,7 +11,6 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
             "options": ["Sales Order", "BOM", "Project"],
 	    "reqd": 1,
 	    "on_change": function(query_report){
-		frappe.query_report.set_filter_value("docIds", "");
 		var docName = frappe.query_report.get_filter_value("for");
 		console.log("on change...."+docName);
 		frappe.query_report.set_filter_value("docIds", []);
@@ -88,7 +87,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 			frappe.query_report.refresh();
 			
 			var status = get_record_status();
-			if(status == -1){
+			if(status == -1 && docID != undefined && docID != "" && docName=="BOM"){
 				frappe.msgprint(__("Records Not Found For "+docID));
 			}
 		}
@@ -96,10 +95,11 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 			frappe.query_report.refresh();
 			
 			var status = get_record_status();
-			if(status == -1){
+			if(status == -1 && docID != undefined && docID != "" && docName=="Sales Order"){
 				frappe.msgprint(__("Records Not Found For "+docID));
 			}
 		}
+		frappe.query_report.refresh();
 		
 	   }//end of on_change..
 	},
