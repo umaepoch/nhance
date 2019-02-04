@@ -34,7 +34,7 @@ frappe.query_reports["INDIA-GSTR-2"] = {
                 var from_date = frappe.query_report.get_filter_value("from_date");
                 var to_date = frappe.query_report.get_filter_value("to_date");
                 var fetch_days_data =frappe.query_report.get_filter_value("fetch_days_data");
-		var temp_from_date_filter = frappe.query_report.get_filter_value("temp_from_date");
+		//var temp_from_date_filter = frappe.query_report.get_filter_value("temp_from_date");
 		console.log("fetch data field--------"+frappe.query_report.get_filter_value("fetch_days_data"))
                 var temp_to_date_filter = frappe.query_report.get_filter_value("temp_to_date");
 
@@ -61,22 +61,28 @@ frappe.query_reports["INDIA-GSTR-2"] = {
                 var diffDays = parseInt((date2 - date1) / (1000 * 60 * 60 * 24));
                 console.log("diffDays------" + diffDays);
                 if (fetch_days_data > diffDays) {
-                    frappe.query_report.set_filter_value("fetch_days_data","");
+                    frappe.query_report.set_filter_value("fetch_days_data", " ");
                     frappe.throw(" Fetch Days Data value should be less than: " + (diffDays + 1));
                 }else{
 			var temp_from_date = from_date;
+			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
+			/**
                         temp_from_date_filter.df.options = temp_from_date;
                         temp_from_date_filter.df.default = temp_from_date;
                         temp_from_date_filter.refresh();
                         temp_from_date_filter.set_input(temp_from_date_filter.df.default);
+			**/
 
 			var temp_to_date = frappe.datetime.add_days(from_date, (fetch_days_data - 1));
+			console.log("temp_to_date----" + temp_to_date);
+			/**
                         temp_to_date_filter.df.default = temp_to_date;
                         temp_to_date_filter.refresh();
                         temp_to_date_filter.set_input(temp_to_date_filter.df.default);
+			**/
 
-			console.log("temp_from_date in --fetch_days_data----" + frappe.query_report_filters_by_name.temp_from_date.get_value());
-                        console.log("temp_to_date--in---fetch_days_data----" + frappe.query_report_filters_by_name.temp_to_date.get_value());
+			console.log("temp_from_date in --fetch_days_data----" + frappe.query_report.get_filter_value("temp_from_date"));
+                        //console.log("temp_to_date--in---fetch_days_data----" + frappe.query_report_filters_by_name.temp_to_date.get_value());
 		}
                 query_report.refresh();
             }
@@ -115,18 +121,21 @@ frappe.query_reports["INDIA-GSTR-2"] = {
                 var temp_to_date = filters.temp_to_date;
 
                 var temp_from_date_filter = frappe.query_report.get_filter_value("temp_from_date");
+		 console.log("Previous-primary-temp_from_date---------" + temp_from_date);
                 var temp_to_date_filter = frappe.query_report.get_filter_value("temp_to_date");
                 var fetch_days_data = frappe.query_report.get_filter_value("fetch_days_data");
 
                 if (fetch_days_data != "" && fetch_days_data != null) {
 
                     if (temp_from_date == "" || temp_from_date == null) {
+			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
                         var temp_from_date = frappe.datetime.add_days(to_date, -(fetch_days_data));
+			/**
                         temp_from_date_filter.df.options = temp_from_date;
                         temp_from_date_filter.df.default = temp_from_date;
                         temp_from_date_filter.refresh();
                         temp_from_date_filter.set_input(temp_from_date_filter.df.default);
-
+			**/
                         temp_to_date_filter.df.options = to_date;
                         temp_to_date_filter.df.default = to_date;
                         temp_to_date_filter.refresh();
