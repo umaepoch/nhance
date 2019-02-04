@@ -66,7 +66,18 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 		}else{
 		console.log("success.."+masterBOM[0].master_bom);
 		var master_bom = masterBOM[0].master_bom;
-		setMasterBOM_Value(master_bom,query_report);
+		//setMasterBOM_Value(master_bom,query_report);
+
+		console.log("masterBOM-----:: "+masterBOM);
+		frappe.query_report.set_filter_value("master_bom_hidden", "");
+		//frappe.query_report.set_filter_value("master_bom_hidden", masterBOM);
+
+
+		frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].options = masterBOM;
+		frappe.query_reports["BOM Item Warehouse Status Report"].filters[2].default = masterBOM;
+
+		var bom_val = frappe.query_report.get_filter_value("master_bom_hidden");
+		console.log("masterBOM--1---:: "+ bom_val);
 		}
 		}//end of call-back function..
 		});//end of frappe call..
