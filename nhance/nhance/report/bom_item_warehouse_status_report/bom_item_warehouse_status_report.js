@@ -87,7 +87,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 			frappe.query_report.refresh();
 			
 			var status = get_record_status();
-			if(status == -1 && docID != undefined && docID != "" && docName=="BOM"){
+			if(status == -1 && docName=="BOM"){
 				frappe.msgprint(__("Records Not Found For "+docID));
 			}
 		}
@@ -95,7 +95,7 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 			frappe.query_report.refresh();
 			
 			var status = get_record_status();
-			if(status == -1 && docID != undefined && docID != "" && docName=="Sales Order"){
+			if(status == -1 && docName=="Sales Order"){
 				frappe.msgprint(__("Records Not Found For "+docID));
 			}
 		}
