@@ -64,8 +64,11 @@ frappe.query_reports["INDIA-GSTR-2"] = {
                     frappe.query_report.set_filter_value("fetch_days_data", " ");
                     frappe.throw(" Fetch Days Data value should be less than: " + (diffDays + 1));
                 }else{
+			frappe.query_report.set_filter_value("temp_from_date"," ");
 			var temp_from_date = from_date;
+			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
 			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
+			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
 			/**
                         temp_from_date_filter.df.options = temp_from_date;
                         temp_from_date_filter.df.default = temp_from_date;
@@ -113,7 +116,6 @@ frappe.query_reports["INDIA-GSTR-2"] = {
         console.log("onload.............");
         report.page.add_inner_button(__("Previous"),
             function() {
-                var reporter = frappe.query_reports["Test Report For GSTR"];
                 var filters = report.get_values();
                 var from_date = filters.from_date;
                 var to_date = filters.to_date;
@@ -128,34 +130,49 @@ frappe.query_reports["INDIA-GSTR-2"] = {
                 if (fetch_days_data != "" && fetch_days_data != null) {
 
                     if (temp_from_date == "" || temp_from_date == null) {
-			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
                         var temp_from_date = frappe.datetime.add_days(to_date, -(fetch_days_data));
+
+			frappe.query_report.set_filter_value("temp_from_date"," ");
+			var temp_from_date = from_date;
+			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
+			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
+			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
+
+			frappe.query_report.set_filter_value("temp_to_date"," ");
+			var temp_to_date = to_date;
+			console.log("*******temp_to_date----" + temp_to_date);
+			frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
+			frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
+	
 			/**
                         temp_from_date_filter.df.options = temp_from_date;
                         temp_from_date_filter.df.default = temp_from_date;
                         temp_from_date_filter.refresh();
                         temp_from_date_filter.set_input(temp_from_date_filter.df.default);
-			**/
+			
                         temp_to_date_filter.df.options = to_date;
                         temp_to_date_filter.df.default = to_date;
                         temp_to_date_filter.refresh();
                         temp_to_date_filter.set_input(temp_to_date_filter.df.default);
+			**/
+			  console.log("temp_from_date---------" + temp_from_date);
+                        console.log("temp_to_date---------" + temp_to_date);
 
                         report.refresh();
                     } else {
                         console.log("Previous-primary-temp_from_date---------" + temp_from_date);
                         var to_date = temp_from_date;
                         var temp_from_date = frappe.datetime.add_days(temp_from_date, -(fetch_days_data));
-                        temp_from_date_filter.df.options = temp_from_date;
-                        temp_from_date_filter.df.default = temp_from_date;
-                        temp_from_date_filter.refresh();
-                        temp_from_date_filter.set_input(temp_from_date_filter.df.default);
+                        frappe.query_report.set_filter_value("temp_from_date"," ");
+			var temp_from_date = from_date;
+			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
+			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
+			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
 
                         var temp_to_date = frappe.datetime.add_days(to_date, -1);
-                        temp_to_date_filter.df.options = temp_to_date;
-                        temp_to_date_filter.df.default = temp_to_date;
-                        temp_to_date_filter.refresh();
-                        temp_to_date_filter.set_input(temp_to_date_filter.df.default);
+                        console.log("*******temp_to_date----" + temp_to_date);
+			frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
+			frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
 
                         console.log("temp_from_date---------" + temp_from_date);
                         console.log("temp_to_date---------" + temp_to_date);
