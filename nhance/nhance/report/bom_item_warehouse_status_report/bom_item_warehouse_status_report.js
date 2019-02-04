@@ -47,6 +47,8 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 		var docName = frappe.query_report.get_filter_value("for");
 		var docID = frappe.query_report.get_filter_value("docIds");
 		if(docName=="Project"){
+
+		if (docID != undefined && docID != ""){
 		frappe.call({
 			method: 			    				    					"nhance.nhance.report.bom_item_warehouse_status_report.bom_item_warehouse_status_report.get_master_bom",
 			args: {
@@ -68,6 +70,8 @@ frappe.query_reports["BOM Item Warehouse Status Report"] = {
 		}
 		}//end of call-back function..
 		});//end of frappe call..
+		}
+
 		}//end of if..
 		else if(docName=="BOM"){
 			frappe.query_report.refresh();
