@@ -80,9 +80,6 @@ def get_items_data(requested_by):
 								items_details.append(po_items_data)
 			if check_flag is not True:
 				frappe.msgprint("There is no Purchase Order For "+requested_by)
-		else:
-			#pass
-			frappe.msgprint("Records Not Found For "+requested_by)
 	return items_details
 
 def get_po_items(po):

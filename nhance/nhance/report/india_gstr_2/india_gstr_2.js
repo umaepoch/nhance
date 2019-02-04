@@ -68,8 +68,10 @@ frappe.query_reports["INDIA-GSTR-2"] = {
 			var temp_from_date = from_date;
 			temp_from_date = moment(temp_from_date).format("DD/MM/YYYY")
 			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
-			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
-			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
+			 frappe.query_report.set_filter_value("temp_from_date",temp_from_date);
+			
 			/**
                         temp_from_date_filter.df.options = temp_from_date;
                         temp_from_date_filter.df.default = temp_from_date;
@@ -124,7 +126,7 @@ frappe.query_reports["INDIA-GSTR-2"] = {
                 var temp_to_date = filters.temp_to_date;
 
                 var temp_from_date_filter = frappe.query_report.get_filter_value("temp_from_date");
-		 console.log("Previous-primary-temp_from_date---------" + temp_from_date);
+		// console.log("Previous-primary-temp_from_date---------" + temp_from_date);
                 var temp_to_date_filter = frappe.query_report.get_filter_value("temp_to_date");
                 var fetch_days_data = frappe.query_report.get_filter_value("fetch_days_data");
 
@@ -136,16 +138,17 @@ frappe.query_reports["INDIA-GSTR-2"] = {
 			var temp_from_date = from_date;
 			temp_from_date = moment(temp_from_date).format("DD-MM-YYYY")
 			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
-			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
-			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
+			frappe.query_report.set_filter_value("temp_from_date",temp_from_date);
 
 			//frappe.query_report.set_filter_value("temp_to_date"," ");
 			var temp_to_date = to_date;
 			temp_to_date = moment(temp_to_date).format("DD-MM-YYYY")
 			console.log("*******temp_to_date----" + temp_to_date);
-			frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
-			frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
-	
+			//frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
+			frappe.query_report.set_filter_value("temp_to_date",temp_to_date);
 			/**
                         temp_from_date_filter.df.options = temp_from_date;
                         temp_from_date_filter.df.default = temp_from_date;
@@ -169,15 +172,16 @@ frappe.query_reports["INDIA-GSTR-2"] = {
 			var temp_from_date = from_date;
 			temp_from_date = moment(temp_from_date).format("DD-MM-YYYY")
 			console.log("*******temp_to_dtemp_from_date----" + temp_from_date);
-			frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
-			frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[5].options = temp_from_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[5].default = temp_from_date;
+			frappe.query_report.set_filter_value("temp_from_date",temp_from_date);
 
                         var temp_to_date = frappe.datetime.add_days(to_date, -1);
 			temp_to_date = moment(temp_to_date).format("DD-MM-YYYY")
                         console.log("*******temp_to_date----" + temp_to_date);
-			frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
-			frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
-
+			//frappe.query_reports["INDIA-GSTR-2"].filters[6].options = temp_to_date;
+			//frappe.query_reports["INDIA-GSTR-2"].filters[6].default = temp_to_date;
+			frappe.query_report.set_filter_value("temp_to_date",temp_to_date);
                         console.log("temp_from_date---------" + temp_from_date);
                         console.log("temp_to_date---------" + temp_to_date);
                         report.refresh();
