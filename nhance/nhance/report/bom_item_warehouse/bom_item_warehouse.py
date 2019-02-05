@@ -804,8 +804,9 @@ def get_sales_order_items(docId,docName):
 		records = unique_items
 	elif docName == "Project":
 		records = frappe.db.sql("""select master_bom from `tabProject` where name=%s""", (docId), as_dict=1)
-		if records[0]['master_bom'] is None:
-			records = "null"
+		if len(records)!=0:
+			if records[0]['master_bom'] is None:
+				records = "null"
 	return records
 
 @frappe.whitelist()
@@ -843,7 +844,7 @@ def get_bom_list(soNumber,item_code):
 
 @frappe.whitelist()
 def get_bom_list_for_so(item_code):
-	records = frappe.db.sql("""select name  from `tabBOM` where item=%s""", (item_code), as_dict=1);
+	records = frappe.db.sql("""select name  from `tabBOM` where item=%s""", (item_code), as_dict=1)
 	return records
 
 @frappe.whitelist()
