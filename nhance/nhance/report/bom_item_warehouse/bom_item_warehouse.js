@@ -97,6 +97,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "fieldtype": "Select",
             "options": ["Sales Order", "Project", "BOM", "Production Order"],
             "on_change": function(query_report) {
+		frappe.query_report.set_filter_value("docIds", []);
                 console.log("on_change....of for");
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = "";
 		frappe.query_reports["BOM Item Warehouse"].filters[6].refresh;
@@ -165,24 +166,32 @@ frappe.query_reports["BOM Item Warehouse"] = {
                                 console.log("masterBOM....." + masterBOM);
                                 if (masterBOM == "null" || masterBOM == null) {
                                     frappe.msgprint(__("Master BOM Not Found In The Project."));
+				    frappe.query_report.set_filter_value("master_bom_hidden", "");
+				    frappe.query_report.set_filter_value("master_bom_hidden", masterBOM);
+				    /**
                                     var master_bom_hidden_filter = frappe.query_report_filters_by_name.master_bom_hidden;
                                     master_bom_hidden_filter.df.options = masterBOM;
                                     master_bom_hidden_filter.df.default = masterBOM;
                                     master_bom_hidden_filter.refresh();
                                     master_bom_hidden_filter.set_input(master_bom_hidden_filter.df.default);
+					**/
                                     display_popup = false;
                                     docid_for_popup = docId;
-				    query_report.refresh();
+				    frappe.query_report.refresh();
                                 }
                                 else {
                                     console.log("success.." + masterBOM[0].master_bom);
                                     var master_bom = masterBOM[0].master_bom;
+				    frappe.query_report.set_filter_value("master_bom_hidden", "");
+				    frappe.query_report.set_filter_value("master_bom_hidden", master_bom);
+				    /**
                                     var master_bom_hidden_filter = frappe.query_report_filters_by_name.master_bom_hidden;
                                     master_bom_hidden_filter.df.options = master_bom;
                                     master_bom_hidden_filter.df.default = master_bom;
                                     master_bom_hidden_filter.refresh();
                                     master_bom_hidden_filter.set_input(master_bom_hidden_filter.df.default);
-                                    query_report.refresh();
+					**/
+                                    frappe.query_report.refresh();
                                     var status = getBOMStatus(master_bom);
                                     if (status.is_active == 0) {
                                         frappe.msgprint(__("Master BOM Is Not Active " + master_bom));
