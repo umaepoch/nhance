@@ -163,6 +163,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         } else if (docName == "Project") {
                             if (display_popup == true) {
                                 var masterBOM = r.message;
+				console.log("########-Response....." + r.message);
                                 console.log("masterBOM....." + masterBOM);
                                 if (masterBOM == "null" || masterBOM == null) {
                                     frappe.msgprint(__("Master BOM Not Found In The Project."));
