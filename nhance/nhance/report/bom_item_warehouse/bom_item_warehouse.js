@@ -156,6 +156,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         console.log("display_popup----------"+ display_popup);
                         if (docName == "Sales Order") {
                             if (display_popup == true) {
+				console.log("########-Response - docId....." + docId);
                                 displayPopUpForSalesOrderItems(r.message, docId, query_report);
                                 display_popup = false;
                                 docid_for_popup = docId;
