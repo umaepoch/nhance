@@ -584,6 +584,16 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 		frappe.msgprint("Planning Warehouse has all the item !! Stock transfer is not required")
 	elif curr_stock_balance == 1 or only_transfer:
 		print "###################-inside_transfer::"
+		newJson_transfer1 = {
+			"company": company,
+			"doctype": "Stock Requisition",
+			"title": "Material Transfer",
+			"workflow_state": workflowStatus,
+			"material_request_type": "Material Transfer",
+			"quantity_to_make": qty_to_make,
+			"requested_by" : reference_no,
+			"items": []
+			}
 		if empty_uom:
 			frappe.throw(_("UOM for  {0} is empty,Please add UOM in Item Master Doctype.").format(frappe.bold(comma_and(empty_uom))))
 		if empty_desc:
@@ -596,13 +606,10 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 			sreq_dict = []
 			for item_code in sreq_items_map:
 				sreq_dict_items = sreq_items_map[item_code]
-				sreq_dict.append(sreq_dict_items)
-			print "####################-newJson_transfer::", sreq_dict
-			newJson_transfer["items"] = sreq_dict
-			doc.update(newJson_transfer)
+				newJson_transfer1["items"].append(sreq_dict_items)
+			doc.update(newJson_transfer1)
 			if workflowStatus == "Approved":
-				#doc.submit()
-				doc.save()
+				doc.submit()
 			else:
 				doc.save()
 			ret = doc.doctype
