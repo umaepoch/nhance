@@ -165,7 +165,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                                 var masterBOM = r.message;
 				console.log("########-Response....." + r.message);
                                 console.log("masterBOM....." + masterBOM);
-                                if (masterBOM == "null" || masterBOM == null) {
+                                if (masterBOM[0].master_bom == "null" || masterBOM[0].master_bom == null) {
                                     frappe.msgprint(__("Master BOM Not Found In The Project."));
 				    frappe.query_report.set_filter_value("master_bom_hidden", "");
 				    frappe.query_report.set_filter_value("master_bom_hidden", masterBOM);
