@@ -804,7 +804,7 @@ def get_sales_order_items(docId,docName):
 		records = unique_items
 	elif docName == "Project":
 		records = frappe.db.sql("""select master_bom from `tabProject` where name=%s""", (docId), as_dict=1)
-		if records is not None:
+		if records:
 			if records[0]['master_bom'] is None:
 				records = "null"
 	return records
