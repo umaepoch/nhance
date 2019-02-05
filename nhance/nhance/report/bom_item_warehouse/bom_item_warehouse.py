@@ -601,7 +601,8 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 			newJson_transfer["items"] = sreq_dict
 			doc.update(newJson_transfer)
 			if workflowStatus == "Approved":
-				doc.submit()
+				#doc.submit()
+				doc.save()
 			else:
 				doc.save()
 			ret = doc.doctype
