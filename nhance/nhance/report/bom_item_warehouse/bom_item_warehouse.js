@@ -157,9 +157,11 @@ frappe.query_reports["BOM Item Warehouse"] = {
                         if (docName == "Sales Order") {
                             if (display_popup == true) {
 				console.log("########-Response - docId....." + docId);
+				if (docId != ""){
                                 displayPopUpForSalesOrderItems(r.message, docId, query_report);
                                 display_popup = false;
                                 docid_for_popup = docId;
+				}
                             }
                         } else if (docName == "Project") {
                             if (display_popup == true) {
