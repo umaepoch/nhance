@@ -101,14 +101,14 @@ frappe.query_reports["BOM Item Warehouse"] = {
                 console.log("on_change....of for");
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = "";
 		frappe.query_reports["BOM Item Warehouse"].filters[6].refresh;
-		query_report.refresh();
+		frappe.query_report.refresh();
 		
 		var docName = frappe.query_report.get_filter_value("for");
 		var docIds_filter = frappe.query_report.get_filter_value("docIds");
 
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = docName;
 		console.log("on_change....of for docName"+docName);
-                query_report.refresh();
+                frappe.query_report.refresh();
             } //end of on_change function..
         },
         {
@@ -209,7 +209,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                                 }
                                 display_popup = false;
                                 docid_for_popup = docId;
-				query_report.refresh();
+				frappe.query_report.refresh();
                             }
                         }else if (docName == "Production Order") {
                             if (display_popup == true) {
@@ -219,15 +219,20 @@ frappe.query_reports["BOM Item Warehouse"] = {
                                 if (status.is_active == 0) {
                                     frappe.msgprint(__("BOM Is Not Active " + docId));
                                 }else{
+				    frappe.query_report.set_filter_value("production_bom_hidden", "");
+				    frappe.query_report.set_filter_value("production_bom_hidden", productionBOM);
+
+				    /**
 				    var production_bom_hidden_filter = frappe.query_report_filters_by_name.production_bom_hidden;
                                     production_bom_hidden_filter.df.options = productionBOM;
                                     production_bom_hidden_filter.df.default = productionBOM;
                                     production_bom_hidden_filter.refresh();
                                     production_bom_hidden_filter.set_input(production_bom_hidden_filter.df.default);
+					**/
 				}
                                 display_popup = false;
                                 docid_for_popup = docId;
-				query_report.refresh();
+				frappe.query_report.refresh();
                             }
                         }
                     } //end of call-back function..
@@ -842,12 +847,17 @@ function displayPopUpForSalesOrderItems(items, soNumber, query_report) {
                 } //end of check_val..
             } //end of for loop..
             console.log("#############hidden_bom_list..." + hidden_bom_list);
+
+	    frappe.query_report.set_filter_value("hidden_bom", "");
+	    frappe.query_report.set_filter_value("hidden_bom", hidden_bom_list);
+	    /**
             var hidden_bom_filter = frappe.query_report_filters_by_name.hidden_bom;
             hidden_bom_filter.df.options = hidden_bom_list;
             hidden_bom_filter.df.default = hidden_bom_list;
             hidden_bom_filter.refresh();
             hidden_bom_filter.set_input(hidden_bom_filter.df.default);
-            query_report.refresh();
+	    **/
+            frappe.query_report.refresh();
         } //end of primary_action
     }); //end of dialog box...
     dialog.show();
@@ -868,10 +878,10 @@ function check_for_whole_number(bomNO, qty, query_report) {
                 //frappe.msgprint(__("Quantity to Make should be whole number"));
                 check_for_whole_number = true;
                 frappe.query_report_filters_by_name.qty_to_make.set_input("1");
-                query_report.refresh();
+                frappe.query_report.refresh();
             } else {
                 check_for_whole_number = false;
-                query_report.refresh();
+                frappe.query_report.refresh();
             }
         } //end of callback fun..
     }) //end of frappe call..
