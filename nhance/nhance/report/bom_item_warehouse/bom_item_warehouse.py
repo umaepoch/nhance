@@ -598,7 +598,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 			frappe.throw(_("UOM for  {0} is empty,Please add UOM in Item Master Doctype.").format(frappe.bold(comma_and(empty_uom))))
 		if empty_desc:
 			frappe.throw(_("Description for  {0} is empty,Please add description in Item Master Doctype.").format(frappe.bold(comma_and(empty_desc))))
-		doc = frappe.new_doc("Stock Requisition")
+		
 		sreq_items= newJson_transfer["items"]
 		sreq_items_map = get_unique_stock_requisition_items(sreq_items)
 		print "len of sreq_items_map::", sreq_items_map
@@ -606,7 +606,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 			sreq_dict = []
 			for item_code in sreq_items_map:
 				sreq_dict_items = sreq_items_map[item_code]
-				innerJson_requisition1 =	{
+				innerJson_requisition1 ={
 					"doctype": sreq_dict_items['doctype'],
 					"item_code": sreq_dict_items['item_code'],
 					"qty": sreq_dict_items['qty'],
@@ -618,6 +618,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 					"description": sreq_dict_items['description']
 		   			}
 				newJson_transfer1["items"].append(innerJson_requisition1)
+			doc = frappe.new_doc("Stock Requisition")
 			doc.update(newJson_transfer1)
 			if workflowStatus == "Approved":
 				doc.submit()
