@@ -97,6 +97,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
             "fieldtype": "Select",
             "options": ["Sales Order", "Project", "BOM", "Production Order"],
             "on_change": function(query_report) {
+		frappe.query_report.refresh();
 		frappe.query_report.set_filter_value("docIds", []);
                 console.log("on_change....of for");
 		frappe.query_reports["BOM Item Warehouse"].filters[6].options = "";
@@ -172,13 +173,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                                     frappe.msgprint(__("Master BOM Not Found In The Project."));
 				    frappe.query_report.set_filter_value("master_bom_hidden", "");
 				    frappe.query_report.set_filter_value("master_bom_hidden", masterBOM);
-				    /**
-                                    var master_bom_hidden_filter = frappe.query_report_filters_by_name.master_bom_hidden;
-                                    master_bom_hidden_filter.df.options = masterBOM;
-                                    master_bom_hidden_filter.df.default = masterBOM;
-                                    master_bom_hidden_filter.refresh();
-                                    master_bom_hidden_filter.set_input(master_bom_hidden_filter.df.default);
-					**/
+				 
                                     display_popup = false;
                                     docid_for_popup = docId;
 				    frappe.query_report.refresh();
@@ -188,13 +183,7 @@ frappe.query_reports["BOM Item Warehouse"] = {
                                     var master_bom = masterBOM[0].master_bom;
 				    frappe.query_report.set_filter_value("master_bom_hidden", "");
 				    frappe.query_report.set_filter_value("master_bom_hidden", master_bom);
-				    /**
-                                    var master_bom_hidden_filter = frappe.query_report_filters_by_name.master_bom_hidden;
-                                    master_bom_hidden_filter.df.options = master_bom;
-                                    master_bom_hidden_filter.df.default = master_bom;
-                                    master_bom_hidden_filter.refresh();
-                                    master_bom_hidden_filter.set_input(master_bom_hidden_filter.df.default);
-					**/
+				    
                                     frappe.query_report.refresh();
                                     var status = getBOMStatus(master_bom);
                                     if (status.is_active == 0) {
@@ -224,14 +213,6 @@ frappe.query_reports["BOM Item Warehouse"] = {
                                 }else{
 				    frappe.query_report.set_filter_value("production_bom_hidden", "");
 				    frappe.query_report.set_filter_value("production_bom_hidden", productionBOM);
-
-				    /**
-				    var production_bom_hidden_filter = frappe.query_report_filters_by_name.production_bom_hidden;
-                                    production_bom_hidden_filter.df.options = productionBOM;
-                                    production_bom_hidden_filter.df.default = productionBOM;
-                                    production_bom_hidden_filter.refresh();
-                                    production_bom_hidden_filter.set_input(production_bom_hidden_filter.df.default);
-					**/
 				}
                                 display_popup = false;
                                 docid_for_popup = docId;
@@ -291,8 +272,8 @@ frappe.query_reports["BOM Item Warehouse"] = {
 
 function makeStockOperations(report, status, flag) {
     var filters = report.get_values();
-    var docIdVal = frappe.query_report_filters_by_name.docIds.get_value();
-    var docName = frappe.query_report_filters_by_name.for.get_value();
+    var docIdVal = frappe.query_report.get_filter_value("docIds");
+    var docName = frappe.query_report.get_filter_value("for"); 
     //var filters = report.get_values();
     if (docName == "Project") {
         reference_no = docIdVal;
@@ -853,13 +834,6 @@ function displayPopUpForSalesOrderItems(items, soNumber, query_report) {
 
 	    frappe.query_report.set_filter_value("hidden_bom", "");
 	    frappe.query_report.set_filter_value("hidden_bom", hidden_bom_list);
-	    /**
-            var hidden_bom_filter = frappe.query_report_filters_by_name.hidden_bom;
-            hidden_bom_filter.df.options = hidden_bom_list;
-            hidden_bom_filter.df.default = hidden_bom_list;
-            hidden_bom_filter.refresh();
-            hidden_bom_filter.set_input(hidden_bom_filter.df.default);
-	    **/
             frappe.query_report.refresh();
         } //end of primary_action
     }); //end of dialog box...
@@ -880,7 +854,7 @@ function check_for_whole_number(bomNO, qty, query_report) {
                 //console.log("Quantity to Make should be whole number..");
                 //frappe.msgprint(__("Quantity to Make should be whole number"));
                 check_for_whole_number = true;
-                frappe.query_report_filters_by_name.qty_to_make.set_input("1");
+                frappe.query_report.set_filter_value("qty_to_make", "1");
                 frappe.query_report.refresh();
             } else {
                 check_for_whole_number = false;
