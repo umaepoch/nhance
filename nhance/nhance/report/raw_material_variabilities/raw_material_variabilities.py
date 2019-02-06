@@ -238,7 +238,10 @@ def make_stock_requisition(stockRequisitionItemsList, materialRequestType, workf
 		else:
 			doc.save()
 	else:
-		doc.submit()
+		if workflow_status == "Approved":
+			doc.submit()
+		else:
+			doc.save()
 	return_doc = doc.doctype
 	if return_doc:
 		return return_doc
