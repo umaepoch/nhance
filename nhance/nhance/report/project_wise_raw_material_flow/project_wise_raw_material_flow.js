@@ -46,56 +46,23 @@ frappe.query_reports["Project Wise Raw Material Flow"] = {
 				var planner = r.message[0].planner;
 				var start_date = r.message[0].start_date;
 
-				/**
-				var warehouse_filter = frappe.query_report.get_filter_value("warehouse");
-				var reserve_warehouse_filter = frappe.query_report.get_filter_value("reserve_warehouse");
-				var bom_filter = frappe.query_report.get_filter_value("bom");
-				var core_team_coordinator_filter = frappe.query_report.get_filter_value("core_team_coordinator");
-				var planner_filter = frappe.query_report.get_filter_value("planner");
-				var start_date_filter = frappe.query_report.get_filter_value("start_date");
-				**/
-
 				if (project_warehouse != null) {
 				console.log("project_warehouse::"+ project_warehouse);
 				frappe.query_report.set_filter_value("warehouse", "");
 				frappe.query_report.set_filter_value("warehouse", project_warehouse);
-				/**
-				warehouse_filter.df.options = project_warehouse;
-				warehouse_filter.df.default = project_warehouse;
-				warehouse_filter.refresh();
-				warehouse_filter.set_input(warehouse_filter.df.default);
-				**/
 				frappe.query_report.refresh();
 				}else{
 				frappe.query_report.set_filter_value("warehouse", "");
-				/**
-				warehouse_filter.df.options = "";
-				warehouse_filter.df.default = "";
-				warehouse_filter.refresh();
-				warehouse_filter.set_input(warehouse_filter.df.default);
-				**/
 				frappe.query_report.refresh();
 				}
 				
 				if (reserve_warehouse != null) {
 				console.log("reserve_warehouse::"+ reserve_warehouse);
 				frappe.query_report.set_filter_value("reserve_warehouse", "");
-				frappe.query_report.set_filter_value("reserve_warehouse", project_warehouse);
-				/**
-				reserve_warehouse_filter.df.options = reserve_warehouse;
-				reserve_warehouse_filter.df.default = reserve_warehouse;
-				reserve_warehouse_filter.refresh();
-				reserve_warehouse_filter.set_input(reserve_warehouse_filter.df.default);
-				**/
+				frappe.query_report.set_filter_value("reserve_warehouse", reserve_warehouse);
 				frappe.query_report.refresh();
 				}else{
 				frappe.query_report.set_filter_value("reserve_warehouse", "");
-				/**
-				reserve_warehouse_filter.df.options = "";
-				reserve_warehouse_filter.df.default = "";
-				reserve_warehouse_filter.refresh();
-				reserve_warehouse_filter.set_input(reserve_warehouse_filter.df.default);
-				**/
 				frappe.query_report.refresh();
 				}
 
@@ -103,13 +70,7 @@ frappe.query_reports["Project Wise Raw Material Flow"] = {
 				console.log("master_bom::"+ master_bom);
 				frappe.query_report.set_filter_value("bom", "");
 				frappe.query_report.set_filter_value("bom", master_bom);
-				/**
-				bom_filter.df.options = master_bom;
-				bom_filter.df.default = master_bom;
-				bom_filter.refresh();
-				bom_filter.set_input(bom_filter.df.default);
-				**/
-
+		
 				var qty = frappe.query_report.get_filter_value("qty_to_make");
 		    		var check_for_whole_number_flag = check_for_whole_number(master_bom, qty, query_report);
 		    		if (check_for_whole_number_flag) {
@@ -118,77 +79,38 @@ frappe.query_reports["Project Wise Raw Material Flow"] = {
 				frappe.query_report.refresh();
 				}else{
 				frappe.query_report.set_filter_value("bom", "");
-				/**
-				bom_filter.df.options = "";
-				bom_filter.df.default = "";
-				bom_filter.refresh();
-				bom_filter.set_input(bom_filter.df.default);
-				**/
 				frappe.query_report.refresh();
 				}
 				
 				if (core_team_coordinator != null) {
 				frappe.query_report.set_filter_value("core_team_coordinator", "");
 				frappe.query_report.set_filter_value("core_team_coordinator", core_team_coordinator);
-				/**
-				core_team_coordinator_filter.df.options = core_team_coordinator;
-				core_team_coordinator_filter.df.default = core_team_coordinator;
-				core_team_coordinator_filter.refresh();
-				core_team_coordinator_filter.set_input(core_team_coordinator_filter.df.default);
-				**/
+				
 				frappe.query_report.refresh();
 				}else{
 				console.log("core_team_coordinator::"+ core_team_coordinator);
 				frappe.query_report.set_filter_value("core_team_coordinator", "null");
-				/**
-				core_team_coordinator_filter.df.options = "null";
-				core_team_coordinator_filter.df.default = "null";
-				core_team_coordinator_filter.refresh();
-				core_team_coordinator_filter.set_input(core_team_coordinator_filter.df.default);
-				**/
+				
 				frappe.query_report.refresh();
 				}
 				
 				if (planner != null) {
 				frappe.query_report.set_filter_value("planner", "");
 				frappe.query_report.set_filter_value("planner", planner);
-				/**
-				planner_filter.df.options = planner;
-				planner_filter.df.default = planner;
-				planner_filter.refresh();
-				planner_filter.set_input(planner_filter.df.default);
-				**/
+				
 				frappe.query_report.refresh();
 				}else{
 				console.log("planner::"+ planner);
 				frappe.query_report.set_filter_value("planner", "null");
-				/**
-				planner_filter.df.options = "null";
-				planner_filter.df.default = "null";
-				planner_filter.refresh();
-				planner_filter.set_input(planner_filter.df.default);
-				**/
 				frappe.query_report.refresh();
 				}
 				
 				if (start_date != null) {
 				frappe.query_report.set_filter_value("start_date", "");
 				frappe.query_report.set_filter_value("start_date", start_date);
-				/**
-				start_date_filter.df.options = start_date;
-				start_date_filter.df.default = start_date;
-				start_date_filter.refresh();
-				start_date_filter.set_input(start_date_filter.df.default);
-				**/
 				frappe.query_report.refresh();
 				}else{
 				frappe.query_report.set_filter_value("start_date", "");
-				/**
-				start_date_filter.df.options = "";
-				start_date_filter.df.default = "";
-				start_date_filter.refresh();
-				start_date_filter.set_input(start_date_filter.df.default);
-				**/
 				frappe.query_report.refresh();
 				}
 				}//end of if..
