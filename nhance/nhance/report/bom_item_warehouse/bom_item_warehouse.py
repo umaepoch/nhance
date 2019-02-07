@@ -584,6 +584,15 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 		frappe.msgprint("Planning Warehouse has all the item !! Stock transfer is not required")
 	elif curr_stock_balance == 1 or only_transfer:
 		print "###################-inside_transfer::"
+		doctype = ""
+		item_code = ""
+		qty = 0
+		schedule_date = ""
+		warehouse = ""
+		uom = ""
+		stock_uom = ""
+		conversion_factor = 1
+		description = ""
 		newJson_transfer1 = {
 			"company": company,
 			"doctype": "Stock Requisition",
@@ -604,27 +613,18 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 		print "len of sreq_items_map::", sreq_items_map
 		if len(sreq_items_map)!=0:
 			sreq_dict = []
-			doctype = ""
-			item_code = ""
-			qty = 0
-			schedule_date = ""
-			warehouse = ""
-			uom = ""
-			stock_uom = ""
-			conversion_factor = 1
-			description = ""
 			for item_code in sreq_items_map:
 				sreq_dict_items = sreq_items_map[item_code]		
 				
-				doctype = str(sreq_dict_items['doctype'])
-				item_code = str(sreq_dict_items['item_code'])
-				qty = str(sreq_dict_items['qty'])
-				schedule_date = str(sreq_dict_items['schedule_date'])
-				warehouse = str(sreq_dict_items['warehouse'])
-				uom = str(sreq_dict_items['uom'])
-				stock_uom = str(sreq_dict_items['stock_uom'])
-				conversion_factor = str(sreq_dict_items['conversion_factor'])
-				description = str(sreq_dict_items['description'])
+				doctype = sreq_dict_items['doctype']
+				item_code = sreq_dict_items['item_code']
+				qty = sreq_dict_items['qty']
+				schedule_date = sreq_dict_items['schedule_date']
+				warehouse = sreq_dict_items['warehouse']
+				uom = sreq_dict_items['uom']
+				stock_uom = sreq_dict_items['stock_uom']
+				conversion_factor = sreq_dict_items['conversion_factor']
+				description = sreq_dict_items['description']
 
 				innerJson_requisition1 ={
 					"doctype": doctype,
