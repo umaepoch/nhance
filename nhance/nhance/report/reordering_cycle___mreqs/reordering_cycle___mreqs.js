@@ -47,7 +47,7 @@ frappe.query_reports["Reordering Cycle - MREQs"] = {
         	    var required_date = filters.required_on;
         	    if (required_date < get_today()){
         	      frappe.msgprint("Required Date cannot be an Earlier Date than today")
-        	      frappe.query_report_filters_by_name.required_on.set_input(get_today());
+		      frappe.query_report.set_filter_value("required_on", get_today());
         	    }
         	  }
         	},
@@ -64,7 +64,7 @@ frappe.query_reports["Reordering Cycle - MREQs"] = {
 		        var cutoff_date = filters.cutoff_date;
             		if (cutoff_date > get_today()){
               			frappe.msgprint("Cutoff Date cannot be a later Date than today")
-              			frappe.query_report_filters_by_name.required_on.set_input(get_today());
+				frappe.query_report.set_filter_value("required_on", get_today());
             }
           }
 
