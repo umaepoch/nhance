@@ -614,6 +614,8 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 			conversion_factor = 1
 			description = ""
 			for item_code in sreq_items_map:
+				sreq_dict_items = sreq_items_map[item_code]		
+				
 				doctype = str(sreq_dict_items['doctype'])
 				item_code = str(sreq_dict_items['item_code'])
 				qty = str(sreq_dict_items['qty'])
@@ -624,7 +626,6 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 				conversion_factor = str(sreq_dict_items['conversion_factor'])
 				description = str(sreq_dict_items['description'])
 
-				sreq_dict_items = sreq_items_map[item_code]
 				innerJson_requisition1 ={
 					"doctype": doctype,
 					"item_code": item_code,
