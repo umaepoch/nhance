@@ -316,7 +316,8 @@ def get_item_warehouse_map(filters):
 
 	        	        qty_dict = iwb_map[(d.bom_name, d.bo_item, d.bi_item, d.purchase_order, whse)]
 		
-				qty_dict.bal_qty = get_stock(d.bi_item, d.purchase_order, whse)
+				#qty_dict.bal_qty = get_stock(d.bi_item, d.purchase_order, whse)
+				qty_dict.bal_qty = get_stock(d.bi_item, whse)
 			
         		        qty_dict.bi_qty = d.bi_qty
 				qty_dict.bom_qty = d.bo_qty
