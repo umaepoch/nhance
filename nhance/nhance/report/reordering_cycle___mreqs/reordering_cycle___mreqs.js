@@ -42,7 +42,7 @@ frappe.query_reports["Reordering Cycle - MREQs"] = {
         	  "fieldtype": "Date",
         	  "default": get_today(),
         	  "on_change": function(query_report) {
-        	    query_report.trigger_refresh();
+        	    frappe.query_report.refresh();
 		    var filters = query_report.get_values();
         	    var required_date = filters.required_on;
         	    if (required_date < get_today()){
@@ -59,7 +59,7 @@ frappe.query_reports["Reordering Cycle - MREQs"] = {
 			"width": "80",
 			"default": frappe.datetime.get_today(),
           		"on_change": function(query_report) {
-		         query_report.trigger_refresh();
+        	    	frappe.query_report.refresh();
 	    		var filters = query_report.get_values();
 		        var cutoff_date = filters.cutoff_date;
             		if (cutoff_date > get_today()){
