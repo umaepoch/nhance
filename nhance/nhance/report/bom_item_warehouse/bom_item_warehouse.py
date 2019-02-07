@@ -606,8 +606,9 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 			sreq_dict = []
 			for item_code in sreq_items_map:
 				frappe.msgprint("inside for lopp#: ")
-				frappe.msgprint("inside for lopp#: "+ sreq_dict_items['doctype'])
+				
 				sreq_dict_items = sreq_items_map[item_code]
+				frappe.msgprint("inside for lopp#: "+ str(sreq_dict_items['item_code']))
 				innerJson_requisition1 ={
 					"doctype": sreq_dict_items['doctype'],
 					"item_code": sreq_dict_items['item_code'],
