@@ -40,14 +40,14 @@ frappe.query_reports["Reordering Cycle - MREQs"] = {
 	          "fieldname":"required_on",
         	  "label": __("Required Date"),
         	  "fieldtype": "Date",
-        	  "default": get_today(),
+        	  "default": frappe.datetime.get_today(),
         	  "on_change": function(query_report) {
         	    frappe.query_report.refresh();
 		    var filters = query_report.get_values();
         	    var required_date = filters.required_on;
-        	    if (required_date < get_today()){
+        	    if (required_date < frappe.datetime.get_today()){
         	      frappe.msgprint("Required Date cannot be an Earlier Date than today")
-		      frappe.query_report.set_filter_value("required_on", get_today());
+		      frappe.query_report.set_filter_value("required_on", frappe.datetime.get_today());
         	    }
         	  }
         	},
@@ -62,9 +62,9 @@ frappe.query_reports["Reordering Cycle - MREQs"] = {
         	    	frappe.query_report.refresh();
 	    		var filters = query_report.get_values();
 		        var cutoff_date = filters.cutoff_date;
-            		if (cutoff_date > get_today()){
+            		if (cutoff_date > frappe.datetime.get_today()){
               			frappe.msgprint("Cutoff Date cannot be a later Date than today")
-				frappe.query_report.set_filter_value("required_on", get_today());
+				frappe.query_report.set_filter_value("required_on", frappe.datetime.get_today());
             }
           }
 
