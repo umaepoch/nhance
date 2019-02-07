@@ -638,16 +638,16 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 					"description": description
 		   			}
 				newJson_transfer1["items"].append(innerJson_requisition1)
-			doc = frappe.new_doc("Stock Requisition")
-			doc.update(newJson_transfer1)
-			print "doc#######################:", doc
-			type_of_doc = type(doc)
+			sreq_doc = frappe.new_doc("Stock Requisition")
+			sreq_doc.update(newJson_transfer1)
+			print "doc#######################:", sreq_doc
+			type_of_doc = type(sreq_doc)
 			frappe.msgprint("doc#######################: "+ str(type_of_doc) )
 			if workflowStatus == "Approved":
-				doc.submit()
+				sreq_doc.submit()
 			else:
-				doc.save()
-			ret = doc.doctype
+				sreq_doc.save()
+			ret = sreq_doc.doctype
 		if only_transfer:
 			if ret:
 				return ret
