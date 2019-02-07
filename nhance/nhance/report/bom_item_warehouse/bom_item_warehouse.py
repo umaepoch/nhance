@@ -604,21 +604,37 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 		print "len of sreq_items_map::", sreq_items_map
 		if len(sreq_items_map)!=0:
 			sreq_dict = []
+			doctype = ""
+			item_code = ""
+			qty = 0
+			schedule_date = ""
+			warehouse = ""
+			uom = ""
+			stock_uom = ""
+			conversion_factor = 1
+			description = ""
 			for item_code in sreq_items_map:
-				#frappe.msgprint("inside for lopp#: ")
-				
+				doctype = str(sreq_dict_items['doctype'])
+				item_code = str(sreq_dict_items['item_code'])
+				qty = str(sreq_dict_items['qty'])
+				schedule_date = str(sreq_dict_items['schedule_date'])
+				warehouse = str(sreq_dict_items['warehouse'])
+				uom = str(sreq_dict_items['uom'])
+				stock_uom = str(sreq_dict_items['stock_uom'])
+				conversion_factor = str(sreq_dict_items['conversion_factor'])
+				description = str(sreq_dict_items['description'])
+
 				sreq_dict_items = sreq_items_map[item_code]
-				#frappe.msgprint("inside for lopp#: "+ str(sreq_dict_items['item_code']))
 				innerJson_requisition1 ={
-					"doctype": str(sreq_dict_items['doctype']),
-					"item_code": str(sreq_dict_items['item_code']),
-					"qty": str(sreq_dict_items['qty']),
-					"schedule_date": str(sreq_dict_items['schedule_date']),
-					"warehouse": str(sreq_dict_items['warehouse']),
-					"uom": str(sreq_dict_items['uom']),
-					"stock_uom": str(sreq_dict_items['stock_uom']),
-					"conversion_factor": str(sreq_dict_items['conversion_factor']),
-					"description": str(sreq_dict_items['description'])
+					"doctype": doctype,
+					"item_code": item_code,
+					"qty": qty,
+					"schedule_date": schedule_date,
+					"warehouse": warehouse,
+					"uom": uom,
+					"stock_uom": stock_uom,
+					"conversion_factor": conversion_factor,
+					"description": description
 		   			}
 				newJson_transfer1["items"].append(innerJson_requisition1)
 			doc = frappe.new_doc("Stock Requisition")
