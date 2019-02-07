@@ -621,6 +621,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 			doc = frappe.new_doc("Stock Requisition")
 			doc.update(newJson_transfer1)
 			print "doc#######################:", doc
+			frappe.msgprint("doc#######################: "+doc.doctype )
 			if workflowStatus == "Approved":
 				doc.submit()
 			else:
