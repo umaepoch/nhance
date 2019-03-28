@@ -1406,6 +1406,110 @@ def fax_number_test():
 	
 	return left
 
+@frappe.whitelist()
+def make_bom_for_boq_lite(source_name, target_doc=None):
+	boq_record = frappe.get_doc("BOQ Lite", source_name)
+	company = boq_record.company
+	name = boq_record.name
+
+	if boq_record.name:
+		boq_record_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item, boqi.is_raw_material as 		is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s order by boqi.immediate_parent_item""" , boq_record.name,  as_dict=1)
+		if boq_record_items:
+			raw_list = []
+			assembly_list = []
+			boq_lite_list = []
+			for boq_record_item in boq_record_items:
+				bom_main_item = boq_record_item.bom_item
+				is_raw_material = boq_record_item.is_raw_material
+				if is_raw_material == "Yes":
+					raw_list.append(bom_main_item)
+				else:
+					assembly_list.append(bom_main_item)
+
+			boq_lite_list = raw_list + assembly_list
+			print "boq_lite_list--------", boq_lite_list
+			if boq_lite_list:
+				for bom_main_item in boq_lite_list:
+					bom_qty = 1
+					boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.uom_qty as qty, boqi.is_raw_material as is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s order by boqi.item_code""" , (source_name, bom_main_item), as_dict=1)
+
+					if boq_record_bom_items:
+					
+						raw_material_outer_json = {
+						"company": company,
+						"doctype": "BOM",
+						"item": bom_main_item,
+						"quantity": bom_qty,
+						"items": []
+						}
+
+						assembly_outer_json={
+						"company": company,
+						"doctype": "BOM",
+						"item": bom_main_item,
+						"quantity": bom_qty,
+						"items": []
+						}
+					
+						for record in boq_record_bom_items:
+							item = record.qi_item
+							qty = record.qty
+							is_raw_material = record.is_raw_material
+							if item:
+								item_record = frappe.get_doc("Item", item)
+								if str(is_raw_material) == "Yes":
+									raw_material_innerJson ={
+										"doctype": "BOM Item",
+										"item_code": item,
+										"description": item_record.description,
+										"uom": item_record.stock_uom,
+										"stock_uom": item_record.stock_uom,
+										"qty": qty
+										}
+									raw_material_outer_json["items"].append(raw_material_innerJson)
+								elif str(is_raw_material) == "No":
+									assembly_innerJson ={
+										"doctype": "BOM Item",
+										"item_code": item,
+										"description": item_record.description,
+										"uom": item_record.stock_uom,
+										"stock_uom": item_record.stock_uom,
+										"qty": qty
+										}
+									assembly_outer_json["items"].append(assembly_innerJson)
+
+						if raw_material_outer_json["items"]:
+							raw_material_doc = frappe.new_doc("BOM")
+							raw_material_doc.update(raw_material_outer_json)
+							raw_material_doc.save()
+							frappe.db.commit()
+							raw_material_doc.submit()
+							docname = raw_material_doc.name
+							frappe.msgprint(_("BOM Created - " + docname))
+
+						if assembly_outer_json["items"]:
+							assembly_doc = frappe.new_doc("BOM")
+							assembly_doc.update(assembly_outer_json)
+							assembly_doc.save()
+							frappe.db.commit()
+							assembly_doc.submit()
+							docname = assembly_doc.name
+							frappe.msgprint(_("BOM Created - " + docname))
+
+
+@frappe.whitelist()
+def get_conversion_factor(parent,uom):
+	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent=%s and uom=%s""", (parent, uom), as_dict=1)
+	if records:
+		conversion_factor = records[0]['conversion_factor']
+		return conversion_factor
+
+@frappe.whitelist()
+def update_boq_item(item_code,conversion_factor,name,is_raw_material):
+	records = frappe.db.sql("""update `tabBOQ Lite Item` set is_raw_material = '"""+ str(is_raw_material)+ """', conversion_factor = '""" + conversion_factor + """' where parent=%s and item_code=%s""", (name, item_code))
+	frappe.db.commit()
+
+
 ## Expense Account details of Stock Entry Begins...
 @frappe.whitelist()
 def match_item_groups(item_code):
