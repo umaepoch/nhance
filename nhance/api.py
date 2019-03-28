@@ -1389,11 +1389,28 @@ def fetch_delivery_note_list(name):
 	delivery_note_list = frappe.db.sql("""select name from `tabDelivery Note` where pch_sales_invoice=%s """, name, as_dict = 1) 
 	return delivery_note_list
 
+@frappe.whitelist()
+def fax_number_test():
+	doctype = "Warehouse"
+	left = ""
+	right = ""
+	parent = "GMP - EPCH"
+	if parent:
+		left = frappe.db.sql("select lft, rgt from `tab{0}` where name=%s"
+			.format(doctype), parent, as_dict=1)
+		if left is not None and len(left)!=0:
+			lft = left[0]['lft']
+			rgt = left[0]['rgt']
+			print "lft----------", lft
+			print "rgt----------", rgt
+	
+	return left
+
 ## Expense Account details of Stock Entry Begins...
 @frappe.whitelist()
-def match_item_code(purpose):
-	details = frappe.db.sql("""select purpose,expense_account from `tabStock Expense Account Details` where purpose = %s""",(purpose), as_dict=1)
-	print "details------", details
+def match_item_groups(item_code):
+	details = frappe.db.sql("""select ig.pch_issue_diffaccount,i.item_code from `tabItem Group` ig, `tabItem` i where i.item_group = ig.name and i.name = %s""",(item_code), as_dict=1)
 	return details
 ## Expense Account details of Stock Entry end...
+
 
