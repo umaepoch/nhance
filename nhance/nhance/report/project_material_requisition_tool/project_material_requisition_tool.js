@@ -2,7 +2,8 @@
 // For license information, please see license.txt
 /* eslint-disable */
 var project_details = [];
-var col_data= []
+var col_data= [];
+var company = "";
 frappe.query_reports["Project Material Requisition Tool"] = {
 	"filters": [
 		{
@@ -45,7 +46,14 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 
 							} //End of on change
 
-	  }
+	  }, //end of prject filter
+		{
+            "fieldname": "company",
+            "label": __("Company"),
+            "fieldtype": "Link",
+            "options": "Company",
+            "reqd": 1
+    }
 	],
 	onload: function(report) {
 				console.log("onload.............");
@@ -131,6 +139,7 @@ function makeStockRequistionn(filters) {
                     method: "nhance.nhance.report.project_material_requisition_tool.project_material_requisition_tool.make_stock_requisition",
                     args: {
 											"project":filters.project,
+											"company":filters.company,
 											"workflowStatus":workflowStatus,
 											"col_data" : col_data
                     },

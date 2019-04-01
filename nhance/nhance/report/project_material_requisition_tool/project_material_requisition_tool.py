@@ -68,7 +68,6 @@ def execute(filters=None):
 
 	return columns, sum_data
 
-
 def get_columns():
 	"""return columns"""
 	columns = [
@@ -189,16 +188,17 @@ def	 get_workflowStatus(master_bom,col_data):
 
 
 @frappe.whitelist()
-def	make_stock_requisition(project,col_data,workflowStatus):
+def	make_stock_requisition(project,company,col_data,workflowStatus):
 
 		col_data = eval(col_data)
 		reserve_warehouse =  frappe.db.get_value('Project',project , 'reserve_warehouse')
 
+		print "company name from filter", company
 		innerJson_requisition = " "
 		innerJson_transfer = " "
 		ret = ""
 		newJson_requisition = {
-		"company":"Epoch Consulting" ,
+		"company": company ,
 		"doctype": "Stock Requisition",
 		"title": "Purchase",
 		"material_request_type": "Purchase",
