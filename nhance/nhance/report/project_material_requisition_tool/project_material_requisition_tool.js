@@ -20,8 +20,7 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 															}
 					    },
 							"on_change": function(query_report) {
-															console.log("Suresh Changed project ********* ");
-
+															console.log(" Changed project ********* ");
 															var project = frappe.query_report.get_filter_value("project");
 															console.log("Selected project******************:::::"+project);
 															frappe.call({
@@ -33,9 +32,6 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 																	callback: function(r)
 																	{
 																								if(r.message){
-																								console.log("docids options::"+r.message.length);
-																								console.log("message::"+JSON.stringify(r.message));
-
 																								var master_bom = r.message[0].master_bom;
 																								project_details = r.message[0]
 																								console.log("project_details  :::::"+JSON.stringify(project_details));
@@ -53,7 +49,7 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 	],
 	onload: function(report) {
 				console.log("onload.............");
-				console.log("Make Stock Requisition...");
+				console.log("Make Stock Requisition button created...");
 				report.page.add_inner_button(__("Make Stock Requistion"),
 						function() {
 								frappe.query_report.refresh();  //beacause of that col data issue
@@ -67,7 +63,6 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 										callback: function(r)
 										{
 																	if(r.message){
-																	console.log("COl data"+r.message.length);
 																	console.log("COl data::"+ JSON.stringify(r.message));
 																	col_data = r.message
 																	console.log("COl data::"+ JSON.stringify(col_data));
@@ -84,13 +79,14 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 										break;
 									}
 								}
+								reporter.makeStockRequisition(report, "");
 
-								if (short_qty_flag == "true"){
+							/*	if (short_qty_flag == "true"){
 									reporter.makeStockRequisition(report, "");
 								}
 								else{
 									frappe.throw("Short qty for all items are empty,Cannot makeStockRequistion");
-								}
+								} */
 								//reporter.makeIssue(report);
 						});
 	},//end of onload..
@@ -125,6 +121,10 @@ function makeStockRequistionn(filters) {
 					console.log("After submit ,COl data::"+ JSON.stringify(col_data));
 
 					workflowStatus =get_workflowStatus(col_data);
+					console.log("After submit ,workflowStatus"+ workflowStatus );
+					console.log("After submit ,project"+ filters.project );
+
+
 
 					if (filters.project && project_details['reserve_warehouse'] ) {
 						return frappe.call({

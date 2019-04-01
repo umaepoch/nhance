@@ -322,13 +322,14 @@ def execute(filters=None):
 			integrated_tax = rule.integrated_tax
 			central_tax = rule.central_tax
 			state_ut_tax = rule.state_ut_tax
-			cess = rule.cess
+			if rule.cess is not None:
+				cess = rule.cess
 
 		grand_total_value = float(total_taxable_value)+float(isd_net_total)+float(itc_net_total)+float(no_compos_total)+float(reverse_total)+float(sr_total+total_net)
 		grand_total_igst = float(integrated_tax) + float(igst_isd_total) + float(igst_itc_total) + float(cm_igst_total) +float(rv_igst_total)+float(sr_igst_total)+float(tx_igst_total)
 		grand_total_cgst = float(central_tax)+ float(cgst_isd_total) + float(cgst_itc_total) + float(cm_cgst_total) +float(rv_cgst_total) 
 		grand_total_sgst = float(state_ut_tax) + float(sgst_isd_total) + float(sgst_itc_total) + float(cm_sgst_total) +float(rv_sgst_total)
-		grand_total_cess = float(cess) + float(cess_isd_total) + float(itc_cess_total) + float(cm_cess_total) +float(rv_cess_total) + float(sr_cess_total) +float(tx_cess_total)
+		grand_total_cess = cess + cess_isd_total + itc_cess_total + cm_cess_total +rv_cess_total + sr_cess_total +tx_cess_total
 
 		summ_data.append(["ITC Available (Whether in full or part)"])
 		summ_data.append(["Import of goods ",total_net,tx_igst_total,0,0,tx_cess_total])
@@ -625,7 +626,7 @@ def get_columns2():
 	]
 
 def sales_invoice():
-	invoices = frappe.db.sql("""select si.place_of_supply,si.billto_state,si.customer_address,si.name,si.net_total,si.posting_date from `tabSales Invoice` si , `tabCustomer` c where si.customer = c.name AND si.posting_date >= %s AND si.posting_date <= %s AND c.customer_type = 'Individual'""",(start_date, end_date), as_dict = 1)
+	invoices = frappe.db.sql("""select si.place_of_supply,si.customer_address,si.name,si.net_total,si.posting_date from `tabSales Invoice` si , `tabCustomer` c where si.customer = c.name AND si.posting_date >= %s AND si.posting_date <= %s AND c.customer_type = 'Individual'""",(start_date, end_date), as_dict = 1)
 	return invoices
 def sales_payment(state):
 	payment = frappe.db.sql(""" select st.account_head,st.tax_amount,si.name,si.place_of_supply from `tabSales Invoice` si, `tabSales Taxes and Charges` st where si.name = st.parent AND si.place_of_supply = %s AND si.posting_date >= %s AND si.posting_date <= %s AND customer IN(select name from `tabCustomer` where customer_type = "Individual")  """,(state,start_date, end_date), as_dict = 1)

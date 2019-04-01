@@ -738,8 +738,8 @@ def purchase_invoice_impg(from_date,to_date):
 def purchase_invoice_cdnr(from_date,to_date):
 	cdnr_purchase = frappe.db.sql("""select 
 						pi.name,pi.posting_date,pi.supplier_address,pi.supplier_name,pi.eligibility_for_itc,
-						pi.itc_integrated_tax,pi.itc_cess_amount,pi.port_code,pi.bill_of_entry_date
-						,pi.bill_of_entry_number,pi.invoice_type,s.india_gst_supplier_status,pi.return_against,
+						pi.itc_integrated_tax,pi.itc_cess_amount
+						,pi.invoice_type,s.india_gst_supplier_status,pi.return_against,
 						pi.itc_central_tax,pi.itc_state_tax,pi.reason_for_issuing_document,pi.company
 					from 
 						`tabPurchase Invoice` pi , `tabSupplier` s

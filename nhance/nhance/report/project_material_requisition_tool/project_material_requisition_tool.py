@@ -129,8 +129,7 @@ def get_sreq_total_qty(item_code,project_name):
 
 def get_po_total_qty(item_code,project_name):
 	po_total_qty = 0
-	po_datas = frappe.db.sql("""select po.name,poi.item_code,poi.qty,poi.project  from `tabPurchase Order` po ,`tabPurchase Order Item` poi where po.name=poi.parent and po.docstatus=1 and poi.item_code=%s and project = %s""",(item_code,project_name), as_dict=1)
-
+	po_datas = frappe.db.sql("""select po.name,poi.item_code,poi.qty,poi.project,poi.project  from `tabPurchase Order` po ,`tabPurchase Order Item` poi where po.name=poi.parent and po.docstatus=1 and poi.item_code=%s and poi.project = %s""",(item_code,project_name), as_dict=1)
 	for po_data in po_datas:
 		po_total_qty = po_total_qty + po_data['qty']
 
@@ -218,7 +217,7 @@ def	make_stock_requisition(project,col_data,workflowStatus):
 			innerJson_transfer ={
 				  "doctype": "Stock Requisition Item",
 				  "item_code": item_code,
-				  "qty": c[11],
+				  "qty": 2,
 				  "schedule_date": getdate(datetime.now().strftime('%Y-%m-%d')),
 				  "warehouse":reserve_warehouse,
 				  "uom": item_data['stock_uom'],
@@ -227,9 +226,11 @@ def	make_stock_requisition(project,col_data,workflowStatus):
 				  "sreq_made_from_pmrt":"Yes",
 				  "project":project
 					}
-
+			newJson_requisition["items"].append(innerJson_transfer)
+			"""
 			if short_qty > 0:
 				newJson_requisition["items"].append(innerJson_transfer)
+				"""
 
 		if newJson_requisition["items"]:
 					doc = frappe.new_doc("Stock Requisition")

@@ -604,7 +604,7 @@ class IndiaGstr1A(object):
 				grand_total_integrated = grand_total_integrated + integrated_tax_amount
 				grand_total_state = grand_total_state + state_tax_amount
 				self.data.append([self.gst_hsn_code,description,uqc_name,qty,total_value,
-					net_amount,integrated_tax_amount,central_tax_amount,state_tax_amount])
+					net_amount,integrated_tax_amount,central_tax_amount,state_tax_amount,""])
 			self.data.append(["","","","",""])
 			
 			self.data.append(["Total","","","",grand_total_value,grand_total_net_amount,grand_total_integrated,grand_total_central,
