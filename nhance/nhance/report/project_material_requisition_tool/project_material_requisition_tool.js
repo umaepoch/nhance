@@ -7,6 +7,13 @@ var company = "";
 frappe.query_reports["Project Material Requisition Tool"] = {
 	"filters": [
 		{
+            "fieldname": "company",
+            "label": __("Company"),
+            "fieldtype": "Link",
+            "options": "Company",
+            "reqd": 1
+    },
+		{
 	            "fieldname": "project",
 	            "label": __("Project"),
 	            "fieldtype": "Link",
@@ -42,18 +49,17 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 																	}//end of call-back function..
 															});//end of frappe call..
 
+															if( project_details['reserve_warehouse'] == null || project_details['master_bom'] == null || project_details['project_warehouse'] == null)
+															{
+															  frappe.throw("The Project Master for Project "+ project +" is not updated with Master BOM/Reserve Warehouse/Project Warehouse. Please update these values in the Project Master and run this report again. ");
+															}
+
 															frappe.query_report.refresh();
 
 							} //End of on change
 
-	  }, //end of prject filter
-		{
-            "fieldname": "company",
-            "label": __("Company"),
-            "fieldtype": "Link",
-            "options": "Company",
-            "reqd": 1
-    }
+	  } //end of prject filter
+
 	],
 	onload: function(report) {
 				console.log("onload.............");
@@ -71,7 +77,6 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 										callback: function(r)
 										{
 																	if(r.message){
-																	console.log("COl data::"+ JSON.stringify(r.message));
 																	col_data = r.message
 																	console.log("COl data::"+ JSON.stringify(col_data));
 
@@ -82,19 +87,22 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 
 								  var short_qty_flag="false"
 									for (i = 0; i < col_data.length; i++) {
-									if (col_data[i][11] > 0) {
-										short_qty_flag = "true";
-										break;
-									}
-								}
-								reporter.makeStockRequisition(report, "");
+										var short_qty = parseFloat (col_data[i][11])
+										console.log("Short qty type"+ typeof short_qty );
 
-							/*	if (short_qty_flag == "true"){
+										if (short_qty > 0) {
+											short_qty_flag = "true";
+											break;
+										}
+								  }
+								//reporter.makeStockRequisition(report, "");
+
+								if (short_qty_flag == "true"){
 									reporter.makeStockRequisition(report, "");
 								}
 								else{
 									frappe.throw("Short qty for all items are empty,Cannot makeStockRequistion");
-								} */
+								}
 								//reporter.makeIssue(report);
 						});
 	},//end of onload..
@@ -148,7 +156,7 @@ function makeStockRequistionn(filters) {
                             frappe.set_route('List', r.message);
                         }
                     } //end of callback fun..
-                }) //end of frappe call.
+                });//end of frappe call.
 					} //end of if
 				} //end of set_primary_action
 
