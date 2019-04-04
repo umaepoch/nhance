@@ -35,16 +35,10 @@ frappe.ui.form.on("BOQ Lite", "refresh", function(frm) {
     console.log("onload--------");
     if (cur_frm.doc.docstatus == 1 || cur_frm.doc.docstatus == 0) {
         var items = cur_frm.doc.items;
-        var parentList = [];
         var main_item = cur_frm.doc.item;
-        for (var i = 0; i < items.length; i++) {
-            var item = items[i]['item_code'];
-            var parentItem = items[i]['immediate_parent_item'];
-            if (!parentList.includes(parentItem)) {
-                parentList.push(parentItem);
-            }
-        } // end of for loop..
-
+	var obj = fetch_parent_list(cur_frm.doc.name);
+	var parentList = obj.toString().split(",");
+	//console.log("typeof -----parentList---"+ typeof parentList + "----"+parentList);
         $.each(frm.doc.items, function(i, d) {
             var item = d.item_code;
             var unit_of_measure = d.unit_of_measure;
@@ -73,15 +67,9 @@ frappe.ui.form.on("BOQ Lite", "refresh", function(frm) {
 
 frappe.ui.form.on("BOQ Lite", "before_submit", function(frm) {
     var items = cur_frm.doc.items;
-    var parentList = [];
     var main_item = cur_frm.doc.item;
-    for (var i = 0; i < items.length; i++) {
-        var item = items[i]['item_code'];
-        var parentItem = items[i]['immediate_parent_item'];
-        if (!parentList.includes(parentItem)) {
-            parentList.push(parentItem);
-        }
-    } // end of for loop..
+    var obj = fetch_parent_list(cur_frm.doc.name);
+    var parentList = obj.toString().split(",");
 
     $.each(frm.doc.items, function(i, d) {
         var item = d.item_code;
@@ -151,6 +139,24 @@ frappe.ui.form.on("BOQ Lite Item", {
         refresh_field("items");
     }
 });
+
+function fetch_parent_list(boq_lite){
+var parentList = [];
+frappe.call({
+        method: "nhance.nhance.doctype.boq_lite.boq_lite.fetch_parent_list",
+        args: {
+            "parent": boq_lite,
+        },
+        async: false,
+        callback: function(r) {
+		if (r.message){
+			//console.log("ParentList-----"+r.message + "length---"+ r.message.length);
+			parentList = r.message;
+		}
+	}
+    });
+return parentList;
+}
 
 function update_boq_item(item_code, conversion_factor, name, is_raw_material) {
     frappe.call({

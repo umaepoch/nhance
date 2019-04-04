@@ -46,4 +46,9 @@ def validate_cf(items):
 	print "check_flag---", check_flag
 	return check_flag
 
+@frappe.whitelist()
+def fetch_parent_list(parent):
+	boq_record_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item from `tabBOQ Lite Item` boqi where boqi.parent = %s order by boqi.immediate_parent_item""", parent)
+	return boq_record_items
+
 
