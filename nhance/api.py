@@ -740,6 +740,17 @@ def get_uom_list(item_code):
 		return
 
 @frappe.whitelist()
+def get_stock_uom(item_code):
+	records = frappe.db.sql("""select stock_uom as uom from `tabItem` where item_code = %s""", (item_code))
+
+	if records:
+#		frappe.msgprint(_(records[0].warehouse))
+#		return records[0].warehouse
+		return records
+	else:
+		return
+
+@frappe.whitelist()
 def get_user_role():
 	userrole = frappe.db.get_value("User",{"name":frappe.session.user},"role_profile_name")
 	if userrole:
