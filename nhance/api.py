@@ -1505,8 +1505,8 @@ def get_conversion_factor(parent,uom):
 		return conversion_factor
 
 @frappe.whitelist()
-def update_boq_item(item_code,conversion_factor,name,is_raw_material):
-	records = frappe.db.sql("""update `tabBOQ Lite Item` set is_raw_material = '"""+ str(is_raw_material)+ """', conversion_factor = '""" + conversion_factor + """' where parent=%s and item_code=%s""", (name, item_code))
+def update_boq_lite_item(item_code,name,is_raw_material):
+	records = frappe.db.sql("""update `tabBOQ Lite Item` set is_raw_material = '"""+ str(is_raw_material)+"""' where parent=%s and item_code=%s""", (name, item_code))
 	frappe.db.commit()
 
 
@@ -1516,5 +1516,4 @@ def match_item_groups(item_code):
 	details = frappe.db.sql("""select ig.pch_issue_diffaccount,i.item_code from `tabItem Group` ig, `tabItem` i where i.item_group = ig.name and i.name = %s""",(item_code), as_dict=1)
 	return details
 ## Expense Account details of Stock Entry end...
-
 
