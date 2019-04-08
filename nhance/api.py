@@ -1442,7 +1442,7 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 			if boq_lite_list:
 				for bom_main_item in boq_lite_list:
 					bom_qty = 1
-					boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.uom_qty as qty, boqi.is_raw_material as is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s order by boqi.item_code""" , (source_name, bom_main_item), as_dict=1)
+					boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.qty as qty, boqi.is_raw_material as is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s order by boqi.item_code""" , (source_name, bom_main_item), as_dict=1)
 
 					if boq_record_bom_items:
 					
