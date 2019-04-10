@@ -1424,37 +1424,16 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 	name = boq_record.name
 
 	if boq_record.name:
-		boq_record_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item, boqi.is_raw_material as 		is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s order by boqi.immediate_parent_item""" , boq_record.name,  as_dict=1)
+		boq_record_items = frappe.db.sql("""select distinct(immediate_parent_item) as bom_main_item  from `tabBOQ Lite Item` where parent = %s order by immediate_parent_item desc""", boq_record.name, as_dict=1)
 		if boq_record_items:
-			raw_list = []
-			assembly_list = []
-			boq_lite_list = []
-			for boq_record_item in boq_record_items:
-				bom_main_item = boq_record_item.bom_item
-				is_raw_material = boq_record_item.is_raw_material
-				if is_raw_material == "Yes":
-					raw_list.append(bom_main_item)
-				else:
-					assembly_list.append(bom_main_item)
+			for record in boq_record_items:
+				bom_qty = 1
+				bom_main_item = record.bom_main_item
+				boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.qty as qty, boqi.is_raw_material as is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s order by boqi.item_code""" , (source_name, bom_main_item), as_dict=1)
 
-			boq_lite_list = raw_list + assembly_list
-			print "boq_lite_list--------", boq_lite_list
-			if boq_lite_list:
-				for bom_main_item in boq_lite_list:
-					bom_qty = 1
-					boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.qty as qty, boqi.is_raw_material as is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s order by boqi.item_code""" , (source_name, bom_main_item), as_dict=1)
-
-					if boq_record_bom_items:
+				if boq_record_bom_items:
 					
-						raw_material_outer_json = {
-						"company": company,
-						"doctype": "BOM",
-						"item": bom_main_item,
-						"quantity": bom_qty,
-						"items": []
-						}
-
-						assembly_outer_json={
+					outer_json = {
 						"company": company,
 						"doctype": "BOM",
 						"item": bom_main_item,
@@ -1462,50 +1441,29 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 						"items": []
 						}
 					
-						for record in boq_record_bom_items:
-							item = record.qi_item
-							qty = record.qty
-							is_raw_material = record.is_raw_material
-							if item:
-								item_record = frappe.get_doc("Item", item)
-								if str(is_raw_material) == "Yes":
-									raw_material_innerJson ={
-										"doctype": "BOM Item",
-										"item_code": item,
-										"description": item_record.description,
-										"uom": item_record.stock_uom,
-										"stock_uom": item_record.stock_uom,
-										"qty": qty
-										}
-									raw_material_outer_json["items"].append(raw_material_innerJson)
-								elif str(is_raw_material) == "No":
-									assembly_innerJson ={
-										"doctype": "BOM Item",
-										"item_code": item,
-										"description": item_record.description,
-										"uom": item_record.stock_uom,
-										"stock_uom": item_record.stock_uom,
-										"qty": qty
-										}
-									assembly_outer_json["items"].append(assembly_innerJson)
+					for record in boq_record_bom_items:
+						item = record.qi_item
+						qty = record.qty
+						if item:
+							item_record = frappe.get_doc("Item", item)
+							innerJson ={
+								"doctype": "BOM Item",
+								"item_code": item,
+								"description": item_record.description,
+								"uom": item_record.stock_uom,
+								"stock_uom": item_record.stock_uom,
+								"qty": qty
+								}
+							outer_json["items"].append(innerJson)
 
-						if raw_material_outer_json["items"]:
-							raw_material_doc = frappe.new_doc("BOM")
-							raw_material_doc.update(raw_material_outer_json)
-							raw_material_doc.save()
-							frappe.db.commit()
-							raw_material_doc.submit()
-							docname = raw_material_doc.name
-							frappe.msgprint(_("BOM Created - " + docname))
-
-						if assembly_outer_json["items"]:
-							assembly_doc = frappe.new_doc("BOM")
-							assembly_doc.update(assembly_outer_json)
-							assembly_doc.save()
-							frappe.db.commit()
-							assembly_doc.submit()
-							docname = assembly_doc.name
-							frappe.msgprint(_("BOM Created - " + docname))
+					if outer_json["items"]:
+						doc = frappe.new_doc("BOM")
+						doc.update(outer_json)
+						doc.save()
+						frappe.db.commit()
+						doc.submit()
+						docname = doc.name
+						frappe.msgprint(_("BOM Created - " + docname))
 
 
 @frappe.whitelist()
