@@ -117,21 +117,28 @@ def get_stock_entry_quantities(warehouse,item_code):
  return total_qty
 
 def get_sreq_total_qty(item_code,project_name):
- sreq_datas = frappe.db.sql("""select sri.project, sri.item_code,sri.qty,sri.parent,sri.uom,sri.warehouse,sri.schedule_date,sri.stock_uom,sri.description,sr.docstatus,sr.transaction_date,sr.schedule_date from `tabStock Requisition Item` sri,`tabStock Requisition` sr where sri.item_code=%s  and sri.parent=sr.name and sr.docstatus=1 and sri.project=%s""",(item_code,project_name), as_dict=1)
+ sreq_datas = frappe.db.sql("""select sri.project, sri.item_code,sri.qty,sri.quantity_to_be_ordered,sri.parent,sri.uom,sri.warehouse,sri.schedule_date,sri.stock_uom,sri.description,sr.docstatus,sr.transaction_date,sr.schedule_date from `tabStock Requisition Item` sri,`tabStock Requisition` sr where sri.item_code=%s  and sri.parent=sr.name and sr.docstatus=1 and sri.project=%s""",(item_code,project_name), as_dict=1)
  sreq_total_qty = 0
+ quantity_to_be_ordered = 0
+ print "sreq_datas********************",sreq_datas
 
  for sreq_data in sreq_datas:
-   sreq_total_qty = sreq_total_qty + sreq_data['qty']
+   print "sreq_datas type of quantity_to_be_ordered",type(sreq_data['quantity_to_be_ordered'])
+   if sreq_data['quantity_to_be_ordered']:
+     quantity_to_be_ordered = float(sreq_data['quantity_to_be_ordered'])
+   sreq_total_qty = sreq_total_qty + quantity_to_be_ordered
 
+ print "sreq_datas type of sreq_total_qty",type(sreq_total_qty)
  return sreq_total_qty
 
 def get_po_total_qty(item_code,project_name):
  po_total_qty = 0
- po_datas = frappe.db.sql("""select po.name,poi.item_code,poi.qty,poi.project,poi.project  from `tabPurchase Order` po ,`tabPurchase Order Item` poi where po.name=poi.parent and po.docstatus=1 and poi.item_code=%s and poi.project = %s""",(item_code,project_name), as_dict=1)
+ po_datas = frappe.db.sql("""select po.name,poi.item_code,poi.qty,poi.project,poi.project,poi.received_qty,poi.stock_qty  from `tabPurchase Order` po ,`tabPurchase Order Item` poi where po.name=poi.parent and po.docstatus=1 and poi.item_code=%s and poi.project = %s""",(item_code,project_name), as_dict=1)
  for po_data in po_datas:
-   po_total_qty = po_total_qty + po_data['qty']
-
+   calculated_qty = po_data['stock_qty'] - po_data['received_qty']
+   po_total_qty = po_total_qty + calculated_qty
  return po_total_qty
+
 
 def  get_item_data(item_code):
  item_data =  frappe.db.sql("""select *  from `tabItem` where item_code = %s """,item_code ,as_dict=1)
@@ -157,7 +164,7 @@ def fetch_project_details(project):
  return details
 
 @frappe.whitelist()
-def	 get_workflowStatus(master_bom,col_data):
+def get_workflowStatus(master_bom,col_data):
  col_data = eval(col_data)
  workflowStatus_list = []
  workflowStatus = ""
