@@ -1488,21 +1488,20 @@ def match_item_groups(item_code):
 
 
 #Project_material_requisition_tool PMRT (suresh)
-
 @frappe.whitelist()
 def get_po_items_qty_ac_to_sreq( stockRequisitionID ):
-	po_items_qty_ac_to_sreq = frappe.db.sql("""select po.name,po.stock_requisition_id,poi.item_code,poi.qty,poi.received_qty,poi.stock_qty,poi.project  from `tabPurchase Order` po ,`tabPurchase Order Item` poi where po.name=poi.parent and po.docstatus=1 and po.stock_requisition_id = %s """,(stockRequisitionID), as_dict=1)
+	po_items_qty_ac_to_sreq = frappe.db.sql("""select po.name,po.stock_requisition_id,poi.item_code,poi.qty,poi.received_qty,poi.stock_qty,poi.conversion_factor,poi.project  from `tabPurchase Order` po ,`tabPurchase Order Item` poi where po.name=poi.parent and po.docstatus=1 and po.status != 'Closed' and po.stock_requisition_id = %s """,(stockRequisitionID), as_dict=1)
 	item_data = {}
 
 	for po_item_qty_ac_to_sreq in po_items_qty_ac_to_sreq:
 
 		if po_item_qty_ac_to_sreq['item_code'] in item_data.keys():
-			calculated_qty = po_item_qty_ac_to_sreq['stock_qty'] - po_item_qty_ac_to_sreq['received_qty']
+			calculated_qty = po_item_qty_ac_to_sreq['stock_qty'] - ( po_item_qty_ac_to_sreq['received_qty'] * po_item_qty_ac_to_sreq['conversion_factor']  )
 			item_data_key =  po_item_qty_ac_to_sreq['item_code']
 			sum_qty = item_data[ item_data_key ] + calculated_qty
 			item_data[ item_data_key ] = sum_qty
 		else:
-			calculated_qty = po_item_qty_ac_to_sreq['stock_qty'] - po_item_qty_ac_to_sreq['received_qty']
+			calculated_qty = po_item_qty_ac_to_sreq['stock_qty'] - ( po_item_qty_ac_to_sreq['received_qty'] * po_item_qty_ac_to_sreq['conversion_factor']  )
 			item_data_local =	{po_item_qty_ac_to_sreq['item_code']: calculated_qty}
 			item_data.update( item_data_local)
 
@@ -1526,7 +1525,6 @@ def update_sreq_items_data(updated_sreq_items_data,stockRequisitionID):
 		frappe.db.sql("""update `tabStock Requisition Item` sri  set sri.quantity_ordered = %s, sri.quantity_to_be_ordered =%s where sri.parent = %s and sri.item_code = %s """, (quantity_ordered, quantity_to_be_order,stockRequisitionID,sreq_item_code))
 
 	return "done"
-
 
 #PMRT end
 
