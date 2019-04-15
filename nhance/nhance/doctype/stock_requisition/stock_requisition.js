@@ -43,7 +43,12 @@ frappe.ui.form.on("Stock Requisition Item", {
 		var row = locals[cdt][cdn];
 		if (row.schedule_date) {
 			if(!frm.doc.schedule_date) {
-				erpnext.utils.copy_value_in_all_row(frm.doc, cdt, cdn, "items", "schedule_date");
+				//erpnext.utils.copy_value_in_all_row(frm.doc, cdt, cdn, "items", "schedule_date");
+				$.each(frm.doc.items, function(i, d) {
+				    d.schedule_date = frm.doc.schedule_date;
+				    refresh_field("schedule_date");
+				    }); //end of each...
+				    refresh_field(frm.doc.items);
 			} else {
 				set_schedule_date(frm);
 			}
@@ -90,8 +95,8 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					this.make_supplier_quotation, __("Make"));
 
 				if(doc.material_request_type === "Manufacture")
-					cur_frm.add_custom_button(__("Production Order"),
-					function() { me.raise_production_orders() }, __("Make"));
+					cur_frm.add_custom_button(__("Work Order"),
+					this.raise_work_orders, __("Make"));
 
 				cur_frm.page.set_inner_btn_group_as_primary(__("Make"));
 
@@ -235,16 +240,20 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						var uom = itemsList[arrayLength].uom;
 						var stock_uom = itemsList[arrayLength].stock_uom;
 						var stock_qty = itemsList[arrayLength].stock_qty;
-						//var conversion_factor = itemsList[arrayLength].conversion_factor;
+						var cost_center1 = itemsList[arrayLength].cost_center;
+						var expense_account1 = itemsList[arrayLength].expense_account;
 						var purchase_uom = getPurchaseUom(item_code);
+						var check_flag = get_UOM_Details(stock_uom);
+						/**
 						console.log("purchase_uom::"+purchase_uom);
 						console.log("qty::"+qty);
-						//console.log("stock_qty::"+stock_qty);
-						var check_flag = get_UOM_Details(stock_uom);
+						console.log("cost_center::"+cost_center1);
+						console.log("expense_account-------------::"+expense_account1);
 						console.log("check_flag::"+check_flag);
+						**/
         					if(check_flag){
 							var processedQty = processQuantity(check_args,stock_qty);
-							console.log("processedQty is::"+processedQty);
+							//console.log("processedQty is::"+processedQty);
 							qty = processedQty;
 							itemsList[arrayLength].qty = qty;
 							itemsList[arrayLength].stock_qty = qty;
@@ -256,7 +265,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}
 						if(purchase_uom!=null){
 						var conversion_factor = getConversionFactor(purchase_uom,item_code);
-						console.log("conversion_factor::"+conversion_factor);
+						//console.log("conversion_factor::"+conversion_factor);
 						qty = qty/conversion_factor;
 						itemsList[arrayLength].qty = qty;
 						itemsList[arrayLength].uom = purchase_uom;
@@ -264,35 +273,76 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 						purchase_uom = uom;
 						}
-						console.log("stock_qty is::"+stock_qty);
+						//console.log("stock_qty is::"+stock_qty);
    						var stock_uom = itemsList[arrayLength].stock_uom;
-    						var warehouse = itemsList[arrayLength].warehouse;
-						var supplier = getItemDetails(item_code);
+    						var warehouse1 = itemsList[arrayLength].warehouse;
+
+						var item_default_details = getItemDetails(item_code,company);
+
+						var default_supplier = item_default_details[0]['default_supplier'];
+						var cost_center = item_default_details[0]['buying_cost_center'];
+						var expense_account = item_default_details[0]['expense_account'];
+						var warehouse = item_default_details[0]['default_warehouse'];
+						var price_list = item_default_details[0]['default_price_list'];
+						
+						if (price_list != null){
+							var item_price = fetch_item_price(item_code,price_list);
+							arr['price_list_rate'] = item_price;
+							itemsList[arrayLength].price_list_rate = item_price;
+						}else{
+							arr['price_list_rate'] = 0.0;
+							itemsList[arrayLength].price_list_rate = 0.0;
+						}
+
+						if (warehouse != null){
+							arr['warehouse'] = warehouse;
+							itemsList[arrayLength].warehouse = warehouse;
+						}else{
+							arr['warehouse'] = warehouse;
+						}
+
+						if (cost_center != null){
+							arr['cost_center'] = cost_center;
+							itemsList[arrayLength].cost_center = cost_center;
+						}else{
+							arr['cost_center'] = cost_center1;
+						}
+		
+						if (expense_account != null){
+							arr['expense_account'] = expense_account;
+							itemsList[arrayLength].expense_account = expense_account;
+						}else{
+							arr['expense_account'] = expense_account1;
+						}
+						
+
+
+						//console.log("default_supplier::"+default_supplier);
 
 						arr['item_code'] = item_code;
-   						arr['supplier'] = supplier;
+   						arr['supplier'] = default_supplier;
     						arr['qty'] = qty;
     						arr['stock_qty'] = stock_qty;
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
     						//arr['price'] = standard_rate;
-    						arr['warehouse'] = warehouse;
+    						
     						arr['conversion_factor'] = conversion_factor;
 
-						if(supplier == null){
+						if(default_supplier == null){
 							//itemsList[arrayLength].rate = standard_rate;
 							no_Supplier_Items.push(itemsList[arrayLength]);
 						}else{
-							if(!supplierList.includes(supplier)){
-    								supplierList.push(supplier);
+							if(!supplierList.includes(default_supplier)){
+    								supplierList.push(default_supplier);
    							 }
-							if (defaultSupplierItemsMap.has(supplier)) {
-        							arrList = defaultSupplierItemsMap.get(supplier);
+							if (defaultSupplierItemsMap.has(default_supplier)) {
+        							arrList = defaultSupplierItemsMap.get(default_supplier);
         							arrList.push(arr);
-       								defaultSupplierItemsMap.set(supplier, arrList);
+       								defaultSupplierItemsMap.set(default_supplier, arrList);
    							 } else {
        								arrList.push(arr);
-        							defaultSupplierItemsMap.set(supplier, arrList);
+        							defaultSupplierItemsMap.set(default_supplier, arrList);
     							 }
 						}//end of else...
 					}//end of for..
@@ -352,7 +402,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 				**/
 				var items = r.message.items;
 				var stockEntryList = r.message;
-				makeStockEntry(stockEntryList,items,stock_requisition_id);
+				makeStockEntry(stockEntryList,items,stock_requisition_id,cur_frm);
 			}
 			});
 		}else{
@@ -367,16 +417,17 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 
 	},
 
-	raise_production_orders: function() {
+	raise_work_orders: function() {
 		var me = this;
+		console.log("Docname--------"+cur_frm.doc.name);
 		frappe.call({
-			method:"nhance.nhance.doctype.stock_requisition.stock_requisition.raise_production_orders",
+			method:"nhance.nhance.doctype.stock_requisition.stock_requisition.raise_work_orders",
 			args: {
-				"material_request": me.frm.doc.name
+				"stock_requisition": cur_frm.doc.name
 			},
 			callback: function(r) {
 				if(r.message.length) {
-					me.frm.reload_doc();
+					cur_frm.reload_doc();
 				}
 			}
 		});
@@ -440,9 +491,38 @@ cur_frm.cscript['Unstop Material Request'] = function(){
 
 function set_schedule_date(frm) {
 	if(frm.doc.schedule_date){
-		erpnext.utils.copy_value_in_all_row(frm.doc, frm.doc.doctype, frm.doc.name, "items", "schedule_date");
+		//erpnext.utils.copy_value_in_all_row(frm.doc, frm.doc.doctype, frm.doc.name, "items", "schedule_date");
+		$.each(frm.doc.items, function(i, d) {
+			d.schedule_date = frm.doc.schedule_date;
+			refresh_field("schedule_date");
+			}); //end of each...
+			refresh_field(frm.doc.items);
 	}
 }
+
+
+function fetch_item_price(item_code,price_list){
+var rate = 0.0;
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            doctype: "Item Price",
+            filters: {
+                item_code: ["=", item_code],
+		price_list: ["=", price_list],
+            },
+            fieldname: ["price_list_rate"]
+        },
+        async: false,
+        callback: function(r) {
+		if (r.message){
+        		rate = r.message.price_list_rate;
+		}
+        }
+    });
+return rate;
+}
+
 function processQuantity(check_args,qty) {
 var quantity = 0;
 if (check_args.round_up_fractions == 1) {
@@ -467,26 +547,23 @@ console.log("quantity::"+quantity);
 return quantity;
 }
 
-function getItemDetails(item_code){
-var supplier = "";
+function getItemDetails(item_code,company){
+var details = [];
 frappe.call({
-    method: 'frappe.client.get_value',
-    args: {
-        doctype: "Item",
-        filters: {
-            item_code: ["=", item_code]
-        },
-
-        fieldname: ["default_supplier"]
-    },
-    async: false,
-    callback: function(r) {
-        console.log("default_supplier..." + r.message.default_supplier);
-        supplier = r.message.default_supplier;
-
-    }
-});
-return supplier;
+           method: "nhance.nhance.doctype.stock_requisition.stock_requisition.fetch_item_defaults",
+           args: {
+                   "company": company,
+		   "item_code": item_code
+           },
+	   async: false,
+           callback: function(r) {
+           if (r.message) {
+		console.log("ItemDetails::"+ JSON.stringify(r.message));
+		details = r.message;
+            }
+            }//end of callback fun..
+           })//end of frappe call..
+return details;
 }
 
 function get_UOM_Details(stock_uom) {
@@ -512,31 +589,6 @@ return whole_number_in_stock_transactions_flag;
 }
 
 function getConversionFactor(purchase_uom,item_code){
-/**
-var conversion_factor = 0;
-    frappe.call({
-        method: 'frappe.client.get_value',
-        args: {
-            doctype: "UOM Conversion Detail",
-            filters: {
-                uom: ["=", purchase_uom],
-		parent: ["=", item_code]
-		
-            },
-
-            fieldname: ["conversion_factor"]
-        },
-        async: false,
-        callback: function(r) {
-		if(r.message){
-            	conversion_factor = r.message.conversion_factor;
-		}else{
-		conversion_factor =null;
-		}
-        }
-    });
-return conversion_factor;
-**/
 var conversion_factor;
 frappe.call({
            method: "nhance.nhance.doctype.stock_requisition.stock_requisition.fetch_conversion_factor",
@@ -744,7 +796,7 @@ frappe.call({
 return checkFlag;
 }
 
-function makeStockEntry(stockEntryList,items,stock_requisition_id){
+function makeStockEntry(stockEntryList,items,stock_requisition_id,cur_frm){
 var company = stockEntryList.company;
 frappe.call({
 	method: "nhance.nhance.doctype.stock_requisition.stock_requisition.make_material_issue",
@@ -756,7 +808,8 @@ frappe.call({
         async: false,
         callback: function(r) {
         	if (r.message) {
-                	frm.reload_doc()
+                	cur_frm.reload_doc();
+			frappe.msgprint(__("Material Issue is created for: "+stock_requisition_id));
                  }
         } //end of callback fun..
        }) //end of frappe call.

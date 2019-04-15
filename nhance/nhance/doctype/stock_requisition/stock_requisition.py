@@ -684,3 +684,10 @@ def cancel_stock_requisition(stock_requisition_id):
 	frappe.msgprint("The Stock Requisition is cancelled successfully!!")
 	return 1
 
+@frappe.whitelist()
+def fetch_item_defaults(company,item_code):
+	records = frappe.db.sql("""select * from `tabItem Default` where company=%s and parent=%s""", (company,item_code), as_dict=1)
+	return records
+
+
+
