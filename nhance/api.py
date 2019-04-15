@@ -17,7 +17,7 @@ import time
 import math
 import base64
 import ast
-
+parent_list = []
 @frappe.whitelist()
 def make_proposal_stage(source_name, target_doc=None):
 
@@ -1422,13 +1422,19 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 	boq_record = frappe.get_doc("BOQ Lite", source_name)
 	company = boq_record.company
 	name = boq_record.name
+	
+	boq_lite_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item from `tabBOQ Lite Item` boqi where boqi.parent=%s order by boqi.immediate_parent_item desc""", boq_record.name,  as_dict=1)
 
-	if boq_record.name:
-		boq_record_items = frappe.db.sql("""select distinct(immediate_parent_item) as bom_main_item  from `tabBOQ Lite Item` where parent = %s order by immediate_parent_item desc""", boq_record.name, as_dict=1)
-		if boq_record_items:
-			for record in boq_record_items:
+	if boq_lite_items:
+		raw_boms = []
+		for parent in boq_lite_items:
+			bom_main_item = parent.bom_item
+
+			boq_records = frappe.db.sql("""select * from `tabBOQ Lite Item` where parent=%s and immediate_parent_item=%s and is_raw_material='No' order by immediate_parent_item desc""", (boq_record.name,bom_main_item), as_dict=1)
+
+			if not boq_records:
 				bom_qty = 1
-				bom_main_item = record.bom_main_item
+				raw_boms.append(bom_main_item)
 				boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.qty as qty, boqi.is_raw_material as is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s order by boqi.item_code""" , (source_name, bom_main_item), as_dict=1)
 
 				if boq_record_bom_items:
@@ -1464,8 +1470,65 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 						doc.submit()
 						docname = doc.name
 						frappe.msgprint(_("BOM Created - " + docname))
+		if raw_boms:
+			global parent_list
+			parent_list = []
+			for bom_item in raw_boms:
+				parent = frappe.db.sql("""select immediate_parent_item as bom_main_item  from `tabBOQ Lite Item` where parent=%s and item_code=%s""", (boq_record.name,bom_item), as_dict=1)
+				if parent:
+					for main_item in parent:
+						bom_main_item = main_item.bom_main_item
+						print "*****parent for*****",bom_item, bom_main_item
+						if bom_main_item not in parent_list:
+							parent_list.append(bom_main_item)
+							submit_assembly_boms(name,bom_main_item,company)
+					print "*****parent_list*****", parent_list
+					
+			
+def submit_assembly_boms(name,bom_main_item,company):
 
+	boq_record_bom_items = frappe.db.sql("""select boqi.item_code as qi_item, boqi.qty as qty, boqi.is_raw_material as is_raw_material from `tabBOQ Lite Item` boqi where boqi.parent = %s and boqi.immediate_parent_item = %s order by boqi.item_code""", (name, bom_main_item),as_dict=1)
+	bom_qty = 1
+	if boq_record_bom_items:
+		outer_json = {
+			"company": company,
+			"doctype": "BOM",
+			"item": bom_main_item,
+			"quantity": bom_qty,
+			"items": []
+			}
+					
+		for record in boq_record_bom_items:
+			item = record.qi_item
+			qty = record.qty
+			if item:
+				item_record = frappe.get_doc("Item", item)
+				innerJson ={
+					"doctype": "BOM Item",
+					"item_code": item,
+					"description": item_record.description,
+					"uom": item_record.stock_uom,
+					"stock_uom": item_record.stock_uom,
+					"qty": qty
+					}
+				outer_json["items"].append(innerJson)
+		if outer_json["items"]:
+			doc = frappe.new_doc("BOM")
+			doc.update(outer_json)
+			doc.save()
+			frappe.db.commit()
+			doc.submit()
+			docname = doc.name
+			frappe.msgprint(_("BOM Created - " + docname))
 
+		parent = frappe.db.sql("""select immediate_parent_item as bom_main_item  from `tabBOQ Lite Item` where parent=%s and item_code=%s""", (name,bom_main_item), as_dict=1)
+		for main_item in parent:
+			parent_item = main_item.bom_main_item
+			print "***2nd**parent for*****", bom_main_item, parent_item
+			if parent_item  not in parent_list:
+				parent_list.append(parent_item)
+				submit_assembly_boms(name,parent_item,company)
+		
 @frappe.whitelist()
 def get_conversion_factor(parent,uom):
 	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent=%s and uom=%s""", (parent, uom), as_dict=1)
