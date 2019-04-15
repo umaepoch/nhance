@@ -133,6 +133,7 @@ def get_po_total_qty(item_code,project_name):
  po_datas = frappe.db.sql("""select po.name,poi.item_code,poi.qty,poi.project,poi.project,poi.received_qty,poi.conversion_factor,poi.stock_qty  from `tabPurchase Order` po ,`tabPurchase Order Item` poi where po.name=poi.parent and po.docstatus=1 and po.status != 'Closed' and poi.item_code=%s and poi.project = %s""",(item_code,project_name), as_dict=1)
  for po_data in po_datas:
    calculated_qty = po_data['stock_qty'] - ( po_data['received_qty'] * po_data['conversion_factor'] )
+   calculated_qty = round(calculated_qty,2)
    po_total_qty = po_total_qty + calculated_qty
  return po_total_qty
 
@@ -191,7 +192,7 @@ def	 get_workflowStatus(master_bom,col_data):
 
 
 @frappe.whitelist()
-def	make_stock_requisition(project,company,col_data,workflowStatus):
+def	make_stock_requisition(project,company,col_data,workflowStatus,required_date):
 
    col_data = eval(col_data)
    reserve_warehouse =  frappe.db.get_value('Project',project , 'reserve_warehouse')
@@ -221,7 +222,7 @@ def	make_stock_requisition(project,company,col_data,workflowStatus):
          "doctype": "Stock Requisition Item",
          "item_code": item_code,
          "qty": c[11],
-         "schedule_date": getdate(datetime.now().strftime('%Y-%m-%d')),
+         "schedule_date": required_date ,
          "warehouse":reserve_warehouse,
          "uom": item_data['stock_uom'],
          "stock_uom": item_data['stock_uom'],

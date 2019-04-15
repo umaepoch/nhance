@@ -129,18 +129,29 @@ function makeStockRequistionn(filters) {
 			console.log("reserve_warehouse is there:"+project_details['reserve_warehouse']);
 		}
 
+		var required_date ;
     var dialog = new frappe.ui.Dialog({
         title: __("This Tool can only be used to Request Quantities that have not been requested as per BOM " +project_details['master_bom']+ " for delivery to Warehouse "+project_details['reserve_warehouse']+" and as represented in Column Short Quantity. If you have to request for additional quantities, please change the BOM to reflect additional quantities or use the Stock Requisition Tool Directly"),
+				'fields': [
+					{
+							"fieldtype": "Date",
+							"label": "Required By Date",
+							"fieldname": "required_date"
+					}
+				],
 				primary_action : function() {
 					dialog.hide();
-					show_alert(dialog.get_values());
+
+					console.log("After submit dialog.get_values()"+JSON.stringify( dialog.get_values() ));
 					console.log("After submit ,COl data::"+ JSON.stringify(col_data));
 
 					workflowStatus =get_workflowStatus(col_data);
 					console.log("After submit ,workflowStatus"+ workflowStatus );
 					console.log("After submit ,project"+ filters.project );
 
-
+					dialog_data = dialog.get_values() ;
+					required_date = dialog_data.required_date ;
+					console.log("After submit dialog date,required_date final"+ required_date);
 
 					if (filters.project && project_details['reserve_warehouse'] ) {
 						return frappe.call({
@@ -149,7 +160,8 @@ function makeStockRequistionn(filters) {
 											"project":filters.project,
 											"company":filters.company,
 											"workflowStatus":workflowStatus,
-											"col_data" : col_data
+											"col_data" : col_data,
+											"required_date" : required_date
                     },
                     callback: function(r) {
                         if (r.message) {
