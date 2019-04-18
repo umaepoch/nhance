@@ -689,5 +689,16 @@ def fetch_item_defaults(company,item_code):
 	records = frappe.db.sql("""select * from `tabItem Default` where company=%s and parent=%s""", (company,item_code), as_dict=1)
 	return records
 
+@frappe.whitelist()
+def fetch_transferred_qty(item_code,sreq_no):
+	records = frappe.db.sql("""select sed.qty as qty from `tabStock Entry Detail` sed, `tabStock Entry` se where se.stock_requisition_id=%s and sed.item_code=%s and se.name=sed.parent and se.docstatus=1""", (sreq_no,item_code), as_dict=1)
+	if records:
+		return records[0]['qty']
+	else:
+		return 0
 
+@frappe.whitelist()
+def update_fulfilled_qty(item_code,fulFilledQty,sreq_no):
+	if fulFilledQty >= 0:
+		records = frappe.db.sql("""update `tabStock Requisition Item` set fulfilled_quantity='"""+fulFilledQty+"""' where parent=%s and item_code=%s""", (sreq_no,item_code))
 
