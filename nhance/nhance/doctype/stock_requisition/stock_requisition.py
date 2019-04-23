@@ -634,7 +634,7 @@ def po_list_value(srID,po_list):
 
 @frappe.whitelist()
 def check_stock_entry_for_stock_requisition(stock_requisition_id):
-	records = frappe.db.sql("""select * from `tabStock Entry` where stock_requisition_id=%s and docstatus=1""", stock_requisition_id, as_dict=1)
+	records = frappe.db.sql("""select * from `tabStock Entry` where stock_requisition_id=%s and docstatus=1 and purpose='Material Issue'""", stock_requisition_id, as_dict=1)
 	if len(records) == 0:
 		flag = "true"
 	else:
@@ -691,7 +691,7 @@ def fetch_item_defaults(company,item_code):
 
 @frappe.whitelist()
 def fetch_transferred_qty(item_code,sreq_no):
-	records = frappe.db.sql("""select sed.qty as qty from `tabStock Entry Detail` sed, `tabStock Entry` se where se.stock_requisition_id=%s and sed.item_code=%s and se.name=sed.parent and se.docstatus=1""", (sreq_no,item_code), as_dict=1)
+	records = frappe.db.sql("""select sed.qty as qty from `tabStock Entry Detail` sed, `tabStock Entry` se where se.stock_requisition_id=%s and sed.item_code=%s and se.name=sed.parent and se.docstatus=1 and se.purpose='Material Transfer'""", (sreq_no,item_code), as_dict=1)
 	if records:
 		return records[0]['qty']
 	else:

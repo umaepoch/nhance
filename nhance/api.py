@@ -1542,6 +1542,60 @@ def update_boq_lite_item(item_code,name,is_raw_material):
 	frappe.db.commit()
 
 
+@frappe.whitelist()
+def fetch_qty_available_in_swh(item_code,swh):
+	details = frappe.db.sql("""select actual_qty from `tabBin` where item_code=%s and warehouse=%s""", (item_code,swh), as_dict=1)
+	if details:
+		return details[0]['actual_qty']
+	else:
+		return 0
+
+@frappe.whitelist()
+def fetch_nhance_settings_details():
+	details = frappe.get_doc("Nhance Settings")
+	return details
+
+@frappe.whitelist()
+def make_material_receipt(mterialReceiptList,difference_account):
+	mt_receipt_items = eval(mterialReceiptList)
+	company = frappe.db.get_single_value("Global Defaults", "default_company")
+
+	if mt_receipt_items:
+		basic_rate = 0
+		outerJson_Transfer = {
+			"naming_series": "STE-",
+			"doctype": "Stock Entry",
+			"title": "Material Receipt",
+			"docstatus": 1,
+			"purpose": "Material Receipt",
+			"company": company,
+			"items": []
+			}
+
+		for items in mt_receipt_items:
+			if items['basic_rate'] is not None:
+				basic_rate = items['basic_rate']
+			innerJson_Transfer =	{
+				"t_warehouse":items['t_warehouse'],
+				"qty":items['qty'],
+				"item_code":items['item_code'],
+				"stock_uom":items['stock_uom'],
+				"uom":items['uom'],
+				"conversion_factor":items['conversion_factor'],
+				"valuation_rate":items['valuation_rate'],
+				"basic_rate": basic_rate,
+				"doctype": "Stock Entry Detail"
+			}
+			if difference_account is not None:
+				innerJson_Transfer["expense_account"] = difference_account
+			outerJson_Transfer["items"].append(innerJson_Transfer)
+		print "########-Final make_stock_entry Json::", outerJson_Transfer
+		doc = frappe.new_doc("Stock Entry")
+		doc.update(outerJson_Transfer)
+		doc.save()
+		doc.submit()
+		ret = doc.doctype
+
 ## Expense Account details of Stock Entry Begins...
 @frappe.whitelist()
 def match_item_groups(item_code):
