@@ -25,24 +25,24 @@ def execute(filters=None):
 	all_po_datas =  get_all_po_datas()
 
 	for po_data in all_po_datas:
-		 po_name = po_data.name
-		 date = po_data.transaction_date
-		 reqd_by_date = po_data.schedule_date
-		 supplier = po_data.supplier
-		 supplier_name = po_data.supplier_name
-		 project_name = po_data.project
-		 item_code = po_data.item_code
+		 po_name = po_data.name or  ""
+		 date = po_data.transaction_date or  ""
+		 reqd_by_date = po_data.schedule_date or  ""
+		 supplier = po_data.supplier or  ""
+		 supplier_name = po_data.supplier_name or  ""
+		 project_name = po_data.project or  ""
+		 item_code = po_data.item_code or  ""
 		 qty = po_data.qty
 		 received_qty = po_data.received_qty
 		 qty_to_receive = po_data.qr
-		 stock_uom = po_data.stock_uom
-		 pur_stock_uom = po_data.uom
-		 qty_to_receive_pur_uom = po_data.received_qty
-		 warehouse = po_data.warehouse
-		 item_name = po_data.item_name
-		 description = po_data.description
-		 brand = po_data.brand
-		 company = po_data.company
+		 stock_uom = po_data.stock_uom or  ""
+		 pur_stock_uom = po_data.uom or  ""
+		 qty_to_receive_pur_uom = po_data.qr
+		 warehouse = po_data.warehouse or  ""
+		 item_name = po_data.item_name or  ""
+		 description = po_data.description or  ""
+		 brand = po_data.brand or  ""
+		 company = po_data.company or  ""
 
 	 	 data.append([ str(po_name),
 		 str(date),
@@ -97,16 +97,16 @@ def get_all_po_datas():
 										po.transaction_date ,
 										poi.schedule_date ,
 										po.supplier ,
-										po.supplier_name",
+										po.supplier_name,
 										poi.project,
 										poi.item_code,
-										poi.qty",
+										poi.qty,
 										poi.received_qty,
 										(poi.qty - ifnull(poi.received_qty, 0)) qr,
 										poi.stock_uom,
-										poi.uom",
+										poi.uom,
 										poi.warehouse,
-										poi.item_name ",
+										poi.item_name ,
 										poi.description ,
 										poi.brand,
 										po.company
