@@ -1593,8 +1593,8 @@ def make_material_receipt(mterialReceiptList,difference_account):
 		doc = frappe.new_doc("Stock Entry")
 		doc.update(outerJson_Transfer)
 		doc.save()
-		doc.submit()
-		ret = doc.doctype
+		#doc.submit()
+		#ret = doc.doctype
 
 ## Expense Account details of Stock Entry Begins...
 @frappe.whitelist()
