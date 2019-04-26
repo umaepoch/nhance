@@ -14,7 +14,7 @@ frappe.query_reports["APayable"] = {
 			"fieldname":"ageing_based_on",
 			"label": __("Ageing Based On"),
 			"fieldtype": "Select",
-			"options": 'Posting Date\nDue Date',
+			"options": 'Posting Date\nDue Date\nSupplier Invoice Date',
 			"default": "Posting Date"
 		},
 		{
@@ -30,79 +30,38 @@ frappe.query_reports["APayable"] = {
 			"options": "Finance Book"
 		},
 		{
-			"fieldname":"customer",
-			"label": __("Customer"),
+			"fieldname":"supplier",
+			"label": __("Supplier"),
 			"fieldtype": "Link",
-			"options": "Customer",
+			"options": "Supplier",
 			on_change: () => {
-				var customer = frappe.query_report.get_filter_value('customer');
-				if (customer) {
-					frappe.db.get_value('Customer', customer, ["tax_id", "customer_name", "credit_limit", "payment_terms"], function(value) {
+				var supplier = frappe.query_report.get_filter_value('supplier');
+				if (supplier) {
+					frappe.db.get_value('Supplier', supplier, "tax_id", function(value) {
 						frappe.query_report.set_filter_value('tax_id', value["tax_id"]);
-						frappe.query_report.set_filter_value('customer_name', value["customer_name"]);
-						frappe.query_report.set_filter_value('credit_limit', value["credit_limit"]);
-						frappe.query_report.set_filter_value('payment_terms', value["payment_terms"]);
 					});
 				} else {
 					frappe.query_report.set_filter_value('tax_id', "");
-					frappe.query_report.set_filter_value('customer_name', "");
-					frappe.query_report.set_filter_value('credit_limit', "");
-					frappe.query_report.set_filter_value('payment_terms', "");
 				}
 			}
 		},
 		{
-			"fieldname":"customer_group",
-			"label": __("Customer Group"),
+			"fieldname":"supplier_group",
+			"label": __("Supplier Group"),
 			"fieldtype": "Link",
-			"options": "Customer Group"
-		},
-		{
-			"fieldname":"territory",
-			"label": __("Territory"),
-			"fieldtype": "Link",
-			"options": "Territory"
-		},
-		{
-			"fieldname":"sales_partner",
-			"label": __("Sales Partner"),
-			"fieldtype": "Link",
-			"options": "Sales Partner"
-		},
-		{
-			"fieldname":"sales_person",
-			"label": __("Sales Person"),
-			"fieldtype": "Link",
-			"options": "Sales Person"
-		},
-		{
-			"fieldname":"show_pdc_in_print",
-			"label": __("Show PDC in Print"),
-			"fieldtype": "Check",
+			"options": "Supplier Group"
 		},
 		{
 			"fieldname":"tax_id",
 			"label": __("Tax Id"),
 			"fieldtype": "Data",
 			"hidden": 1
-		},
-		{
-			"fieldname":"customer_name",
-			"label": __("Customer Name"),
-			"fieldtype": "Data",
-			"hidden": 1
-		},
-		{
-			"fieldname":"payment_terms",
-			"label": __("Payment Tems"),
-			"fieldtype": "Data",
-			"hidden": 1
-		},
-		{
-			"fieldname":"credit_limit",
-			"label": __("Credit Limit"),
-			"fieldtype": "Currency",
-			"hidden": 1
 		}
-	]
+	],
+	onload: function(report) {
+		report.page.add_inner_button(__("Accounts Payable Summary"), function() {
+			var filters = report.get_values();
+			frappe.set_route('query-report', 'Accounts Payable Summary', {company: filters.company});
+		});
+	}
 }
