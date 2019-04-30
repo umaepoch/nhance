@@ -192,56 +192,60 @@ def	 get_workflowStatus(master_bom,col_data):
 
 
 @frappe.whitelist()
-def	make_stock_requisition(project,company,col_data,workflowStatus,required_date):
+def	make_stock_requisition(project,company,col_data,workflowStatus,required_date,master_bom):
 
-   col_data = eval(col_data)
-   reserve_warehouse =  frappe.db.get_value('Project',project , 'reserve_warehouse')
+    col_data = eval(col_data)
+    reserve_warehouse =  frappe.db.get_value('Project',project , 'reserve_warehouse')
 
-   innerJson_requisition = " "
-   innerJson_transfer = " "
-   ret = ""
-   newJson_requisition = {
-   "company": company ,
-   "doctype": "Stock Requisition",
-   "title": "Purchase",
-   "material_request_type": "Purchase",
-   "workflow_state": "Pending Approval",
-   "requested_by":project,
-   "items": []
-   }
-   for c in col_data:
+    innerJson_requisition = " "
+    innerJson_transfer = " "
+    ret = ""
+    newJson_requisition = {
+    "company": company ,
+    "doctype": "Stock Requisition",
+    "title": "Purchase",
+    "material_request_type": "Purchase",
+    "workflow_state": "Pending Approval",
+    "requested_by":project,
+    "items": []
+    }
+    for c in col_data:
 
-     item_code = c[0]
-     short_qty = c[11]
-     short_qty = float(short_qty)
+        item_code = c[0]
+        short_qty = c[11]
+        short_qty = float(short_qty)
 
-     item_data_key = get_item_data(item_code)
-     item_data = item_data_key[0]
+        item_data_key = get_item_data(item_code)
+        item_data = item_data_key[0]
 
-     innerJson_transfer ={
-         "doctype": "Stock Requisition Item",
-         "item_code": item_code,
-         "qty": c[11],
-         "schedule_date": required_date ,
-         "warehouse":reserve_warehouse,
-         "uom": item_data['stock_uom'],
-         "stock_uom": item_data['stock_uom'],
-         "description": item_data['description'],
-         "sreq_made_from_pmrt":"Yes",
-         "project":project
-       }
-     if short_qty > 0:
-       newJson_requisition["items"].append(innerJson_transfer)
+        innerJson_transfer ={
+        "doctype": "Stock Requisition Item",
+        "item_code": item_code,
+        "qty": c[11],
+        "schedule_date": required_date ,
+        "warehouse":reserve_warehouse,
+        "uom": item_data['stock_uom'],
+        "stock_uom": item_data['stock_uom'],
+        "description": item_data['description'],
+        "sreq_made_from_pmrt":"Yes",
+        "project":project,
+        "pch_bom_reference": master_bom
+        }
+        print "pch_bom_reference checking innerJson_transfer**********",innerJson_transfer
+        if short_qty > 0:
+            newJson_requisition["items"].append(innerJson_transfer) #end of for
 
-   if newJson_requisition["items"]:
-         doc = frappe.new_doc("Stock Requisition")
-         doc.update(newJson_requisition)
-         doc.save()
-         """if workflowStatus == "Approved":
-           doc.submit()
-         else:
-           doc.save() """
-         ret =  doc.doctype
-         return ret
-   else:
-     return null
+    print "pch_bom_reference checking newJson_requisition**********",newJson_requisition
+
+    if newJson_requisition["items"]:
+        doc = frappe.new_doc("Stock Requisition")
+        doc.update(newJson_requisition)
+        doc.save()
+        """if workflowStatus == "Approved":
+        doc.submit()
+        else:
+        doc.save() """
+        ret =  doc.doctype
+        return ret
+    else:
+        return null

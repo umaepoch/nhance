@@ -136,7 +136,8 @@ function makeStockRequistionn(filters) {
 					{
 							"fieldtype": "Date",
 							"label": "Required By Date",
-							"fieldname": "required_date"
+							"fieldname": "required_date",
+							"reqd":1 //
 					}
 				],
 				primary_action : function() {
@@ -161,7 +162,8 @@ function makeStockRequistionn(filters) {
 											"company":filters.company,
 											"workflowStatus":workflowStatus,
 											"col_data" : col_data,
-											"required_date" : required_date
+											"required_date" : required_date,
+											"master_bom" : project_details['master_bom']
                     },
                     callback: function(r) {
                         if (r.message) {

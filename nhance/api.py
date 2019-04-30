@@ -1444,6 +1444,7 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 						"doctype": "BOM",
 						"item": bom_main_item,
 						"quantity": bom_qty,
+						"pch_boq_lite_reference": name,
 						"items": []
 						}
 					
@@ -1495,6 +1496,7 @@ def submit_assembly_boms(name,bom_main_item,company):
 			"doctype": "BOM",
 			"item": bom_main_item,
 			"quantity": bom_qty,
+			"pch_boq_lite_reference": name,
 			"items": []
 			}
 					

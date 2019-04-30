@@ -32,6 +32,7 @@ def execute(filters=None):
 				data = items_map[sreq_no]
 				for sreq_dict in data:
 					print "sreq_dict-----", sreq_dict['sreq_no']
+					print "bom-----", sreq_dict['bom']
 					sum_data.append([				
 					sreq_dict['sreq_no'],
 					project,
@@ -50,7 +51,8 @@ def execute(filters=None):
 					sreq_dict['no_of_purchase_transactions'],
 					sreq_dict['max_price_of_last_10_purchase_transactions'],
 					sreq_dict['min_price_of_last_10_purchase_transactions'],
-					sreq_dict['avg_price_of_last_10_purchase_transactions']
+					sreq_dict['avg_price_of_last_10_purchase_transactions'],
+					sreq_dict['bom']
 					])	
 
 	return columns, sum_data
@@ -72,6 +74,7 @@ def fetch_pending_sreqnos(project,swh):
 					sreq_qty = 0
 					for items_data in sreq_items:
 						item_code = items_data['item_code']
+						bom_reference = items_data['pch_bom_reference']
 						default_supplier = fetch_default_supplier(company,item_code)
 						po_items = fetch_po_items_details(item_code,po_list)
 						po_uom = fetch_item_purchase_uom(item_code)
@@ -119,7 +122,8 @@ def fetch_pending_sreqnos(project,swh):
 									"no_of_purchase_transactions": no_of_purchase_transactions,
 									"max_price_of_last_10_purchase_transactions": max_price_of_last_10_purchase_transactions,
 									"min_price_of_last_10_purchase_transactions": min_price_of_last_10_purchase_transactions,
-									"avg_price_of_last_10_purchase_transactions": avg_price_of_last_10_purchase_transactions
+									"avg_price_of_last_10_purchase_transactions": avg_price_of_last_10_purchase_transactions,
+									"bom": bom_reference
 									})
 								items_map[key] = sreq_items_list
 							else:
@@ -142,6 +146,7 @@ def fetch_pending_sreqnos(project,swh):
 								item_entry["max_price_of_last_10_purchase_transactions"] = max_price_of_last_10_purchase_transactions
 								item_entry["min_price_of_last_10_purchase_transactions"] = min_price_of_last_10_purchase_transactions
 								item_entry["avg_price_of_last_10_purchase_transactions"] = avg_price_of_last_10_purchase_transactions
+								item_entry["bom"] =  bom_reference
 								prev_sreq_list.append(item_entry)
 								items_map[key] = prev_sreq_list
 						
@@ -153,6 +158,7 @@ def fetch_pending_sreqnos(project,swh):
 				if sreq_items:
 					for items_data in sreq_items:
 						item_code = items_data['item_code']
+						bom_reference = items_data['pch_bom_reference']
 						default_supplier = fetch_default_supplier(company,item_code)
 						print "item_code---", item_code, items_data['uom']
 						po_uom = fetch_item_purchase_uom(item_code)
@@ -196,7 +202,8 @@ def fetch_pending_sreqnos(project,swh):
 									"no_of_purchase_transactions": no_of_purchase_transactions,
 									"max_price_of_last_10_purchase_transactions": max_price_of_last_10_purchase_transactions,
 									"min_price_of_last_10_purchase_transactions": min_price_of_last_10_purchase_transactions,
-									"avg_price_of_last_10_purchase_transactions": avg_price_of_last_10_purchase_transactions
+									"avg_price_of_last_10_purchase_transactions": avg_price_of_last_10_purchase_transactions,
+									"bom": bom_reference
 									})
 							items_map[key] = sreq_items_list
 						else:
@@ -219,6 +226,7 @@ def fetch_pending_sreqnos(project,swh):
 							item_entry["max_price_of_last_10_purchase_transactions"] = max_price_of_last_10_purchase_transactions
 							item_entry["min_price_of_last_10_purchase_transactions"] = min_price_of_last_10_purchase_transactions
 							item_entry["avg_price_of_last_10_purchase_transactions"] = avg_price_of_last_10_purchase_transactions
+							item_entry["bom"] =  bom_reference
 							prev_sreq_list.append(item_entry)
 							items_map[key] = prev_sreq_list
 		#print "items_map-----", items_map
@@ -386,6 +394,8 @@ def make_stock_entry(sreq_no,mt_list):
 				"s_warehouse":items['s_warehouse'],
 				"t_warehouse":items['t_warehouse'],
 				"qty":items['qty'],
+				"pch_bom_reference":items['bom'],
+				"pch_project":items['project'],
 				"doctype": "Stock Entry Detail"
 				}
 			outerJson_Transfer["items"].append(innerJson_Transfer)
@@ -423,6 +433,8 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				"creation": creation_Date,
 				"qty": items['qty'],
 				"item_code": items['item_code'],
+				"pch_bom_reference":items['bom'],
+				"project":items['project'],
 				"price_list_rate": items['price_list_rate'],
 				"doctype": "Purchase Order Item",
 				"parenttype": "Purchase Order",
@@ -454,6 +466,7 @@ def get_report_data():
 		po_uom = rows[9]
 		conversion_factor = rows[10]
 		supplier = rows[12]
+		bom_reference = rows[18]
 		mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
 		details = {"sreq_no":sreq_no,
 			   "project":project,
@@ -463,7 +476,8 @@ def get_report_data():
 			   "po_qty":excess_to_be_ordered,
 			   "conversion_factor":conversion_factor,
 			   "po_uom":po_uom,
-			   "supplier":supplier
+			   "supplier":supplier,
+			   "bom":bom_reference
 			}
 		report_data.append(details)
 	return report_data

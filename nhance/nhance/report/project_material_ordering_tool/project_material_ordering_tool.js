@@ -86,6 +86,11 @@ function make_PO_and_transfer_qty(report){
 		var po_qty = reportData[i]['po_qty'];
 		var mt_qty = reportData[i]['mt_qty'];
 		var supplier = reportData[i]['supplier'];
+		var bom = reportData[i]['bom'];
+
+		if (bom == null || bom == undefined){
+			bom = "";
+		}
 
 		if (mt_qty>0){
 			materialItems['item_code'] = item_code;
@@ -96,6 +101,8 @@ function make_PO_and_transfer_qty(report){
 			materialItems['item_code'] = item_code;
 			materialItems['stock_uom'] = stock_uom;
 			materialItems['uom'] = po_uom;
+			materialItems['bom'] = bom;
+			materialItems['project'] = project;
 
 			if (materialTransferMap.has(sreq_no)) {
        				var arrList = materialTransferMap.get(sreq_no);
@@ -161,6 +168,7 @@ function make_PO_and_transfer_qty(report){
 					}
 				}
 			}else if (item_price_by == "Price List"){
+				price_list_by = "Standard Buying";
 				rate = getItemValuationRateFromPriceList(item_code,price_list_by);
 				if (rate == 0){
 					rate = getItemLastPurchasePrice(item_code,po_uom);
@@ -183,6 +191,8 @@ function make_PO_and_transfer_qty(report){
 			poItems['project'] = project;
 			poItems['warehouse'] = reserve_whse;
 			poItems['price_list_rate'] = rate;
+			poItems['bom'] = bom;
+			poItems['project'] = project;
 
 			if (purchaseOrderMap.has(sreq_no)) {
        				var arrList = purchaseOrderMap.get(sreq_no);
@@ -376,7 +386,6 @@ frappe.call({
         filters: {
             name: ["=", project]
         },
-
         fieldname: ["reserve_warehouse"]
     },
     async: false,
