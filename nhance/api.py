@@ -1423,14 +1423,14 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 	company = boq_record.company
 	name = boq_record.name
 	
-	boq_lite_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item from `tabBOQ Lite Item` boqi where boqi.parent=%s order by boqi.immediate_parent_item desc""", boq_record.name,  as_dict=1)
+	boq_lite_items = frappe.db.sql("""select distinct boqi.immediate_parent_item as bom_item from `tabBOQ Lite Item` boqi where boqi.parent=%s""", boq_record.name,  as_dict=1)
 
 	if boq_lite_items:
 		raw_boms = []
 		for parent in boq_lite_items:
 			bom_main_item = parent.bom_item
-
 			boq_records = frappe.db.sql("""select * from `tabBOQ Lite Item` where parent=%s and immediate_parent_item=%s and is_raw_material='No' order by immediate_parent_item desc""", (boq_record.name,bom_main_item), as_dict=1)
+			print "bom_main_item--------", bom_main_item
 
 			if not boq_records:
 				bom_qty = 1
@@ -1472,6 +1472,7 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 						docname = doc.name
 						frappe.msgprint(_("BOM Created - " + docname))
 		if raw_boms:
+			print "raw_boms--------------", raw_boms
 			global parent_list
 			parent_list = []
 			for bom_item in raw_boms:
@@ -1526,10 +1527,31 @@ def submit_assembly_boms(name,bom_main_item,company):
 		parent = frappe.db.sql("""select immediate_parent_item as bom_main_item  from `tabBOQ Lite Item` where parent=%s and item_code=%s""", (name,bom_main_item), as_dict=1)
 		for main_item in parent:
 			parent_item = main_item.bom_main_item
+
+			multi_parent_list = check_multiple_parent_items(name,parent_item)
 			print "***2nd**parent for*****", bom_main_item, parent_item
-			if parent_item  not in parent_list:
-				parent_list.append(parent_item)
-				submit_assembly_boms(name,parent_item,company)
+			if multi_parent_list:
+				for parent in multi_parent_list:
+					if parent not in parent_list:
+						parent_list.append(parent)
+						submit_assembly_boms(name,parent,company)
+			else:
+				if parent_item  not in parent_list:
+					parent_list.append(parent_item)
+					submit_assembly_boms(name,parent_item,company)
+
+def check_multiple_parent_items(name,parent_item):
+	sub_parent_items = []
+	parent_items = frappe.db.sql("""select item_code as bom_main_item  from `tabBOQ Lite Item` where parent=%s and immediate_parent_item=%s""", (name,parent_item), as_dict=1)
+	if parent_items:
+		for parent in parent_items:
+			sub_parent = parent['bom_main_item']
+			sub_items = frappe.db.sql("""select * from `tabBOQ Lite Item` where parent=%s and immediate_parent_item=%s""", (name,sub_parent), as_dict=1)
+			if sub_items and sub_parent not in parent_list and sub_parent not in sub_parent_items:
+				sub_parent_items.append(sub_parent)
+				check_multiple_parent_items(name,sub_parent)
+	sub_parent_items.append(parent_item)
+	return sub_parent_items
 		
 @frappe.whitelist()
 def get_conversion_factor(parent,uom):
