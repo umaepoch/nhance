@@ -1550,6 +1550,7 @@ def check_multiple_parent_items(name,parent_item):
 			if sub_items and sub_parent not in parent_list and sub_parent not in sub_parent_items:
 				sub_parent_items.append(sub_parent)
 				check_multiple_parent_items(name,sub_parent)
+	sub_parent_items.reverse()
 	sub_parent_items.append(parent_item)
 	return sub_parent_items
 		
