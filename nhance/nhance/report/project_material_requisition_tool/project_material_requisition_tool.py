@@ -158,7 +158,7 @@ def get_col_data():
 
 @frappe.whitelist()
 def fetch_project_details(project):
- details = frappe.db.sql("""select start_date,project_warehouse,reserve_warehouse,master_bom,core_team_coordinator,planner from 	`tabProject` where name=%s""", project, as_dict=1)
+ details = frappe.db.sql("""select start_date,project_warehouse,reserve_warehouse,master_bom from 	`tabProject` where name=%s""", project, as_dict=1)
  return details
 
 @frappe.whitelist()
