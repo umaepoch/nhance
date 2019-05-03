@@ -275,16 +275,16 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}
 						//console.log("stock_qty is::"+stock_qty);
    						var stock_uom = itemsList[arrayLength].stock_uom;
-    						var warehouse1 = itemsList[arrayLength].warehouse;
+    						var warehouse = itemsList[arrayLength].warehouse;
 
 						var item_default_details = getItemDetails(item_code,company);
 
 						var default_supplier = item_default_details[0]['default_supplier'];
 						var cost_center = item_default_details[0]['buying_cost_center'];
 						var expense_account = item_default_details[0]['expense_account'];
-						var warehouse = item_default_details[0]['default_warehouse'];
+						//var warehouse = item_default_details[0]['default_warehouse'];
 						var price_list = item_default_details[0]['default_price_list'];
-						
+
 						if (price_list != null){
 							var item_price = fetch_item_price(item_code,price_list);
 							arr['price_list_rate'] = item_price;
@@ -294,12 +294,14 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 							itemsList[arrayLength].price_list_rate = 0.0;
 						}
 
+						/** From Item Defaults Child-Doc(IN Item Master) fetching Default Warehouse..
+
 						if (warehouse != null){
 							arr['warehouse'] = warehouse;
 							itemsList[arrayLength].warehouse = warehouse;
 						}else{
 							arr['warehouse'] = warehouse;
-						}
+						}**/
 
 						if (cost_center != null){
 							arr['cost_center'] = cost_center;
@@ -307,14 +309,14 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 							arr['cost_center'] = cost_center1;
 						}
-		
+
 						if (expense_account != null){
 							arr['expense_account'] = expense_account;
 							itemsList[arrayLength].expense_account = expense_account;
 						}else{
 							arr['expense_account'] = expense_account1;
 						}
-						
+
 
 
 						//console.log("default_supplier::"+default_supplier);
@@ -325,8 +327,9 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['stock_qty'] = stock_qty;
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
+						arr['warehouse'] = warehouse;
     						//arr['price'] = standard_rate;
-    						
+
     						arr['conversion_factor'] = conversion_factor;
 
 						if(default_supplier == null){
@@ -472,7 +475,7 @@ cur_frm.cscript['Stop Material Request'] = function() {
 	callback: function(r) {
 		if(r.message) {
 			cur_frm.reload_doc();
-		} 
+		}
 		}
          });
     /**
@@ -645,21 +648,21 @@ var dialog_array = [];
 var supplier = "";
 var column_break_json ={
 "fieldtype":"Column Break",
-"fieldname":"column_break"	
+"fieldname":"column_break"
 }
 var column_break_data = JSON.stringify(column_break_json);
 for(var i=0;i<supplierList.length;i++){
 	supplier = supplierList[i];
 	var supplier_json ={
 		"fieldtype":"Data",
-		"fieldname":"supplier"+ "_" + i,	
-		"default": supplier,	
-		"bold":1,	
-		"read_only":1				
+		"fieldname":"supplier"+ "_" + i,
+		"default": supplier,
+		"bold":1,
+		"read_only":1
 		}
 	var tax_template_json ={
 		"fieldtype":"Link",
-		"fieldname":"tax_template" + "_" + i,	
+		"fieldname":"tax_template" + "_" + i,
 		"options": "Purchase Taxes and Charges Template",
 		"reqd":1
 		}
@@ -680,7 +683,7 @@ dialogArray.push(JSON.parse(dialog_fields[i]));
 console.log("message-----------------");
 if(supplierList.length!=0){
 cur_frm.save("Update");
-var dialog = new frappe.ui.Dialog({																																																																																																																																																																								
+var dialog = new frappe.ui.Dialog({
 title: __("Select Tax Template For Suppilers"),
 fields: dialogArray,
 	primary_action: function(){
@@ -770,8 +773,8 @@ frappe.call({
 		 "po_list":poList
         },
 	async: false,
-	callback: function(r) 
-      	{ 
+	callback: function(r)
+      	{
 	//console.log("");
 	}
 	});//end of frappe call..
@@ -814,4 +817,3 @@ frappe.call({
         } //end of callback fun..
        }) //end of frappe call.
 }
-
