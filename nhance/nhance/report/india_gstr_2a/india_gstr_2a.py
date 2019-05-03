@@ -539,71 +539,71 @@ def get_columns_b2b():
 		_("GSTIN of Supplier") + "::150",
 		_("Invoice Number") + ":Link/Purchase Invoice:150",
 		_("Invoice date") + "::150",
-		_("Invoice Value") + ":Currency:150",
+		_("Invoice Value") + "::150",
 		_("Place Of Supply") + "::150",
 		_("Reverse Charge") + "::180",
 		_("Invoice Type") + "::150",
-		_("Rate") + ":Currency:150",
-		_("Taxable Value") + ":Currency:150",
-		_("Integrated Tax Paid") + ":Currency:150",
-		_("Central Tax Paid") + ":Currency:150",
-		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Rate") + "::150",
+		_("Taxable Value") + "::150",
+		_("Integrated Tax Paid") + "::150",
+		_("Central Tax Paid") + "::150",
+		_("State/UT Tax Paid") + "::150",
+		_("Cess Paid") + "::160", 
 		_("Eligibility For ITC") + "::120",
-		_("Availed ITC Integrated Tax") + ":Currency:150",
-		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
-		_("Availed ITC Cess") + ":Currency:120"
+		_("Availed ITC Integrated Tax") + "::150",
+		_("Availed ITC Central Tax") + "::150",
+		_("Availed ITC State/UT Tax") + "::160", 
+		_("Availed ITC Cess") + "::120"
 	]
 def get_columns_b2bur():
 	return [
 		_("Supplier Name") + "::150",
 		_("Invoice Number") + ":Link/Purchase Invoice:150",
 		_("Invoice date") + "::150",
-		_("Invoice Value") + ":Currency:150",
+		_("Invoice Value") + "::150",
 		_("Place Of Supply") + "::150",
 		_("Supply Type") + "::180",
-		_("Rate") + ":Currency:150",
-		_("Taxable Value") + ":Currency:150",
-		_("Integrated Tax Paid") + ":Currency:150",
-		_("Central Tax Paid") + ":Currency:150",
-		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Rate") + "::150",
+		_("Taxable Value") + "::150",
+		_("Integrated Tax Paid") + "::150",
+		_("Central Tax Paid") + "::150",
+		_("State/UT Tax Paid") + "::150",
+		_("Cess Paid") + "::160", 
 		_("Eligibility For ITC") + "::120",
-		_("Availed ITC Integrated Tax") + ":Currency:150",
-		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
-		_("Availed ITC Cess") + ":Currency:120"
+		_("Availed ITC Integrated Tax") + "::150",
+		_("Availed ITC Central Tax") + "::150",
+		_("Availed ITC State/UT Tax") + "::160", 
+		_("Availed ITC Cess") + "::120"
 	]
 def get_columns_imps():
 	return [
 		_("Invoice Number of Reg Recipient") + ":Link/Purchase Invoice:150",
 		_("Invoice date") + "::150",
-		_("Invoice Value") + ":Currency:150",
+		_("Invoice Value") + "::150",
 		_("Place Of Supply") + "::150",
-		_("Rate") + ":Currency:150",
-		_("Taxable Value") + ":Currency:150",
-		_("Integrated Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Rate") + "::150",
+		_("Taxable Value") + "::150",
+		_("Integrated Tax Paid") + "::150",
+		_("Cess Paid") + "::160", 
 		_("Eligibility For ITC") + "::120",
-		_("Availed ITC Integrated Tax") + ":Currency:150",
-		_("Availed ITC Cess") + ":Currency:120"
+		_("Availed ITC Integrated Tax") + "::150",
+		_("Availed ITC Cess") + "::120"
 	]
 def get_columns_impg():
 	return [
 		_("Port Code") + "::150",
 		_("Bill Of Entry Number") + "::150",
 		_("Bill Of Entry Date") + "::150",
-		_("Bill Of Entry Value") + ":Currency:150",
+		_("Bill Of Entry Value") + "::150",
 		_("Document type") + "::180",
 		_("GSTIN Of SEZ Supplier")+"::150",
 		_("Rate") + ":Currency:150",
-		_("Taxable Value") + ":Currency:150",
-		_("Integrated Tax Paid") + ":Currency:150",
+		_("Taxable Value") + "::150",
+		_("Integrated Tax Paid") + "::150",
 		_("Cess Paid") + ":Currency:160", 
 		_("Eligibility For ITC") + "::120",
-		_("Availed ITC Integrated Tax") + ":Currency:150",
-		_("Availed ITC Cess") + ":Currency:120"
+		_("Availed ITC Integrated Tax") + "::150",
+		_("Availed ITC Cess") + "::120"
 	]
 def get_columns_cdnr():
 	return [
@@ -616,18 +616,18 @@ def get_columns_cdnr():
 		_("Document Type") + "::150",
 		_("Reason For Issuing document") + "::150",
 		_("Supply Type") + "::180",
-		_("Note/Refund Voucher Value")+":Currency:150",
-		_("Rate") + ":Currency:150",
-		_("Taxable Value") + ":Currency:150",
-		_("Integrated Tax Paid") + ":Currency:150",
-		_("Central Tax Paid") + ":Currency:150",
-		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Note/Refund Voucher Value")+"::150",
+		_("Rate") + "::150",
+		_("Taxable Value") + "::150",
+		_("Integrated Tax Paid") + "::150",
+		_("Central Tax Paid") + "::150",
+		_("State/UT Tax Paid") + "::150",
+		_("Cess Paid") + "::160", 
 		_("Eligibility For ITC") + "::120",
 		_("Availed ITC Integrated Tax") + "::150",
-		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
-		_("Availed ITC Cess") + ":Currency:120"
+		_("Availed ITC Central Tax") + "::150",
+		_("Availed ITC State/UT Tax") + "::160", 
+		_("Availed ITC Cess") + "::120"
 	]
 def get_columns_cdnur():
 	return [
@@ -639,26 +639,26 @@ def get_columns_cdnur():
 		_("Document Type")+"::150",
 		_("Reason For Issuing document") + "::150",
 		_("Supply Type") + "::180",
-		_("Note/Voucher Value")+":Currency:150",
+		_("Note/Voucher Value")+"::150",
 		_("Rate") + ":Currency:150",
-		_("Taxable Value") + ":Currency:150",
-		_("Integrated Tax Paid") + ":Currency:150",
-		_("Central Tax Paid") + ":Currency:150",
-		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Taxable Value") + "::150",
+		_("Integrated Tax Paid") + "::150",
+		_("Central Tax Paid") + "::150",
+		_("State/UT Tax Paid") + "::150",
+		_("Cess Paid") + "::160", 
 		_("Eligibility For ITC") + "::120",
-		_("Availed ITC Integrated Tax") + ":Currency:150",
-		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
-		_("Availed ITC Cess") + ":Currency:120"
+		_("Availed ITC Integrated Tax") + "::150",
+		_("Availed ITC Central Tax") + "::150",
+		_("Availed ITC State/UT Tax") + "::160", 
+		_("Availed ITC Cess") + "::120"
 	]
 def get_columns_exemp():
 	return [
 		_("Description") + "::150",
-		_("Composition taxable person")+":Currency:150",
+		_("Composition taxable person")+"::150",
 		_("Nil Rated Supplies") + ":Currency:150",
-		_("Exempted (other than nil rated/non GST supply )") + ":Currency:180",
-		_("Non-GST supplies") + ":Currency:150"
+		_("Exempted (other than nil rated/non GST supply )") + "::180",
+		_("Non-GST supplies") + "::150"
 	]
 def get_columns_itcr():
 	return [
@@ -675,12 +675,12 @@ def get_columns_hsnsum():
 		_("Description")+"::150",
 		_("UQC") + "::150",
 		_("Total Quantity") + "::180",
-		_("Total Value") + ":Currency:150",
-		_("Taxable Value") + ":Currency:150",
-		_("Integrated Tax Amount") + ":Currency:150",
-		_("Central Tax Amount")+":Currency:150",
-		_("State/UT Tax Amount") + ":Currency:150",
-		_("Cess Amount") + ":Currency:180"
+		_("Total Value") + "::150",
+		_("Taxable Value") + "::150",
+		_("Integrated Tax Amount") + "::150",
+		_("Central Tax Amount")+"::150",
+		_("State/UT Tax Amount") + "::150",
+		_("Cess Amount") + "::180"
 	]
 
 def purchase_invoice_b2b(from_date,to_date):
@@ -814,11 +814,10 @@ def sales_tax(item_code,invoice_id):
 				from 
 					`tabPurchase Invoice Item` si, `tabItem Tax` it , `tabPurchase Taxes and Charges` st 
 				where 
-					si.item_code = '"""+str(item_code)+"""' AND 
-					si.parent = '"""+str(invoice_id)+"""' AND it.parent = si.item_code AND 
+					si.item_code = %s AND si.parent = %s AND it.parent = si.item_code AND 
 					st.parent = si.parent AND it.tax_type = st.account_head
-					order by it.idx
-				""", as_dict = 1)
+				order by  it.idx
+				""",(item_code,invoice_id), as_dict = 1)
 	return items
 def sales_account_tax(invoice_id):
 	if invoice_id:
