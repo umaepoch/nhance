@@ -814,8 +814,8 @@ def sales_tax(item_code,invoice_id):
 				from 
 					`tabPurchase Invoice Item` si, `tabItem Tax` it , `tabPurchase Taxes and Charges` st 
 				where 
-					si.item_code = '"""+item_code+"""' AND 
-					si.parent = '"""+invoice_id+"""' AND it.parent = si.item_code AND 
+					si.item_code = '"""+str(item_code)+"""' AND 
+					si.parent = '"""+str(invoice_id)+"""' AND it.parent = si.item_code AND 
 					st.parent = si.parent AND it.tax_type = st.account_head
 					order by it.idx
 				""", as_dict = 1)
