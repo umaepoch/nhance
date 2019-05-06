@@ -269,9 +269,9 @@ def get_Purchase_Taxes_and_Charges(account_head, tax_name):
 @frappe.whitelist()
 def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 	#print "##-tax_template::", tax_template
-	order_List = json.loads(args)
-	items_List = json.dumps(order_List)
-	items_List = ast.literal_eval(items_List)
+	items_List = json.loads(args)
+	#items_List = json.dumps(order_List)
+	#items_List = ast.literal_eval(items_List)
 	creation_Date = datetime.datetime.now()
 	outerJson_Transfer = {
 				"doctype": "Purchase Order",
