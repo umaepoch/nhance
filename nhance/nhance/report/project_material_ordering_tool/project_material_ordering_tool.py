@@ -372,6 +372,8 @@ def fetch_item_price_settings_details():
 
 @frappe.whitelist()
 def make_stock_entry(sreq_no,mt_list):
+	mt_items_map = {}
+	sreq_items_list = []
 	materialTransferItems = eval(mt_list)
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 
@@ -388,6 +390,11 @@ def make_stock_entry(sreq_no,mt_list):
 			}
 
 		for items in materialTransferItems:
+			key = items['item_code']
+			qty = items['qty']
+
+			if key not in mt_items_map:
+				mt_items_map[key] = float(qty)
 
 			innerJson_Transfer ={
 				"item_code":items['item_code'],
@@ -404,11 +411,40 @@ def make_stock_entry(sreq_no,mt_list):
 		doc.update(outerJson_Transfer)
 		doc.save()
 		ret = doc.doctype
+
+		if mt_items_map:
+			updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no)
+
 		if ret:
 			frappe.msgprint("Stock Entry is created: "+doc.name)
 
+def updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no):
+	sreq_item_list = []
+	sreq_items = frappe.db.sql(""" select sri.item_code as item_code,sri.fulfilled_quantity as fulfilled_quantity from `tabStock Requisition` sr,`tabStock Requisition Item` sri where sr.name= %s and sri.parent=sr.name """,(sreq_no), as_dict=1)
+
+	if sreq_items:
+		for items_data in sreq_items:
+			original_fulfilled_qty = 0
+			item_code = items_data['item_code']
+			fulfilled_quantity = items_data['fulfilled_quantity']
+			
+			if item_code in mt_items_map:
+				transfered_qty = mt_items_map[item_code]
+				original_fulfilled_qty = float(fulfilled_quantity) + float(transfered_qty)
+
+			sreq_item_list.append({"item_code": item_code, "fulfilled_qty": original_fulfilled_qty})
+
+	if sreq_item_list:
+		for sreq_data in sreq_item_list:
+			item_code = sreq_data['item_code']
+			fulfilled_quantity = sreq_data['fulfilled_qty']
+
+			frappe.db.sql("""update `tabStock Requisition Item` sri set fulfilled_quantity=%s where sri.parent = %s and sri.item_code = %s """, (fulfilled_quantity,sreq_no,item_code))
+				
+
 @frappe.whitelist()
 def make_purchase_orders(sreq_no,supplier,po_items):
+	
 	items_List = json.loads(po_items)
 	print "type of po_items_list---------", type(items_List), items_List
 	creation_Date = datetime.datetime.now()
@@ -443,6 +479,8 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				"warehouse": items['warehouse']
 			   	}
 			outerJson_Transfer["items"].append(innerJson_Transfer)
+			
+
 		doc = frappe.new_doc("Purchase Order")
 		doc.update(outerJson_Transfer)
 		doc.save()

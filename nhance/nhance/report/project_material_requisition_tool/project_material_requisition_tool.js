@@ -7,56 +7,57 @@ var company = "";
 frappe.query_reports["Project Material Requisition Tool"] = {
 	"filters": [
 		{
-            "fieldname": "company",
-            "label": __("Company"),
-            "fieldtype": "Link",
-            "options": "Company",
-            "reqd": 1
+			"fieldname": "company",
+			"label": __("Company"),
+			"fieldtype": "Link",
+			"options": "Company",
+			"reqd": 1
     },
 		{
-	            "fieldname": "project",
-	            "label": __("Project"),
-	            "fieldtype": "Link",
-	            "options": "Project",
-	            "reqd": 1,
-							"get_query": function(){
-															return {
-																"doctype": "Project",
-																"filters": {
-																"is_active": "Yes"
-																}
-															}
-					    },
-							"on_change": function(query_report) {
-															console.log(" Changed project ********* ");
-															var project = frappe.query_report.get_filter_value("project");
-															console.log("Selected project******************:::::"+project);
-															frappe.call({
-																	method: "nhance.nhance.report.project_material_requisition_tool.project_material_requisition_tool.fetch_project_details",
-																	args: {
-																	"project":project
-																	},
-																	async: false,
-																	callback: function(r)
-																	{
-																								if(r.message){
-																								var master_bom = r.message[0].master_bom;
-																								project_details = r.message[0]
-																								console.log("project_details  :::::"+JSON.stringify(project_details));
-																								console.log("MAster Bom :::::"+master_bom);
+			"fieldname": "project",
+			"label": __("Project"),
+			"fieldtype": "Link",
+			"options": "Project",
+			"reqd": 1,
+			"get_query": function(){
+											return {
+												"doctype": "Project",
+												"filters": {
+												"is_active": "Yes"
+												}
+											}
+			},
+			"on_change": function(query_report) {
+											console.log(" Changed project ********* ");
+											var project = frappe.query_report.get_filter_value("project");
+											console.log("Selected project******************:::::"+project);
+											frappe.call({
+													method: "nhance.nhance.report.project_material_requisition_tool.project_material_requisition_tool.fetch_project_details",
+													args: {
+													"project":project
+													},
+													async: false,
+													callback: function(r)
+													{
+																				if(r.message){
+																				var master_bom = r.message[0].master_bom;
+																				project_details = r.message[0]
+																				console.log("project_details  :::::"+JSON.stringify(project_details));
+																				console.log("MAster Bom :::::"+master_bom);
 
-																								}//end of if..
-																	}//end of call-back function..
-															});//end of frappe call..
+																				}//end of if..
+													}//end of call-back function..
+											});//end of frappe call..
 
-															if( project_details['reserve_warehouse'] == null || project_details['master_bom'] == null || project_details['project_warehouse'] == null)
-															{
-															  frappe.throw("The Project Master for Project "+ project +" is not updated with Master BOM/Reserve Warehouse/Project Warehouse. Please update these values in the Project Master and run this report again. ");
-															}
+											if( project_details['reserve_warehouse'] == null || project_details['master_bom'] == null || project_details['project_warehouse'] == null)
+											{
+												frappe.throw("The Project Master for Project "+ project +" is not updated with Master BOM/Reserve Warehouse/Project Warehouse. Please update these values in the Project Master and run this report again. ");
+											}
 
-															frappe.query_report.refresh();
+											frappe.query_report.refresh();
 
-							} //End of on change
+			} //End of on change
+
 
 	  } //end of prject filter
 
@@ -87,10 +88,13 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 
 								  var short_qty_flag="false"
 									for (i = 0; i < col_data.length; i++) {
-										var short_qty = parseFloat (col_data[i][11])
+										var short_qty = parseFloat (col_data[i][12])
+										console.log("Short qty "+i +"st row"+  short_qty );
+
 										console.log("Short qty type"+ typeof short_qty );
 
 										if (short_qty > 0) {
+											console.log("came inside check loop");
 											short_qty_flag = "true";
 											break;
 										}
@@ -137,7 +141,7 @@ function makeStockRequistionn(filters) {
 							"fieldtype": "Date",
 							"label": "Required By Date",
 							"fieldname": "required_date",
-							"reqd":1 //
+							"reqd":1
 					}
 				],
 				primary_action : function() {

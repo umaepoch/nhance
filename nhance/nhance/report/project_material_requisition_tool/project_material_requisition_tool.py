@@ -17,77 +17,77 @@ company = []
 sum_data = []
 
 def execute(filters=None):
+    global sum_data
+    sum_data = []
+    columns = []
+    columns = get_columns()
+    master_bom = frappe.db.get_value('Project', filters.get("project"), 'master_bom')
+    project_name = frappe.db.get_value('Project', filters.get("project"), 'name')
+    company.append(frappe.db.get_value('BOM', master_bom, 'company'))
+    project_warehouse =  frappe.db.get_value('Project', filters.get("project"), 'project_warehouse')
+    reserve_warehouse =  frappe.db.get_value('Project', filters.get("project"), 'reserve_warehouse')
 
- global sum_data
- sum_data = []
- columns = []
- columns = get_columns()
- master_bom = frappe.db.get_value('Project', filters.get("project"), 'master_bom')
- project_name = frappe.db.get_value('Project', filters.get("project"), 'name')
- company.append(frappe.db.get_value('BOM', master_bom, 'company'))
- project_warehouse =  frappe.db.get_value('Project', filters.get("project"), 'project_warehouse')
- reserve_warehouse =  frappe.db.get_value('Project', filters.get("project"), 'reserve_warehouse')
+    if  master_bom and project_warehouse and reserve_warehouse:
+        items_data = get__bom_items(master_bom)  #exploded items
 
- if  master_bom and project_warehouse and reserve_warehouse:
+        for item_data in sorted(items_data):
+            item_code = item_data.item_code
+            bom_item_qty = item_data.bi_qty
+            warehouse_qty = 0
+            reserve_warehouse_qty = 0
+            qty_consumed_in_manufacture= 0
+            sreq_sub_not_approved = 0
+            sreq_sub_not_ordered = 0
+            po_total_qty = 0
 
-   items_data = get__bom_items(master_bom)  #exploded items
+            warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
+            qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,item_code)
 
-   for item_data in sorted(items_data):
-       item_code = item_data.item_code
-       bom_item_qty = item_data.bi_qty
-       warehouse_qty = 0
-       reserve_warehouse_qty = 0
-       qty_consumed_in_manufacture= 0
-       sreq_total_qty = 0
-       po_total_qty = 0
+            delta_qty = warehouse_qty - bom_item_qty
 
-       warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
-       qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,item_code)
+            reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
 
-       delta_qty = warehouse_qty - bom_item_qty
+            rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
 
-       reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
+            sreq_sub_not_approved = get_sreq_sub_not_approved(item_code,project_name)
+            sreq_sub_not_ordered = get_sreq_sub_not_ordered(item_code,project_name) # have to create project custom field and add to query condition
+            po_total_qty = get_po_total_qty(item_code,project_name) # have to create project custom field and add to query condition
 
-       rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
+            qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty
+            tot_qty_covered =  qty_planned_nrec +  rw_pb_cons_qty
 
-       sreq_total_qty = get_sreq_total_qty(item_code,project_name) # have to create project custom field and add to query condition
-       po_total_qty = get_po_total_qty(item_code,project_name) # have to create project custom field and add to query condition
+            short_qty =  bom_item_qty - tot_qty_covered
 
-       qty_planned_nrec = sreq_total_qty + po_total_qty
-       tot_qty_covered =  qty_planned_nrec +  rw_pb_cons_qty
+            if short_qty < 0:
+              short_qty = 0
 
-       short_qty =  bom_item_qty - tot_qty_covered
+            sum_data.append([str(item_code),str(bom_item_qty),str(warehouse_qty),str(delta_qty),
+                  str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_sub_not_approved),str(sreq_sub_not_ordered),str(po_total_qty),str(qty_planned_nrec),
+                  str(tot_qty_covered),str(short_qty)])
 
-       if short_qty < 0:
-         short_qty = 0
-
-       sum_data.append([str(item_code),str(bom_item_qty),str(warehouse_qty),str(delta_qty),
-             str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_total_qty),str(po_total_qty),str(qty_planned_nrec),
-             str(tot_qty_covered),str(short_qty)])
-
- return columns, sum_data
+    return columns, sum_data
 
 def get_columns():
- """return columns"""
- columns = [
-   _("Item Code")+"::100",
-   _("BOM Item Qty")+"::100",
-   _("PB WAREHOUSE QTY")+"::100",
-   _("DELTA QTY (PB-BOM item qty)")+"::140",
-   _("RW WAREHOUSE QTY")+"::100",
-   _("Quantity consumed in Manufacturte")+"::150",
-   _("RW+PB+Consumed QTY")+"::150",
-   _("SREQs  Submitted but not Ordered")+":Link/UOM:90",
-   _("PO Quantities Ordered but not Delivered")+"::150",
-   _("Sum Quantity Planned but Not Received Material")+"::150",
-   _("Total Quantity Covered")+"::150",
-   _("Short Qty (Excess Quantity is reported as 0)")+"::150"
-    ]
- return columns
-
+    """return columns"""
+    columns = [
+      _("Item Code")+"::100",
+      _("BOM Item Qty")+"::100",
+      _("PB WAREHOUSE QTY")+"::100",
+      _("DELTA QTY (PB-BOM item qty)")+"::140",
+      _("RW WAREHOUSE QTY")+"::100",
+      _("Quantity consumed in Manufacturte")+"::150",
+      _("RW+PB+Consumed QTY")+"::150",
+      _("SREQs  Submitted but not Approved")+":Link/UOM:90",
+      _("SREQs  Submitted but not Ordered")+":Link/UOM:90",
+      _("PO Quantities Ordered but not Delivered")+"::150",
+      _("Sum Quantity Planned but Not Received Material")+"::150",
+      _("Total Quantity Covered")+"::150",
+      _("Short Qty (Excess Quantity is reported as 0)")+"::150"
+       ]
+    return columns
 
 def get__bom_items(master_bom):
- return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1"and bi.parent = '%s' order by bo.name, bi.item_code""" % master_bom, as_dict=1)
+     return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1"and bi.parent = '%s' order by bo.name, bi.item_code""" % master_bom, as_dict=1)
 
 def get_warehouse_qty(warehouse,item_code):
  whse_qty = 0
@@ -98,35 +98,54 @@ def get_warehouse_qty(warehouse,item_code):
  return whse_qty
 
 def get_stock_entry_quantities(warehouse,item_code):
- total_qty = 0
- po_details = {}
- qty_consumed_in_manufacture = 0
+    total_qty = 0
+    po_details = {}
+    qty_consumed_in_manufacture = 0
 
- details = frappe.db.sql("""select sed.item_code,sed.qty,se.purpose from `tabStock Entry Detail` sed,
-     `tabStock Entry` se where sed.item_code=%s and sed.s_warehouse=%s and se.purpose='Manufacture' and
-     sed.parent=se.name and se.docstatus=1""", (item_code,warehouse), as_dict=1)
+    details = frappe.db.sql("""select sed.item_code,sed.qty,se.purpose from `tabStock Entry Detail` sed,
+        `tabStock Entry` se where sed.item_code=%s and sed.s_warehouse=%s and se.purpose='Manufacture' and
+        sed.parent=se.name and se.docstatus=1""", (item_code,warehouse), as_dict=1)
 
- if len(details)!=0:
-   for entries in details:
-     if entries['qty'] is None:
-       qty = 0
-     else:
-       qty = float(entries['qty'])
-     total_qty = total_qty + qty
+    if len(details)!=0:
+      for entries in details:
+        if entries['qty'] is None:
+          qty = 0
+        else:
+          qty = float(entries['qty'])
+        total_qty = total_qty + qty
 
- return total_qty
+    return total_qty
 
-def get_sreq_total_qty(item_code,project_name):
- sreq_datas = frappe.db.sql("""select sri.project, sri.item_code,sri.qty,sri.quantity_to_be_ordered,sri.parent,sri.uom,sri.warehouse,sri.schedule_date,sri.stock_uom,sri.description,sr.docstatus,sr.transaction_date,sr.schedule_date from `tabStock Requisition Item` sri,`tabStock Requisition` sr where sri.item_code=%s  and sri.parent=sr.name and sr.docstatus=1 and sri.project=%s""",(item_code,project_name), as_dict=1)
- sreq_total_qty = 0
- quantity_to_be_ordered = 0
+def get_sreq_sub_not_approved(item_code,project_name):
+    total_not_appr_qty = 0
+    not_approved_qty = 0
+    sreq_datas = frappe.db.sql("""select
+                                        sri.project, sri.item_code,sri.qty
+                                  from
+                                        `tabStock Requisition Item` sri,`tabStock Requisition` sr
+                                  where
+                                        sri.item_code=%s  and sri.parent=sr.name
+                                        and sr.docstatus= 0 and sri.project=%s
+                                        and sr.workflow_state = 'Pending Approval' """,(item_code,project_name), as_dict=1)
 
- for sreq_data in sreq_datas:
-   if sreq_data['quantity_to_be_ordered']:
-     quantity_to_be_ordered = float(sreq_data['quantity_to_be_ordered'])
-   sreq_total_qty = sreq_total_qty + quantity_to_be_ordered
 
- return sreq_total_qty
+    for sreq_data in sreq_datas:
+        if sreq_data['qty']:
+            not_approved_qty = float(sreq_data['qty'])
+        total_not_appr_qty = total_not_appr_qty + not_approved_qty
+
+    return total_not_appr_qty
+
+def get_sreq_sub_not_ordered(item_code,project_name):
+    sreq_datas = frappe.db.sql("""select sri.project, sri.item_code,sri.qty,sri.quantity_to_be_ordered,sri.parent,sri.uom,sri.warehouse,sri.schedule_date,sri.stock_uom,sri.description,sr.docstatus,sr.transaction_date,sr.schedule_date from `tabStock Requisition Item` sri,`tabStock Requisition` sr where sri.item_code=%s  and sri.parent=sr.name and sr.docstatus=1 and sri.project=%s""",(item_code,project_name), as_dict=1)
+    sreq_total_qty = 0
+    quantity_to_be_ordered = 0
+    for sreq_data in sreq_datas:
+        if sreq_data['quantity_to_be_ordered']:
+              quantity_to_be_ordered = float(sreq_data['quantity_to_be_ordered'])
+              sreq_total_qty = sreq_total_qty + quantity_to_be_ordered
+    return sreq_total_qty
+
 
 def get_po_total_qty(item_code,project_name):
  po_total_qty = 0
@@ -172,7 +191,7 @@ def	 get_workflowStatus(master_bom,col_data):
    item_code = c[0]
    bom_item_qty = c[1]
    bom_item_qty = float(bom_item_qty)
-   sreq_qty =c[7]
+   sreq_qty =c[9]
    sreq_qty = float(sreq_qty)
 
    differnce = (bom_qty*bom_item_qty)-sreq_qty
@@ -212,7 +231,7 @@ def	make_stock_requisition(project,company,col_data,workflowStatus,required_date
     for c in col_data:
 
         item_code = c[0]
-        short_qty = c[11]
+        short_qty = c[12]
         short_qty = float(short_qty)
 
         item_data_key = get_item_data(item_code)
@@ -221,7 +240,7 @@ def	make_stock_requisition(project,company,col_data,workflowStatus,required_date
         innerJson_transfer ={
         "doctype": "Stock Requisition Item",
         "item_code": item_code,
-        "qty": c[11],
+        "qty": c[12],
         "schedule_date": required_date ,
         "warehouse":reserve_warehouse,
         "uom": item_data['stock_uom'],
@@ -231,11 +250,11 @@ def	make_stock_requisition(project,company,col_data,workflowStatus,required_date
         "project":project,
         "pch_bom_reference": master_bom
         }
-        print "pch_bom_reference checking innerJson_transfer**********",innerJson_transfer
+
         if short_qty > 0:
             newJson_requisition["items"].append(innerJson_transfer) #end of for
 
-    print "pch_bom_reference checking newJson_requisition**********",newJson_requisition
+
 
     if newJson_requisition["items"]:
         doc = frappe.new_doc("Stock Requisition")
