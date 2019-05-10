@@ -212,7 +212,7 @@ def get_columns_sales():
 		_("Order Type") + "::120",
 		_("Company")+"::130",
 		_("Creation Date") + "::150", 
-		_("Schedule Date") + "::180",
+		_("Delivery Date") + "::180",
 		_("Total Quantity") + "::120",
 		_("Grand Total (INR)")+"::130",
 		_("Status")+"::130"
@@ -224,7 +224,7 @@ def get_columns_purchase():
 		_("Customer name ") + "::180",
 		_("Company")+"::130",
 		_("Creation Date") + "::150", 
-		_("Delivery Date") + "::180",
+		_("Schedule Date") + "::180",
 		_("Total Quantity") + "::120",
 		_("Grand Total (INR)")+"::130",
 		_("Status")+"::130"
@@ -306,6 +306,7 @@ def cancel_and_amend_doc(doctype,docIdss,newdate):
 	sales_name = new_pr.name
 	print "name------------",sales_name
 	new_pr.submit()
+	frappe.msgprint(" Successfully created new Doc "+doctype+" as Amended "+sales_name+" !!")
 	if doctype == "Sales Order":
 		frappe.db.sql("""UPDATE `tabSales Order` SET delivery_date = '"""+str(newdate)+"""' where name = '"""+sales_name+"""'""")
 		frappe.db.sql("""UPDATE `tabSales Order Item` SET delivery_date = '"""+str(newdate)+"""' where parent = '"""+sales_name+"""'""")

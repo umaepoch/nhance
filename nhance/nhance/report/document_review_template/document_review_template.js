@@ -140,20 +140,15 @@ frappe.query_reports["Document Review Template"] = {
 			console.log("before get date-----"+input_date);
                         input_date = $("input[data-fieldname='date']").val();
 			console.log("after get date------"+input_date);
-                       // show_alert(input_date);
                         var newdate = input_date.split("-").reverse().join("-");
                         show_alert(newdate);
-                        //selectStudentIdFromStudentDocType(batch_name);
-                        //var new_date = frappe.datetime.date(date);
-                        //console.log(new_date);
                         var new_id =  function_doctype_cancell_amended(doctype, docIdss, newdate);
 			show_alert(new_id);
 			frappe.query_report.refresh();
 			frappe.query_report.set_filter_value("docIds", "");
 			frappe.query_report.set_filter_value("docIds", new_id);
 			frappe.query_report.refresh();
-		        $("input[data-fieldname='date']").reset();
-			d.reset();
+			
 			d.hide();
 			
                        
