@@ -1620,6 +1620,9 @@ def make_material_receipt(mterialReceiptList,difference_account):
 		doc.save()
 		#doc.submit()
 		#ret = doc.doctype
+		doc_name = doc.name
+		if doc_name:
+			return doc_name
 
 ## Expense Account details of Stock Entry Begins...
 @frappe.whitelist()
@@ -1703,4 +1706,11 @@ def update_sreq_items_fulfilled_qty(updated_sreq_items_data,stockRequisitionID):
 		frappe.db.sql("""update `tabStock Requisition Item` sri set fulfilled_quantity=%s where sri.parent = %s and sri.item_code = %s """, (fulfilled_qty,stockRequisitionID,sreq_item_code))
 
 #PMRT end
+
+@frappe.whitelist()
+def cancel_stock_entry_material_receipt(pch_ste_pull_short_rm):
+    frappe.db.sql("""update `tabStock Entry` set docstatus=2 where name=%s""", pch_ste_pull_short_rm)
+    frappe.db.commit()
+    frappe.msgprint("The Stock Entry is cancelled successfully!!")
+    return 1
 
