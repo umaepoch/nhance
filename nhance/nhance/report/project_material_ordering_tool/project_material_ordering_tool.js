@@ -55,7 +55,6 @@ function validate_project_details(project, query_report) {
             } else {
                 frappe.query_report.refresh();
             }
-
         }
     });
 }
@@ -86,6 +85,7 @@ function make_PO_and_transfer_qty(report) {
         var mt_qty = reportData[i]['mt_qty'];
         var supplier = reportData[i]['supplier'];
         var bom = reportData[i]['bom'];
+	var fulfilled_qty = reportData[i]['fulfilled_qty'];
         var conversion_factor = reportData[i]['conversion_factor'];
 	var po_qty = 0;
 
@@ -104,24 +104,29 @@ function make_PO_and_transfer_qty(report) {
             		req_po_qty = parseInt(tmp_po_qty);
         	}
 
-		if (purchase_uom != null){
-			po_qty = req_po_qty/conversion_factor;
+		if (purchase_uom != null && purchase_uom != undefined && purchase_uom != ""){
+			var cf = fetch_conversion_factor(item_code,purchase_uom);
+			if (cf != 0){
+				po_qty = req_po_qty/conversion_factor;
+			}else{
+				frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
+			}
 		}else{
 			po_qty = req_po_qty;
 		}
+		console.log("...tmp_po_qty....testing......" + tmp_po_qty);
+        	console.log("...req_po_qty....testing......" + req_po_qty);
+		console.log("...po_qty....testing......" + po_qty);
 	}else{
 		po_qty = tmp_po_qty;
 	}
 
-        console.log("...tmp_po_qty....testing......" + po_qty);
-        console.log("...po_qty.........." + po_qty);
-
-
+       
         if (bom == null || bom == undefined) {
             bom = "";
         }
 
-        if (mt_qty > 0) {
+        if (mt_qty > 0 && fulfilled_qty > 0) {
             materialItems['item_code'] = item_code;
             materialItems['sreq_no'] = sreq_no;
             materialItems['s_warehouse'] = source_warehouse;
@@ -217,7 +222,7 @@ function make_PO_and_transfer_qty(report) {
             poItems['sreq_no'] = sreq_no;
             poItems['supplier'] = supplier;
             poItems['qty'] = po_qty;
-            poItems['project'] = project;
+            poItems['bom'] = bom;
             poItems['warehouse'] = reserve_whse;
             poItems['price_list_rate'] = rate;
             poItems['bom'] = bom;
@@ -235,15 +240,7 @@ function make_PO_and_transfer_qty(report) {
         }
     } //end of for loop...
 
-    //Creating Material Transfer of Stock Entry..
-    for (const entry of materialTransferMap.entries()) {
-        var sreq_no = entry[0];
-        var mt_list = materialTransferMap.get(sreq_no);
-        makeMaterialTransfer(sreq_no, mt_list);
-    }
-    //end of Material Transfer of Stock Entry..
-
-
+    //Creating PO's..
     for (const entry of purchaseOrderMap.entries()) {
         var supplier_map = new Map();
         var sreq_no = entry[0];
@@ -282,8 +279,35 @@ function make_PO_and_transfer_qty(report) {
 
     } //end of purchaseOrderMap
 
+ //Creating Material Transfer of Stock Entry..
+    for (const entry of materialTransferMap.entries()) {
+        var sreq_no = entry[0];
+        var mt_list = materialTransferMap.get(sreq_no);
+        makeMaterialTransfer(sreq_no, mt_list);
+    }
+    //end of Material Transfer of Stock Entry..
+
 
 } //end of make_PO_and_transfer_qty..
+
+
+function fetch_conversion_factor(item_code,purchase_uom){
+var cf = 0.0;
+    frappe.call({
+        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fetch_conversion_factor",
+        args: {
+            "parent": item_code,
+            "uom": purchase_uom
+        },
+        async: false,
+        callback: function(r) {
+            console.log("conversion_factor..." + r.message);
+            cf = r.message;
+
+        }
+    });
+    return cf;
+}
 
 function makePO(sreq_no, supplier, po_items) {
     frappe.call({

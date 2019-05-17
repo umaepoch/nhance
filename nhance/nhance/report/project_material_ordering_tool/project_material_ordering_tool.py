@@ -52,7 +52,8 @@ def execute(filters=None):
 					sreq_dict['max_price_of_last_10_purchase_transactions'],
 					sreq_dict['min_price_of_last_10_purchase_transactions'],
 					sreq_dict['avg_price_of_last_10_purchase_transactions'],
-					sreq_dict['bom']
+					sreq_dict['bom'],
+					sreq_dict['fulFilledQty']
 					])	
 
 	return columns, sum_data
@@ -72,13 +73,17 @@ def fetch_pending_sreqnos(project,swh):
 				sreq_items = fetch_sreq_item_details(sreq_no)
 				if sreq_items:
 					sreq_qty = 0
+					fulFilledQty = 0
 					for items_data in sreq_items:
 						item_code = items_data['item_code']
 						bom_reference = items_data['pch_bom_reference']
+						fulFilledQty = items_data['fulfilled_quantity']
 						default_supplier = fetch_default_supplier(company,item_code)
 						po_items = fetch_po_items_details(item_code,po_list)
 						po_uom = fetch_item_purchase_uom(item_code)
 						conversion_factor = fetch_conversion_factor(item_code,po_uom)
+						if conversion_factor == 0:
+							conversion_factor = ""
 
 						last_purchase_price = fetch_last_purchase_price(str(item_code), str(items_data['uom']))
 						max_price_of_last_10_purchase_transactions = fetch_max_price_of_last_10_purchase_transactions(item_code, items_data['uom'])
@@ -123,7 +128,8 @@ def fetch_pending_sreqnos(project,swh):
 									"max_price_of_last_10_purchase_transactions": max_price_of_last_10_purchase_transactions,
 									"min_price_of_last_10_purchase_transactions": min_price_of_last_10_purchase_transactions,
 									"avg_price_of_last_10_purchase_transactions": avg_price_of_last_10_purchase_transactions,
-									"bom": bom_reference
+									"bom": bom_reference,
+									"fulFilledQty": fulFilledQty
 									})
 								items_map[key] = sreq_items_list
 							else:
@@ -147,6 +153,7 @@ def fetch_pending_sreqnos(project,swh):
 								item_entry["min_price_of_last_10_purchase_transactions"] = min_price_of_last_10_purchase_transactions
 								item_entry["avg_price_of_last_10_purchase_transactions"] = avg_price_of_last_10_purchase_transactions
 								item_entry["bom"] =  bom_reference
+								item_entry["fulFilledQty"] =  fulFilledQty
 								prev_sreq_list.append(item_entry)
 								items_map[key] = prev_sreq_list
 						
@@ -156,13 +163,17 @@ def fetch_pending_sreqnos(project,swh):
 			else:
 				sreq_items = fetch_sreq_item_details(sreq_no)
 				if sreq_items:
+					fulFilledQty = 0
 					for items_data in sreq_items:
 						item_code = items_data['item_code']
 						bom_reference = items_data['pch_bom_reference']
+						fulFilledQty = items_data['fulfilled_quantity']
 						default_supplier = fetch_default_supplier(company,item_code)
 						print "item_code---", item_code, items_data['uom']
 						po_uom = fetch_item_purchase_uom(item_code)
 						conversion_factor = fetch_conversion_factor(item_code,po_uom)
+						if conversion_factor == 0:
+							conversion_factor = ""
 
 						last_purchase_price = fetch_last_purchase_price(str(item_code), str(items_data['uom']))
 						max_price_of_last_10_purchase_transactions = fetch_max_price_of_last_10_purchase_transactions(item_code, items_data['uom'])
@@ -203,7 +214,8 @@ def fetch_pending_sreqnos(project,swh):
 									"max_price_of_last_10_purchase_transactions": max_price_of_last_10_purchase_transactions,
 									"min_price_of_last_10_purchase_transactions": min_price_of_last_10_purchase_transactions,
 									"avg_price_of_last_10_purchase_transactions": avg_price_of_last_10_purchase_transactions,
-									"bom": bom_reference
+									"bom": bom_reference,
+									"fulFilledQty": fulFilledQty
 									})
 							items_map[key] = sreq_items_list
 						else:
@@ -227,6 +239,7 @@ def fetch_pending_sreqnos(project,swh):
 							item_entry["min_price_of_last_10_purchase_transactions"] = min_price_of_last_10_purchase_transactions
 							item_entry["avg_price_of_last_10_purchase_transactions"] = avg_price_of_last_10_purchase_transactions
 							item_entry["bom"] =  bom_reference
+							item_entry["fulFilledQty"] =  fulFilledQty
 							prev_sreq_list.append(item_entry)
 							items_map[key] = prev_sreq_list
 		#print "items_map-----", items_map
@@ -235,12 +248,14 @@ def fetch_pending_sreqnos(project,swh):
 	else:
 		return None
 
-
+@frappe.whitelist()
 def fetch_conversion_factor(parent,uom):
 	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent=%s and uom=%s""", (parent, uom), as_dict=1)
 	if records:
 		conversion_factor = records[0]['conversion_factor']
 		return conversion_factor
+	else:
+		return 0
 
 def fetch_po_items_details(item_code,po_list):
 	print "po_list-------", po_list
@@ -402,7 +417,7 @@ def make_stock_entry(sreq_no,mt_list):
 				"t_warehouse":items['t_warehouse'],
 				"qty":items['qty'],
 				"pch_bom_reference":items['bom'],
-				"pch_project":items['project'],
+				"pch_project_reference":items['project'],
 				"doctype": "Stock Entry Detail"
 				}
 			outerJson_Transfer["items"].append(innerJson_Transfer)
@@ -449,6 +464,8 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 	print "type of po_items_list---------", type(items_List), items_List
 	creation_Date = datetime.datetime.now()
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
+	details = frappe.get_meta("Purchase Order").get("fields")
+
 	if items_List:
 		outerJson_Transfer = {
 			"doctype": "Purchase Order",
@@ -463,6 +480,93 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 			"items": [],
 			"taxes": []
 			}
+
+		for defaults in details:
+			if defaults.fieldname == "supplier":
+				print "supplier Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['supplier'] = defaults.default
+				
+			if defaults.fieldname == "customer":
+				print "customer Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['customer'] = defaults.default
+
+			if defaults.fieldname == "auto_repeat":
+				print "auto_repeat Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['auto_repeat'] = defaults.default
+
+			if defaults.fieldname == "select_print_heading":
+				print "select_print_heading Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['select_print_heading'] = defaults.default
+
+			if defaults.fieldname == "party_account_currency":
+				print "party_account_currency Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['party_account_currency'] = defaults.default
+
+			if defaults.fieldname == "payment_terms_template":
+				print "payment_terms_template Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['payment_terms_template'] = defaults.default
+
+			if defaults.fieldname == "shipping_rule":
+				print "shipping_rule Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['shipping_rule'] = defaults.default
+
+			if defaults.fieldname == "taxes_and_charges":
+				print "taxes_and_charges Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['taxes_and_charges'] = defaults.default
+
+			if defaults.fieldname == "supplier_warehouse":
+				print "supplier_warehouse Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['supplier_warehouse'] = defaults.default
+
+			if defaults.fieldname == "set_warehouse":
+				print "set_warehouse Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['set_warehouse'] = defaults.default
+
+			if defaults.fieldname == "price_list_currency":
+				print "price_list_currency Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['price_list_currency'] = defaults.default
+
+			if defaults.fieldname == "buying_price_list":
+				print "buying_price_list Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['buying_price_list'] = defaults.default
+
+			if defaults.fieldname == "currency":
+				print "currency Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['currency'] = defaults.default
+
+			if defaults.fieldname == "shipping_address":
+				print "shipping_address Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['shipping_address'] = defaults.default
+
+			if defaults.fieldname == "contact_person":
+				print "contact_person Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['contact_person'] = defaults.default
+
+			if defaults.fieldname == "supplier_address":
+				print "supplier_address Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['supplier_address'] = defaults.default
+
+			if defaults.fieldname == "customer_contact_person":
+				print "customer_contact_person Default---", defaults.default
+				if defaults.default:
+					outerJson_Transfer['customer_contact_person'] = defaults.default
+			
 
 		for items in items_List:
 			innerJson_Transfer ={
@@ -505,6 +609,7 @@ def get_report_data():
 		conversion_factor = rows[10]
 		supplier = rows[12]
 		bom_reference = rows[18]
+		fulfilled_qty = rows[19]
 		mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
 		details = {"sreq_no":sreq_no,
 			   "project":project,
@@ -515,7 +620,8 @@ def get_report_data():
 			   "conversion_factor":conversion_factor,
 			   "po_uom":po_uom,
 			   "supplier":supplier,
-			   "bom":bom_reference
+			   "bom":bom_reference,
+			   "fulfilled_qty":fulfilled_qty
 			}
 		report_data.append(details)
 	return report_data
