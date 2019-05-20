@@ -27,6 +27,81 @@ frappe.ui.form.on('Stock Requisition', {
 	}
 });
 
+//update qty to be order on submit of sreq
+frappe.ui.form.on('Stock Requisition', {
+
+	refresh: function(frm, cdt, cdn) {
+		console.log("sreq refreshed");
+		if(cur_frm.doc.workflow_state == "Approved"){
+		console.log("SREQ approved **************");
+		var d = frappe.get_doc(cdt, cdn);
+		console.log("d  :::" + d );
+		var stockRequisitionID = d.name;
+		console.log("stockRequisitionID  :::" + stockRequisitionID );
+
+		if (stockRequisitionID != null && stockRequisitionID != "") {
+			if (cur_frm.doc.pch_is_submitted_sreq_updated == "No") {
+				var updated_sreq_items_data = [];
+
+				var sreq_items_data = get_sreq_items_data(stockRequisitionID);  //sreq_items_data[{"item_code":"Test Item1","qty":1}]
+				console.log("from submit,before update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
+
+				for (var i = 0; i < sreq_items_data.length; i++) {
+					var sreq_item_code = sreq_items_data[i]['item_code'];
+					var sreq_qty = sreq_items_data[i]['qty'];
+					var quantity_to_be_order = sreq_qty ;
+
+					updated_sreq_items_data.push(
+						{
+							"sreq_item_code":sreq_item_code,
+							"quantity_to_be_order":quantity_to_be_order
+						}
+					);
+					} //end of for
+
+				console.log("from approvel,calculated for updation, sreq_items_data ",JSON.stringify(updated_sreq_items_data));
+				update_sreq_items_data_on_sreq_approvel(updated_sreq_items_data,stockRequisitionID);
+				update_submitted_sreq( stockRequisitionID);
+				refresh_field("quantity_to_be_order");
+				refresh_field(frm.doc.items);
+
+				sreq_items_data = get_sreq_items_data(stockRequisitionID);
+				console.log("from submit,after update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
+
+			}// end if pch_is_cancelled_po_updated checking
+
+		} //if stockRequisitionID check
+
+	} // end of if check approved
+	} //end of refresh
+});
+//End update qty to be order on submit of sreq
+
+//raghu code
+/**
+frappe.ui.form.on('Stock Requisition', {
+   refresh: function(frm, cdt, cdn) {
+      cur_frm.set_query("item_code", "items", function(frm, cdt, cdn) {
+         var item_list = [];
+         var d = locals[cdt][cdn];
+         var item_group = d.item_group;
+         console.log("Stock Requisition refresh****inside**********");
+         if (item_group != undefined && item_group != null) {
+            item_list = fetch_items(item_group);
+            return {
+               "filters": [
+                  ["Item", "name", "in", item_list]
+               ]
+            }
+            refresh_field("item_code");
+            refresh_field("items");
+         }
+      });
+   }
+});
+**/
+//raghu end
+
 frappe.ui.form.on("Stock Requisition Item", {
 	qty: function (frm, doctype, name) {
 		var d = locals[doctype][name];
@@ -189,7 +264,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 	calculate_taxes_and_totals: function() {
 		return;
 	},
-	make_purchase_order: function() {
+	make_purchase_order: function( ) {
 		var whole_number = 0;
 		var whole_number_in_stock_transactions = 0;
 		var dialog_box_flag = false;
@@ -202,7 +277,56 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var itemsArray = new Array();
 		var whole_number_in_stock_transactions_flag = false;
 		var check_args = "";
-		console.log("--------------SREQ ID::"+cur_frm.doc.name);
+		console.log("make_purchase_order --------------SREQ ID::"+cur_frm.doc.name);
+
+
+
+
+
+		//validating purchase uom and  conversion_factor
+		var sreq_document = 	cur_frm.doc;
+		var sreq_items_data = sreq_document.items;
+		var sreq_items_name_list = [];
+
+		for(var i = 0; i < sreq_items_data.length; i++){
+			var sreq_item_name = sreq_items_data[i].item_code ;
+			sreq_items_name_list.push(sreq_item_name);
+		}//end of for
+
+		var sreq_master_items_data = get_sreq_master_items_data(sreq_items_name_list);
+		//console.log("sreq_items_name_list :::" +sreq_items_name_list );
+		console.log("sreq_master_items_data ac to  sreq_items_name_list" +JSON.stringify(sreq_master_items_data) );
+
+
+		for(var i = 0; i < sreq_items_name_list.length; i++){
+			var item_code = sreq_items_name_list[i];
+			var master_item_data =  sreq_master_items_data[item_code];
+			var ucd_uom_list = []
+			var purchase_uom = master_item_data[0]['purchase_uom'];
+
+			if (purchase_uom != null ){
+
+					for(var j = 0; j < master_item_data.length; j++){
+						var ucd_uom = master_item_data[j]['uom'] ;
+						ucd_uom_list.push( ucd_uom );
+						}
+
+					if( $.inArray(purchase_uom, ucd_uom_list) != -1){
+						console.log("ucf available for this item"+item_code)
+						}
+						else {
+							frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
+							console.log("ucf not there  for this item"+item_code)
+							}
+
+			} //end if
+			console.log("purchase_uom for item name:"+item_code+" is "+purchase_uom)
+			console.log("ucd_uom_list"+item_code+" is "+ucd_uom_list)
+
+		}//end of forsreq_items_name_list
+		//End validating purchase uom and conversion conversion_factor
+
+
 		if(!dialog_displayed){
 			var dialog = new frappe.ui.Dialog({
 			title: __("Select Round Type:"),
@@ -244,8 +368,16 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						var expense_account1 = itemsList[arrayLength].expense_account;
 						var purchase_uom = getPurchaseUom(item_code);
 						var check_flag = get_UOM_Details(stock_uom);
-						/**
+						var pch_bom_reference = "" ;
+						var project = "" ;
+						if( itemsList[arrayLength].pch_bom_reference != null && itemsList[arrayLength].pch_bom_reference != undefined){
+							pch_bom_reference= itemsList[arrayLength].pch_bom_reference;
+						}
+						if( itemsList[arrayLength].project != null && itemsList[arrayLength].project != undefined){
+							project= itemsList[arrayLength].project;
+						}
 						console.log("purchase_uom::"+purchase_uom);
+							/**
 						console.log("qty::"+qty);
 						console.log("cost_center::"+cost_center1);
 						console.log("expense_account-------------::"+expense_account1);
@@ -273,6 +405,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 						purchase_uom = uom;
 						}
+						console.log("second time purchase_uom after else"+purchase_uom);
 						//console.log("stock_qty is::"+stock_qty);
    						var stock_uom = itemsList[arrayLength].stock_uom;
     						var warehouse = itemsList[arrayLength].warehouse;
@@ -284,7 +417,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						var expense_account = item_default_details[0]['expense_account'];
 						//var warehouse = item_default_details[0]['default_warehouse'];
 						var price_list = item_default_details[0]['default_price_list'];
-						
+
 						if (price_list != null){
 							var item_price = fetch_item_price(item_code,price_list);
 							arr['price_list_rate'] = item_price;
@@ -308,14 +441,14 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 							arr['cost_center'] = cost_center1;
 						}
-		
+
 						if (expense_account != null){
 							arr['expense_account'] = expense_account;
 							itemsList[arrayLength].expense_account = expense_account;
 						}else{
 							arr['expense_account'] = expense_account1;
 						}
-						
+
 
 
 						//console.log("default_supplier::"+default_supplier);
@@ -327,8 +460,10 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
 						arr['warehouse'] = warehouse;
+						arr['pch_bom_reference'] = pch_bom_reference;
+						arr['project'] = project;
     						//arr['price'] = standard_rate;
-    						
+
     						arr['conversion_factor'] = conversion_factor;
 
 						if(default_supplier == null){
@@ -474,7 +609,7 @@ cur_frm.cscript['Stop Material Request'] = function() {
 	callback: function(r) {
 		if(r.message) {
 			cur_frm.reload_doc();
-		} 
+		}
 		}
          });
     /**
@@ -633,35 +768,35 @@ var purchase_uom = "";
 
 return purchase_uom;
 }
-
+//					making_PurchaseOrder_For_SupplierItems(supplierList,defaultSupplierItemsMap,company,no_Supplier_Items,msg,cur_frm);
 function making_PurchaseOrder_For_SupplierItems(supplierList,myMap,company,items,message,cur_frm){
-console.log("making_PurchaseOrder_For_SupplierItems-----------------");
+
 var srID = cur_frm.doc.name;
-console.log("po_list::"+cur_frm.doc.po_list);
+
 /**
 ** Preparing JsonArray Data To Display Dialog box with Suppliers and Tax Template..
 **/
-console.log("#####-supplierList::"+supplierList);
+
 var dialog_fields = new Array();
 var dialog_array = [];
 var supplier = "";
 var column_break_json ={
 "fieldtype":"Column Break",
-"fieldname":"column_break"	
+"fieldname":"column_break"
 }
 var column_break_data = JSON.stringify(column_break_json);
 for(var i=0;i<supplierList.length;i++){
 	supplier = supplierList[i];
 	var supplier_json ={
 		"fieldtype":"Data",
-		"fieldname":"supplier"+ "_" + i,	
-		"default": supplier,	
-		"bold":1,	
-		"read_only":1				
+		"fieldname":"supplier"+ "_" + i,
+		"default": supplier,
+		"bold":1,
+		"read_only":1
 		}
 	var tax_template_json ={
 		"fieldtype":"Link",
-		"fieldname":"tax_template" + "_" + i,	
+		"fieldname":"tax_template" + "_" + i,
 		"options": "Purchase Taxes and Charges Template",
 		"reqd":1
 		}
@@ -679,10 +814,11 @@ dialogArray.push(JSON.parse(dialog_fields[i]));
 /**
 ** End of Preparing JsonArray Data..
 **/
+
 console.log("message-----------------");
 if(supplierList.length!=0){
 cur_frm.save("Update");
-var dialog = new frappe.ui.Dialog({																																																																																																																																																																								
+var dialog = new frappe.ui.Dialog({
 title: __("Select Tax Template For Suppilers"),
 fields: dialogArray,
 	primary_action: function(){
@@ -758,8 +894,36 @@ fields: dialogArray,
 function makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID){
 	message.items = items;
 	message.stock_requisition_id  = srID;
-	message.supplier = "";
-	message.supplier_name = "";
+
+
+	//getting default values
+	var defualt_list=["supplier","company","customer","customer_contact_person",
+	"supplier_address","contact_person","shipping_address","currency","buying_price_list",
+	"price_list_currency","set_warehouse","supplier_warehouse","taxes_and_charges","shipping_rule",
+	"payment_terms_template","party_account_currency","select_print_heading",
+	"auto_repeat"]
+	var po_default_values=get_po_default_values();
+	console.log("from no supplier default values"+JSON.stringify(po_default_values));
+
+
+	for (var i = 0; i < defualt_list.length; i++) {
+
+	 var default_field = defualt_list[i] ;
+	 var key_default_value = "defualt_" + defualt_list[i] ;
+	 if  ( po_default_values[key_default_value] != null )
+	 {
+		 var append_default_val = po_default_values[key_default_value] ;
+		 message.default_field  = append_default_val ;
+		 console.log("appended_default_field ---"+ default_field+  ":" + append_default_val);
+	 }
+
+	}
+
+
+
+
+	//getting default values end
+
 	frappe.get_doc(message.doctype, message.name).__run_link_triggers = true;
 	frappe.set_route("Form", message.doctype, message.name);
 }//end of makePUrchaseOrderForNoSupplierItems..
@@ -772,8 +936,8 @@ frappe.call({
 		 "po_list":poList
         },
 	async: false,
-	callback: function(r) 
-      	{ 
+	callback: function(r)
+      	{
 	//console.log("");
 	}
 	});//end of frappe call..
@@ -817,3 +981,144 @@ frappe.call({
        }) //end of frappe call.
 }
 
+
+/**
+
+frappe.ui.form.on("Stock Requisition", "refresh", function(frm) {
+   cur_frm.set_query("item_code", "items", function(frm, cdt, cdn) {
+      var d = locals[cdt][cdn];
+      var item_group = d.item_group;
+      var item_list = fetch_items(item_group);
+      console.log("checking----------------");
+      if (item_list != null) {
+         return {
+            "filters": [
+               ["Item", "name", "in", item_list]
+            ]
+         }
+         refresh_field("item_code");
+         refresh_field("items");
+      }
+   });
+});
+
+function fetch_items(item_group) {
+   var itemList = [];
+   frappe.call({
+      method: 'nhance.nhance.doctype.stock_requisition.stock_requisition.fetch_items',
+      args: {
+         "item_group": item_group,
+      },
+      async: false,
+      callback: function(r) {
+         if (r.message) {
+		console.log("Result-----fetch_items----"+ JSON.stringify(r.message));
+		for(var i=0;i<r.message.length;i++){
+			var item = r.message[i].name;
+			itemList.push(item);
+		}
+            //expense_account = r.message.item_code;
+         }
+      } //end of callback fun..
+   }); //end of frappe call..
+return itemList;
+}
+**/
+
+//qty to be order start SREQ refresh functions //PMRT start (Update "qty to be order" field on approving sreq )
+function update_sreq_items_data_on_sreq_approvel( updated_sreq_items_data,stockRequisitionID ) {
+	console.log(" This data is going to be updated" + JSON.stringify(updated_sreq_items_data));
+	frappe.call({
+        method: "nhance.api.update_sreq_items_data_on_sreq_approvel",
+        args: {
+            "updated_sreq_items_data": updated_sreq_items_data,
+						"stockRequisitionID" :stockRequisitionID
+        },
+        async: false,
+        callback: function(r) {
+					if (r.message) {
+						console.log("updatd sreq item succesfully");
+					} else {
+						console.log("failed to update sreq data");
+					}
+				}  //end of call back
+    }); // end of frappe call
+} //  end of update_sreq_items_data
+
+function get_sreq_items_data( stockRequisitionID ) {
+
+	var sreq_items_data;
+
+	frappe.call({
+        method: "nhance.api.get_sreq_items_data",
+        args: {
+            "stockRequisitionID": stockRequisitionID
+        },
+        async: false,
+        callback: function(r) {
+					if (r.message) {
+						sreq_items_data = r.message;
+            } else {
+							console.log("no get_sreq_items_data data");
+            }
+
+				}  //end of call back
+    }); // end of frappe call
+
+		return sreq_items_data;
+}  //end of  get_sreq_items_data
+
+
+function update_submitted_sreq(stockRequisitionID) {
+    frappe.call({
+        method: "nhance.api.update_submitted_sreq",
+        args: {
+            "stockRequisitionID": stockRequisitionID
+        },
+        async: false,
+        callback: function(r) {}
+    });
+}
+//qty to be order functions end
+
+//functions validating purchase uom and conversion conversion_factor
+function get_sreq_master_items_data(sreq_items_name_list){
+	var sreq_master_items_data_local;
+
+	frappe.call({
+				method: "nhance.nhance.doctype.stock_requisition.stock_requisition.get_sreq_master_items_data",
+				args: {
+						"sreq_items_name_list": sreq_items_name_list
+				},
+				async: false,
+				callback: function(r) {
+					if (r.message) {
+						sreq_master_items_data_local = r.message;
+						}
+
+				}  //end of call back
+		}); // end of frappe call
+		return sreq_master_items_data_local;
+}
+//End validating purchase uom and conversion conversion_factor
+
+//making po from sreq get_po_default_values
+function get_po_default_values(){
+	var po_default_values_local;
+
+	frappe.call({
+				method: "nhance.nhance.doctype.stock_requisition.stock_requisition.get_po_default_values",
+				args: {
+				},
+				async: false,
+				callback: function(r) {
+					if (r.message) {
+						po_default_values_local = r.message;
+						}
+
+				}  //end of call back
+		}); // end of frappe call
+		return po_default_values_local
+
+}
+//making po from sreq get_po_default_values

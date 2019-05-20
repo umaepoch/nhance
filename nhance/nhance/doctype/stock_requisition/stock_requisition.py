@@ -268,11 +268,17 @@ def get_Purchase_Taxes_and_Charges(account_head, tax_name):
 
 @frappe.whitelist()
 def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
+	#print "Came inside making_PurchaseOrder_For_SupplierItems"
+
+
 	#print "##-tax_template::", tax_template
 	order_List = json.loads(args)
 	items_List = json.dumps(order_List)
 	items_List = ast.literal_eval(items_List)
 	creation_Date = datetime.datetime.now()
+	#print "suresh debug*************items_List ",items_List
+
+
 	outerJson_Transfer = {
 				"doctype": "Purchase Order",
 				"title": "Purchase Order",
@@ -283,12 +289,31 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 				"stock_requisition_id": srID,
 				"due_date": creation_Date,
 				"docstatus": 0,
-				"supplier":"",
+
 				"items": [
 				],
 				"taxes": [
         			],
-			     }
+			     }  #end  outerJson_Transfer
+
+	#default values appending
+	po_default_values = get_po_default_values()
+	defualt_list=["supplier","company","customer","customer_contact_person",
+	"supplier_address","contact_person","shipping_address","currency","buying_price_list",
+	"price_list_currency","set_warehouse","supplier_warehouse","taxes_and_charges","shipping_rule",
+	"payment_terms_template","party_account_currency","select_print_heading",
+	"auto_repeat"]
+
+	for  vari in defualt_list :
+		key = "defualt_" + vari
+		if po_default_values[key]:
+			#print "Suresh debuf appended keys",key
+			outerJson_Transfer[vari] = po_default_values[key]
+
+	#print "outerJson_Transfer after append",outerJson_Transfer
+	# End default values appending
+
+
 	i = 0
 	if tax_template is not None and tax_template is not "":
 		tax_Name = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
@@ -314,6 +339,7 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 	i = 0
 	for items in items_List:
 		outerJson_Transfer['supplier'] = items_List[i]['supplier']
+
 		innerJson_Transfer =	{
 					"creation": creation_Date,
 					"qty": items_List[i]['qty'],
@@ -325,11 +351,13 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 					"parenttype": "Purchase Order",
 					"schedule_date": creation_Date,
 					"parentfield": "items",
-					"warehouse": items_List[i]['warehouse']
+					"warehouse": items_List[i]['warehouse'],
+					"pch_bom_reference": items_List[i]['pch_bom_reference'],
+					"project": items_List[i]['project']
 				   	}
 		outerJson_Transfer["items"].append(innerJson_Transfer)
 		i = i + 1
-	#print "########-Final Purchase Order Json::", outerJson_Transfer
+
 	doc = frappe.new_doc("Purchase Order")
 	doc.update(outerJson_Transfer)
 	doc.save()
@@ -701,3 +729,88 @@ def fetch_transferred_qty(item_code,sreq_no):
 def update_fulfilled_qty(item_code,fulFilledQty,sreq_no):
 	if fulFilledQty >= 0:
 		records = frappe.db.sql("""update `tabStock Requisition Item` set fulfilled_quantity='"""+fulFilledQty+"""' where parent=%s and item_code=%s""", (sreq_no,item_code))
+
+@frappe.whitelist()
+def fetch_items(item_group):
+	records = frappe.db.sql("""select name from `tabItem` where item_group=%s""", item_group, as_dict=1)
+	return records
+
+@frappe.whitelist()
+def get_sreq_master_items_data(sreq_items_name_list): # get item master details according to item code
+
+	"""
+	Format of this json:{ Item code:[itemdata] }
+	Ex:
+	{ item_code1 : [item_code1 data1, item_code1 data2...] ,item_code2 : [item_code2 data1, item_code2 data2...]
+ 	"""
+
+	sreq_items_name_list = eval(sreq_items_name_list)
+	count = 0
+	sql_sreq_items_name_list = "("
+	for sreq_item_name in sreq_items_name_list:
+		if count == 0 :
+			sql_sreq_items_name_list += "'" + sreq_item_name + "'"
+		else:
+			sql_sreq_items_name_list += ","+"'" + sreq_item_name + "'"
+		count = count +1
+	sql_sreq_items_name_list += ")"
+
+	sreq_master_items_data = frappe.db.sql("""select it.item_code,it.purchase_uom,ucd.parent,ucd.uom,ucd.conversion_factor from `tabUOM Conversion Detail` ucd,`tabItem` it where ucd.parent = it.item_code and it.item_code in {}""".format(sql_sreq_items_name_list), as_dict=1)
+
+	sreq_master_items_data_map= {}
+	for sreq_master_item_data in sreq_master_items_data :
+		if sreq_master_item_data['item_code'] in sreq_master_items_data_map.keys():
+			item_key =  sreq_master_item_data['item_code']
+			actuallist = sreq_master_items_data_map[item_key]
+			newlist = [sreq_master_item_data]
+			updated_list = actuallist.extend(newlist)
+			sreq_master_item_data['item_code'] = updated_list
+		else:
+			item_data_local = {sreq_master_item_data['item_code'] : [sreq_master_item_data ]}
+			sreq_master_items_data_map.update(item_data_local)
+			item_key =  sreq_master_item_data['item_code']
+
+	return sreq_master_items_data_map
+
+
+
+@frappe.whitelist()
+def get_po_default_values():
+
+	#print "came inside get_po_default_values"
+	po_default_values = { }
+	details = frappe.get_meta("Purchase Order").get("fields")
+	#print "after fetch meta data"
+
+	for defaults in details:
+		defualt_list=["supplier",
+		"company",
+		"customer",
+		"customer_contact_person",
+		"supplier_address",
+		"contact_person",
+		"shipping_address",
+		"currency",
+		"buying_price_list",
+		"price_list_currency",
+		"set_warehouse",
+		"supplier_warehouse",
+		"taxes_and_charges",
+		"shipping_rule",
+		"payment_terms_template",
+		"party_account_currency",
+		"select_print_heading",
+		"auto_repeat"]
+
+		for  vari in defualt_list :
+			if defaults.fieldname == vari:
+				#print vari + " Default---", defaults.default
+				vari_value = defaults.default
+				key = "defualt_" + vari
+				po_default_values[key] = None
+				if vari_value:
+					po_default_values[key] = vari_value
+
+
+	#print "po_default_values",po_default_values
+	return po_default_values
