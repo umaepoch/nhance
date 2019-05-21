@@ -26,18 +26,23 @@ def execute(filters=None):
 
 	for po_data in all_po_datas:
 		 po_name = po_data.name or  ""
-		 date = po_data.transaction_date or  ""
-		 reqd_by_date = po_data.schedule_date or  ""
+		 date = po_data.transaction_date
+		 date = frappe.utils.formatdate(date, "dd-MM-yyyy")
+		 reqd_by_date = po_data.schedule_date
+ 		 reqd_by_date = frappe.utils.formatdate(reqd_by_date, "dd-MM-yyyy")
 		 supplier = po_data.supplier or  ""
 		 supplier_name = po_data.supplier_name or  ""
 		 project_name = po_data.project or  ""
 		 item_code = po_data.item_code or  ""
-		 qty = po_data.qty
-		 received_qty = po_data.received_qty
-		 qty_to_receive = po_data.qr
+		 qty_puom = po_data.qty
+		 received_qty_puom = po_data.received_qty
+		 qty_to_receive_puom = po_data.qr
 		 stock_uom = po_data.stock_uom or  ""
-		 pur_stock_uom = po_data.uom or  ""
-		 qty_to_receive_pur_uom = po_data.qr
+		 pur_uom = po_data.uom or  ""
+		 conversion_factor =  po_data.conversion_factor
+		 stock_qty =  po_data.stock_qty
+		 received_qty_suom =  received_qty_puom *  conversion_factor
+		 qty_to_receive_suom = stock_qty - received_qty_suom
 		 warehouse = po_data.warehouse or  ""
 		 item_name = po_data.item_name or  ""
 		 description = po_data.description or  ""
@@ -51,14 +56,15 @@ def execute(filters=None):
 		 str(supplier_name),
 		 str(project_name),
 		 str(item_code),
-		 str(qty),
-		 str(received_qty),
-		 str(qty_to_receive),
+		 str(qty_puom),
+		 str(received_qty_puom),
+		 str(qty_to_receive_puom),
 		 str(stock_uom),
-		 str(pur_stock_uom),
-		 str(qty_to_receive_pur_uom),
+		 str(pur_uom),
+		 str(conversion_factor),
+		 str(qty_to_receive_suom),
+ 		 str(item_name),
 		 str(warehouse),
-		 str(item_name),
 		 str(description),
 		 str(brand),
 		 str(company)
@@ -77,14 +83,15 @@ def get_columns():
 		_("Supplier Name")+"::140",
 		_("Project")+"::140",
 		_("Item Code")+"::100",
-		_("Qty")+"::100",
-		_("Received Qty")+"::150",
-		_("Qty to Receive")+"::150",
+		_("Qty(PUOM)")+"::100",
+		_("Received Qty(PUOM)")+"::150",
+		_("Qty to Receive(PUOM)")+"::150",
 		_("Stock UOM")+":Link/UOM:90",
 		_("Purchase UOM")+"::150",
-		_("Quantity to Receive in Purchase UOM")+"::150",
-		_("Warehouse")+"::150",
+		_("Conversion Factor")+"::150",
+		_("Qty to Receive (SUOM)")+"::150",
 		_("Item Name")+"::150",
+		_("Warehouse")+"::150",
 		_("Description")+"::150",
 		_("Brand")+"::150",
 		_("Company")+"::150"
@@ -105,6 +112,8 @@ def get_all_po_datas():
 										(poi.qty - ifnull(poi.received_qty, 0)) qr,
 										poi.stock_uom,
 										poi.uom,
+										poi.conversion_factor,
+										poi.stock_qty ,
 										poi.warehouse,
 										poi.item_name ,
 										poi.description ,
