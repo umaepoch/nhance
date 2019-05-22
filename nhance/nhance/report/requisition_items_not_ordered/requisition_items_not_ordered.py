@@ -10,131 +10,110 @@ sys.setdefaultencoding('utf-8')
 
 def execute(filters=None):
 	unique_po_items_list = []
-
-	global company
-	company = filters.get("company")
-	sreq_data=get_po_list()
-	print "sreq_data ::", sreq_data
+	data = []
 	columns = get_columns()
-	sreq_items_data = []
-	pos_list = ""
-	for name in sreq_data:
-		sreq_id = name['name']
-		pos_list_tmp = name['po_list']
-		if pos_list_tmp is not None and pos_list_tmp is not "" and pos_list_tmp != 'NULL':
-			if pos_list == "":
-				pos_list = pos_list_tmp
-			else:
-				pos_list = pos_list + "," + pos_list_tmp
-		sreq_list = get_requisitioned_items(sreq_id)
-		if len(sreq_list)!=0:
-			for sreq_items in  sreq_list:
-				item_code = sreq_items['item_code']
-				qty = sreq_items['qty']
-				data = {
-				"sreq_id": sreq_id,
-				"item_code": item_code,
-				"qty": qty
-				}
-				sreq_items_data.append(data)
 
-	items_list = sreq_items_data
-	unique_stock_requisition_list = get_unique_items_list(items_list)
-	print "----------unique_stock_requisition_list-----------::", unique_stock_requisition_list
-	if len(pos_list)!=0:
-		items_list = get_po_items_data(pos_list)
-		unique_po_items_list = get_unique_items_list(items_list)
-		print "----------unique_po_items_list-----------::", unique_po_items_list
+	company = filters.get("company")
 
-	if len(unique_stock_requisition_list)!=0:
-		data = []
-		for item_code in unique_stock_requisition_list:
-			details = unique_stock_requisition_list[item_code]
-			item = details.item_code
-			sreq_qty = details.qty
-			sreq_qty=float("{0:.2f}".format(sreq_qty))
-			ordered_qty = check_item_code_in_po_list(unique_po_items_list,item)
-			ordered_qty=float("{0:.2f}".format(ordered_qty))
-			pending_qty = float(sreq_qty) - float(ordered_qty)
-			pending_qty=float("{0:.2f}".format(pending_qty))
-			print "sreq_qty-------",sreq_qty
+
+	sreq_datas  = get_sreq_datas(company)
+
+	for sreq_data in sreq_datas :
+		sreq_name = sreq_data['name']
+		pos_list_tmp = sreq_data['po_list']
+		sreq_items_data = get_sreq_items_data( sreq_name,filters )
+
+		count = 1
+		for sreq_item_data in sreq_items_data :
+
+			sreq_item_code = sreq_item_data['item_code']
+			total_qty = sreq_item_data ['qty']
+			total_po_ord_qty = get_total_po_ord_qty ( sreq_name,sreq_item_code,filters )
+			pending_qty = total_qty - total_po_ord_qty
+			project = sreq_item_data['project']
+			bom =  sreq_item_data['pch_bom_reference']
+
 			data.append([
-			item,
-			sreq_qty,
-			ordered_qty,
-			pending_qty
+			sreq_name,
+			sreq_item_code,
+			total_qty,
+			total_po_ord_qty,
+			pending_qty,
+			bom,
+			project
 			])
-		return columns, data
-	else:
-		pass
-		
+			print "Data appending for "+ str(count) +"th time"
+			count = count +1
+
+	return columns, data
+
 def get_columns():
-		"""return columns"""
-		columns = [
-		_("Item")+":Link/Item:100",
-		_("Total Qty")+"::100",
-		_("Ordered Qty")+"::140",
-		_("Pending Qty")+"::100"
-		 ]
-		return columns
-def get_po_list():
-	#po_list = frappe.db.sql("""select name,po_list,material_request_type from `tabStock Requisition` where name="SREQ-00022" """, as_dict=1)
-	po_list = frappe.db.sql("""select name,po_list,material_request_type from `tabStock Requisition` where docstatus=1 and 			    material_request_type='Purchase' """, as_dict=1)
-	return po_list
+	"""return columns"""
+	columns = [
+	_("SREQ No")+":Link/Stock Requisition:100",
+	_("Item")+":Link/Item:100",
+	_("Total Qty")+"::100",
+	_("Ordered Qty")+"::140",
+	_("Pending Qty")+"::100",
+	_("BOM")+":Link/BOM:100",
+	_("Project")+":Link/Project:100"
+	 ]
+	return columns
 
-def get_requisitioned_items(sreq_id):
-	sreq_list = frappe.db.sql("""select item_code,qty from `tabStock Requisition Item` where parent=%s""",(sreq_id),as_dict=1)
-	return sreq_list
+def get_conditions(filters):
+	conditions = ""
 
-def get_unique_items_list(items_list):
-	if len(items_list)!=0:
-		items_map = {}
-		for data in items_list:
-			item_code = data['item_code']
-			qty = data['qty']
-			key = item_code
-			if key in items_map:
-				item_entry = items_map[key]
-				qty_temp = item_entry["qty"]
-				item_entry["qty"] = (qty_temp) + (qty)
+	if filters.get("bom"):
+		conditions += " and pch_bom_reference = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
+	if filters.get("project"):
+		conditions += " and project = '%s'" % frappe.db.escape(filters.get("project"), percent=False)
+	return conditions
 
-			else:
-				items_map[key] = frappe._dict({
-						"item_code": item_code, 
-						"qty": qty, 
-						})
-		print "-------items_map--------::", items_map
-		return items_map
+def po_get_conditions(filters):
+	conditions = ""
 
-def get_po_items_data(pos_list):
-	items_details = []
-	splitted_pos_list = pos_list.split(",")
-	if len(splitted_pos_list)!=0:
-		for po in splitted_pos_list:
-			po_items = get_po_items(po)
-			for item in po_items:
-				data = get_items_list(item)
-				items_details.append(data)
-	return items_details
+	if filters.get("bom"):
+		conditions += " and poi.pch_bom_reference = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
+	if filters.get("project"):
+		conditions += " and poi.project = '%s'" % frappe.db.escape(filters.get("project"), percent=False)
 
-def get_po_items(po):
-	po_items = frappe.db.sql("""select item_code,qty from `tabPurchase Order Item` where parent=%s and docstatus=1""", (po), as_dict=1)
-	return po_items
+	conditions += " and po.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
+	return conditions
 
-def get_items_list(item):
-	item_code = item['item_code']
-	qty = item['qty']
-	data = {"item_code":item_code,
-		"qty":qty
-		}
-	#print "-----------------data is::", data
-	return data
 
-def check_item_code_in_po_list(unique_po_items_list,item):
-	if item in unique_po_items_list:
-		item_entry = unique_po_items_list[item]
-		qty = item_entry['qty']
-	else:
-		qty = 0
-	return qty
+def get_sreq_datas(company):
+	#print "suresh # DEBUG:  cond",conditions
+	#select name from `tabStock Requisition` where company like "Epoch%" and name in (select parent from `tabStock Requisition Item`)
+	#check = frappe.db.sql("""select name from `tabStock Requisition` where company=%s and na""", as_dict=1)
+	#check = frappe.db.sql("""select name from `tabStock Requisition` where company = {0} and name in (select parent from `tabStock Requisition Item` where name ="217c40d2af") """.format(company), as_dict=1)
+	#print "suresh # DEBUG:  check",check
+	#workingFine sreq_data = frappe.db.sql("""select name,po_list,material_request_type from `tabStock Requisition` where docstatus=1 and material_request_type='Purchase' """, as_dict=1)
 
+	sreq_data = frappe.db.sql("""select name,po_list,material_request_type from `tabStock Requisition` where docstatus=1 and material_request_type='Purchase' and company = %s  """,(company) ,as_dict=1)
+	print "sreq_data",sreq_data
+	return sreq_data
+
+def get_sreq_items_data( sreq_name,filters ):
+	conditions = get_conditions(filters)
+	print "from get_sreq_items_data conditions",conditions
+	sreq_name = str(sreq_name)
+	query = "select item_code,qty,pch_bom_reference,project from `tabStock Requisition Item` where parent={} {}".format("'"+sreq_name+"'",conditions)
+	print "sreq query",query
+	#sreq_items_data = frappe.db.sql("""select item_code,qty,pch_bom_reference,project from `tabStock Requisition Item` where parent={} {} """.format(sreq_name,conditions),as_dict=1)
+	sreq_items_data = frappe.db.sql(query,as_dict=1)
+
+	print "from get_sreq_items_data sreq_items_data",sreq_items_data
+
+	return sreq_items_data
+
+def get_total_po_ord_qty ( sreq_name,sreq_item_code,filters):
+	conditions = po_get_conditions(filters)
+	query = "select sum(poi.qty) total_qty from `tabPurchase Order Item` poi,`tabPurchase Order` po where  po.name =poi.parent and poi.item_code={} and po.stock_requisition_id={} {}".format("'"+sreq_item_code+"'","'"+sreq_name+"'",conditions)
+	print "po query",query
+	total_po_ord_qty_list = frappe.db.sql(query,as_dict=1)
+	#total_po_ord_qty_list = frappe.db.sql("""select sum(poi.qty) total_qty from `tabPurchase Order Item` poi,`tabPurchase Order` po  where po.name =poi.parent and poi.item_code=%s and po.stock_requisition_id=%s""",(sreq_item_code,sreq_name),as_dict=1)
+	total_po_ord_qty = 0
+	if total_po_ord_qty_list[0]['total_qty']:
+		total_po_ord_qty = total_po_ord_qty_list[0]['total_qty']
+
+	return total_po_ord_qty
