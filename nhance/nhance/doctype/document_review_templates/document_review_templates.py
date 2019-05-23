@@ -62,4 +62,9 @@ def get_item_price_list(item_code):
 def get_taxes_details(taxes_doc,taxes_and_charges):
 	taxes_details = frappe.get_doc(taxes_doc, taxes_and_charges)
 	return taxes_details
+@frappe.whitelist()
+def get_current_doc_details(cur_name):
+	taxes_details = frappe.db.sql("""select * from `tabDocument Review Template Table` where parent = %s""",(cur_name),as_dict=1)
+	print "taxes_details============",taxes_details
+	return taxes_details
 

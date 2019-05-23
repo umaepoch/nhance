@@ -1,6 +1,5 @@
 // Copyright (c) 2019, Epoch and contributors
 // For license information, please see license.txt
-var dialog_json = "";
 frappe.ui.form.on('Document Review Templates', {
 	refresh: function(frm, cdt, cdn) {
         var d = locals[cdt][cdn];
@@ -41,7 +40,12 @@ frappe.ui.form.on('Document Review Templates', {
         var child_taxes_fields = "";
         var child_taxes_fields1 = "";
         var cur_doctype = cur_frm.doc.doctype;
-	
+	var cur_name = cur_frm.doc.name;
+	console.log("current docname ========"+cur_name);
+	var current_doc_detials = "";
+	if(cur_name != undefined){
+	 	current_doc_detials = get_current_doc_details(cur_name);
+	}
         var current_doc = function_doc_details(cur_doctype);
 	
             for (var i = 0; i < current_doc.length; i++) {
@@ -210,14 +214,17 @@ frappe.ui.form.on('Document Review Templates', {
             primary_action: function() {
 
                 d.hide();
-                dialog_json = d.get_values();
-                console.log(JSON.stringify(dialog_json));
+		var fields_details = "";
+		
+               var dialog_json = d.get_values();
+               // console.log(JSON.stringify(dialog_json));
                 Object.keys(dialog_json).forEach(function(key) {
                     // console.table("in dialog box==="+JSON.stringify(doc_details));
                     if (dialog_json[key] == 1) {
 			
                         //key = key.charAt(0).toUpperCase() + key.slice(1);
                         // console.log(key);
+			if(cur_frm.doc.__islocal){
 			for(var doc_d =0; doc_d < doc_details.length; doc_d++){
 			    if(doc_details[doc_d].fieldname == key){
 				var child = cur_frm.add_child("fields_descriptions");
@@ -232,7 +239,7 @@ frappe.ui.form.on('Document Review Templates', {
 			}
 			for(var child_d = 0; child_d < child_doc_fields.length; child_d++){
 				if(child_doc_fields[child_d].fieldname == key){
-					var child = cur_frm.add_child("fields_descriptions");
+				var child = cur_frm.add_child("fields_descriptions");
 				frappe.model.set_value(child.doctype, child.name, "label", child_doc_fields[child_d].label);
 				frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
 				frappe.model.set_value(child.doctype, child.name, "fieldtype", child_doc_fields[child_d].fieldtype);
@@ -255,8 +262,62 @@ frappe.ui.form.on('Document Review Templates', {
 				
 					}
 				}
+		}
+		if(!cur_frm.doc.__islocal){
+			var current_fields_list = [];
+			for(var cr_doc = 0; cr_doc < current_doc_detials.length; cr_doc++){
+				current_fields_list.push(current_doc_detials[cr_doc].fieldname);
+			}
+			for(var doc_d =0; doc_d < doc_details.length; doc_d++){
+		 		if(key == doc_details[doc_d].fieldname){
+				if(!current_fields_list.includes(key)){
+					//console.log("current field name========="+current_doc_detials[cr_doc].fieldname);
+					
+					//console.log("parent fields =========="+key);
+					var child = cur_frm.add_child("fields_descriptions");
+					frappe.model.set_value(child.doctype, child.name, "label", doc_details[doc_d].label);
+					frappe.model.set_value(child.doctype, child.name, "field_label", "Parent Field");
+					frappe.model.set_value(child.doctype, child.name, "fieldtype", doc_details[doc_d].fieldtype);
+					frappe.model.set_value(child.doctype, child.name, "fieldname", doc_details[doc_d].fieldname);
+					frappe.model.set_value(child.doctype, child.name, "options", doc_details[doc_d].options);
+					cur_frm.refresh_field('fields_descriptions');
+					//break;
+				}
+				}
+			}
 			
+			for(var child_d = 0; child_d < child_doc_fields.length; child_d++){
+				if(child_doc_fields[child_d].fieldname == key){
+					if(!current_fields_list.includes(key)){
+					console.log("item fields =========="+key);
+					var child = cur_frm.add_child("fields_descriptions");
+					frappe.model.set_value(child.doctype, child.name, "label", child_doc_fields[child_d].label);
+					frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
+					frappe.model.set_value(child.doctype, child.name, "fieldtype", child_doc_fields[child_d].fieldtype);
+					frappe.model.set_value(child.doctype, child.name, "fieldname", child_doc_fields[child_d].fieldname);
+					frappe.model.set_value(child.doctype, child.name, "options", child_doc_fields[child_d].options);
+					cur_frm.refresh_field('fields_descriptions');
+				
+					}
+			}
+				}
+			for(var tax_d = 0; tax_d < child_taxes_fields.length; tax_d++){
+				 if(child_taxes_fields[tax_d].fieldname == key){
+					if(!current_fields_list.includes(key)){
+					console.log("tax fields =========="+key);
+					var child = cur_frm.add_child("fields_descriptions");
+					frappe.model.set_value(child.doctype, child.name, "label", child_taxes_fields[tax_d].label);
+					frappe.model.set_value(child.doctype, child.name, "field_label", "Tax Field");
+					frappe.model.set_value(child.doctype, child.name, "fieldtype", child_taxes_fields[tax_d].fieldtype);
+					frappe.model.set_value(child.doctype, child.name, "fieldname", child_taxes_fields[tax_d].fieldname);
+					frappe.model.set_value(child.doctype, child.name, "options", child_taxes_fields[tax_d].options);
+					cur_frm.refresh_field('fields_descriptions');
+				
+					}
+				}
+				}
 			
+			}
 			}
                 })
             }
@@ -392,6 +453,21 @@ function function_taxes_details(taxes_doc, taxes_and_charges) {
         args: {
             "taxes_doc": taxes_doc,
             "taxes_and_charges": taxes_and_charges
+        },
+        async: false,
+        callback: function(r) {
+            //  console.log("supplier criticality..." + JSON.stringify(r.message));
+            supplier_criticality = r.message;
+        }
+    });
+    return supplier_criticality;
+}
+function get_current_doc_details(cur_name){
+    var supplier_criticality = "";
+	 frappe.call({
+        method: 'nhance.nhance.doctype.document_review_templates.document_review_templates.get_current_doc_details',
+        args: {
+            "cur_name": cur_name,
         },
         async: false,
         callback: function(r) {
