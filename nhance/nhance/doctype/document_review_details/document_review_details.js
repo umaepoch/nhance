@@ -276,7 +276,21 @@ frappe.ui.form.on("Document Review Details", "refresh", function(frm, cdt, cdn) 
         }
     }
 });
+frappe.ui.form.on("Document Review Details", "on_submit", function(frm, cdt, cdn) {
+	console.log("cur_frm.doc.doctype_name============="+cur_frm.doc.doctype_name);
+	
+	var source_docname = "";
+	if(cur_frm.doc.doctype_name == "Sales Order"){
+		source_docname = cur_frm.doc.sales_order;
+		}
+	else if(cur_frm.doc.doctype_name == "Purchase Order"){
+		source_docname = cur_frm.doc.purchase_order;
 
+		}
+	console.log("source_docname==========="+source_docname);
+	function_make_uncheck(cur_frm.doc.doctype_name.toString(),source_docname.toString());
+
+});
 function get_fields_of_document_review(docName) {
     var docFields = "";
     frappe.call({
@@ -384,4 +398,20 @@ function get_document_template_name(doctype_name) {
         } //end of callback fun..
     }); //end of frappe call..
     return document_name;
+}
+function function_make_uncheck(doctype_name,source_docname){
+	  frappe.call({
+        method: 'nhance.nhance.doctype.document_review_details.document_review_details.get_uncheck_box_cheched',
+        args: {
+            "doctype": doctype_name,
+	     "source_docname":source_docname
+
+        },
+        async: false,
+        callback: function(r) {
+            // console.log("supplier criticality..." + JSON.stringify(r.message));
+           // supplier_criticality = r.message;
+        }
+    });
+   // return supplier_criticality;
 }

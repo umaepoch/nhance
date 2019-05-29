@@ -37,7 +37,7 @@ def make_document_review_detials(source_name, target_doc=None, ignore_permission
 				"payment_terms_template": "payment_terms_template"
 			},
 			"validation": {
-				"docstatus": ["=", 1]
+				"docstatus": ["=", 0]
 			}
 		}
 	}, target_doc, postprocess, ignore_permissions=ignore_permissions)
@@ -71,7 +71,7 @@ def make_document_review(source_name, target_doc=None, ignore_permissions=False)
 				"payment_terms_template": "payment_terms_template"
 			},
 			"validation": {
-				"docstatus": ["=", 1]
+				"docstatus": ["=", 0]
 			}
 		}
 	}, target_doc, postprocess, ignore_permissions=ignore_permissions)
@@ -115,3 +115,13 @@ def get_doc_fields(doctype):
 	doc_details = frappe.get_meta(doctype).get("fields")
 	return doc_details
 
+@frappe.whitelist()
+def get_check_box_cheched(doctype,name):
+	name = frappe.db.sql("""update `tab""" +doctype + """`
+	set under_review = 1 where name = %s""",(name),as_dict=1)
+	return name
+@frappe.whitelist()
+def get_uncheck_box_cheched(doctype,source_docname):
+	name = frappe.db.sql("""update `tab""" +doctype + """`
+	set under_review = 0 where name = %s""", source_docname, as_dict=1)
+	return name
