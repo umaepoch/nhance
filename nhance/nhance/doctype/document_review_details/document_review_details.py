@@ -88,20 +88,33 @@ def get_sales_order_details(docIds,docName):
 	sales_details = {}
 #	print "docIds=============",docIds
 #	print "docName=============",docName
-	if docName == "Sales Order":
-		order = frappe.db.sql("""select * from `tabSales Order` where name = %s""",(docIds), as_dict=1)
-		item = frappe.db.sql("""select * from `tabSales Order Item` where parent = %s""",(docIds), as_dict=1)
-		taxes = frappe.db.sql("""select * from `tabSales Taxes and Charges` where parent = %s""",(docIds), as_dict=1)
-		sales_details["order"] =order 
-		sales_details["item"] =item 
-		sales_details["taxes"] =taxes 
+	doc_details = frappe.get_meta(docName).get("fields")
+	item_table = ""
+	tax_table = ""
+	order = frappe.db.sql("""select * from `tab""" +docName + """` where name = %s""",(docIds), as_dict=1)
+#	item = frappe.db.sql("""select * from `tabSales Order Item` where parent = %s""",(docIds), as_dict=1)
+#	taxes = frappe.db.sql("""select * from `tabSales Taxes and Charges` where parent = %s""",(docIds), as_dict=1)
+
+	'''
 	elif docName == "Purchase Order":
-		order = frappe.db.sql("""select * from `tabPurchase Order` where name = %s""",(docIds), as_dict=1)
+		order = frappe.db.sql("""select * from `tab""" +DocName + """` where name = %s""",(docIds), as_dict=1)
 		item = frappe.db.sql("""select * from `tabPurchase Order Item` where parent = %s""",(docIds), as_dict=1)
 		taxes = frappe.db.sql("""select * from `tabPurchase Taxes and Charges` where parent = %s""",(docIds), as_dict=1)
-		sales_details["order"] =order 
-		sales_details["item"] =item 
-		sales_details["taxes"] =taxes 
+		sales_details["order"] =order
+		sales_details["item"] =item
+		sales_details["taxes"] =taxes
+	'''
+	for fields in doc_details:
+		if fields.fieldname == "items":
+			item_table = fields.options
+		elif fields.fieldname == "taxes":
+			tax_table = fields.options
+	item = frappe.db.sql("""select * from `tab""" +item_table + """` where parent = %s""",(docIds), as_dict=1)
+	taxes = frappe.db.sql("""select * from `tab""" +tax_table + """` where parent = %s""",(docIds), as_dict=1)
+#	print "taxes=================",taxes
+	sales_details["order"] =order
+	sales_details["item"] =item
+	sales_details["taxes"] =taxes
 #	print "sales_details============",sales_details
 	return sales_details
 @frappe.whitelist()
