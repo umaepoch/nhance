@@ -279,53 +279,22 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var check_args = "";
 		console.log("make_purchase_order --------------SREQ ID::"+cur_frm.doc.name);
 
-
-
-
-
 		//validating purchase uom and  conversion_factor
-		var sreq_document = 	cur_frm.doc;
-		var sreq_items_data = sreq_document.items;
-		var sreq_items_name_list = [];
-
-		for(var i = 0; i < sreq_items_data.length; i++){
-			var sreq_item_name = sreq_items_data[i].item_code ;
-			sreq_items_name_list.push(sreq_item_name);
-		}//end of for
-
-		var sreq_master_items_data = get_sreq_master_items_data(sreq_items_name_list);
-		//console.log("sreq_items_name_list :::" +sreq_items_name_list );
-		console.log("sreq_master_items_data ac to  sreq_items_name_list" +JSON.stringify(sreq_master_items_data) );
-
-
-		for(var i = 0; i < sreq_items_name_list.length; i++){
-			var item_code = sreq_items_name_list[i];
-			var master_item_data =  sreq_master_items_data[item_code];
-			var ucd_uom_list = []
-			var purchase_uom = master_item_data[0]['purchase_uom'];
-
-			if (purchase_uom != null ){
-
-					for(var j = 0; j < master_item_data.length; j++){
-						var ucd_uom = master_item_data[j]['uom'] ;
-						ucd_uom_list.push( ucd_uom );
-						}
-
-					if( $.inArray(purchase_uom, ucd_uom_list) != -1){
-						console.log("ucf available for this item"+item_code)
-						}
-						else {
-							frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
-							console.log("ucf not there  for this item"+item_code)
-							}
-
-			} //end if
-			console.log("purchase_uom for item name:"+item_code+" is "+purchase_uom)
-			console.log("ucd_uom_list"+item_code+" is "+ucd_uom_list)
-
-		}//end of forsreq_items_name_list
-		//End validating purchase uom and conversion conversion_factor
-
+        	var sreq_items_data = cur_frm.doc.items;
+        	for(var i = 0; i < sreq_items_data.length; i++){
+            		var item_code = sreq_items_data[i].item_code ;
+            		var purchase_uom = getPurchaseUom(item_code);
+            		//console.log("purchase_uom--------------::"+purchase_uom);
+            		if(purchase_uom!=null){
+                		var conversion_factor = getConversionFactor(purchase_uom,item_code);
+                		//console.log("conversion_factor--------------::"+conversion_factor);
+                		if (conversion_factor == 0 || conversion_factor == undefined){
+                    			frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
+                		}
+            		}
+           
+        	}//end of for
+        	//End validating purchase uom and conversion conversion_factor
 
 		if(!dialog_displayed){
 			var dialog = new frappe.ui.Dialog({
@@ -1080,27 +1049,6 @@ function update_submitted_sreq(stockRequisitionID) {
     });
 }
 //qty to be order functions end
-
-//functions validating purchase uom and conversion conversion_factor
-function get_sreq_master_items_data(sreq_items_name_list){
-	var sreq_master_items_data_local;
-
-	frappe.call({
-				method: "nhance.nhance.doctype.stock_requisition.stock_requisition.get_sreq_master_items_data",
-				args: {
-						"sreq_items_name_list": sreq_items_name_list
-				},
-				async: false,
-				callback: function(r) {
-					if (r.message) {
-						sreq_master_items_data_local = r.message;
-						}
-
-				}  //end of call back
-		}); // end of frappe call
-		return sreq_master_items_data_local;
-}
-//End validating purchase uom and conversion conversion_factor
 
 //making po from sreq get_po_default_values
 function get_po_default_values(){

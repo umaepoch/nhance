@@ -616,7 +616,7 @@ def get_ordered_items_and_qty(po):
 
 @frappe.whitelist()
 def fetch_conversion_factor(purchase_uom, item_code):
-	conversion_factor = 1
+	conversion_factor = 0
 	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where uom=%s and parent=%s""", (purchase_uom, 					item_code), as_dict=1)
 	#print "records::", records
 	if len(records)!=0:
@@ -734,44 +734,6 @@ def update_fulfilled_qty(item_code,fulFilledQty,sreq_no):
 def fetch_items(item_group):
 	records = frappe.db.sql("""select name from `tabItem` where item_group=%s""", item_group, as_dict=1)
 	return records
-
-@frappe.whitelist()
-def get_sreq_master_items_data(sreq_items_name_list): # get item master details according to item code
-
-	"""
-	Format of this json:{ Item code:[itemdata] }
-	Ex:
-	{ item_code1 : [item_code1 data1, item_code1 data2...] ,item_code2 : [item_code2 data1, item_code2 data2...]
- 	"""
-
-	sreq_items_name_list = eval(sreq_items_name_list)
-	count = 0
-	sql_sreq_items_name_list = "("
-	for sreq_item_name in sreq_items_name_list:
-		if count == 0 :
-			sql_sreq_items_name_list += "'" + sreq_item_name + "'"
-		else:
-			sql_sreq_items_name_list += ","+"'" + sreq_item_name + "'"
-		count = count +1
-	sql_sreq_items_name_list += ")"
-
-	sreq_master_items_data = frappe.db.sql("""select it.item_code,it.purchase_uom,ucd.parent,ucd.uom,ucd.conversion_factor from `tabUOM Conversion Detail` ucd,`tabItem` it where ucd.parent = it.item_code and it.item_code in {}""".format(sql_sreq_items_name_list), as_dict=1)
-
-	sreq_master_items_data_map= {}
-	for sreq_master_item_data in sreq_master_items_data :
-		if sreq_master_item_data['item_code'] in sreq_master_items_data_map.keys():
-			item_key =  sreq_master_item_data['item_code']
-			actuallist = sreq_master_items_data_map[item_key]
-			newlist = [sreq_master_item_data]
-			updated_list = actuallist.extend(newlist)
-			sreq_master_item_data['item_code'] = updated_list
-		else:
-			item_data_local = {sreq_master_item_data['item_code'] : [sreq_master_item_data ]}
-			sreq_master_items_data_map.update(item_data_local)
-			item_key =  sreq_master_item_data['item_code']
-
-	return sreq_master_items_data_map
-
 
 
 @frappe.whitelist()
