@@ -33,7 +33,8 @@ def execute(filters=None):
 		total_itc_integrated_tax = 0.0
 		total_itc_central_tax = 0.0
 		total_itc_state_tax = 0.0
-		total_itc_cess_amount = 0.0
+		total_itc_cess_amount			print "gst_hsn_code----------",gst_hsn_code
+ = 0.0
 		total_invoice_value = 0.0
 		total_taxable_value = 0.0
 		total_integrated_tax_paid = 0.0
@@ -64,6 +65,9 @@ def execute(filters=None):
 					sgst_tax_rate = map_data["mapped_items"][map_d]["sgst_tax_rate"]
 					cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
 					gstin = map_data["mapped_items"][map_d]["gstin"]
+					supplier_name = map_data["mapped_items"][map_d]["supplier_name"]
+					supplier_invoice_no = map_data["mapped_items"][map_d]["supplier_invoice_no"]
+					supplier_invoice_date = map_data["mapped_items"][map_d]["supplier_invoice_date"]
 					invoice_value = tot_net_amount * rate_of_tax /100
 					grand_total = invoice_value + tot_net_amount
 					igst_tax_amount = tot_net_amount * igst_tax_rate /100
@@ -84,11 +88,11 @@ def execute(filters=None):
 						total_itc_central_tax += float(itc_central_tax)
 					if itc_cess_amount is not None:
 						total_itc_cess_amount += float(itc_cess_amount)
-					data.append([gstin,invoice_no,posting_date,grand_total,place_of_supply,reverse_charge,invoice_type,
+					data.append([gstin,invoice_no,posting_date,supplier_name,supplier_invoice_no,supplier_invoice_date,grand_total,place_of_supply,reverse_charge,invoice_type,
 						rate_of_tax,tot_net_amount,igst_tax_amount,cgst_tax_amount,sgst_tax_amount
 						,"",eligibility_for_itc,itc_integrated_tax,itc_central_tax,itc_state_tax,itc_cess_amount])
 		data.append(["","","","","","",""])
-		data.append(["Total","","",total_invoice_value,"","","","",total_taxable_value,total_integrated_tax_paid,
+		data.append(["Total","","","","","",total_invoice_value,"","","","",total_taxable_value,total_integrated_tax_paid,
 			total_central_tax_paid,total_state_tax_paid,"","",total_itc_integrated_tax,total_itc_central_tax,total_itc_state_tax,
 			total_itc_cess_amount])
 	elif type_of_business == "B2BUR":
@@ -125,6 +129,9 @@ def execute(filters=None):
 				cgst_tax_rate = map_data["mapped_items"][map_d]["cgst_tax_rate"]
 				india_gst_supplier_status = map_data["mapped_items"][map_d]["india_gst_supplier_status"]
 				gstin = map_data["mapped_items"][map_d]["gstin"]
+				supplier_name = map_data["mapped_items"][map_d]["supplier_name"]
+				supplier_invoice_no = map_data["mapped_items"][map_d]["supplier_invoice_no"]
+				supplier_invoice_date = map_data["mapped_items"][map_d]["supplier_invoice_date"]
 				invoice_value = tot_net_amount * rate_of_tax /100
 				grand_total = invoice_value + tot_net_amount
 				igst_tax_amount = tot_net_amount * igst_tax_rate /100
@@ -145,11 +152,11 @@ def execute(filters=None):
 					total_itc_central_tax += float(itc_central_tax)
 				if itc_cess_amount is not None:
 					total_itc_cess_amount += float(itc_cess_amount)
-				data.append([supplier_name,invoice_no,posting_date,grand_total,place_of_supply,supply_type,
+				data.append([supplier_name,invoice_no,posting_date,supplier_invoice_no,supplier_invoice_date,grand_total,place_of_supply,supply_type,
 					rate_of_tax,tot_net_amount,igst_tax_amount,cgst_tax_amount,sgst_tax_amount
 					,"",eligibility_for_itc,itc_integrated_tax,itc_central_tax,itc_state_tax,itc_cess_amount])
 		data.append(["","","","","","",""])
-		data.append(["Total","","",total_invoice_value,"","","",total_net_amount,total_integrated_tax_paid,total_central_tax_paid,
+		data.append(["Total","","","","",total_invoice_value,"","","",total_net_amount,total_integrated_tax_paid,total_central_tax_paid,
 				total_state_tax_paid,"","",total_itc_integrated_tax,total_itc_central_tax,total_itc_state_tax,
 				total_itc_cess_amount])
 	elif type_of_business == "IMPS":
@@ -539,6 +546,9 @@ def get_columns_b2b():
 		_("GSTIN of Supplier") + "::150",
 		_("Invoice Number") + ":Link/Purchase Invoice:150",
 		_("Invoice date") + "::150",
+		_("Supplier Name")+"::150",
+		_("Supplier Invoice no")+"::150",
+		_("Supplier Invoice Date")+"::150",
 		_("Invoice Value") + ":Currency:150",
 		_("Place Of Supply") + "::150",
 		_("Reverse Charge") + "::180",
@@ -560,6 +570,8 @@ def get_columns_b2bur():
 		_("Supplier Name") + "::150",
 		_("Invoice Number") + ":Link/Purchase Invoice:150",
 		_("Invoice date") + "::150",
+		_("Supplier Invoice no")+"::150",
+		_("Supplier Invoice Date")+"::150",
 		_("Invoice Value") + ":Currency:150",
 		_("Place Of Supply") + "::150",
 		_("Supply Type") + "::180",
@@ -687,7 +699,7 @@ def purchase_invoice_b2b(from_date,to_date):
 	b2b_purchase = frappe.db.sql("""select
 						pi.name,pi.invoice_type,pi.reverse_charge,pi.posting_date,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.itc_central_tax,pi.itc_state_tax,pi.supplier_address,
-						pi.itc_cess_amount,pi.supplier_name,pi.company,s.india_gst_supplier_status
+						pi.itc_cess_amount,pi.supplier_name,pi.company,s.india_gst_supplier_status,pi.bill_no,pi.bill_date
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
@@ -700,7 +712,7 @@ def purchase_invoice_b2bur(from_date,to_date):
 	b2b_purchase = frappe.db.sql("""select
 						pi.name,pi.invoice_type,pi.reverse_charge,pi.posting_date,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.itc_central_tax,pi.itc_state_tax,pi.supplier_address,
-						pi.itc_cess_amount,pi.supplier_name,pi.company,s.india_gst_supplier_status
+						pi.itc_cess_amount,pi.supplier_name,pi.company,s.india_gst_supplier_status,pi.bill_no,pi.bill_date
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
@@ -714,7 +726,7 @@ def purchase_invoice_imps(from_date,to_date):
 	imps_purchase = frappe.db.sql("""select
 						pi.name,pi.invoice_type,pi.reverse_charge,pi.posting_date,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.itc_central_tax,pi.itc_state_tax,pi.supplier_address,
-						pi.itc_cess_amount,pi.supplier_name,pi.company,s.india_gst_supplier_status
+						pi.itc_cess_amount,pi.supplier_name,pi.company,s.india_gst_supplier_status,pi.bill_no,pi.bill_date
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
@@ -727,7 +739,7 @@ def purchase_invoice_impg(from_date,to_date):
 						pi.name,pi.invoice_type,pi.reverse_charge,pi.posting_date,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.itc_central_tax,pi.itc_state_tax,pi.supplier_address,
 						pi.itc_cess_amount,pi.supplier_name,pi.company,s.india_gst_supplier_status
-						,pi.pch_port_code,pi.pch_bill_of_entry_date,pi.pch_bill_of_entry_number,pi.invoice_type
+						,pi.pch_port_code,pi.pch_bill_of_entry_date,pi.pch_bill_of_entry_number,pi.invoice_type,pi.bill_no,pi.bill_date
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
@@ -740,7 +752,7 @@ def purchase_invoice_cdnr(from_date,to_date):
 						pi.name,pi.posting_date,pi.supplier_address,pi.supplier_name,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.itc_cess_amount
 						,pi.invoice_type,s.india_gst_supplier_status,pi.return_against,
-						pi.itc_central_tax,pi.itc_state_tax,pi.reason_for_issuing_document,pi.company
+						pi.itc_central_tax,pi.itc_state_tax,pi.reason_for_issuing_document,pi.company,pi.bill_no,pi.bill_date
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
@@ -850,6 +862,7 @@ def get_Advance_Payment_details(invoice_id):
 					""",(invoice_id),as_dict = 1)
 	return payment_data
 def sales_tax_hsn(item_code,invoice_id):
+	items_hsn = ""
 	if item_code:
 		items_hsn = frappe.db.sql("""select
 							si.parent,si.item_code,si.item_name,si.net_amount,it.tax_rate,it.tax_type
@@ -889,6 +902,8 @@ def get_business_type_details(sales):
 		reverse_charge = seles_data.reverse_charge
 		invoice_type = seles_data.invoice_type
 		supplier_name = seles_data.supplier_name
+		supplier_invoice_no = seles_data.bill_no
+		supplier_invoice_date = seles_data.bill_date
 		india_gst_supplier_status = seles_data.india_gst_supplier_status
 		posting_date = seles_data.posting_date
 		eligibility_for_itc = seles_data.eligibility_for_itc
@@ -969,7 +984,9 @@ def get_business_type_details(sales):
 									"bill_of_entry_date":bill_of_entry_date,
 									"bill_of_entry_number":bill_of_entry_number,
 									"return_against":return_against,
-									"reason_for_issuing_document":reason_for_issuing_document
+									"reason_for_issuing_document":reason_for_issuing_document,
+									"supplier_invoice_no":supplier_invoice_no,
+									"supplier_invoice_date":supplier_invoice_date
 								    })
 						item_entry["mapped_items"] = mapped_items_list + new_list
 				else :
@@ -998,7 +1015,9 @@ def get_business_type_details(sales):
 							"bill_of_entry_date":bill_of_entry_date,
 							"bill_of_entry_number":bill_of_entry_number,
 							"return_against":return_against,
-							"reason_for_issuing_document":reason_for_issuing_document
+							"reason_for_issuing_document":reason_for_issuing_document,
+							"supplier_invoice_no":supplier_invoice_no,
+							"supplier_invoice_date":supplier_invoice_date
 						})
 					invoice_map[key] = frappe._dict({
 						    "mapped_items": item_list
@@ -1062,7 +1081,9 @@ def get_business_type_details(sales):
 										"bill_of_entry_date":bill_of_entry_date,
 										"bill_of_entry_number":bill_of_entry_number,
 										"return_against":return_against,
-										"reason_for_issuing_document":reason_for_issuing_document
+										"reason_for_issuing_document":reason_for_issuing_document,
+										"supplier_invoice_no":supplier_invoice_no,
+										"supplier_invoice_date":supplier_invoice_date
 									})
 							item_entry["mapped_items"] = mapped_items_list
 					else:
@@ -1091,7 +1112,9 @@ def get_business_type_details(sales):
 								"bill_of_entry_date":bill_of_entry_date,
 								"bill_of_entry_number":bill_of_entry_number,
 								"return_against":return_against,
-								"reason_for_issuing_document":reason_for_issuing_document
+								"reason_for_issuing_document":reason_for_issuing_document,
+								"supplier_invoice_no":supplier_invoice_no,
+								"supplier_invoice_date":supplier_invoice_date
 								})
 						invoice_map[invoice_id] = frappe._dict({"mapped_items": item_list})
 	return invoice_map
