@@ -328,6 +328,10 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					for(var arrayLength = 0; arrayLength < itemsList.length; arrayLength++){
 						var arr = {};
     						var arrList = [];
+						var default_supplier = "";
+						var cost_center = "";
+						var expense_account = "";
+						var price_list = "";
 						var item_code = itemsList[arrayLength].item_code;
 						var qty = itemsList[arrayLength].qty;
 						var uom = itemsList[arrayLength].uom;
@@ -337,16 +341,8 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						var expense_account1 = itemsList[arrayLength].expense_account;
 						var purchase_uom = getPurchaseUom(item_code);
 						var check_flag = get_UOM_Details(stock_uom);
-						var pch_bom_reference = "" ;
-						var project = "" ;
-						if( itemsList[arrayLength].pch_bom_reference != null && itemsList[arrayLength].pch_bom_reference != undefined){
-							pch_bom_reference= itemsList[arrayLength].pch_bom_reference;
-						}
-						if( itemsList[arrayLength].project != null && itemsList[arrayLength].project != undefined){
-							project= itemsList[arrayLength].project;
-						}
+						/**
 						console.log("purchase_uom::"+purchase_uom);
-							/**
 						console.log("qty::"+qty);
 						console.log("cost_center::"+cost_center1);
 						console.log("expense_account-------------::"+expense_account1);
@@ -374,20 +370,21 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 						purchase_uom = uom;
 						}
-						console.log("second time purchase_uom after else"+purchase_uom);
 						//console.log("stock_qty is::"+stock_qty);
    						var stock_uom = itemsList[arrayLength].stock_uom;
     						var warehouse = itemsList[arrayLength].warehouse;
 
 						var item_default_details = getItemDetails(item_code,company);
 
-						var default_supplier = item_default_details[0]['default_supplier'];
-						var cost_center = item_default_details[0]['buying_cost_center'];
-						var expense_account = item_default_details[0]['expense_account'];
-						//var warehouse = item_default_details[0]['default_warehouse'];
-						var price_list = item_default_details[0]['default_price_list'];
-
-						if (price_list != null){
+						if (item_default_details.length != 0){
+							default_supplier = item_default_details[0]['default_supplier'];
+							cost_center = item_default_details[0]['buying_cost_center'];
+							expense_account = item_default_details[0]['expense_account'];
+							//var warehouse = item_default_details[0]['default_warehouse'];
+							price_list = item_default_details[0]['default_price_list'];
+						}
+						
+						if (price_list != null && price_list != ""){
 							var item_price = fetch_item_price(item_code,price_list);
 							arr['price_list_rate'] = item_price;
 							itemsList[arrayLength].price_list_rate = item_price;
@@ -404,23 +401,20 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 							arr['warehouse'] = warehouse;
 						}**/
 
-						if (cost_center != null){
+						if (cost_center != null && cost_center != ""){
 							arr['cost_center'] = cost_center;
 							itemsList[arrayLength].cost_center = cost_center;
 						}else{
 							arr['cost_center'] = cost_center1;
 						}
-
-						if (expense_account != null){
+		
+						if (expense_account != null && expense_account != ""){
 							arr['expense_account'] = expense_account;
 							itemsList[arrayLength].expense_account = expense_account;
 						}else{
 							arr['expense_account'] = expense_account1;
 						}
-
-
-
-						//console.log("default_supplier::"+default_supplier);
+						
 
 						arr['item_code'] = item_code;
    						arr['supplier'] = default_supplier;
@@ -429,13 +423,11 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
 						arr['warehouse'] = warehouse;
-						arr['pch_bom_reference'] = pch_bom_reference;
-						arr['project'] = project;
     						//arr['price'] = standard_rate;
-
+    						
     						arr['conversion_factor'] = conversion_factor;
 
-						if(default_supplier == null){
+						if(default_supplier == null || default_supplier == ""){
 							//itemsList[arrayLength].rate = standard_rate;
 							no_Supplier_Items.push(itemsList[arrayLength]);
 						}else{
