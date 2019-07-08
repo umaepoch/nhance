@@ -33,8 +33,8 @@ def execute(filters=None):
 		total_itc_integrated_tax = 0.0
 		total_itc_central_tax = 0.0
 		total_itc_state_tax = 0.0
-		total_itc_cess_amount			print "gst_hsn_code----------",gst_hsn_code
- = 0.0
+		total_itc_cess_amount = 0.0
+	#	print "gst_hsn_code----------",gst_hsn_code
 		total_invoice_value = 0.0
 		total_taxable_value = 0.0
 		total_integrated_tax_paid = 0.0
