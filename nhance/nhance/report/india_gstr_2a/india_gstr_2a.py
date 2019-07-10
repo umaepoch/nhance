@@ -694,8 +694,6 @@ def get_columns_hsnsum():
 		_("State/UT Tax Amount") + ":Currency:150",
 		_("Cess Amount") + ":Currency:180"
 	]
-def purchase_invoice_id(from_date,to_date):
-	b2b_invoice_id =
 def purchase_invoice_b2b(from_date,to_date):
 	b2b_purchase = frappe.db.sql("""select
 						pi.name,pi.invoice_type,pi.reverse_charge,pi.posting_date,pi.eligibility_for_itc,
