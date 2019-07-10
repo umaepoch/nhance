@@ -522,8 +522,8 @@ def execute(filters=None):
 			integrated_tax_amount = hsn_detials.integrated_tax_amount_total
 			integrated_tax_amount = round(integrated_tax_amount,2)
 			total_value_tax = net_amount*hsn_detials.tax_rate/100
-			print "gst_hsn_code----------",gst_hsn_code
-			print "tax_rate-------------",hsn_detials.tax_rate
+			#print "gst_hsn_code----------",gst_hsn_code
+			#print "tax_rate-------------",hsn_detials.tax_rate
 			total_value = total_value_tax+net_amount
 			total_value = round(total_value,2)
 			grand_total_value = grand_total_value + total_value
@@ -694,7 +694,8 @@ def get_columns_hsnsum():
 		_("State/UT Tax Amount") + ":Currency:150",
 		_("Cess Amount") + ":Currency:180"
 	]
-
+def purchase_invoice_id(from_date,to_date):
+	b2b_invoice_id =
 def purchase_invoice_b2b(from_date,to_date):
 	b2b_purchase = frappe.db.sql("""select
 						pi.name,pi.invoice_type,pi.reverse_charge,pi.posting_date,pi.eligibility_for_itc,
@@ -704,7 +705,7 @@ def purchase_invoice_b2b(from_date,to_date):
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
 						pi.posting_date >= %s AND pi.posting_date <= %s AND
-						pi.eligibility_for_itc NOT IN ("ineligible") AND pi.supplier_name = s.name
+						pi.eligibility_for_itc NOT IN ("ineligible") AND pi.supplier = s.name
 						AND pi.invoice_type = 'Regular' AND pi.docstatus = 1 AND pi.is_return = 0""",
 					(from_date,to_date), as_dict = 1)
 	return b2b_purchase
@@ -716,7 +717,7 @@ def purchase_invoice_b2bur(from_date,to_date):
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
-						pi.posting_date >= %s AND pi.posting_date <= %s AND pi.supplier_name = s.name AND
+						pi.posting_date >= %s AND pi.posting_date <= %s AND pi.supplier = s.name AND
 						pi.eligibility_for_itc NOT IN ("ineligible") AND pi.invoice_type = 'Regular'
 						AND pi.docstatus = 1 AND pi.is_return = 0 AND
 						s.india_gst_supplier_status = 'Unregistered Dealer'
@@ -730,7 +731,7 @@ def purchase_invoice_imps(from_date,to_date):
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
-						pi.supplier_name = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s AND
+						pi.supplier = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s AND
 						pi.invoice_type = 'Import - Service' AND pi.docstatus =1 AND pi.is_return = 0
 					""",(from_date,to_date), as_dict =1)
 	return imps_purchase
@@ -743,7 +744,7 @@ def purchase_invoice_impg(from_date,to_date):
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
-						pi.supplier_name = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s AND
+						pi.supplier = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s AND
 						pi.invoice_type = 'Import - Goods' AND pi.docstatus =1 AND pi.is_return = 0
 					""",(from_date,to_date), as_dict =1)
 	return impg_purchase
@@ -756,7 +757,7 @@ def purchase_invoice_cdnr(from_date,to_date):
 					from
 						`tabPurchase Invoice` pi , `tabSupplier` s
 					where
-						pi.supplier_name = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s AND
+						pi.supplier = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s AND
 						pi.docstatus =1 AND pi.is_return = 1
 					""",(from_date,to_date), as_dict =1)
 	return cdnr_purchase
@@ -832,6 +833,7 @@ def sales_tax(item_code,invoice_id):
 				""",(item_code,invoice_id), as_dict = 1)
 	return items
 def sales_account_tax(invoice_id):
+	account_tax = ""
 	if invoice_id:
 		account_tax = frappe.db.sql("""select
 							account_head,rate,item_wise_tax_detail
