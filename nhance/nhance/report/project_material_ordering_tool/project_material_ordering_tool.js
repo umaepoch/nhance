@@ -249,7 +249,7 @@ function make_PO_and_transfer_qty(report) {
 
         for (var i = 0; i < po_items_list.length; i++) {
             var supplier = po_items_list[i].supplier;
-            if (supplier == null || supplier == "") {
+            if (supplier == null || supplier == "" || supplier == undefined) {
                 no_supplier_items.push(po_items_list[i]);
             } else {
                 if (supplier_map.has(supplier)) {

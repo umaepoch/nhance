@@ -63,7 +63,7 @@ def execute(filters=None):
 def fetch_pending_sreqnos(project,swh):
 	items_map = {}
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
-	sreq_nos_data = frappe.db.sql("""select distinct(sri.parent) as parent, sr.po_list as po_list from `tabStock Requisition Item` sri, `tabStock Requisition` sr where sri.project=%s and sr.name=sri.parent and sr.docstatus=1 and sr.status not in('Ordered') and sr.name=sri.parent""", project, as_dict=1)
+	sreq_nos_data = frappe.db.sql("""select distinct(sri.parent) as parent, sr.po_list as po_list from `tabStock Requisition Item` sri, `tabStock Requisition` sr where sri.project=%s and sr.name=sri.parent and sr.docstatus=1 and sr.status not in('Ordered')""", project, as_dict=1)
 	if sreq_nos_data:
 		for sreq_data in sreq_nos_data:
 			sreq_no = sreq_data['parent']
