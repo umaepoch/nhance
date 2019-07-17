@@ -31,6 +31,19 @@ def execute(filters=None):
 			item_name = bom_i.item_name
 			description = bom_i.description
 			stock_uom = bom_i.stock_uom
+			stock_valuation_price = 0.0
+			purchase_order_no = get_purchase_order_no(item_code)
+			#print "valuation_prince===========",valuation_prince
+			purchase_dict = []
+			print "purchase_order_no=========",purchase_order_no
+			for purchase in purchase_order_no:
+				purchase_dict.append(purchase.parent)
+			stock_ledger_entry = get_stock_ledger_entry(purchase_dict)
+			for stock in stock_ledger_entry:
+				for stock_details in stock:
+					if stock_uom == stock_details.stock_uom:
+						stock_valuation_price = stock_details.valuation_rate
+			print "stock_valuation_price==============",stock_valuation_price
 			stock_qty = bom_i.bi_qty
 			purchase_uom = ""
 			valuation_rate = 0.0
@@ -66,15 +79,47 @@ def execute(filters=None):
 					max_purchase = valuation_rate
 					min_purchase = valuation_rate
 			required_qty = 1
+			Amount_valuation_rate = (stock_valuation_price*bo_qty )/required_qty
+			amount_last_purchase = 0.0
+			if last_purchase_rate == 0:
+				amount_last_purchase = (stock_valuation_price*bo_qty )/required_qty
+			else :
+				amount_last_purchase = (last_purchase_rate * bo_qty)/1
+			amount_higher_purchase_rate = 0.0
+			amount_lowest_purchase_rate = 0.0
+			amount_avg_purchase_rate = 0.0
+			if number_of_purchase == 0:
+				if last_purchase_rate == 0:
+					amount_higher_purchase_rate = (stock_valuation_price*bo_qty )/required_qty
+				else:
+					amount_higher_purchase_rate = (last_purchase_rate * bo_qty)/1
+			else :
+				amount_higher_purchase_rate = (max_purchase * bo_qty)/1
+			if number_of_purchase == 0:
+				if last_purchase_rate == 0:
+					amount_lowest_purchase_rate = (stock_valuation_price*bo_qty )/required_qty
+				else:
+					amount_lowest_purchase_rate = (last_purchase_rate * bo_qty)/1
+			else :
+				amount_lowest_purchase_rate = (min_purchase * bo_qty)/1
+			if number_of_purchase == 0:
+				if last_purchase_rate == 0:
+					amount_avg_purchase_rate = (stock_valuation_price*bo_qty )/required_qty
+				else:
+					amount_avg_purchase_rate = (last_purchase_rate * bo_qty)/1
+			else :
+				amount_avg_purchase_rate = (avg_purchase * bo_qty)/1
+
 			data.append([bom_name,bom_item,bo_qty,description,item_group,item_name,stock_uom,purchase_uom,item_code,stock_qty,required_qty,
-			valuation_rate,last_purchase_rate,check_last_purchase_rate,number_of_purchase,max_purchase,avg_purchase,min_purchase])
+			stock_valuation_price,last_purchase_rate,check_last_purchase_rate,number_of_purchase,max_purchase,avg_purchase,
+			min_purchase,Amount_valuation_rate,amount_last_purchase,amount_higher_purchase_rate,amount_lowest_purchase_rate,amount_avg_purchase_rate])
 	return columns, data
 
 def bom_list():
 	list = frappe.db.sql()
 def get_columns():
 	return [
-		_("BOM") + "::110", 
+		_("BOM") + "::110",
 		_("Item ") + "::110",
 		_("BOM Qty") + "::110",
 		_("Description") + "::110",
@@ -83,7 +128,7 @@ def get_columns():
 		_("Stock UOM") + "::110",
 		_("Purchase UOM") + "::110",
 		_("BOM Item") + "::110",
-		_("BoM Item Qty") + "::110", 
+		_("BoM Item Qty") + "::110",
 		_("Qty to calculat cost for ") + "::150",
 		_("Current Valuation Rate") + "::130",
 		_("Last Purchase Price") + "::130",
@@ -91,8 +136,13 @@ def get_columns():
 		_("Number of Purchase Transactions that exist") + "::250",
 		_("Last N Purchases - Highest") + "::160",
 		_("Last N Purchases - Average") + "::160",
-		_("Last N Purchases - Lowest") + "::160"
-		
+		_("Last N Purchases - Lowest") + "::160",
+		_("Amount(Valuation Rate)")+"::150",
+		_("Amount (Last Purchase Rate)")+"::160",
+		_("Amount (Highest Purchase Rate)")+"::160",
+		_("Amount (Lowest Purchase Rate)")+"::160",
+		_("Amount (Average Purchase Rate)")+"::160"
+
 	]
 def get_conditions(filters):
 	conditions = ""
@@ -103,15 +153,57 @@ def get_conditions(filters):
 	return conditions
 
 def bom_details(filters):
-	conditions = get_conditions(filters)	
-	bom_detail = frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project,bi.item_name, bi.item_code as bi_item,bi.description, bi.stock_qty as bi_qty,bi.stock_uom from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)	
+	conditions = get_conditions(filters)
+	bom_detail = frappe.db.sql("""select
+										bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project,bi.item_name,
+										bi.item_code as bi_item,bi.description, bi.stock_qty as bi_qty,bi.stock_uom
+								from
+										`tabBOM` bo, `tabBOM Explosion Item` bi
+								where
+										bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name,
+										bi.item_code""" % conditions, as_dict=1)
 	return bom_detail
 
 def get_item_details(item_code):
-	item_detail = frappe.db.sql("""select purchase_uom,valuation_rate,item_group,last_purchase_rate from `tabItem` where item_code = %s""",(item_code), as_dict =1)	
+	item_detail = frappe.db.sql("""select
+											purchase_uom,valuation_rate,item_group,last_purchase_rate
+									from
+											`tabItem`
+									where
+											item_code = %s""",(item_code), as_dict =1)
 	return item_detail
 
 def get_number_of_purchase(item_code):
-	purchase = frappe.db.sql("""select count(parent) as num_of_purchase,avg(rate) as avg_purchase,MAX(rate) as max_purchase, MIN(rate) as min_purchase from `tabPurchase Order Item` where item_code = %s""",(item_code), as_dict=1)
+	purchase = frappe.db.sql("""select
+										count(parent) as num_of_purchase,avg(rate) as avg_purchase,MAX(rate) as max_purchase,
+										MIN(rate) as min_purchase
+								from
+										`tabPurchase Order Item`
+								where
+										item_code = %s and docstatus = 1""",(item_code), as_dict=1)
 	return purchase
-
+def get_purchase_order_no(item_code):
+	purchase_order = frappe.db.sql("""select
+													parent
+											from
+													`tabPurchase Order Item`
+	 									where
+													item_code = '"""+item_code+"""' and docstatus =1
+										order by parent
+									""", as_dict =1)
+	return purchase_order
+def get_stock_ledger_entry(purchase_dict):
+	purchase_stock_valuation = []
+	for purchase in purchase_dict:
+		#print "purchase order =============",purchase
+		stock_entry = frappe.db.sql("""select
+											sl.stock_uom,sl.valuation_rate, pri.purchase_order
+									from
+											`tabStock Ledger Entry` sl, `tabPurchase Receipt Item` pri
+									where
+											pri.parent = sl.voucher_no and
+											pri.purchase_order IN  ('"""+purchase+"""')
+								    order by
+											sl.name""",as_dict=1)
+		purchase_stock_valuation.append(stock_entry)
+	return purchase_stock_valuation
