@@ -41,7 +41,8 @@ def execute(filters=None):
 		pending_qty =ordered_qty - delivered_qty
 		if pending_qty > 0:
 			sum_data.append([ po_data['item_code'], po_data['ordered_qty'], po_data['delivered_qty'],
-			pending_qty, po_data['warehouse'],po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'], po_data['rate']])
+			pending_qty, po_data['warehouse'],po_data['qty'],po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
+                        ])
 
 
 	return columns, sum_data
@@ -49,13 +50,14 @@ def execute(filters=None):
 def fetching_po_details(sales_order):
 	po_data = frappe.db.sql("""select
 					tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty,
-					 tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,tsoi.stock_qty
+					tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,tsoi.stock_qty,tb.warehouse,
+                                        tb.actual_qty as qty
 			from
-				`tabSales Order` tso,`tabSales Order Item` tsoi
+				`tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb
 			where
-				tso.name=tsoi.parent and tso.docstatus=1 and tso.name = '"""+sales_order+"""'""", as_dict=1)
+				tso.name=tsoi.parent and tso.docstatus=1 and tsoi.item_code = tb.item_code and tso.name = '"""+sales_order+"""'""", as_dict=1)
 
-	#po_data = frappe.db.sql(""" select tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty, tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,  (tsoi.qty-tsoi.delivered_qty) as pending_qty,tsoi.stock_qty from `tabSales Order` tso,`tabSales Order Item` tsoi where tsoi.parent='SAL-ORD-2019-00003' and tso.name=tsoi.parent and tso.docstatus=1;""", as_dict=1)
+	#po_data = frappe.db.sql(""" select tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty, tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,  (tsoi.qty-tsoi.delivered_qty) as pending_qty,tsoi.stock_qty,tb.warehouse,tb.actual_qty as qty from `tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb where tsoi.parent='SAL-ORD-2019-00001' and tso.name=tsoi.parent and tsoi.item_code=tb.item_code;""", as_dict=1)
 
 	return po_data
 
@@ -69,6 +71,6 @@ def get_columns():
 		_("Delivered Quantity")+"::100",
 		_("Pending Quantity")+"::100",
                 _("Warehouse")+":Link/Warehouse:100",
-                _("Stock Qty")+"::100"
+                _("Available Qty")+"::100"
 		 ]
 	return columns
