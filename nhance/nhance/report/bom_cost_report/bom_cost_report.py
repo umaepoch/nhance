@@ -35,15 +35,14 @@ def execute(filters=None):
 			purchase_order_no = get_purchase_order_no(item_code)
 			#print "valuation_prince===========",valuation_prince
 			purchase_dict = []
-			print "purchase_order_no=========",purchase_order_no
+		#	print "purchase_order_no=========",purchase_order_no
 			for purchase in purchase_order_no:
 				purchase_dict.append(purchase.parent)
 			stock_ledger_entry = get_stock_ledger_entry(purchase_dict)
 			for stock in stock_ledger_entry:
-				for stock_details in stock:
-					if stock_uom == stock_details.stock_uom:
-						stock_valuation_price = stock_details.valuation_rate
-			print "stock_valuation_price==============",stock_valuation_price
+				if stock_uom == stock.stock_uom:
+					stock_valuation_price = stock.valuation_rate
+			#print "stock_valuation_price==============",stock_valuation_price
 			stock_qty = bom_i.bi_qty
 			purchase_uom = ""
 			valuation_rate = 0.0
@@ -71,9 +70,9 @@ def execute(filters=None):
 			for num in number_of_purchase:
 				number_of_purchase = num.num_of_purchase
 				if last_purchase > 0:
-					avg_purchase = num.avg_purchase
-					max_purchase = num.max_purchase
-					min_purchase = num.min_purchase
+					avg_purchase = round(num.avg_purchase , 2)
+					max_purchase = round(num.max_purchase, 2)
+					min_purchase = round(num.min_purchase,2)
 				else:
 					avg_purchase = valuation_rate
 					max_purchase = valuation_rate
@@ -108,7 +107,7 @@ def execute(filters=None):
 				else:
 					amount_avg_purchase_rate = (last_purchase_rate * bo_qty)/1
 			else :
-				amount_avg_purchase_rate = (avg_purchase * bo_qty)/1
+				amount_avg_purchase_rate = round((avg_purchase * bo_qty)/1,2)
 
 			data.append([bom_name,bom_item,bo_qty,description,item_group,item_name,stock_uom,purchase_uom,item_code,stock_qty,required_qty,
 			stock_valuation_price,last_purchase_rate,check_last_purchase_rate,number_of_purchase,max_purchase,avg_purchase,
@@ -194,16 +193,17 @@ def get_purchase_order_no(item_code):
 	return purchase_order
 def get_stock_ledger_entry(purchase_dict):
 	purchase_stock_valuation = []
-	for purchase in purchase_dict:
-		#print "purchase order =============",purchase
-		stock_entry = frappe.db.sql("""select
+	purchase_or = ""
+	for purchase_o in purchase_dict:
+		purchase_or = purchase_o
+	print "purchase_o------------------------",purchase_or
+	stock_entry = frappe.db.sql("""select
 											sl.stock_uom,sl.valuation_rate, pri.purchase_order
 									from
 											`tabStock Ledger Entry` sl, `tabPurchase Receipt Item` pri
 									where
 											pri.parent = sl.voucher_no and
-											pri.purchase_order IN  ('"""+purchase+"""')
+											pri.purchase_order IN  ('"""+purchase_or+"""')
 								    order by
 											sl.name""",as_dict=1)
-		purchase_stock_valuation.append(stock_entry)
-	return purchase_stock_valuation
+	return stock_entry
