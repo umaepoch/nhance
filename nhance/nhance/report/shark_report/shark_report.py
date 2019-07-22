@@ -35,13 +35,16 @@ def execute(filters=None):
 
 	if po_details:
 		print "so_details--------", po_details
+
 	for po_data in po_details:
 		ordered_qty = po_data["ordered_qty"]
 		delivered_qty = po_data["delivered_qty"]
 		pending_qty =ordered_qty - delivered_qty
-		if pending_qty > 0:
-			sum_data.append([ po_data['item_code'], po_data['ordered_qty'], po_data['delivered_qty'],
-			pending_qty, po_data['warehouse'],po_data['qty'],po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
+		actual_qty = po_data['qty']
+		Shortage_Qty=actual_qty -pending_qty
+		if (pending_qty > 0 and actual_qty>0):
+			sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'], po_data['delivered_qty'],
+			pending_qty, po_data['warehouse'],po_data['qty'],Shortage_Qty,po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
                         ])
 
 
@@ -51,7 +54,7 @@ def fetching_po_details(sales_order):
 	po_data = frappe.db.sql("""select
 					tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty,
 					tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,tsoi.stock_qty,tb.warehouse,
-                                        tb.actual_qty as qty
+                                        tb.actual_qty as qty,tsoi.item_name
 			from
 				`tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb
 			where
@@ -67,10 +70,12 @@ def get_columns():
 	"""return columns"""
 	columns = [
 		_("Item")+":Link/Item:100",
+		_("Item Name")+"::100",
 		_("Quantity")+":100",
 		_("Delivered Quantity")+"::100",
 		_("Pending Quantity")+"::100",
                 _("Warehouse")+":Link/Warehouse:100",
-                _("Available Qty")+"::100"
+                _("Available Qty")+"::100",
+		_("Shortage/Excess Qty")+"::100",
 		 ]
 	return columns

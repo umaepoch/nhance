@@ -16,6 +16,6 @@ frappe.query_reports["shark report"] = {
         "fieldtype": "Link",
         "options": "Sales Order",
         "reqd": 1
-	},
-],
+	}
+]
 }
