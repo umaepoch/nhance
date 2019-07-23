@@ -75,9 +75,9 @@ def execute(filters=None):
 			for num in number_of_purchase:
 				number_of_purchase = num.num_of_purchase
 				if last_purchase > 0:
-					avg_purchase = round(num.avg_purchase,2)
-					max_purchase = round(num.max_purchase,2)
-					min_purchase = round(num.min_purchase,2)
+					avg_purchase = round(float(num.avg_purchase),2)
+					max_purchase = round(float(num.max_purchase),2)
+					min_purchase = round(float(num.min_purchase),2)
 				else:
 					avg_purchase = valuation_rate
 					max_purchase = valuation_rate
