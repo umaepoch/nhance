@@ -667,12 +667,12 @@ def check_stock_entry_for_stock_requisition(stock_requisition_id):
 		flag = "true"
 	else:
 		flag = "false"
-	print "flag----------", flag
+	#print "flag----------", flag
 	return flag
 
 @frappe.whitelist()
 def make_material_issue(items,company,stock_requisition_id):
-	print "stock_requisition_id------", stock_requisition_id
+	#print "stock_requisition_id------", stock_requisition_id
 	required_date = datetime.datetime.now()
 	return_doc = ""
 	innerJson_Transfer = " "

@@ -465,7 +465,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 	creation_Date = datetime.datetime.now()
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 	details = frappe.get_meta("Purchase Order").get("fields")
-	print "supplier-----------------", supplier
+	#print "supplier-----------------", supplier
 	
 	if items_List:
 		outerJson_Transfer = {
@@ -485,7 +485,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 
 		for defaults in details:
 			if defaults.fieldname == "supplier":
-				print "Default Supplier------------------------", defaults.default
+				#print "Default Supplier------------------------", defaults.default
 				if defaults.default:
 					supplier = defaults.default
 					default_address = fetch_supplier_address(supplier)
@@ -511,7 +511,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 						tax_template = supplier_tax.pch_tax_template
 						outerJson_Transfer['taxes_and_charges'] = tax_template
 						purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
-						print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+						#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
 
 						for data in purchase_taxes.taxes:
 							charge_type = data.charge_type
@@ -529,7 +529,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 							outerJson_Transfer["taxes"].append(inner_json_for_taxes)
 				else:
 					address = fetch_supplier_address(supplier)
-					print "address-----------------", address
+					#print "address-----------------", address
 					supplier_data = frappe.get_doc("Supplier", supplier)
 
 					if address:
@@ -548,7 +548,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 						outerJson_Transfer['taxes_and_charges'] = tax_template
 						purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
 
-						print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+						#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
 						for data in purchase_taxes.taxes:
 							charge_type = data.charge_type
 							account_head = data.account_head

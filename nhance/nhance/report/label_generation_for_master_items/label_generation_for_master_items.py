@@ -21,7 +21,7 @@ def execute(filters=None):
 	columns = get_columns()
 	conditions = get_conditions(filters)
 	items_list = get_master_items(conditions)
-	print "items_list--------", items_list
+	#print "items_list--------", items_list
 	if items_list is not None:
 		for items_data in items_list:
 			item_code = items_data['item_code']
@@ -62,9 +62,9 @@ def make_prnfile(ncopies,label,date_of_import):
 	printer_details = frappe.get_doc("Label Printer", label)
 	address = printer_details.address
 	report_data_size = len(data_summary)
-	print "report_data_size-------", report_data_size
+	#print "report_data_size-------", report_data_size
 	split_address = address.split("\n")
-	print "len of address_details-----", len(split_address)
+	#print "len of address_details-----", len(split_address)
 
 	curr_date = utils.today()
 	fname = "ITEM_"+ str(curr_date) +".PRN"
@@ -86,10 +86,10 @@ def make_prnfile(ncopies,label,date_of_import):
 		stock_uom = report_data[2]
 		mrp = report_data[3]
 
-		print "type of date_of_import-------", date_of_import, type(date_of_import)
+		#print "type of date_of_import-------", date_of_import, type(date_of_import)
 		date_of_import1 = datetime.strptime(date_of_import, '%Y-%m-%d')
 		month_and_year_of_import = (date_of_import1).strftime("%m/%y")
-		print "month_and_year_of_import-------", month_and_year_of_import
+		#print "month_and_year_of_import-------", month_and_year_of_import
 
 		for copies in xrange(int(ncopies)):
 			prn_file.write("<xpml><page quantity='0' pitch='50.8 mm'></xpml>G0\015" +"\n")

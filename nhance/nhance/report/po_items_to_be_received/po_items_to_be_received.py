@@ -25,31 +25,31 @@ def execute(filters=None):
 	all_po_datas =  get_all_po_datas()
 
 	for po_data in all_po_datas:
-		 po_name = po_data.name or  ""
-		 date = po_data.transaction_date
-		 date = frappe.utils.formatdate(date, "dd-MM-yyyy")
-		 reqd_by_date = po_data.schedule_date
- 		 reqd_by_date = frappe.utils.formatdate(reqd_by_date, "dd-MM-yyyy")
-		 supplier = po_data.supplier or  ""
-		 supplier_name = po_data.supplier_name or  ""
-		 project_name = po_data.project or  ""
-		 item_code = po_data.item_code or  ""
-		 qty_puom = po_data.qty
-		 received_qty_puom = po_data.received_qty
-		 qty_to_receive_puom = po_data.qr
-		 stock_uom = po_data.stock_uom or  ""
-		 pur_uom = po_data.uom or  ""
-		 conversion_factor =  po_data.conversion_factor
-		 stock_qty =  po_data.stock_qty
-		 received_qty_suom =  received_qty_puom *  conversion_factor
-		 qty_to_receive_suom = stock_qty - received_qty_suom
-		 warehouse = po_data.warehouse or  ""
-		 item_name = po_data.item_name or  ""
-		 description = po_data.description or  ""
-		 brand = po_data.brand or  ""
-		 company = po_data.company or  ""
+		po_name = po_data.name or ""
+		date = po_data.transaction_date
+		date = frappe.utils.formatdate(date, "dd-MM-yyyy")
+		reqd_by_date = po_data.schedule_date
+ 		reqd_by_date = frappe.utils.formatdate(reqd_by_date, "dd-MM-yyyy")
+		supplier = po_data.supplier or  ""
+		supplier_name = po_data.supplier_name or  ""
+		project_name = po_data.project or  ""
+		item_code = po_data.item_code or  ""
+		qty_puom = po_data.qty
+		received_qty_puom = po_data.received_qty
+		qty_to_receive_puom = po_data.qr
+		stock_uom = po_data.stock_uom or  ""
+		pur_uom = po_data.uom or  ""
+		conversion_factor =  po_data.conversion_factor
+		stock_qty =  po_data.stock_qty
+		received_qty_suom =  received_qty_puom *  conversion_factor
+		qty_to_receive_suom = stock_qty - received_qty_suom
+		warehouse = po_data.warehouse or  ""
+		item_name = po_data.item_name or  ""
+		description = po_data.description or  ""
+		brand = po_data.brand or  ""
+		company = po_data.company or  ""
 
-	 	 data.append([ str(po_name),
+	 	data.append([ str(po_name),
 		 str(date),
 		 str(reqd_by_date),
 		 str(supplier),

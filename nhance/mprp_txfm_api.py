@@ -26,7 +26,7 @@ def get_transformed_items_details(loggedInUser):
 					passBasedOn = itemRecord[1]
 					transformedMaterialItemCode = itemRecord[0]
 					bomRecord = itemRecord[2]
-					print "The BOM used for item "+itemRecord[0]+"is:"+itemRecord[2]
+					#print "The BOM used for item "+itemRecord[0]+"is:"+itemRecord[2]
 					if bomRecord:
 						bomDoc = frappe.get_doc("BOM", bomRecord)
 						if bomDoc:
@@ -86,7 +86,7 @@ def fetchItemsConsumedListFromBom(transformedMaterialItemCode, warehouse, bomRec
 	#bomRecord = frappe.db.sql("""select it.default_bom from `tabItem` it where it.item_code = %s""",(transformedMaterialItemCode))
 	if bomRecord:
 		bomDoc = frappe.get_doc("BOM", bomRecord)
-		print "The BOM in fetchItemsConsumedListFromBOM is: "+bomRecord
+		#print "The BOM in fetchItemsConsumedListFromBOM is: "+bomRecord
 		if bomDoc:
 			bomItemsExplodedTableRecords = bomDoc.exploded_items
 			if bomItemsExplodedTableRecords:
@@ -138,7 +138,7 @@ def getBatchNos(transformedMaterialItemCode, warehouse):
 			outerJson.append(innerJson)
 		return outerJson
 	else:
-		print "I am in else part of if batchRecords: why?" 		
+		#print "I am in else part of if batchRecords: why?" 		
 		return None
 
 def getSerialNoRecords(transformedMaterialItemCode, warehouse):
@@ -153,7 +153,7 @@ def getSerialNoRecords(transformedMaterialItemCode, warehouse):
 			outerJson.append(innerJson)
 		return outerJson
 	else:
-		print "I am in else part of if serialNoRecords..why? this is strange behaviour"
+		#print "I am in else part of if serialNoRecords..why? this is strange behaviour"
 		return None	
 
 def getBatchAndSerialNos(itemCode, warehouse):

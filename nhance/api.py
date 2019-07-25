@@ -137,15 +137,14 @@ def make_interactions_cust(source_name, target_doc=None):
 @frappe.whitelist()
 def set_proposal_stage_values(opportunity):
 
-        
 	max_closing_date = frappe.db.sql("""select max(closing_date) from `tabProposal Stage` where reference_name=%s""",
 				(opportunity))
 				
-        sc_rec = frappe.db.sql("""select value, closing_date, stage, opportunity_purpose, buying_status, support_needed, competition_status
+	sc_rec = frappe.db.sql("""select value, closing_date, stage, opportunity_purpose, buying_status, support_needed, competition_status
 		from `tabProposal Stage`
 		where reference_name=%s and closing_date = %s""",
 		(opportunity, max_closing_date))
-        return sc_rec
+	return sc_rec
 
 #@frappe.whitelist()
 #def set_opp_stages(opportunity):

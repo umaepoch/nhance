@@ -23,7 +23,7 @@ def execute(filters=None):
 	columns = get_columns()
 	conditions = get_conditions(filters)
 	items_list = get_purchase_receipt_items(conditions)
-	print "items_list--------", items_list
+	#print "items_list--------", items_list
 	if filters.get("purchase_receipt") or filters.get("date_of_creation") or filters.get("item_code"):
 		if items_list is not None:
 			for (name) in sorted(items_list):

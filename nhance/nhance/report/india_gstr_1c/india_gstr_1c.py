@@ -355,10 +355,10 @@ class IndiaGstr1C(object):
 						place_of_supply = ""
 						billing_address_gstin = ""
 						gstin_and_place_of_supply,shipping_address_name,customer_address = frappe.db.get_value('Sales Invoice',amended_from,['gstin_and_place_of_supply','shipping_address_name','customer_address'])
-						print "amended_from----------",amended_from
-						print "gstin_and_place_of_supply----------",gstin_and_place_of_supply
-						print "shipping_address_name-----------",shipping_address_name
-						print "customer_address----------",customer_address
+						#print "amended_from----------",amended_from
+						#print "gstin_and_place_of_supply----------",gstin_and_place_of_supply
+						#print "shipping_address_name-----------",shipping_address_name
+						#print "customer_address----------",customer_address
 						gst_state_number = ""
 						gst_state = ""
 						party_gsstin = ""

@@ -135,7 +135,7 @@ def get_transformed_items_details(loggedInUser):
 				if itemRecord:
 					passBasedOn = itemRecord[1]
 					transformedMaterialItemCode = itemRecord[0]
-					print transformedMaterialItemCode
+					#print transformedMaterialItemCode
 					bomRecord = frappe.db.sql("""select it.default_bom from `tabItem` it where it.item_code = %s""",(transformedMaterialItemCode))
 					if bomRecord:
 						bomDoc = frappe.get_doc("BOM", bomRecord[0][0])

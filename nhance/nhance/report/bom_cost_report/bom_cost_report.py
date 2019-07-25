@@ -196,7 +196,7 @@ def get_stock_ledger_entry(purchase_dict):
 	purchase_or = ""
 	for purchase_o in purchase_dict:
 		purchase_or = purchase_o
-	print "purchase_o------------------------",purchase_or
+	#print "purchase_o------------------------",purchase_or
 	stock_entry = frappe.db.sql("""select
 											sl.stock_uom,sl.valuation_rate, pri.purchase_order
 									from

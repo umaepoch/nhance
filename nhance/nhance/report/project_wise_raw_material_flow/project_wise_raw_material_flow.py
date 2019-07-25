@@ -42,15 +42,15 @@ def execute(filters=None):
 		whse_items = get_items_from_warehouse(warehouse)
 		if whse_items is None:
 			whse_items = []
-		print "whse_items-----------", whse_items
+		#print "whse_items-----------", whse_items
 	if bom is not None:
 		bom_items = get_bom_items(filters)
 		if bom_items is None:
 			bom_items = []
-		print "bom_items-----------", bom_items
+		#print "bom_items-----------", bom_items
 
 	items_data = merge_items_list(whse_items,bom_items)
-	print "items_data-----------", items_data
+#	print "items_data-----------", items_data
 
 	for item in sorted(items_data):
 		qty_consumed_in_manufacture = 0
@@ -74,7 +74,7 @@ def execute(filters=None):
 		if po_details:
 			whse_stock_entry_qty = po_details['total_qty']
 			qty_consumed_in_manufacture = po_details['qty_consumed_in_manufacture']
-			print "qty_consumed_in_manufacture--------------", qty_consumed_in_manufacture
+			#print "qty_consumed_in_manufacture--------------", qty_consumed_in_manufacture
 			whse_qty = whse_qty + whse_stock_entry_qty
 		if reserve_warehouse is not None and reserve_warehouse is not "":
 			reserved_whse_qty = get_warehouse_qty(reserve_warehouse,item_code)
@@ -94,7 +94,7 @@ def execute(filters=None):
 		delta1_qty = sum_qty - required_qty
 		summ_data.append([str(item_code), str(bom_qty), str(bom_item_qty), str(required_qty), str(whse_qty), str(delta_qty), 
 			str(reserved_whse_qty), str(qty_consumed_in_manufacture), str(max_additional_qty), str(sum_qty), str(delta1_qty)])
-	print "summ_data-----------", summ_data
+	#print "summ_data-----------", summ_data
 	return columns, summ_data
 
 def get_stock_entry_quantities(warehouse,item_code,project_start_date):
@@ -104,7 +104,7 @@ def get_stock_entry_quantities(warehouse,item_code,project_start_date):
 	current_date = str(datetime.datetime.now())
 	if project_start_date is None or project_start_date is "":
 		project_start_date = "2000-01-01 00:00:00"
-	print "project_start_date-----", project_start_date
+	#print "project_start_date-----", project_start_date
 	details = frappe.db.sql("""select sed.item_code,sed.qty,se.purpose from `tabStock Entry Detail` sed, 
 			`tabStock Entry` se where sed.item_code=%s and sed.s_warehouse=%s and se.purpose='Manufacture' and 
 			sed.modified >='""" + str(project_start_date) +"""'and sed.modified <='""" + current_date + """' and 
@@ -136,7 +136,7 @@ def merge_items_list(whse_items,bom_items):
 			item_code = data['item_code']
 			bi_qty = data['bi_qty']
 			bo_qty = data['bo_qty']
-			print "bom_item_qty--------", bi_qty
+			#print "bom_item_qty--------", bi_qty
 			key = (item_code)
 			if key not in items_map:
 				items_map[key] = frappe._dict({"item_code": item_code,"bi_qty": float(bi_qty),"bom_qty": bo_qty})
@@ -172,9 +172,9 @@ def get_items_from_warehouse(warehouse):
 
 def get_bom_items(filters):
 	conditions = get_conditions(filters)
-	print "---------conditions::", conditions
+	#print "---------conditions::", conditions
 	if filters.get("include_exploded_items") == "Y":
-		print "in------------Y"
+		#print "in------------Y"
 		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
 		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
@@ -236,7 +236,7 @@ def make_issue(issue_items):
 	issue_list = json.loads(issue_items)
 	issue_list = json.dumps(issue_list)
 	issue_list = ast.literal_eval(issue_list)
-	print "----------------------issue_list", issue_list
+	#print "----------------------issue_list", issue_list
 	for item in issue_list:
 		issue_assign = []
 		item_code = issue_list[0]['item_code']

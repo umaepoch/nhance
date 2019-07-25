@@ -14,10 +14,10 @@ def execute(filters=None):
 	columns = get_columns(filters, show_party_name)
 
 	opening_balances = get_opening_balances1(filters)
-	print "opening_balances----------------", opening_balances
+	#print "opening_balances----------------", opening_balances
 
 	balances_within_period = get_balances_within_period1(filters)
-	print "balances_within_period----------------", balances_within_period
+	#print "balances_within_period----------------", balances_within_period
 	
 	final_result = []
 	opening_balance_map = {}
@@ -97,7 +97,7 @@ def execute(filters=None):
 				final_result.append([party_names[name], "", "", "", "", "", "", "", company_currency])
 
 	final_result.append(["Totals", "", total_opening_debit, total_opening_credit, total_debit, total_credit, total_closing_debit, total_closing_credit, company_currency])
-	print "final_result----------------", final_result
+	#print "final_result----------------", final_result
 
 	return columns, final_result
 
