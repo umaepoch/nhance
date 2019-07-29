@@ -42,7 +42,7 @@ def execute(filters=None):
 			bom,
 			project
 			])
-			print "Data appending for "+ str(count) +"th time"
+			#print "Data appending for "+ str(count) +"th time"
 			count = count +1
 
 	return columns, data
@@ -90,26 +90,26 @@ def get_sreq_datas(company):
 	#workingFine sreq_data = frappe.db.sql("""select name,po_list,material_request_type from `tabStock Requisition` where docstatus=1 and material_request_type='Purchase' """, as_dict=1)
 
 	sreq_data = frappe.db.sql("""select name,po_list,material_request_type from `tabStock Requisition` where docstatus=1 and material_request_type='Purchase' and company = %s  """,(company) ,as_dict=1)
-	print "sreq_data",sreq_data
+	#print "sreq_data",sreq_data
 	return sreq_data
 
 def get_sreq_items_data( sreq_name,filters ):
 	conditions = get_conditions(filters)
-	print "from get_sreq_items_data conditions",conditions
+	#print "from get_sreq_items_data conditions",conditions
 	sreq_name = str(sreq_name)
 	query = "select item_code,qty,pch_bom_reference,project from `tabStock Requisition Item` where parent={} {}".format("'"+sreq_name+"'",conditions)
-	print "sreq query",query
+	#print "sreq query",query
 	#sreq_items_data = frappe.db.sql("""select item_code,qty,pch_bom_reference,project from `tabStock Requisition Item` where parent={} {} """.format(sreq_name,conditions),as_dict=1)
 	sreq_items_data = frappe.db.sql(query,as_dict=1)
 
-	print "from get_sreq_items_data sreq_items_data",sreq_items_data
+	#print "from get_sreq_items_data sreq_items_data",sreq_items_data
 
 	return sreq_items_data
 
 def get_total_po_ord_qty ( sreq_name,sreq_item_code,filters):
 	conditions = po_get_conditions(filters)
 	query = "select sum(poi.qty) total_qty from `tabPurchase Order Item` poi,`tabPurchase Order` po where  po.name =poi.parent and poi.item_code={} and po.stock_requisition_id={} {}".format("'"+sreq_item_code+"'","'"+sreq_name+"'",conditions)
-	print "po query",query
+	#print "po query",query
 	total_po_ord_qty_list = frappe.db.sql(query,as_dict=1)
 	#total_po_ord_qty_list = frappe.db.sql("""select sum(poi.qty) total_qty from `tabPurchase Order Item` poi,`tabPurchase Order` po  where po.name =poi.parent and poi.item_code=%s and po.stock_requisition_id=%s""",(sreq_item_code,sreq_name),as_dict=1)
 	total_po_ord_qty = 0

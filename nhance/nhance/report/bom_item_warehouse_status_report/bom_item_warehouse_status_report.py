@@ -57,23 +57,23 @@ def get_columns():
 		return columns
 
 def get_items_data(requested_by):
-	print "#####-requested_by::", requested_by
+	#print "#####-requested_by::", requested_by
 	items_details = []
 	if requested_by != "null" and requested_by is not None:
 		records = frappe.db.sql("""select name,po_list from `tabStock Requisition` where requested_by =%s and docstatus=1""", (requested_by), as_dict=1)
-		print "####-records::", records, len(records)
+		#print "####-records::", records, len(records)
 		if len(records)!=0:
 			check_flag = False
 			for name in records:
 				stock_requistion_id = name['name']
 				po = name['po_list']
-				print "------po_list::", po
+				#print "------po_list::", po
 				if po is not None and po is not "" and po != 'NULL':
 					check_flag = True
 					splitted_po = po.split(",")
 					if len(splitted_po)!=0:
 						for po in splitted_po:
-							print "------splitted_po's::", po
+							#print "------splitted_po's::", po
 							po_items = get_po_items(po)
 							for po_items_data in po_items:
 								po_items_data['purchase_order'] = po

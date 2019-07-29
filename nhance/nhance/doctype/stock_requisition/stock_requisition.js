@@ -279,53 +279,22 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var check_args = "";
 		console.log("make_purchase_order --------------SREQ ID::"+cur_frm.doc.name);
 
-
-
-
-
 		//validating purchase uom and  conversion_factor
-		var sreq_document = 	cur_frm.doc;
-		var sreq_items_data = sreq_document.items;
-		var sreq_items_name_list = [];
-
-		for(var i = 0; i < sreq_items_data.length; i++){
-			var sreq_item_name = sreq_items_data[i].item_code ;
-			sreq_items_name_list.push(sreq_item_name);
-		}//end of for
-
-		var sreq_master_items_data = get_sreq_master_items_data(sreq_items_name_list);
-		//console.log("sreq_items_name_list :::" +sreq_items_name_list );
-		console.log("sreq_master_items_data ac to  sreq_items_name_list" +JSON.stringify(sreq_master_items_data) );
-
-
-		for(var i = 0; i < sreq_items_name_list.length; i++){
-			var item_code = sreq_items_name_list[i];
-			var master_item_data =  sreq_master_items_data[item_code];
-			var ucd_uom_list = []
-			var purchase_uom = master_item_data[0]['purchase_uom'];
-
-			if (purchase_uom != null ){
-
-					for(var j = 0; j < master_item_data.length; j++){
-						var ucd_uom = master_item_data[j]['uom'] ;
-						ucd_uom_list.push( ucd_uom );
-						}
-
-					if( $.inArray(purchase_uom, ucd_uom_list) != -1){
-						console.log("ucf available for this item"+item_code)
-						}
-						else {
-							frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
-							console.log("ucf not there  for this item"+item_code)
-							}
-
-			} //end if
-			console.log("purchase_uom for item name:"+item_code+" is "+purchase_uom)
-			console.log("ucd_uom_list"+item_code+" is "+ucd_uom_list)
-
-		}//end of forsreq_items_name_list
-		//End validating purchase uom and conversion conversion_factor
-
+        	var sreq_items_data = cur_frm.doc.items;
+        	for(var i = 0; i < sreq_items_data.length; i++){
+            		var item_code = sreq_items_data[i].item_code ;
+            		var purchase_uom = getPurchaseUom(item_code);
+            		//console.log("purchase_uom--------------::"+purchase_uom);
+            		if(purchase_uom!=null){
+                		var conversion_factor = getConversionFactor(purchase_uom,item_code);
+                		//console.log("conversion_factor--------------::"+conversion_factor);
+                		if (conversion_factor == 0 || conversion_factor == undefined){
+                    			frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
+                		}
+            		}
+           
+        	}//end of for
+        	//End validating purchase uom and conversion conversion_factor
 
 		if(!dialog_displayed){
 			var dialog = new frappe.ui.Dialog({
@@ -359,6 +328,10 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					for(var arrayLength = 0; arrayLength < itemsList.length; arrayLength++){
 						var arr = {};
     						var arrList = [];
+						var default_supplier = "";
+						var cost_center = "";
+						var expense_account = "";
+						var price_list = "";
 						var item_code = itemsList[arrayLength].item_code;
 						var qty = itemsList[arrayLength].qty;
 						var uom = itemsList[arrayLength].uom;
@@ -368,16 +341,8 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						var expense_account1 = itemsList[arrayLength].expense_account;
 						var purchase_uom = getPurchaseUom(item_code);
 						var check_flag = get_UOM_Details(stock_uom);
-						var pch_bom_reference = "" ;
-						var project = "" ;
-						if( itemsList[arrayLength].pch_bom_reference != null && itemsList[arrayLength].pch_bom_reference != undefined){
-							pch_bom_reference= itemsList[arrayLength].pch_bom_reference;
-						}
-						if( itemsList[arrayLength].project != null && itemsList[arrayLength].project != undefined){
-							project= itemsList[arrayLength].project;
-						}
+						/**
 						console.log("purchase_uom::"+purchase_uom);
-							/**
 						console.log("qty::"+qty);
 						console.log("cost_center::"+cost_center1);
 						console.log("expense_account-------------::"+expense_account1);
@@ -405,20 +370,21 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 						purchase_uom = uom;
 						}
-						console.log("second time purchase_uom after else"+purchase_uom);
 						//console.log("stock_qty is::"+stock_qty);
    						var stock_uom = itemsList[arrayLength].stock_uom;
     						var warehouse = itemsList[arrayLength].warehouse;
 
 						var item_default_details = getItemDetails(item_code,company);
 
-						var default_supplier = item_default_details[0]['default_supplier'];
-						var cost_center = item_default_details[0]['buying_cost_center'];
-						var expense_account = item_default_details[0]['expense_account'];
-						//var warehouse = item_default_details[0]['default_warehouse'];
-						var price_list = item_default_details[0]['default_price_list'];
-
-						if (price_list != null){
+						if (item_default_details.length != 0){
+							default_supplier = item_default_details[0]['default_supplier'];
+							cost_center = item_default_details[0]['buying_cost_center'];
+							expense_account = item_default_details[0]['expense_account'];
+							//var warehouse = item_default_details[0]['default_warehouse'];
+							price_list = item_default_details[0]['default_price_list'];
+						}
+						
+						if (price_list != null && price_list != ""){
 							var item_price = fetch_item_price(item_code,price_list);
 							arr['price_list_rate'] = item_price;
 							itemsList[arrayLength].price_list_rate = item_price;
@@ -435,23 +401,20 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 							arr['warehouse'] = warehouse;
 						}**/
 
-						if (cost_center != null){
+						if (cost_center != null && cost_center != ""){
 							arr['cost_center'] = cost_center;
 							itemsList[arrayLength].cost_center = cost_center;
 						}else{
 							arr['cost_center'] = cost_center1;
 						}
-
-						if (expense_account != null){
+		
+						if (expense_account != null && expense_account != ""){
 							arr['expense_account'] = expense_account;
 							itemsList[arrayLength].expense_account = expense_account;
 						}else{
 							arr['expense_account'] = expense_account1;
 						}
-
-
-
-						//console.log("default_supplier::"+default_supplier);
+						
 
 						arr['item_code'] = item_code;
    						arr['supplier'] = default_supplier;
@@ -460,13 +423,11 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
 						arr['warehouse'] = warehouse;
-						arr['pch_bom_reference'] = pch_bom_reference;
-						arr['project'] = project;
     						//arr['price'] = standard_rate;
-
+    						
     						arr['conversion_factor'] = conversion_factor;
 
-						if(default_supplier == null){
+						if(default_supplier == null || default_supplier == ""){
 							//itemsList[arrayLength].rate = standard_rate;
 							no_Supplier_Items.push(itemsList[arrayLength]);
 						}else{
@@ -1080,27 +1041,6 @@ function update_submitted_sreq(stockRequisitionID) {
     });
 }
 //qty to be order functions end
-
-//functions validating purchase uom and conversion conversion_factor
-function get_sreq_master_items_data(sreq_items_name_list){
-	var sreq_master_items_data_local;
-
-	frappe.call({
-				method: "nhance.nhance.doctype.stock_requisition.stock_requisition.get_sreq_master_items_data",
-				args: {
-						"sreq_items_name_list": sreq_items_name_list
-				},
-				async: false,
-				callback: function(r) {
-					if (r.message) {
-						sreq_master_items_data_local = r.message;
-						}
-
-				}  //end of call back
-		}); // end of frappe call
-		return sreq_master_items_data_local;
-}
-//End validating purchase uom and conversion conversion_factor
 
 //making po from sreq get_po_default_values
 function get_po_default_values(){

@@ -49,7 +49,7 @@ def execute(filters=None):
 	validate_filters(filters)
 	columns = get_columns()
 	item_map = get_item_details(filters)
-	print "item_map===>>",item_map
+	#print "item_map===>>",item_map
 	if for_field_value is not None and filters.get("docIds"):
 		iwb_map = get_item_warehouse_map(filters)
 		data = []
@@ -70,7 +70,7 @@ def execute(filters=None):
 		for (bom, item, bi_item, whse) in sorted(iwb_map):
 			qty_dict = iwb_map[(bom, item, bi_item, whse)]
 			if item_map[bi_item]["purchase_uom"] is None or item_map[bi_item]["purchase_uom"] is "":
-				print "purchase_uom is empty....."
+				#print "purchase_uom is empty....."
 				purchase_UOM = item_map[bi_item]["stock_uom"]
 				item_map[bi_item]["purchase_uom"] = purchase_UOM
 				conv_factor = 1
@@ -139,7 +139,7 @@ def execute(filters=None):
 				if check_for_whole_number_itemwise(item_work):
 					tot_reqd_qty = math.ceil(tot_reqd_qty)
 				tot_p_reqd_qty = math.ceil(tot_p_reqd_qty)
-				print "##########-tot_p_reqd_qty::", tot_p_reqd_qty
+				#print "##########-tot_p_reqd_qty::", tot_p_reqd_qty
 				summ_data.append([rows[0], rows[1], rows[11], rows[2],
 		rows[3], rows[4], rows[5], rows[6], rows[12], " ", " ", rows[7], " ", " ", rows[15], " ", rows[9], rows[14]
 			])
@@ -156,7 +156,7 @@ def execute(filters=None):
 					#tot_bal_qty = tot_bal_qty + rows[6]
 					total_delta_qty = tot_reqd_qty - tot_bal_qty
 					total_p_delta_qty = tot_p_reqd_qty - tot_p_bal_qty
-					print "############-total_p_delta_qty::", total_p_delta_qty
+					#print "############-total_p_delta_qty::", total_p_delta_qty
 					if total_delta_qty < 0:
 						total_delta_qty = 0
 						total_p_delta_qty = 0
@@ -229,12 +229,12 @@ def get_conditions(filters):
 			bom_list = hidden_bom.split(",")
 			if len(bom_list)==1:
 				for bom in bom_list:
-					print "bom::", bom
+					#print "bom::", bom
 					conditions += " and bi.parent = '%s'" % frappe.db.escape(bom, percent=False)
 			else:
 				total_boms = ""
 				for bom in bom_list:
-					print "bom::", bom
+					#print "bom::", bom
 					if bom!="null":
 						if total_boms == "":
 							total_boms = "'" + bom + "'"
@@ -246,17 +246,17 @@ def get_conditions(filters):
 				else:
 					conditions += " and bi.parent = 'null'"
 	if filters.get("for") == "Project":
-		print filters.get("master_bom_hidden")
+		#print filters.get("master_bom_hidden")
 		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("master_bom_hidden"), percent=False)
 
 	if filters.get("for") == "Production Order":
-		print filters.get("production_bom_hidden")
+		#print filters.get("production_bom_hidden")
 		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("production_bom_hidden"), percent=False)
 	return conditions
 
 def get_sales_order_entries(filters):
 	conditions = get_conditions(filters)
-	print "---------conditions::", conditions
+	#print "---------conditions::", conditions
 	if filters.get("include_exploded_items") == "Y":
 		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
@@ -376,7 +376,7 @@ def get_item_warehouse_map(filters):
 				#qty_dict.delta_qty=(qty_dict.bal_qty-(d.bi_qty * flt(qty_to_make)))
 				qty_dict.project = d.project
 	del sle[:]
-	print "-------------------iwb_map::", iwb_map
+	#print "-------------------iwb_map::", iwb_map
 	return iwb_map
 
 def get_warehouses(company):
@@ -473,7 +473,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 		only_transfer = False
 	else:
 		only_transfer = bool(check_flag)
-		print "########-parseBoolString::", only_transfer 
+		#print "########-parseBoolString::", only_transfer 
 	test_whole_number = 1
 	if required_date == getdate(datetime.now().strftime('%Y-%m-%d')):
 		if required_date_count == False:
@@ -583,7 +583,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 	if no_transfer == 0:
 		frappe.msgprint("Planning Warehouse has all the item !! Stock transfer is not required")
 	elif curr_stock_balance == 1 or only_transfer:
-		print "###################-inside_transfer::"
+		#print "###################-inside_transfer::"
 		doctype = ""
 		item_code = ""
 		qty = 0
@@ -610,7 +610,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 		
 		sreq_items= newJson_transfer["items"]
 		sreq_items_map = get_unique_stock_requisition_items(sreq_items)
-		print "len of sreq_items_map::", sreq_items_map
+		#print "len of sreq_items_map::", sreq_items_map
 		if len(sreq_items_map)!=0:
 			sreq_dict = []
 			for item_code in sreq_items_map:
@@ -640,7 +640,7 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 				newJson_transfer1["items"].append(innerJson_requisition1)
 			sreq_doc = frappe.new_doc("Stock Requisition")
 			sreq_doc.update(newJson_transfer1)
-			print "sreq_doc-items#######################:", sreq_doc.items
+			#print "sreq_doc-items#######################:", sreq_doc.items
 			type_of_doc = type(sreq_doc)
 			frappe.msgprint("doc#######################: "+ str(type_of_doc) )
 			if workflowStatus == "Approved":
@@ -692,14 +692,14 @@ def make_stock_requisition(planning_warehouse, required_date, reference_no, work
 		if not only_transfer:
 			doc = frappe.new_doc("Stock Requisition")
 			sreq_items= newJson_requisition["items"]
-			print "-------------------sreq_items for purchase::", sreq_items
+			#print "-------------------sreq_items for purchase::", sreq_items
 			sreq_items_map = get_unique_stock_requisition_items(sreq_items)
 			if len(sreq_items_map)!=0:
 				sreq_dict = []
 				for item_code in sreq_items_map:
 					sreq_dict_items = sreq_items_map[item_code]
 					sreq_dict.append(sreq_dict_items)
-				print "####################-newJson_transfer::", sreq_dict
+				#print "####################-newJson_transfer::", sreq_dict
 				newJson_requisition["items"] = sreq_dict
 			doc.update(newJson_requisition)
 			#print "#######################-newJson_requisition purchse::", newJson_requisition
@@ -789,7 +789,7 @@ def get_stock_requistion_bom_item_qty(bom,item_code,docName):
         			updated_bom = split_bom
     			else:
        				updated_bom = updated_bom + "-" + split_bom
-		print "updated_bom::", updated_bom	
+		#print "updated_bom::", updated_bom	
 		previous_bom_list = frappe.db.sql("""select name  from `tabBOM` where name like '%"""+updated_bom+"""%'""", as_dict=1)
 		total_bom_list = ""
 		for name in previous_bom_list:
@@ -797,7 +797,7 @@ def get_stock_requistion_bom_item_qty(bom,item_code,docName):
 				total_bom_list = "'" + total_bom_list + name['name'] + "'"
 			else:
 				total_bom_list = total_bom_list + "," + "'" + name['name'] + "'"
-		print "##########-total_bom_list::", total_bom_list 
+		#print "##########-total_bom_list::", total_bom_list 
 
 		quantity = frappe.db.sql("""select tsri.qty from `tabStock Requisition` tsr, `tabStock Requisition Item` tsri where 						tsr.requested_by in("""+total_bom_list+""")and tsri.item_code=%s and tsr.status not in 					        ('Stopped','Cancelled') and tsri.parent=tsr.name""", (item_code), as_dict=1)
 	if len(quantity)!=0:
@@ -832,7 +832,7 @@ def get_bom_items_list():
 		for item_code in bom_items_map:
 			bom_items = bom_items_map[item_code]
 			bom_items_dict.append(bom_items)
-	print "###################-bom_items_dict::", bom_items_dict
+	#print "###################-bom_items_dict::", bom_items_dict
 	return bom_items_dict
 
 @frappe.whitelist()
@@ -873,7 +873,7 @@ def get_bom_list(soNumber,item_code):
 	if control_bom is not None:
 		control_bom = {"is_default":"so", "control_bom":control_bom}
 	else:
-		print "#####-item_code::", item_code
+		#print "#####-item_code::", item_code
 		records = frappe.db.sql("""select name  from `tabBOM` where item=%s and is_default=1""", (item_code), as_dict=1);
 		if len(records)!=0:
 			control_bom = records[0]['name']
@@ -890,8 +890,8 @@ def get_bom_list_for_so(item_code):
 @frappe.whitelist()
 def get_so_item_status(item_code):
 	item_group = get_item_group(item_code)
-	print "item_code::", item_code 
-	print "item_group::", item_group
+	#print "item_code::", item_code 
+	#print "item_group::", item_group
 	if item_group == "Purchased Materials":
 		data={"status":"-1"}
 	else:

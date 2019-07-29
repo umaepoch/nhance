@@ -87,7 +87,7 @@ def get_conditions(filters):
 	return conditions
 
 def validate_filters(filters):
-		print "##validating filters..."
+		#print "##validating filters..."
 		if not (filters.get("item_code") or filters.get("warehouse")):
 				sle_count = flt(frappe.db.sql("""select count(name) from          
 				`tabStock Ledger Entry`""")[0][0])	
@@ -220,7 +220,7 @@ def get_item_warehouse_map(filters):
 						wso = delta
 					else:
 						wso = float(moq1[0])
-						print "#######-wso::", wso
+						#print "#######-wso::", wso
  						excess_ord = wso - delta
 				else:
 					excess_ord = 0
@@ -384,7 +384,7 @@ def make_Purchase_Items(args):
 						quantity = int(item_qty)
 				else:
 					quantity = int(item_qty)
-				print "#################-quantity::", quantity
+				#print "#################-quantity::", quantity
 			else:
 				quantity = rows[13]
 		if quantity > 0:
@@ -400,7 +400,7 @@ def make_Purchase_Items(args):
 			}
 			outerJson_Transfer["item"].append(innerJson_Transfer)
 			doc = frappe.new_doc("Pre Purchase Order")
-			print "outerJson_Transfer::", outerJson_Transfer
+			#print "outerJson_Transfer::", outerJson_Transfer
 			doc.update(outerJson_Transfer)
 			if args == "as a draft":
 				doc.save()
@@ -408,7 +408,7 @@ def make_Purchase_Items(args):
 	  			doc.save()
 			ret = doc.doctype
 			docid = doc.name
-	print "## Docid:", docid
+	#print "## Docid:", docid
 	if ret:
 		return docid
 def get_Purchase_Taxes_and_Charges(account_head, tax_name):
@@ -460,7 +460,7 @@ def make_PurchaseOrder(args,tax_template):
         						       "parentfield": "taxes"
 								}
 					outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
-	print "items_List::", items_List
+	#print "items_List::", items_List
 	for items in items_List:
 		outerJson_Transfer['supplier'] = items_List[i]['supplier']
 		innerJson_Transfer =	{
@@ -477,7 +477,7 @@ def make_PurchaseOrder(args,tax_template):
 				   	}
 		i = i + 1
 		outerJson_Transfer["items"].append(innerJson_Transfer)
-	print "########-Final Purchase Order Json::", outerJson_Transfer
+	#print "########-Final Purchase Order Json::", outerJson_Transfer
 	doc = frappe.new_doc("Purchase Order")
 	doc.update(outerJson_Transfer)
 	doc.save()

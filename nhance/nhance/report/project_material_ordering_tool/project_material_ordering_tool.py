@@ -31,8 +31,8 @@ def execute(filters=None):
 			for (sreq_no) in sorted(items_map):
 				data = items_map[sreq_no]
 				for sreq_dict in data:
-					print "sreq_dict-----", sreq_dict['sreq_no']
-					print "bom-----", sreq_dict['bom']
+					#print "sreq_dict-----", sreq_dict['sreq_no']
+					#print "bom-----", sreq_dict['bom']
 					sum_data.append([				
 					sreq_dict['sreq_no'],
 					project,
@@ -63,7 +63,8 @@ def execute(filters=None):
 def fetch_pending_sreqnos(project,swh):
 	items_map = {}
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
-	sreq_nos_data = frappe.db.sql("""select distinct(sri.parent) as parent, sr.po_list as po_list from `tabStock Requisition Item` sri, `tabStock Requisition` sr where sri.project=%s and sr.name=sri.parent and sr.docstatus=1 and sr.status not in('Ordered') and sr.name=sri.parent""", project, as_dict=1)
+	sreq_nos_data = frappe.db.sql("""select distinct(sri.parent) as parent, sr.po_list as po_list from `tabStock Requisition Item` sri, `tabStock Requisition` sr where sri.project=%s and sr.name=sri.parent and sr.docstatus=1 and sr.status not in('Ordered')""", project, as_dict=1)
+
 	if sreq_nos_data:
 		for sreq_data in sreq_nos_data:
 			sreq_no = sreq_data['parent']
@@ -169,7 +170,7 @@ def fetch_pending_sreqnos(project,swh):
 						bom_reference = items_data['pch_bom_reference']
 						fulFilledQty = items_data['fulfilled_quantity']
 						default_supplier = fetch_default_supplier(company,item_code)
-						print "item_code---", item_code, items_data['uom']
+						#print "item_code---", item_code, items_data['uom']
 						po_uom = fetch_item_purchase_uom(item_code)
 						conversion_factor = fetch_conversion_factor(item_code,po_uom)
 						if conversion_factor == 0:
@@ -192,7 +193,7 @@ def fetch_pending_sreqnos(project,swh):
 							excess_to_be_ordered = 0
 						else:
 							excess_to_be_ordered = float(items_data['stock_qty']) - qty_available_in_swh
-						print "key-----", key
+						#print "key-----", key
 
 						if key not in items_map:
 							sreq_items_list = []
@@ -258,7 +259,7 @@ def fetch_conversion_factor(parent,uom):
 		return 0
 
 def fetch_po_items_details(item_code,po_list):
-	print "po_list-------", po_list
+	#print "po_list-------", po_list
 	qty = 0
 	stock_qty = 0
 	po_items = {}
@@ -270,7 +271,7 @@ def fetch_po_items_details(item_code,po_list):
 			stock_qty = stock_qty + float(po_data['stock_qty'])
 	po_items['qty'] = qty
 	po_items['stock_qty'] = stock_qty
-	print "po_items-------", po_items
+	#print "po_items-------", po_items
 	return po_items
 
 def fetch_item_purchase_uom(item_code):
@@ -459,13 +460,13 @@ def updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no):
 
 @frappe.whitelist()
 def make_purchase_orders(sreq_no,supplier,po_items):
-	
+	tax_template = ""
 	items_List = json.loads(po_items)
-	print "type of po_items_list---------", type(items_List), items_List
 	creation_Date = datetime.datetime.now()
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 	details = frappe.get_meta("Purchase Order").get("fields")
-
+	#print "supplier-----------------", supplier
+	
 	if items_List:
 		outerJson_Transfer = {
 			"doctype": "Purchase Order",
@@ -476,6 +477,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 			"due_date": creation_Date,
 			"docstatus": 0,
 			"supplier": supplier,
+			"terms": "",
 			"stock_requisition_id": sreq_no,
 			"items": [],
 			"taxes": []
@@ -483,91 +485,165 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 
 		for defaults in details:
 			if defaults.fieldname == "supplier":
-				print "supplier Default---", defaults.default
+				#print "Default Supplier------------------------", defaults.default
 				if defaults.default:
+					supplier = defaults.default
+					default_address = fetch_supplier_address(supplier)
+					supplier_tax = frappe.get_doc("Supplier", supplier)
 					outerJson_Transfer['supplier'] = defaults.default
-				
+
+					if supplier_tax.pch_tax_template:
+						tax_template = supplier_tax.pch_tax_template
+						outerJson_Transfer['taxes_and_charges'] = tax_template
+					
+					if default_address:
+						outerJson_Transfer["supplier_address"] = default_address[0]['name']
+						outerJson_Transfer["tc_name"] = default_address[0]['pch_terms']
+						
+						terms_and_conditios = frappe.get_doc("Terms and Conditions", default_address[0]['pch_terms'])
+						if terms_and_conditios.terms:
+							outerJson_Transfer["terms"] = terms_and_conditios.terms
+					else:
+						outerJson_Transfer["supplier_address"] = ""
+						outerJson_Transfer["tc_name"] = ""
+
+					if supplier_tax.pch_tax_template:
+						tax_template = supplier_tax.pch_tax_template
+						outerJson_Transfer['taxes_and_charges'] = tax_template
+						purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
+						#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+
+						for data in purchase_taxes.taxes:
+							charge_type = data.charge_type
+							account_head = data.account_head
+							rate = data.rate
+							tax_amount = data.tax_amount
+							description = data.description
+							inner_json_for_taxes = {
+								"charge_type" : charge_type,
+								"account_head":account_head,
+								"rate":rate,
+								"tax_amount": tax_amount,
+								"description" :description,
+							}
+							outerJson_Transfer["taxes"].append(inner_json_for_taxes)
+				else:
+					address = fetch_supplier_address(supplier)
+					#print "address-----------------", address
+					supplier_data = frappe.get_doc("Supplier", supplier)
+
+					if address:
+						outerJson_Transfer["supplier_address"] = address[0]['name']
+						outerJson_Transfer["tc_name"] = address[0]['pch_terms']
+						terms_and_conditios = frappe.get_doc("Terms and Conditions", address[0]['pch_terms'])
+
+						if terms_and_conditios.terms:
+							outerJson_Transfer["terms"] = terms_and_conditios.terms
+					else:
+						outerJson_Transfer["supplier_address"] = ""
+						outerJson_Transfer["tc_name"] = ""
+
+					if supplier_data.pch_tax_template:
+						tax_template = supplier_data.pch_tax_template
+						outerJson_Transfer['taxes_and_charges'] = tax_template
+						purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
+
+						#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+						for data in purchase_taxes.taxes:
+							charge_type = data.charge_type
+							account_head = data.account_head
+							rate = data.rate
+							tax_amount = data.tax_amount
+							description = data.description
+							inner_json_for_taxes = {
+								"charge_type" : charge_type,
+								"account_head":account_head,
+								"rate":rate,
+								"tax_amount": tax_amount,
+								"description" :description,
+							}
+							outerJson_Transfer["taxes"].append(inner_json_for_taxes)
+
 			if defaults.fieldname == "customer":
-				print "customer Default---", defaults.default
+				#print "customer Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['customer'] = defaults.default
 
 			if defaults.fieldname == "auto_repeat":
-				print "auto_repeat Default---", defaults.default
+				#print "auto_repeat Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['auto_repeat'] = defaults.default
 
 			if defaults.fieldname == "select_print_heading":
-				print "select_print_heading Default---", defaults.default
+				#print "select_print_heading Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['select_print_heading'] = defaults.default
 
 			if defaults.fieldname == "party_account_currency":
-				print "party_account_currency Default---", defaults.default
+				#print "party_account_currency Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['party_account_currency'] = defaults.default
 
 			if defaults.fieldname == "payment_terms_template":
-				print "payment_terms_template Default---", defaults.default
+				#print "payment_terms_template Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['payment_terms_template'] = defaults.default
 
 			if defaults.fieldname == "shipping_rule":
-				print "shipping_rule Default---", defaults.default
+				#print "shipping_rule Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['shipping_rule'] = defaults.default
 
 			if defaults.fieldname == "taxes_and_charges":
-				print "taxes_and_charges Default---", defaults.default
+				#print "taxes_and_charges Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['taxes_and_charges'] = defaults.default
 
 			if defaults.fieldname == "supplier_warehouse":
-				print "supplier_warehouse Default---", defaults.default
+				#print "supplier_warehouse Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['supplier_warehouse'] = defaults.default
 
 			if defaults.fieldname == "set_warehouse":
-				print "set_warehouse Default---", defaults.default
+				#print "set_warehouse Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['set_warehouse'] = defaults.default
 
 			if defaults.fieldname == "price_list_currency":
-				print "price_list_currency Default---", defaults.default
+				#print "price_list_currency Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['price_list_currency'] = defaults.default
 
 			if defaults.fieldname == "buying_price_list":
-				print "buying_price_list Default---", defaults.default
+				#print "buying_price_list Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['buying_price_list'] = defaults.default
 
 			if defaults.fieldname == "currency":
-				print "currency Default---", defaults.default
+				#print "currency Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['currency'] = defaults.default
 
 			if defaults.fieldname == "shipping_address":
-				print "shipping_address Default---", defaults.default
+				#print "shipping_address Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['shipping_address'] = defaults.default
 
 			if defaults.fieldname == "contact_person":
-				print "contact_person Default---", defaults.default
+				#print "contact_person Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['contact_person'] = defaults.default
 
 			if defaults.fieldname == "supplier_address":
-				print "supplier_address Default---", defaults.default
+				#print "supplier_address Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['supplier_address'] = defaults.default
 
 			if defaults.fieldname == "customer_contact_person":
-				print "customer_contact_person Default---", defaults.default
+				#print "customer_contact_person Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['customer_contact_person'] = defaults.default
 			
-
 		for items in items_List:
 			innerJson_Transfer ={
 				"creation": creation_Date,
@@ -584,7 +660,6 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 			   	}
 			outerJson_Transfer["items"].append(innerJson_Transfer)
 			
-
 		doc = frappe.new_doc("Purchase Order")
 		doc.update(outerJson_Transfer)
 		doc.save()
@@ -593,12 +668,20 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 			frappe.msgprint("Purchase Order is Created:"+doc.name)
 	
 
+def fetch_supplier_address(supplier):
+	address = frappe.db.sql("""select name,pch_terms from `tabAddress` where address_title=%s and is_primary_address=1""", supplier, as_dict=1)
+
+	if address:
+		return address
+	else:
+		return None
+
 @frappe.whitelist()
 def get_report_data():
 	report_data = []
 	details = {}
 	for rows in sum_data:
-		print "row-----", rows
+		#print "row-----", rows
 		sreq_no = rows[0]
 		project = rows[1]
 		item_code = rows[2]

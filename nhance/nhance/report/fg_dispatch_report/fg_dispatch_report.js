@@ -20,3 +20,4 @@ frappe.query_reports["FG Dispatch Report"] = {
 ],
 }
 
+

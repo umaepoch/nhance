@@ -27,12 +27,10 @@ def execute(filters=None):
                 company = filters.get("company")
 		sales_order = filters.get("sales_order")
 	#print "sales_order=============",sales_order
-
-	
 	#print "entering under execute method----"
-
 	columns = get_columns()
 	po_details = fetching_po_details(sales_order)
+
 
 	#if po_details:
 		#print "so_details--------", po_details
@@ -56,9 +54,10 @@ def execute(filters=None):
 			if item_code   in data_rate and actual_qty > 0:
 				sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'], 
 					po_data['delivered_qty'], pending_qty, po_data['warehouse'],actual_qty,Shortage_Qty,
-					po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
+					po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'], po_data['rate']
                         ])
 			 					     					    	
+
 	for po_data in po_details:
 		ordered_qty = po_data["ordered_qty"]
 		delivered_qty = po_data["delivered_qty"]
@@ -89,7 +88,7 @@ def fetching_po_details(sales_order):
 			where 
 				tso.name=tsoi.parent and tso.docstatus=1 and tsoi.item_code = tb.item_code  and tso.name = '"""+sales_order+"""' order by tb.idx""", as_dict=1)
 
-	#po_data = frappe.db.sql(""" select tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty, tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,  (tsoi.qty-tsoi.delivered_qty) as pending_qty,tsoi.stock_qty,tb.warehouse,tb.actual_qty as qty from `tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb where tsoi.parent='SAL-ORD-2019-00001' and tso.name=tsoi.parent and tsoi.item_code=tb.item_code;""", as_dict=1)
+
 
 	return po_data
 

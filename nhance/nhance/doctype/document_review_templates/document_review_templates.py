@@ -23,7 +23,7 @@ def get_doc_details(doctype):
     		# add to child table (assuming it is called fields)
    		 row = self.append('fields', {})
    		 row.label = field.label
-	print "doc_details----------",doc_details
+	#print "doc_details----------",doc_details
 	'''
 	#doc_details =  frappe.client.get_doc(doctype);
 	#doc_details = ""
@@ -65,6 +65,6 @@ def get_taxes_details(taxes_doc,taxes_and_charges):
 @frappe.whitelist()
 def get_current_doc_details(cur_name):
 	taxes_details = frappe.db.sql("""select * from `tabDocument Review Template Table` where parent = %s""",(cur_name),as_dict=1)
-	print "taxes_details============",taxes_details
+	#print "taxes_details============",taxes_details
 	return taxes_details
 

@@ -31,14 +31,14 @@ def execute(filters=None):
 	if old_bom:
 		bom_type = "old"
 		old_bom_items = get_exploded_bom_entries(filters, bom_type)
-		print "old_bom_items--------------------", old_bom_items
+		#print "old_bom_items--------------------", old_bom_items
 	if len(new_bom_items) !=0:
 		for items in new_bom_items:
 			item_code = items['item_code']
 			qty = items['bi_qty']
 			old =0
-			print "item_code",item_code
-			print "item_code",qty
+			#print "item_code",item_code
+			#print "item_code",qty
 			details = {"item_code":item_code,"new_qty":qty,"old_qty":old}
 			new_bom_list.append(details)
 	if len(old_bom_items) !=0:
@@ -47,16 +47,16 @@ def execute(filters=None):
 			item_code = items['item_code']
 			qty = 0
 			old_bom_item_qty =items['bi_qty']
-			print "item_code--",item_code
-			print "old_bom_item_qty--",old_bom_item_qty
+			#print "item_code--",item_code
+			#print "old_bom_item_qty--",old_bom_item_qty
 			details = {"item_code":item_code,"new_qty":qty,"old_qty":old_bom_item_qty}
 			old_bom_list.append(details)
 			
 	items_data = get_merge_bom_list(new_bom_list,old_bom_list)
-	print "items_data---------", items_data
+	#print "items_data---------", items_data
 	report_items_details = get_report_items(items_data,new_bom_items,old_bom_items,warehouse)
 	prepare_report_data = []
-	print "ItemDetail",report_items_details
+	#print "ItemDetail",report_items_details
 	for items in report_items_details:
 		item_code = items['item_code']
 		old_qty = items['old_qty']
@@ -67,7 +67,7 @@ def execute(filters=None):
 		prepare_report_data.append([ item_code, old_qty, new_qty, excees_qty, stock_qty, delta_qty])
 	
 	columns = get_columns()
-	print "DaTA----",prepare_report_data
+	#print "DaTA----",prepare_report_data
 	return columns, prepare_report_data
 
 def get_columns():
@@ -86,9 +86,9 @@ def get_merge_bom_list(new_bom_list,old_bom_list):
 	after_merge=new_bom_list+old_bom_list
 	item_data=[]
 	for new in range(0,len(after_merge)):
-		print "new---", new
+		#print "new---", new
 		for old in range(new,len(after_merge)):
-			print "new value ",after_merge[new]['item_code']
+			#print "new value ",after_merge[new]['item_code']
 			new_item_code=after_merge[new]['item_code']
 			old_item_code=after_merge[old]['item_code']
 			new_qty=after_merge[new]['new_qty']
@@ -139,7 +139,7 @@ def get_exploded_bom_entries(filters, bom_type):
 		conditions = get_conditions_for_old_bom(filters)
 	if bom_type == "new":
 		conditions = get_conditions_for_new_bom(filters)
-	print "---------conditions::", conditions
+	#print "---------conditions::", conditions
 	return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as qty, bo.project, bi.item_code, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
 
 def get_conditions_for_old_bom(filters):
@@ -170,9 +170,9 @@ def get_sreq_items_list(requested_by,item_code):
 		for stockReqID in sreqID:
 			if stockReqID['name'] is not None:
 				parent = stockReqID['name']
-				print "parent-------", parent
+				#print "parent-------", parent
 				details = frappe.db.sql("""select item_code,qty from `tabStock Requisition Item` where parent = %s and 								item_code=%s""", (parent,item_code), as_dict=1)
-				print "length of details------", len(details)
+				#print "length of details------", len(details)
 				for rows in details:
 					item_code = rows['item_code']
 					qty = rows['qty']

@@ -63,8 +63,11 @@ def execute(filters=None):
 				if itc_cess_amount is not None:
 					total_itc_cess_amount = total_itc_cess_amount+float(itc_cess_amount)
 				supplier_address = b2b.supplier_address
+				gst_state_number = ""
+				state = ""
+				gstin =""
 				if supplier_address is not None:
-					state,gst_state_number,gstin = frappe.db.get_value("Address",supplier_address,	
+					state,gst_state_number,gstin = frappe.db.get_value("Address",supplier_address,
 					['state','gst_state_number','gstin'])
 				net_total = 0.0
 				tax_details = puchase_taxes(purchase_invoice)
@@ -105,7 +108,7 @@ def execute(filters=None):
 				state_tax_paid = round(state_tax_paid,2)
 				total_central_tax_paid += central_tax_paid
 				total_state_tax_paid += state_tax_paid
-				data.append([gstin,purchase_invoice,posting_date,invoice_value,str(gst_state_number)+"-"+state,
+				data.append([gstin,purchase_invoice,posting_date,invoice_value,str(gst_state_number)+"-"+str(state),
 						reverse_charge,invoice_type,tax_rate,net_total,integrated_tax_paid,central_tax_paid,
 						state_tax_paid,"",eligibility_for_itc,itc_integrated_tax,itc_state_tax,itc_state_tax,
 						itc_cess_amount])
@@ -204,14 +207,14 @@ def execute(filters=None):
 			total_integrated_tax_paid += integrated_tax_paid
 			total_central_tax_paid += central_tax_paid
 			total_state_tax_paid += state_tax_paid
-			data.append([supplier_name,purchase_invoice,posting_date,invoice_value,str(gst_state_number)+"-"+state,supply_type,
+			data.append([supplier_name,purchase_invoice,posting_date,invoice_value,str(gst_state_number)+"-"+str(state),supply_type,
 					tax_rate,net_total,integrated_tax_paid,central_tax_paid,state_tax_paid,"",eligibility_for_itc,
 					itc_integrated_tax,itc_state_tax,itc_state_tax,itc_cess_amount])
 		data.append(["","","","","","",""])
 		data.append(["Total","","",total_invoice_value,"","","",total_net_amount,total_integrated_tax_paid,total_central_tax_paid,
 				total_state_tax_paid,"","",total_itc_integrated_tax,total_itc_central_tax,total_itc_state_tax,
 				total_itc_cess_amount])
-		
+
 	elif type_of_business == "IMPS":
 		columns = get_columns_imps()
 		imps_purchase = purchase_invoice_imps(from_date,to_date)
@@ -258,13 +261,13 @@ def execute(filters=None):
 					charge_type = tax.charge_type
 					if "On Net Total" in charge_type:
 						net_total = b2b.net_total
-					
+
 					elif "On Previous Row Total" in charge_type:
 						row_id = tax.row_id
-					
+
 						Previous_totla = previous_total_details(purchase_invoice,row_id)
 						for previous in Previous_totla:
-							net_total = previous.total	
+							net_total = previous.total
 					if "SGST" in account_head:
 						tax_rate = tax_rate + tax.rate
 						sgst_rate = tax.rate
@@ -288,14 +291,14 @@ def execute(filters=None):
 				state_tax_paid = net_total * sgst_rate /100
 				state_tax_paid = round(state_tax_paid,2)
 				total_state_tax_paid += state_tax_paid
-				data.append([purchase_invoice,posting_date,invoice_value,str(gst_state_number)+"-"+state,
+				data.append([purchase_invoice,posting_date,invoice_value,str(gst_state_number)+"-"+str(state),
 						tax_rate,net_total,integrated_tax_paid,"",eligibility_for_itc,itc_integrated_tax,
 						itc_cess_amount])
 		data.append(["","","","","","",""])
 		data.append(["Total","",total_invoice_value,"","",total_net_amount,total_integrated_tax_paid,"","",
 				total_itc_integrated_tax,total_itc_cess_amount])
-		
-		
+
+
 	elif type_of_business == "IMPG":
 		columns = get_columns_impg()
 		impg_purchase = purchase_invoice_impg(from_date,to_date)
@@ -322,8 +325,8 @@ def execute(filters=None):
 			if itc_cess_amount is not None:
 				total_itc_cess_amount += float(itc_cess_amount)
 			supplier_address = b2b.supplier_address
-			port_code = b2b.pch_port_code 
-			bill_of_entry_date = b2b.pch_bill_of_entry_date 
+			port_code = b2b.pch_port_code
+			bill_of_entry_date = b2b.pch_bill_of_entry_date
 			bill_of_entry_date = bill_of_entry_date.strftime('%d-%m-%Y')
 			bill_of_entry_number = b2b.pch_bill_of_entry_number
 			supplier_name = b2b.supplier_name
@@ -350,7 +353,7 @@ def execute(filters=None):
 						row_id = tax.row_id
 						Previous_totla = previous_total_details(purchase_invoice,row_id)
 						for previous in Previous_totla:
-							net_total = previous.total	
+							net_total = previous.total
 					if "SGST" in account_head:
 						tax_rate = tax_rate + tax.rate
 						sgst_rate = tax.rate
@@ -380,7 +383,7 @@ def execute(filters=None):
 		data.append(["","","","","","",""])
 		data.append(["Total","","",total_invoice_value,"","","",total_net_amount,total_integrated_tax_paid,"","",
 				total_itc_integrated_tax,total_itc_cess_amount])
-		
+
 	elif type_of_business == "CDNR":
 		columns = get_columns_cdnr()
 		sdnr_purhcase = purchase_invoice_cdnr(from_date,to_date)
@@ -411,8 +414,8 @@ def execute(filters=None):
 				if itc_cess_amount is not None:
 					total_itc_cess_amount = total_itc_cess_amount+float(itc_cess_amount)
 				supplier_address = b2b.supplier_address
-				port_code = b2b.pch_port_code 
-				bill_of_entry_date = b2b.pch_bill_of_entry_date 
+				port_code = b2b.pch_port_code
+				bill_of_entry_date = b2b.pch_bill_of_entry_date
 				bill_of_entry_number = b2b.pch_bill_of_entry_number
 				supplier_name = b2b.supplier_name
 				invoice_type = b2b.invoice_type
@@ -449,7 +452,7 @@ def execute(filters=None):
 				if len(payment_entry) != 0:
 					for payment in payment_entry:
 						payment_number = payment.name
-						payment_date = payment.posting_date		
+						payment_date = payment.posting_date
 				else:
 					payment_number = purchase_invoice
 					payment_date = posting_date
@@ -466,14 +469,14 @@ def execute(filters=None):
 						charge_type = tax.charge_type
 						if "On Net Total" in charge_type:
 							net_total = b2b.net_total
-					
+
 						elif "On Previous Row Total" in charge_type:
 							row_id = tax.row_id
-					
+
 							Previous_totla = previous_total_details(purchase_invoice,row_id)
 							for previous in Previous_totla:
 								net_total = previous.total
-						
+
 						if "SGST" in account_head:
 							tax_rate = tax_rate + tax.rate
 							sgst_rate = tax.rate
@@ -510,7 +513,7 @@ def execute(filters=None):
 		data.append(["Total","","","","","","","","",total_invoice_value,"",total_net_amount,
 				total_integrated_tax_paid,total_central_tax_paid,total_state_tax_paid,"","",total_itc_integrated_tax,
 				total_itc_central_tax,total_itc_state_tax,total_itc_cess_amount])
-		
+
 	elif type_of_business == "CDNUR":
 		columns = get_columns_cdnur()
 		sdnr_purhcase = purchase_invoice_cdnr(from_date,to_date)
@@ -542,7 +545,7 @@ def execute(filters=None):
 				if itc_cess_amount is not None:
 					total_itc_cess_amount = total_itc_cess_amount+float(itc_cess_amount)
 				supplier_address = b2b.supplier_address
-				port_code = b2b.pch_port_code 
+				port_code = b2b.pch_port_code
 				bill_of_entry_date = b2b.pch_bill_of_entry_date
 				bill_of_entry_number = b2b.pch_bill_of_entry_number
 				supplier_name = b2b.supplier_name
@@ -571,7 +574,7 @@ def execute(filters=None):
 						supply_type = "Inter State"
 					elif  state == c_state and gst_state_number == c_state_number:
 						supply_type = "Intra State"
-				
+
 				credit_invoice_id = ""
 				credit_invoice_id = ""
 				payment_date = ""
@@ -581,7 +584,7 @@ def execute(filters=None):
 					for payment in payment_entry:
 						payment_number = payment.name
 						payment_date = payment.posting_date
-							
+
 				else:
 					payment_number = purchase_invoice
 					payment_date = posting_date
@@ -598,13 +601,13 @@ def execute(filters=None):
 						charge_type = tax.charge_type
 						if "On Net Total" in charge_type:
 							net_total = b2b.net_total
-					
+
 						elif "On Previous Row Total" in charge_type:
 							row_id = tax.row_id
-					
+
 							Previous_totla = previous_total_details(purchase_invoice,row_id)
 							for previous in Previous_totla:
-								net_total = previous.total	
+								net_total = previous.total
 						if "SGST" in account_head:
 							tax_rate = tax_rate + tax.rate
 							sgst_rate = tax.rate
@@ -641,7 +644,7 @@ def execute(filters=None):
 		data.append(["Total","","","","","","","",total_invoice_value,"",total_net_amount,total_integrated_tax_paid,
 				total_central_tax_paid,total_state_tax_paid,"","",total_itc_integrated_tax,
 				total_itc_central_tax,total_itc_state_tax])
-		
+
 	elif type_of_business == "AT":
 		columns = get_columns_at()
 		at_purchase = purchase_order_at(from_date,to_date)
@@ -661,7 +664,7 @@ def execute(filters=None):
 				data.append([place_of_supply,invoice_value,tax_rate,taxable_value,""])
 		data.append(["","","","",""])
 		data.append(["Total",total_invoice_value,"",total_taxable_value,""])
-		
+
 	elif type_of_business == "ATADJ":
 		columns = get_columns_atadj()
 		atadj_purchase = purchase_order_invoice_atadj(from_date,to_date)
@@ -681,7 +684,7 @@ def execute(filters=None):
 				data.append([place_of_supply,invoice_value,tax_rate,taxable_value,""])
 		data.append(["","","","",""])
 		data.append(["Total",total_invoice_value,"",total_taxable_value,""])
-		
+
 	elif type_of_business == "EXEMP":
 		columns = get_columns_exemp()
 		exemp_purchase = supplier_status(from_date,to_date)
@@ -705,7 +708,7 @@ def execute(filters=None):
 		data.append(["","","","",""])
 		data.append(["Total",grand_total_composition_net_amount,grand_total_nill_net_amount,
 				grand_total_exempt_net_amount,grand_total_non_net_amount])
-	
+
 	elif type_of_business == "ITCR":
 		columns = get_columns_itcr()
 
@@ -774,11 +777,11 @@ def get_columns_b2b():
 		_("Integrated Tax Paid") + ":Currency:150",
 		_("Central Tax Paid") + ":Currency:150",
 		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Cess Paid") + ":Currency:160",
 		_("Eligibility For ITC") + "::120",
 		_("Availed ITC Integrated Tax") + ":Currency:150",
 		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
+		_("Availed ITC State/UT Tax") + ":Currency:160",
 		_("Availed ITC Cess") + ":Currency:120"
 	]
 def get_columns_b2bur():
@@ -794,11 +797,11 @@ def get_columns_b2bur():
 		_("Integrated Tax Paid") + ":Currency:150",
 		_("Central Tax Paid") + ":Currency:150",
 		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Cess Paid") + ":Currency:160",
 		_("Eligibility For ITC") + "::120",
 		_("Availed ITC Integrated Tax") + ":Currency:150",
 		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
+		_("Availed ITC State/UT Tax") + ":Currency:160",
 		_("Availed ITC Cess") + ":Currency:120"
 	]
 def get_columns_imps():
@@ -810,7 +813,7 @@ def get_columns_imps():
 		_("Rate") + ":Currency:150",
 		_("Taxable Value") + ":Currency:150",
 		_("Integrated Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Cess Paid") + ":Currency:160",
 		_("Eligibility For ITC") + "::120",
 		_("Availed ITC Integrated Tax") + ":Currency:150",
 		_("Availed ITC Cess") + ":Currency:120"
@@ -826,7 +829,7 @@ def get_columns_impg():
 		_("Rate") + ":Currency:150",
 		_("Taxable Value") + ":Currency:150",
 		_("Integrated Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Cess Paid") + ":Currency:160",
 		_("Eligibility For ITC") + "::120",
 		_("Availed ITC Integrated Tax") + ":Currency:150",
 		_("Availed ITC Cess") + ":Currency:120"
@@ -848,11 +851,11 @@ def get_columns_cdnr():
 		_("Integrated Tax Paid") + ":Currency:150",
 		_("Central Tax Paid") + ":Currency:150",
 		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Cess Paid") + ":Currency:160",
 		_("Eligibility For ITC") + "::120",
 		_("Availed ITC Integrated Tax") + "::150",
 		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
+		_("Availed ITC State/UT Tax") + ":Currency:160",
 		_("Availed ITC Cess") + ":Currency:120"
 	]
 def get_columns_cdnur():
@@ -871,11 +874,11 @@ def get_columns_cdnur():
 		_("Integrated Tax Paid") + ":Currency:150",
 		_("Central Tax Paid") + ":Currency:150",
 		_("State/UT Tax Paid") + ":Currency:150",
-		_("Cess Paid") + ":Currency:160", 
+		_("Cess Paid") + ":Currency:160",
 		_("Eligibility For ITC") + "::120",
 		_("Availed ITC Integrated Tax") + ":Currency:150",
 		_("Availed ITC Central Tax") + ":Currency:150",
-		_("Availed ITC State/UT Tax") + ":Currency:160", 
+		_("Availed ITC State/UT Tax") + ":Currency:160",
 		_("Availed ITC Cess") + ":Currency:120"
 	]
 def get_columns_at():
@@ -925,49 +928,49 @@ def get_columns_hsnsum():
 		_("Cess Amount") + ":Currency:180"
 	]
 def purchase_invoice_b2b(from_date,to_date):
-	b2b_purchase = frappe.db.sql("""select 
+	b2b_purchase = frappe.db.sql("""select
 						pi.name,pi.supplier_gstin,pi.posting_date,pi.place_of_supply,pi.reverse_charge,
 						pi.invoice_type,pi.net_total,pi.eligibility_for_itc,pi.itc_integrated_tax,pi.itc_central_tax,
 						pi.itc_state_tax,pi.itc_cess_amount,s.india_gst_supplier_status,pi.supplier_address
 				 	from `tabPurchase Invoice` pi, `tabSupplier` s
 					where pi.supplier_name = s.name AND posting_date >= %s AND pi.posting_date <= %s
-						AND pi.eligibility_for_itc NOT IN ("ineligible") AND pi.invoice_type = 'Regular' 
+						AND pi.eligibility_for_itc NOT IN ("ineligible") AND pi.invoice_type = 'Regular'
 						AND pi.docstatus =1 AND pi.is_return = 0""",
 					(from_date,to_date), as_dict =1)
 	return b2b_purchase
 def puchase_taxes(purchase_invoice):
-	purchase_tax = frappe.db.sql("""select 
+	purchase_tax = frappe.db.sql("""select
 					account_head,rate,row_id,charge_type
-					from `tabPurchase Taxes and Charges` 
-					where parent = %s 
+					from `tabPurchase Taxes and Charges`
+					where parent = %s
 					order by idx""",
 					(purchase_invoice), as_dict =1)
 	return purchase_tax
 def previous_total_details(purchase_invoice,row_id):
-	previous = frappe.db.sql("""select 
+	previous = frappe.db.sql("""select
 					idx,total
-				from `tabPurchase Taxes and Charges` 
-				where idx = '"""+row_id+"""' AND parent = '"""+purchase_invoice+"""'""", 
+				from `tabPurchase Taxes and Charges`
+				where idx = '"""+row_id+"""' AND parent = '"""+purchase_invoice+"""'""",
 				as_dict =1)
 	return previous
 def purchase_invoice_bebur(from_date,to_date):
-	b2bur_purhcase = frappe.db.sql("""select 
+	b2bur_purhcase = frappe.db.sql("""select
 						pi.name,pi.supplier_gstin,pi.posting_date,pi.place_of_supply,pi.reverse_charge,pi.invoice_type
 						,pi.eligibility_for_itc,pi.itc_integrated_tax,pi.itc_central_tax,pi.itc_state_tax,
 						pi.itc_cess_amount,pi.net_total,pi.supplier_address,pi.company,pi.supplier_name
-					from `tabPurchase Invoice` pi, `tabSupplier` s 
+					from `tabPurchase Invoice` pi, `tabSupplier` s
 					where pi.supplier_name = s.name AND pi.posting_date >= %s AND pi.posting_date <= %s
-						AND pi.docstatus = 1 AND s.india_gst_supplier_status = 'Unregistered Dealer' AND 	
+						AND pi.docstatus = 1 AND s.india_gst_supplier_status = 'Unregistered Dealer' AND
 						pi.invoice_type = 'Regular' AND pi.docstatus =1 AND pi.is_return = 0""",
 					(from_date,to_date), as_dict =1)
 	return  b2bur_purhcase
 def company_details(company_name):
 	company_name = company_name + '%'
 	company = frappe.db.sql("""select state,gst_state_number from `tabAddress` where name Like '"""+company_name+"""'""",as_dict=1)
-	
+
 	return company
 def purchase_invoice_imps(from_date,to_date):
-	imps_purchase = frappe.db.sql("""select 
+	imps_purchase = frappe.db.sql("""select
 						pi.name,pi.posting_date,pi.supplier_address,pi.supplier_name,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.net_total,pi.itc_cess_amount
 					from `tabPurchase Invoice` pi , `tabSupplier` s
@@ -976,7 +979,7 @@ def purchase_invoice_imps(from_date,to_date):
 					(from_date,to_date), as_dict =1)
 	return imps_purchase
 def purchase_invoice_impg(from_date,to_date):
-	impg_purchase = frappe.db.sql("""select 
+	impg_purchase = frappe.db.sql("""select
 						pi.name,pi.posting_date,pi.supplier_address,pi.supplier_name,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.net_total,pi.itc_cess_amount,pi.pch_port_code,
 						pi.pch_bill_of_entry_date,pi.pch_bill_of_entry_number,pi.invoice_type
@@ -986,10 +989,10 @@ def purchase_invoice_impg(from_date,to_date):
 					(from_date,to_date), as_dict =1)
 	return impg_purchase
 def purchase_invoice_cdnr(from_date,to_date):
-	cdnr_purchase = frappe.db.sql("""select 
+	cdnr_purchase = frappe.db.sql("""select
 						pi.name,pi.posting_date,pi.supplier_address,pi.supplier_name,pi.eligibility_for_itc,
 						pi.itc_integrated_tax,pi.net_total,pi.itc_cess_amount,
-						pi.pch_port_code,pi.pch_bill_of_entry_date 
+						pi.pch_port_code,pi.pch_bill_of_entry_date
 						,pi.pch_bill_of_entry_number,pi.invoice_type,s.india_gst_supplier_status,pi.return_against,
 						pi.itc_central_tax,pi.itc_state_tax,pi.reason_for_issuing_document,pi.company
 					from `tabPurchase Invoice` pi , `tabSupplier` s
@@ -999,7 +1002,7 @@ def purchase_invoice_cdnr(from_date,to_date):
 	return cdnr_purchase
 def get_Advance_Payment_details(invoice_id):
 	payment_data = frappe.db.sql("""select pe.paid_amount,pe.name,pe.creation,pe.party_name,pe.posting_date
-				 from `tabPayment Entry` pe , `tabPayment Entry Reference` per 
+				 from `tabPayment Entry` pe , `tabPayment Entry Reference` per
 				where pe.name = per.parent AND per.reference_name = %s""",(invoice_id),as_dict = 1)
 	return payment_data
 def purchase_order_at(from_date,to_date):
@@ -1007,10 +1010,10 @@ def purchase_order_at(from_date,to_date):
 	temp_to_time = " 23:59:59"
 	tmp_from_date = str(from_date)+ (temp_from_time)
 	tmp_to_date = str(to_date)+(temp_to_time)
-	at_purchase = frappe.db.sql("""select 
-						po.name,po.supplier_address,per.reference_name,per.allocated_amount 
-					from `tabPurchase Order` po, `tabPayment Entry Reference` per , `tabPayment Entry` pe 
-					where po.name = per.reference_name AND pe.name = per.parent AND po.creation >= %s 
+	at_purchase = frappe.db.sql("""select
+						po.name,po.supplier_address,per.reference_name,per.allocated_amount
+					from `tabPurchase Order` po, `tabPayment Entry Reference` per , `tabPayment Entry` pe
+					where po.name = per.reference_name AND pe.name = per.parent AND po.creation >= %s
 						AND po.creation <=%s AND pe.docstatus =1 """,
 					(tmp_from_date,tmp_to_date),as_dict =1)
 	return at_purchase
@@ -1019,10 +1022,10 @@ def purchase_order_invoice_atadj(from_date,to_date):
 	temp_to_time = " 23:59:59"
 	tmp_from_date = str(from_date)+ (temp_from_time)
 	tmp_to_date = str(to_date)+(temp_to_time)
-	atadj_purchase = frappe.db.sql("""select 
+	atadj_purchase = frappe.db.sql("""select
 						po.name as purchase_order,pi.name as purchase_invoice,pi.grand_total as
-						invoice_total,po.grand_total as order_total,po.supplier_address,per.allocated_amount 
-					from `tabPurchase Order` po, `tabPurchase Invoice` pi, `tabPayment Entry Reference` per 
+						invoice_total,po.grand_total as order_total,po.supplier_address,per.allocated_amount
+					from `tabPurchase Order` po, `tabPurchase Invoice` pi, `tabPayment Entry Reference` per
 					where po.name = pi.pch_purchase_order AND pi.name = per.reference_name AND po.creation >= %s AND
 						 po.creation <= %s AND pi.docstatus =1""",
 					(tmp_from_date,tmp_to_date), as_dict=1)
@@ -1030,11 +1033,11 @@ def purchase_order_invoice_atadj(from_date,to_date):
 def supplier_status(from_date,to_date):
 	status_purchase = frappe.db.sql("""select pi.name,pi.net_total,pi.supplier_address,s.india_gst_supplier_status,pi.company
 						from `tabPurchase Invoice` pi, `tabSupplier` s
-						where pi.supplier_name = s.name AND pi.docstatus =1 AND pi.posting_date >= %s 
+						where pi.supplier_name = s.name AND pi.docstatus =1 AND pi.posting_date >= %s
 						AND pi.posting_date <= %s""",(from_date,to_date),as_dict=1)
 	return status_purchase
 def hsn_code_uqc_code(from_date,to_date):
-	hsn_uqc = frappe.db.sql(""" select 
+	hsn_uqc = frappe.db.sql(""" select
 					s.name,si.item_name,si.item_code,si.net_amount,si.uom,si.qty,si.gst_hsn_code
 				from `tabPurchase Invoice` s, `tabPurchase Invoice Item` si
 				where s.name = si.parent AND s.posting_date >= %s AND s.posting_date <= %s""",
@@ -1051,7 +1054,7 @@ def gst_uqc_doc(uom):
 def gst_hsn_doc(gst_hsn_code):
 	hsn_doc = frappe.db.sql("""select name,description from `tabGST HSN Code` where  name = %s""",(gst_hsn_code), as_dict = 1)
 	return hsn_doc
-	
+
 def get_unique_state(at_purchase):
 	invoice_map = {}
 	for at_data in at_purchase:
@@ -1064,7 +1067,7 @@ def get_unique_state(at_purchase):
 		if supplier_address is not None:
 			state,gst_state_number,gstin = frappe.db.get_value("Address",supplier_address,['state','gst_state_number','gstin'])
 		tax_details = puchase_taxes(purchase_order)
-		place_of_supply = str(gst_state_number)+"-"+state
+		place_of_supply = str(gst_state_number)+"-"+str(state)
 		if len(tax_details) != 0:
 			tax_rate = 0.0
 			for tax in tax_details:
@@ -1105,7 +1108,7 @@ def get_unique_state(at_purchase):
 						})
 				invoice_map[key] = frappe._dict({
 						   "mapped_items": item_list
-						})	
+						})
 
 	return invoice_map
 
@@ -1128,7 +1131,7 @@ def get_unique_atadj_state(atadj_purchase):
 				['state','gst_state_number','gstin'])
 			tax_details = puchase_taxes(purchase_invoice)
 			state = state.title()
-			place_of_supply = str(gst_state_number)+"-"+state
+			place_of_supply = str(gst_state_number)+"-"+str(state)
 			if len(tax_details) != 0:
 				tax_rate = 0.0
 				for tax in tax_details:
@@ -1169,7 +1172,7 @@ def get_unique_atadj_state(atadj_purchase):
 							})
 					invoice_map[key] = frappe._dict({
 							   "mapped_items": item_list
-							})	
+							})
 
 	return invoice_map
 
@@ -1201,7 +1204,7 @@ def sales_exepted_nill(exemp_purchase):
 				non_net_amount = 0.0
 				composition_net_amount = 0.0
 				key = supply_type
-				if key in payment_tax:						
+				if key in payment_tax:
 					item_entry = payment_tax[key]
 					item_unieq_name1.append(item_entry["supply_type"])
 					uniue_name = list(set(item_unieq_name1))
@@ -1211,7 +1214,7 @@ def sales_exepted_nill(exemp_purchase):
 							item_entry["nill_net_amount"] = (qty_temp) + (net_total)
 					else:
 						payment_tax[key] = frappe._dict({
-							"supply_type": key, 
+							"supply_type": key,
 							"nill_net_amount": net_total,
 							"india_gst_supplier_status":india_gst_supplier_status,
 							"non_net_amount":non_net_amount,
@@ -1220,20 +1223,20 @@ def sales_exepted_nill(exemp_purchase):
 							})
 				else:
 					payment_tax[key] = frappe._dict({
-						"supply_type": key, 
+						"supply_type": key,
 						"nill_net_amount": net_total,
 						"india_gst_supplier_status":india_gst_supplier_status,
 						"non_net_amount":non_net_amount,
 						"exempt_net_amount":exempt_net_amount,
 						"composition_net_amount":composition_net_amount
-						})		
+						})
 			elif str(india_gst_supplier_status) == "Exempt":
 				net_total = exempt.net_total
 				non_net_amount = 0.0
 				nill_net_amount = 0.0
 				composition_net_amount = 0.0
 				key = supply_type
-				if key in payment_tax:						
+				if key in payment_tax:
 					item_entry = payment_tax[key]
 					item_unieq_name2.append(item_entry["supply_type"])
 					uniue_name = list(set(item_unieq_name2))
@@ -1243,7 +1246,7 @@ def sales_exepted_nill(exemp_purchase):
 							item_entry["exempt_net_amount"] = (qty_temp) + (net_total)
 					else:
 						payment_tax[key] = frappe._dict({
-							"supply_type": key, 
+							"supply_type": key,
 							"exempt_net_amount": net_total,
 							"india_gst_supplier_status":india_gst_supplier_status,
 							"non_net_amount":non_net_amount,
@@ -1252,21 +1255,21 @@ def sales_exepted_nill(exemp_purchase):
 							})
 				else:
 					payment_tax[key] = frappe._dict({
-						"supply_type": key, 
+						"supply_type": key,
 						"exempt_net_amount": net_total,
 						"india_gst_supplier_status":india_gst_supplier_status,
 						"non_net_amount":non_net_amount,
 						"nill_net_amount":nill_net_amount,
 						"composition_net_amount":composition_net_amount
 						})
-			
+
 			elif str(india_gst_supplier_status) == "Non-GST":
 				net_total = exempt.net_total
 				exempt_net_amount = 0.0
 				nill_net_amount = 0.0
 				composition_net_amount = 0.0
 				key = supply_type
-				if key in payment_tax:						
+				if key in payment_tax:
 					item_entry = payment_tax[key]
 					item_unieq_name3.append(item_entry["supply_type"])
 					uniue_name = list(set(item_unieq_name3))
@@ -1276,7 +1279,7 @@ def sales_exepted_nill(exemp_purchase):
 							item_entry["non_net_amount"] = (qty_temp) + (net_total)
 					else:
 						payment_tax[key] = frappe._dict({
-							"supply_type": key, 
+							"supply_type": key,
 							"non_net_amount": net_total,
 							"india_gst_supplier_status":india_gst_supplier_status,
 							"exempt_net_amount":exempt_net_amount,
@@ -1285,7 +1288,7 @@ def sales_exepted_nill(exemp_purchase):
 							})
 				else:
 					payment_tax[key] = frappe._dict({
-						"supply_type": key, 
+						"supply_type": key,
 						"non_net_amount": net_total,
 						"india_gst_supplier_status":india_gst_supplier_status,
 						"exempt_net_amount":exempt_net_amount,
@@ -1298,7 +1301,7 @@ def sales_exepted_nill(exemp_purchase):
 				nill_net_amount = 0.0
 				non_net_amount = 0.0
 				key = supply_type
-				if key in payment_tax:						
+				if key in payment_tax:
 					item_entry = payment_tax[key]
 					item_unieq_name4.append(item_entry["supply_type"])
 					uniue_name = list(set(item_unieq_name4))
@@ -1308,7 +1311,7 @@ def sales_exepted_nill(exemp_purchase):
 							item_entry["composition_net_amount"] = (qty_temp) + (net_total)
 					else:
 						payment_tax[key] = frappe._dict({
-							"supply_type": key, 
+							"supply_type": key,
 							"non_net_amount": non_net_amount,
 							"india_gst_supplier_status":india_gst_supplier_status,
 							"exempt_net_amount":exempt_net_amount,
@@ -1317,7 +1320,7 @@ def sales_exepted_nill(exemp_purchase):
 							})
 				else:
 					payment_tax[key] = frappe._dict({
-						"supply_type": key, 
+						"supply_type": key,
 						"non_net_amount": non_net_amount,
 						"india_gst_supplier_status":india_gst_supplier_status,
 						"exempt_net_amount":exempt_net_amount,
@@ -1325,7 +1328,7 @@ def sales_exepted_nill(exemp_purchase):
 						"composition_net_amount":net_total
 						})
 
-	
+
 	return payment_tax
 def get_hsn_uqc_list(sales):
 	invoice_map = {}
@@ -1382,7 +1385,7 @@ def get_hsn_uqc_list(sales):
 					item_entry["central_tax_amount_total"] = (central_tmp) + (central_tax_amount)
 					item_entry["state_tax_amount_total"] = (state_tmp) + (state_tax_amount)
 				else :
-				
+
 					invoice_map[key] = frappe._dict({
 							"tax_rate": item_tax_rate,
 							"net_amount": net_amount,
