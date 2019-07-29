@@ -1,7 +1,0 @@
-## Nhance
-
-Nhance
-
-#### License
-
-MIT
