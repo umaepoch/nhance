@@ -10,14 +10,22 @@ frappe.query_reports["FG Dispatch Report"] = {
         "options": "Company",
         "reqd": 1
 	},
-{
+       {
         "fieldname": "sales_order",
         "label": __("Sales Order"),
         "fieldtype": "Link",
         "options": "Sales Order",
-        "reqd": 1
-	},
-],
+        "reqd": 1,
+        "get_query": function() {
+	           return {
+                    "doctype": "Sales Order",
+		     "filters" : [
+			['Sales Order', 'docstatus', '!=', '2'] 
+			]
+              }
+         }
+}
+]
 }
 
 
