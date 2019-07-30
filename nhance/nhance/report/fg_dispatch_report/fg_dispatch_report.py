@@ -87,7 +87,7 @@ def fetching_po_details(sales_order):
 			from 
 				`tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb 
 			where 
-				tso.name=tsoi.parent and tso.docstatus!=2 and tsoi.item_code = tb.item_code  and tso.name = '"""+sales_order+"""' order by tb.idx""", as_dict=1)
+				tso.name=tsoi.parent and tsoi.item_code = tb.item_code  and tso.name = '"""+sales_order+"""' order by tb.idx""", as_dict=1)
 
 	#po_data = frappe.db.sql(""" select tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty, tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,  (tsoi.qty-tsoi.delivered_qty) as pending_qty,tsoi.stock_qty,tb.warehouse,tb.actual_qty as qty from `tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb where tsoi.parent='SAL-ORD-2019-00001' and tso.name=tsoi.parent and tsoi.item_code=tb.item_code;""", as_dict=1)
 
