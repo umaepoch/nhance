@@ -355,10 +355,10 @@ class IndiaGstr1C(object):
 						place_of_supply = ""
 						billing_address_gstin = ""
 						gstin_and_place_of_supply,shipping_address_name,customer_address = frappe.db.get_value('Sales Invoice',amended_from,['gstin_and_place_of_supply','shipping_address_name','customer_address'])
-						#print "amended_from----------",amended_from
-						#print "gstin_and_place_of_supply----------",gstin_and_place_of_supply
-						#print "shipping_address_name-----------",shipping_address_name
-						#print "customer_address----------",customer_address
+						print "amended_from----------",amended_from
+						print "gstin_and_place_of_supply----------",gstin_and_place_of_supply
+						print "shipping_address_name-----------",shipping_address_name
+						print "customer_address----------",customer_address
 						gst_state_number = ""
 						gst_state = ""
 						party_gsstin = ""
@@ -1247,7 +1247,7 @@ class IndiaGstr1C(object):
 			_("Applicable % of Tax Rate") + "::150",
 			_("Invoice Type") + "::150",
 			_("E-Commerce GSTIN") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:160", 
 			_("Cess Amount") + "::120"
 		
@@ -1267,7 +1267,7 @@ class IndiaGstr1C(object):
 			_("Applicable % of Tax Rate") + "::150",
 			_("Invoice Type") + "::150",
 			_("E-Commerce GSTIN") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:160", 
 			_("Cess Amount") + "::120"
 	
@@ -1279,7 +1279,7 @@ class IndiaGstr1C(object):
 			_("Invoice Value") + ":Currency:150",
 			_("Place Of Supply") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:180",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
@@ -1294,7 +1294,7 @@ class IndiaGstr1C(object):
 			_("Revised Invoice date") + "::150",
 			_("Invoice Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:180",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
@@ -1306,7 +1306,7 @@ class IndiaGstr1C(object):
 			_("Place Of Supply") + "::150",
 			_("Invoice Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
@@ -1320,7 +1320,7 @@ class IndiaGstr1C(object):
 			_("Place Of Supply") + "::150",
 			_("Invoice Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("E-Commerce GSTIN") + "::150"
@@ -1336,7 +1336,7 @@ class IndiaGstr1C(object):
 			_("Shipping Bill Number") + "::150",
 			_("Shipping Bill Date") + "::150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150"
 		
@@ -1354,7 +1354,7 @@ class IndiaGstr1C(object):
 			_("Place Of Supply") + "::150",
 			_("Note/Refund Voucher Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("Pre GST") + "::150"
@@ -1375,7 +1375,7 @@ class IndiaGstr1C(object):
 			_("Place Of Supply") + "::150",
 			_("Note/Refund Voucher Value") + ":Currency:150",
 			_("Applicable % of Tax Rate") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Taxable Value") + ":Currency:150",
 			_("Cess Amount") + "::150",
 			_("Pre GST") + "::150"
@@ -1411,7 +1411,7 @@ class IndiaGstr1C(object):
 			_("Party ") + "::150",
 			_("Place of Supply") + "::150",
 			_("Reference No.") + ":Link/Sales Order:150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Advance Received") + ":Currency:150",
 			_("Advance Adjusted") + ":Currency:250",
 			_("Advance Pending ") + ":Currency:150",
@@ -1434,7 +1434,7 @@ class IndiaGstr1C(object):
 			_("Party ") + "::150",
 			_("Place of Supply") + "::150",
 			_("Reference No.") + "::150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Advance Received") + ":Currency:150",
 			_("Advance Adjusted") + ":Currency:250",
 			_("Advance Pending ") + ":Currency:150",
@@ -1451,7 +1451,7 @@ class IndiaGstr1C(object):
 			_("Party ") + "::150",
 			_("Place of Supply") + "::150",
 			_("Reference No.") + ":Link/Sales Order:150",
-			_("Rate") + ":Currency:150",
+			_("Rate") + "::150",
 			_("Advance Received") + ":Currency:150",
 			_("Advance Pending ") + ":Currency:150",
 			_("Advance Adjusted") + ":Currency:150",
