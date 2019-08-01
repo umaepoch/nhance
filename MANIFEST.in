@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include nhance *.css
+recursive-include nhance *.csv
+recursive-include nhance *.html
+recursive-include nhance *.ico
+recursive-include nhance *.js
+recursive-include nhance *.json
+recursive-include nhance *.md
+recursive-include nhance *.png
+recursive-include nhance *.py
+recursive-include nhance *.svg
+recursive-include nhance *.txt
+recursive-exclude nhance *.pyc
