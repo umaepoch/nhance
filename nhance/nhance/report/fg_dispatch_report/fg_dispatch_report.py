@@ -47,47 +47,41 @@ def execute(filters=None):
                 #print "GOOOOOOOOOOOOOOD--------",warehouse
 		Shortage_Qty=actual_qty -pending_qty
                 #print "po_data['qty']--------", po_data['qty']
-		if (pending_qty > 0  and actual_qty>0):
+		if pending_qty > 0  and actual_qty>0:
 			data_rate.append(item_code)
 
 			print "data_rate==============", data_rate
      			#if item_code not in data_rate:
 			#if actual_qty > 0:
 			if item_code   in data_rate and actual_qty > 0:
-				sum_data.append([ po_data['item_code'],po_data['item_name'],po_data['status'], po_data['ordered_qty'], 
+				sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'], 
 					po_data['delivered_qty'], pending_qty, po_data['warehouse'],actual_qty,Shortage_Qty,
 					po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
                         ])
-			 					     					    	
-	for po_data in po_details:
-		ordered_qty = po_data["ordered_qty"]
-		delivered_qty = po_data["delivered_qty"]
-		pending_qty =ordered_qty - delivered_qty
-		actual_qty = po_data['qty']
-		item_code = po_data['item_code']
-		#warehouse = count(po_data['warehouse'])
-                #actual_qty =""
-                #print "GOOOOOOOOOOOOOOD--------",warehouse
-		Shortage_Qty=actual_qty -pending_qty
-                #print "po_data['qty']--------", po_data['qty']
-		if item_code  not in data_rate :
-			sum_data.append([ po_data['item_code'],po_data['item_name'],po_data['status'], po_data['ordered_qty'], 
-					po_data['delivered_qty'], pending_qty, '','','',
+		else:
+			if actual_qty==0:
+				if item_code  not in data_rate :
+					data_rate.append(item_code)
+					print "data rate============",data_rate
+					sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'], 
+					po_data['delivered_qty'], pending_qty,"",actual_qty,Shortage_Qty,
 					po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
-                        ])
-			 					     					    	
-			
+                        ])	 					     					    	
+	
 	return columns, sum_data
 
 def fetching_po_details(sales_order):
 	po_data = frappe.db.sql("""select 
-					tso.name,tsoi.item_code,tso.status,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty,
+					tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty,
 					tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,tsoi.stock_qty,tb.warehouse,
                                         tb.actual_qty as qty,tsoi.item_name
 			from 
 				`tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb 
 			where 
-				tso.name=tsoi.parent and tsoi.item_code = tb.item_code  and tso.name = '"""+sales_order+"""' order by tb.idx""", as_dict=1)
+				tso.name=tsoi.parent and tso.docstatus=1 and tsoi.item_code = tb.item_code 
+				and tso.name = '"""+sales_order+"""' 
+			order by tb.idx""",
+					 as_dict=1)
 
 	#po_data = frappe.db.sql(""" select tso.name,tsoi.item_code,tsoi.qty as ordered_qty,tsoi.stock_uom as stock_uom, tsoi.delivered_qty, tsoi.warehouse as warehouse, tsoi.rate as rate,tsoi.supplier as supplier,  (tsoi.qty-tsoi.delivered_qty) as pending_qty,tsoi.stock_qty,tb.warehouse,tb.actual_qty as qty from `tabSales Order` tso,`tabSales Order Item` tsoi,`tabBin` tb where tsoi.parent='SAL-ORD-2019-00001' and tso.name=tsoi.parent and tsoi.item_code=tb.item_code;""", as_dict=1)
 
@@ -100,7 +94,6 @@ def get_columns():
 	columns = [
 		_("Item")+":Link/Item:100",
 		_("Item Name")+"::100",
-		_("Status")+"::100",
 		_("Quantity")+":100",
 		_("Delivered Quantity")+"::100",
 		_("Pending Quantity")+"::100",
