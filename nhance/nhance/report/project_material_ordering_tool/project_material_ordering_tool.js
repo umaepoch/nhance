@@ -23,13 +23,22 @@ frappe.query_reports["Project Material Ordering Tool"] = {
         console.log("Make PO and Transfer Existing/Required Quantity..........");
         report.page.add_inner_button(__("Make PO and Transfer Existing/Required Quantity"),
             function() {
+		
                 var reporter = frappe.query_reports["Project Material Ordering Tool"];
                 reporter.make_PO_and_transfer_qty(report);
             });
     },
     make_PO_and_transfer_qty: function(report) {
-        make_PO_and_transfer_qty(report);
-    }
+	var doc_name1 = "Supplier";
+	var doc_name2 = "Address";
+	var supplier_fields = get_supplier_field(doc_name1);
+	var address_fields = get_supplier_field(doc_name2);
+	//console.log("address_fields-----------"+address_fields);
+	//console.log("supplier flag========="+supplier_fields);
+	if (address_fields == 1 && supplier_fields == 1) {
+        	make_PO_and_transfer_qty(report);
+	}    
+	}
 }
 
 function validate_project_details(project, query_report) {
@@ -602,4 +611,20 @@ function getPurchaseUom(item_code) {
     });
 
     return purchase_uom;
+}
+function get_supplier_field(doc_name){
+    var reportData = 0;
+    frappe.call({
+        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fields",
+	 args: {
+            "doc_name":doc_name
+        },
+        async: false,
+        callback: function(r) {
+            //console.log("reportData::" + JSON.stringify(r.message));
+            reportData = r.message;
+	    //console.log("reportData==========="+reportData);
+        } //end of call-back function..
+    }); //end of frappe call..
+    return reportData;
 }
