@@ -16,7 +16,15 @@ frappe.query_reports["BOM-Cost-Report v2"] = {
 		"label": __("BOM"),
 		"fieldtype": "Link",
 		"options": "BOM",
-		"reqd": 1
+		"reqd": 1,
+		"get_query": function() {
+			return {
+			"doctype": "BOM",
+			"filters": {
+			"docstatus": 1,
+			}
+			}
+			}
 	}
 
 	]

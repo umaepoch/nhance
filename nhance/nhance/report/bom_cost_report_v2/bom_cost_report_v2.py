@@ -28,6 +28,10 @@ def execute(filters=None):
 			bom_item = bom_i.bo_item
 			bo_qty = bom_i.bo_qty
 			item_code = bom_i.bi_item
+			items_conversion = get_conversion_factore(item_code)
+			conversion_factor = 0.0
+			for conversion in items_conversion:
+				conversion_factor = conversion.conversion_factor
 			item_name = bom_i.item_name
 			description = bom_i.description
 			stock_uom = bom_i.stock_uom
@@ -113,9 +117,13 @@ def execute(filters=None):
 					amount_avg_purchase_rate = (last_purchase_rate * bo_qty)/1
 			else :
 				amount_avg_purchase_rate = (avg_purchase * bo_qty)/1
-
-			data.append([bom_name,item_group,item_name,stock_qty,stock_uom,purchase_uom,last_purchase_rate,item_cose_base_on_last_purchase,
-			stock_valuation_price,item_cose_based_on_valuation_rate,max_purchase,avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
+			
+			item_amount_based_on_conversion = round(float(last_purchase_rate * bo_qty * conversion_factor),0)
+			llp = round(float(bo_qty * last_purchase_rate),2)
+			data.append([bom_name,item_group,item_name,stock_qty,stock_uom,purchase_uom,conversion_factor,
+			last_purchase_rate,item_amount_based_on_conversion,llp,item_cose_base_on_last_purchase,
+			stock_valuation_price,item_cose_based_on_valuation_rate,max_purchase,
+			avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
 	return columns, data
 
 def bom_list():
@@ -128,7 +136,10 @@ def get_columns():
 		_("Bom Item Qty") + "::110",
 		_("Stock UOM") + "::110",
 		_("Purchase UOM") + "::110",
+		_("Conversion Factor")+"::110",
 		_("Last Purchase Price") + "::130",
+		_("Total Bom Item Cost Based on conversion Price")+"::180",
+		_("LLP")+"::50",
 		_("Total Bom Item Cost Based on Last Purchase Price") + "::180",
 		_("Current Valuation Rate") + "::130",
 		_("Total Bom Item Cost Based on Current Valuation Rate")+"::180",
@@ -150,12 +161,13 @@ def get_conditions(filters):
 def bom_details(filters):
 	conditions = get_conditions(filters)
 	bom_detail = frappe.db.sql("""select
-										bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project,bi.item_name,
-										bi.item_code as bi_item,bi.description, bi.stock_qty as bi_qty,bi.stock_uom
-								from
-										`tabBOM` bo, `tabBOM Explosion Item` bi
-								where
-										bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name,
+						bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty,
+						 bo.project,bi.item_name,bi.item_code as bi_item,bi.description,
+						 bi.stock_qty as bi_qty,bi.stock_uom
+				      from
+						`tabBOM` bo, `tabBOM Explosion Item` bi
+	       			where
+						bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s  order by bo.name,
 										bi.item_code""" % conditions, as_dict=1)
 	return bom_detail
 
@@ -202,3 +214,8 @@ def get_stock_ledger_entry(purchase_dict):
 											sl.name""",as_dict=1)
 		purchase_stock_valuation.append(stock_entry)
 	return purchase_stock_valuation
+
+def get_conversion_factore(item_code):
+	conversion = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent = '"""+item_code+"""'""", as_dict=1)
+	return conversion
+
