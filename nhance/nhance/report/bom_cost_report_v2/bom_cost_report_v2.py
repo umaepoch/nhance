@@ -13,7 +13,7 @@ import math
 import json
 import ast
 import sys
-reload(sys)
+#reload(sys)
 
 def execute(filters=None):
 	columns, data = [], []
@@ -21,7 +21,20 @@ def execute(filters=None):
 	global bom
 	bom = ""
 	bom = filters.get("bom")
-	bom_item = bom_details(filters)
+	company = filters.get("company")
+	print ("company and filters=========",company)
+	print ("bom and filters=========",bom)
+	bom_item = bom_details(company , bom)
+	total_bom_qty = 0.0
+	total_last_purchase_rate = 0.0
+	total_item_cose_base_on_last_purchase = 0.0
+	total_stock_valuation_price = 0.0
+	total_item_cose_based_on_valuation_rate = 0.0
+	total_max_purchase = 0.0
+	total_avg_purchase = 0.0
+	total_min_purchase = 0.0
+	total_llp = 0.0
+	total_item_amount_based_on_conversion = 0.0
 	if bom is not None:
 		for bom_i in bom_item:
 			bom_name = bom_i.bom_name
@@ -30,8 +43,10 @@ def execute(filters=None):
 			item_code = bom_i.bi_item
 			items_conversion = get_conversion_factore(item_code)
 			conversion_factor = 0.0
-			for conversion in items_conversion:
-				conversion_factor = conversion.conversion_factor
+			if items_conversion is not None:
+				for conversion in items_conversion:
+					conversion_factor = conversion.conversion_factor
+			
 			item_name = bom_i.item_name
 			description = bom_i.description
 			stock_uom = bom_i.stock_uom
@@ -47,8 +62,12 @@ def execute(filters=None):
 				for stock_details in stock:
 					if stock_uom == stock_details.stock_uom:
 						stock_valuation_price = stock_details.valuation_rate
+			total_stock_valuation_price += stock_valuation_price
+			total_stock_valuation_price = round(float(total_stock_valuation_price),2)
 			#print "stock_valuation_price==============",stock_valuation_price
 			stock_qty = bom_i.bi_qty
+			total_bom_qty += stock_qty
+			total_bom_qty = round(float(total_bom_qty),0)
 			purchase_uom = ""
 			valuation_rate = 0.0
 			item_group = ""
@@ -73,57 +92,78 @@ def execute(filters=None):
 				else:
 					last_purchase_rate = valuation_rate
 					check_last_purchase_rate = "N"
-			item_cose_base_on_last_purchase = stock_qty * last_purchase_rate
-			item_cose_based_on_valuation_rate = stock_valuation_price * last_purchase_rate
+			total_last_purchase_rate +=  last_purchase_rate
+			total_last_purchase_rate = round(float(total_last_purchase_rate),2)
+			item_cose_base_on_last_purchase = last_purchase_rate * stock_qty *  conversion_factor
+			total_item_cose_base_on_last_purchase += item_cose_base_on_last_purchase
+			total_item_cose_base_on_last_purchase = round(float(total_item_cose_base_on_last_purchase),2)
+			item_cose_based_on_valuation_rate = stock_valuation_price * stock_qty
+			item_cose_based_on_valuation_rate = round(float(item_cose_based_on_valuation_rate),2)
+			total_item_cose_based_on_valuation_rate += item_cose_based_on_valuation_rate
+			total_item_cose_based_on_valuation_rate = round(float(total_item_cose_based_on_valuation_rate),2)
 			number_of_purchase = get_number_of_purchase(item_code)
 			for num in number_of_purchase:
 				number_of_purchase = num.num_of_purchase
 				if last_purchase > 0:
-					avg_purchase = round(float(num.avg_purchase),2)
-					max_purchase = round(float(num.max_purchase),2)
-					min_purchase = round(float(num.min_purchase),2)
+					if num.avg_purchase is not None:
+						avg_purchase = num.avg_purchase
+					if num.max_purchase is not None:
+						max_purchase = num.max_purchase
+					if num.min_purchase is not None:
+						min_purchase = num.min_purchase
 				else:
 					avg_purchase = valuation_rate
 					max_purchase = valuation_rate
 					min_purchase = valuation_rate
+			avg_purchase = round(float(avg_purchase),2)
+			max_purchase = round(float(max_purchase),2)
+			min_purchase = round(float(min_purchase),2)
+			total_avg_purchase += avg_purchase
+			total_max_purchase += max_purchase
+			total_min_purchase += min_purchase
+
 			required_qty = 1
-			Amount_valuation_rate = (stock_valuation_price*bo_qty )/required_qty
+			Amount_valuation_rate = (stock_valuation_price*stock_qty )/required_qty
 			amount_last_purchase = 0.0
 			if last_purchase_rate == 0:
-				amount_last_purchase = (stock_valuation_price*bo_qty )/required_qty
+				amount_last_purchase = (stock_valuation_price*stock_qty )/required_qty
 			else :
-				amount_last_purchase = (last_purchase_rate * bo_qty)/1
+				amount_last_purchase = (last_purchase_rate * stock_qty)/1
 			amount_higher_purchase_rate = 0.0
 			amount_lowest_purchase_rate = 0.0
 			amount_avg_purchase_rate = 0.0
 			if number_of_purchase == 0:
 				if last_purchase_rate == 0:
-					amount_higher_purchase_rate = (stock_valuation_price*bo_qty )/required_qty
+					amount_higher_purchase_rate = (stock_valuation_price*stock_qty )/required_qty
 				else:
-					amount_higher_purchase_rate = (last_purchase_rate * bo_qty)/1
+					amount_higher_purchase_rate = (last_purchase_rate * stock_qty)/1
 			else :
-				amount_higher_purchase_rate = (max_purchase * bo_qty)/1
+				amount_higher_purchase_rate = (max_purchase * stock_qty)/1
 			if number_of_purchase == 0:
 				if last_purchase_rate == 0:
-					amount_lowest_purchase_rate = (stock_valuation_price*bo_qty )/required_qty
+					amount_lowest_purchase_rate = (stock_valuation_price*stock_qty )/required_qty
 				else:
-					amount_lowest_purchase_rate = (last_purchase_rate * bo_qty)/1
+					amount_lowest_purchase_rate = (last_purchase_rate * stock_qty)/1
 			else :
-				amount_lowest_purchase_rate = (min_purchase * bo_qty)/1
+				amount_lowest_purchase_rate = (min_purchase * stock_qty)/1
 			if number_of_purchase == 0:
 				if last_purchase_rate == 0:
-					amount_avg_purchase_rate = (stock_valuation_price*bo_qty )/required_qty
+					amount_avg_purchase_rate = (stock_valuation_price*stock_qty )/required_qty
 				else:
-					amount_avg_purchase_rate = (last_purchase_rate * bo_qty)/1
+					amount_avg_purchase_rate = (last_purchase_rate * stock_qty)/1
 			else :
-				amount_avg_purchase_rate = (avg_purchase * bo_qty)/1
+				amount_avg_purchase_rate = (avg_purchase * stock_qty)/1
 			
-			item_amount_based_on_conversion = round(float(last_purchase_rate * bo_qty * conversion_factor),0)
-			llp = round(float(bo_qty * last_purchase_rate),2)
-			data.append([bom_name,item_group,item_name,stock_qty,stock_uom,purchase_uom,conversion_factor,
-			last_purchase_rate,item_amount_based_on_conversion,llp,item_cose_base_on_last_purchase,
-			stock_valuation_price,item_cose_based_on_valuation_rate,max_purchase,
-			avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
+			llp = stock_qty * last_purchase_rate
+			total_llp += llp
+			total_llp = round(float(total_llp),2)
+			data.append([bom_name,item_group,item_name,stock_qty,stock_uom,purchase_uom,conversion_factor,last_purchase_rate,
+					item_cose_base_on_last_purchase ,llp,stock_valuation_price,item_cose_based_on_valuation_rate
+					,max_purchase , avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
+	data.append(["","","","","","","","","","","","","",""])
+	data.append(["Total","","",total_bom_qty,"","","",total_last_purchase_rate,total_llp,
+		total_item_cose_base_on_last_purchase,
+		total_stock_valuation_price,total_item_cose_based_on_valuation_rate,total_max_purchase,total_avg_purchase,total_min_purchase])
 	return columns, data
 
 def bom_list():
@@ -138,9 +178,8 @@ def get_columns():
 		_("Purchase UOM") + "::110",
 		_("Conversion Factor")+"::110",
 		_("Last Purchase Price") + "::130",
-		_("Total Bom Item Cost Based on conversion Price")+"::180",
-		_("LLP")+"::50",
 		_("Total Bom Item Cost Based on Last Purchase Price") + "::180",
+		_("LPP")+"::50",
 		_("Current Valuation Rate") + "::130",
 		_("Total Bom Item Cost Based on Current Valuation Rate")+"::180",
 		_("Last N Purchases - Highest") + "::160",
@@ -150,25 +189,30 @@ def get_columns():
 		_("Was there Last Purchase Price? ") + "::150"
 
 	]
+'''
 def get_conditions(filters):
 	conditions = ""
 	if filters.get("company"):
-		conditions += " and bo.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
+		conditions += " and bo.company = %s" % frappe.db.escape(filters.get("company"), percent=False)
 	if filters.get("bom"):
-		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
+		conditions += " and bi.parent = %s" % frappe.db.escape(filters.get("bom"), percent=False)
 	return conditions
-
-def bom_details(filters):
-	conditions = get_conditions(filters)
+'''
+def bom_details(company , bom):
+	#conditions = get_conditions(company , bom)
+	#print ("conditions-------------",conditions)
 	bom_detail = frappe.db.sql("""select
 						bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty,
-						 bo.project,bi.item_name,bi.item_code as bi_item,bi.description,
-						 bi.stock_qty as bi_qty,bi.stock_uom
-				      from
+						 bo.project,bi.item_name,bi.item_code as bi_item,bi.description, 
+							bi.stock_qty as bi_qty,bi.stock_uom
+					from
 						`tabBOM` bo, `tabBOM Explosion Item` bi
-	       			where
-						bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s  order by bo.name,
-										bi.item_code""" % conditions, as_dict=1)
+					where
+						bo.name = bi.parent and bo.is_active=1 and bo.docstatus = 1 and 
+						bo.company = '"""+company+"""' and bi.parent = '"""+bom+"""'
+
+					order by
+						bi.item_code""", as_dict=1)
 	return bom_detail
 
 def get_item_details(item_code):
@@ -195,9 +239,9 @@ def get_purchase_order_no(item_code):
 											from
 													`tabPurchase Order Item`
 	 									where
-													item_code = '"""+item_code+"""' and docstatus =1
+													item_code = %s and docstatus =1
 										order by parent
-									""", as_dict =1)
+									""",item_code, as_dict =1)
 	return purchase_order
 def get_stock_ledger_entry(purchase_dict):
 	purchase_stock_valuation = []
@@ -216,6 +260,15 @@ def get_stock_ledger_entry(purchase_dict):
 	return purchase_stock_valuation
 
 def get_conversion_factore(item_code):
-	conversion = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent = '"""+item_code+"""'""", as_dict=1)
+	
+	#print "item_code==============",item_code
+	conversion = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent = %s""",item_code, as_dict=1)
+	'''
+	conversion = frappe.get_all('UOM Conversion Detail', filters={"parent": item_code}, fields=["conversion_factor"])
+	
+	print "item_code==============",item_code
+	print "conversion---------------",conversion
+	'''
 	return conversion
+
 
