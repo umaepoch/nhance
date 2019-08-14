@@ -127,7 +127,7 @@ def get_sreq_sub_not_approved(item_code,project_name):
                                         sri.item_code=%s  and sri.parent=sr.name
                                         and sr.docstatus= 0 and sri.project=%s
                                         and sr.workflow_state = 'Pending Approval' """,(item_code,project_name), as_dict=1)
-
+    print "PMRT new total_not_appr_qtysreq_datas ",sreq_datas
 
     for sreq_data in sreq_datas:
         if sreq_data['qty']:
@@ -140,10 +140,13 @@ def get_sreq_sub_not_ordered(item_code,project_name):
     sreq_datas = frappe.db.sql("""select sri.project, sri.item_code,sri.qty,sri.quantity_to_be_ordered,sri.parent,sri.uom,sri.warehouse,sri.schedule_date,sri.stock_uom,sri.description,sr.docstatus,sr.transaction_date,sr.schedule_date from `tabStock Requisition Item` sri,`tabStock Requisition` sr where sri.item_code=%s  and sri.parent=sr.name and sr.docstatus=1 and sri.project=%s""",(item_code,project_name), as_dict=1)
     sreq_total_qty = 0
     quantity_to_be_ordered = 0
+    print "total db data",sreq_datas
     for sreq_data in sreq_datas:
         if sreq_data['quantity_to_be_ordered']:
               quantity_to_be_ordered = float(sreq_data['quantity_to_be_ordered'])
               sreq_total_qty = sreq_total_qty + quantity_to_be_ordered
+              print "Yes quantity_to_be_ordered is there ::",sreq_data['item_code'],quantity_to_be_ordered
+              print "sreq_total_qty from loop",sreq_data['item_code'], sreq_total_qty
     return sreq_total_qty
 
 
@@ -211,9 +214,13 @@ def	 get_workflowStatus(master_bom,col_data):
 
 
 @frappe.whitelist()
-def	make_stock_requisition(project,company,col_data,workflowStatus,required_date,master_bom):
+def	make_stock_requisition(project,company,col_data,required_date,master_bom):
+
+
+    print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PMRT cache Bug sum_data :",sum_data
 
     col_data = eval(col_data)
+    print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PMRT cache Bug  col_data ",col_data
     reserve_warehouse =  frappe.db.get_value('Project',project , 'reserve_warehouse')
 
     innerJson_requisition = " "
@@ -228,7 +235,7 @@ def	make_stock_requisition(project,company,col_data,workflowStatus,required_date
     "requested_by":project,
     "items": []
     }
-    for c in col_data:
+    for c in sum_data:
 
         item_code = c[0]
         short_qty = c[12]
@@ -248,23 +255,23 @@ def	make_stock_requisition(project,company,col_data,workflowStatus,required_date
         "description": item_data['description'],
         "sreq_made_from_pmrt":"Yes",
         "project":project,
-        "pch_bom_reference": master_bom
+                "pch_bom_reference": master_bom
         }
-
+        print "pch_bom_reference checking innerJson_transfer**********",innerJson_transfer
         if short_qty > 0:
             newJson_requisition["items"].append(innerJson_transfer) #end of for
 
-
+    print "pch_bom_reference checking newJson_requisition**********",newJson_requisition
 
     if newJson_requisition["items"]:
         doc = frappe.new_doc("Stock Requisition")
         doc.update(newJson_requisition)
         doc.save()
-        """if workflowStatus == "Approved":
+        """if workflowStatus == "Approved":  #check get_workflowStatus fun in js side for future purpose
         doc.submit()
         else:
         doc.save() """
         ret =  doc.doctype
         return ret
     else:
-        return null
+        return "failed"

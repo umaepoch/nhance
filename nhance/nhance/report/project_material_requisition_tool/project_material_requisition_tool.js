@@ -150,8 +150,8 @@ function makeStockRequistionn(filters) {
 					console.log("After submit dialog.get_values()"+JSON.stringify( dialog.get_values() ));
 					console.log("After submit ,COl data::"+ JSON.stringify(col_data));
 
-					workflowStatus =get_workflowStatus(col_data);
-					console.log("After submit ,workflowStatus"+ workflowStatus );
+					//workflowStatus =get_workflowStatus(col_data);  //for future puprose pass it as argu
+					//console.log("After submit ,workflowStatus"+ workflowStatus );
 					console.log("After submit ,project"+ filters.project );
 
 					dialog_data = dialog.get_values() ;
@@ -164,13 +164,12 @@ function makeStockRequistionn(filters) {
                     args: {
 											"project":filters.project,
 											"company":filters.company,
-											"workflowStatus":workflowStatus,
 											"col_data" : col_data,
 											"required_date" : required_date,
 											"master_bom" : project_details['master_bom']
                     },
                     callback: function(r) {
-                        if (r.message) {
+                        if (r.message != "failed") {
                             frappe.set_route('List', r.message);
                         }
                     } //end of callback fun..
@@ -242,4 +241,4 @@ function getWarehouseName(project_name) {
         }
     });
     return wharehouse;
-}
+}workflow
