@@ -67,7 +67,7 @@ def execute(filters=None):
 			#print "stock_valuation_price==============",stock_valuation_price
 			stock_qty = bom_i.bi_qty
 			total_bom_qty += stock_qty
-			total_bom_qty = round(float(total_bom_qty),0)
+			total_bom_qty = round(float(total_bom_qty),2)
 			purchase_uom = ""
 			valuation_rate = 0.0
 			item_group = ""
@@ -95,6 +95,7 @@ def execute(filters=None):
 			total_last_purchase_rate +=  last_purchase_rate
 			total_last_purchase_rate = round(float(total_last_purchase_rate),2)
 			item_cose_base_on_last_purchase = last_purchase_rate * stock_qty *  conversion_factor
+			item_cose_base_on_last_purchase = round(float(item_cose_base_on_last_purchase),2)
 			total_item_cose_base_on_last_purchase += item_cose_base_on_last_purchase
 			total_item_cose_base_on_last_purchase = round(float(total_item_cose_base_on_last_purchase),2)
 			item_cose_based_on_valuation_rate = stock_valuation_price * stock_qty
@@ -155,15 +156,16 @@ def execute(filters=None):
 				amount_avg_purchase_rate = (avg_purchase * stock_qty)/1
 			
 			llp = stock_qty * last_purchase_rate
+			llp = round(float(llp), 2)
 			total_llp += llp
 			total_llp = round(float(total_llp),2)
 			data.append([bom_name,item_group,item_name,stock_qty,stock_uom,purchase_uom,conversion_factor,last_purchase_rate,
 					item_cose_base_on_last_purchase ,llp,stock_valuation_price,item_cose_based_on_valuation_rate
 					,max_purchase , avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
 	data.append(["","","","","","","","","","","","","",""])
-	data.append(["Total","","",total_bom_qty,"","","",total_last_purchase_rate,total_llp,
-		total_item_cose_base_on_last_purchase,
-		total_stock_valuation_price,total_item_cose_based_on_valuation_rate,total_max_purchase,total_avg_purchase,total_min_purchase])
+	data.append(["Total","","",total_bom_qty,"","","",total_last_purchase_rate,total_item_cose_base_on_last_purchase,total_llp
+		,
+		total_stock_valuation_price,total_item_cose_based_on_valuation_rate,total_max_purchase,total_avg_purchase,total_min_purchase,"",""])
 	return columns, data
 
 def bom_list():
