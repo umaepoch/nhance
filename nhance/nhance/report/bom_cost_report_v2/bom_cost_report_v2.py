@@ -62,8 +62,9 @@ def execute(filters=None):
 				stock_valuation_price = stock.valuation_rate
 				print "item code --------------",item_code
 				print "stock_valuation_price=============",stock_valuation_price
-			total_stock_valuation_price += stock_valuation_price
-			total_stock_valuation_price = round(float(total_stock_valuation_price),2)
+			if stock_valuation_price is not None:
+				total_stock_valuation_price += stock_valuation_price
+				total_stock_valuation_price = round(float(total_stock_valuation_price),2)
 			#print "stock_valuation_price==============",stock_valuation_price
 			stock_qty = bom_i.bi_qty
 			total_bom_qty += stock_qty
@@ -92,8 +93,10 @@ def execute(filters=None):
 				else:
 					last_purchase_rate = stock_valuation_price
 					check_last_purchase_rate = "N"
-			total_last_purchase_rate +=  last_purchase_rate
-			total_last_purchase_rate = round(float(total_last_purchase_rate),2)
+			if last_purchase_rate is not None:
+				last_purchase_rate = round(float(last_purchase_rate),2)
+				total_last_purchase_rate +=  last_purchase_rate
+				total_last_purchase_rate = round(float(total_last_purchase_rate),2)
 			item_cose_base_on_last_purchase = last_purchase_rate * stock_qty *  conversion_factor
 			item_cose_base_on_last_purchase = round(float(item_cose_base_on_last_purchase),2)
 			total_item_cose_base_on_last_purchase += item_cose_base_on_last_purchase
