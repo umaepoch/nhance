@@ -30,12 +30,10 @@ frappe.query_reports["Project Material Ordering Tool"] = {
     },
     make_PO_and_transfer_qty: function(report) {
 	var doc_name1 = "Supplier";
-	var doc_name2 = "Address";
 	var supplier_fields = get_supplier_field(doc_name1);
-	var address_fields = get_supplier_field(doc_name2);
 	//console.log("address_fields-----------"+address_fields);
 	//console.log("supplier flag========="+supplier_fields);
-	if (address_fields == 1 && supplier_fields == 1) {
+	if (supplier_fields == 1) {
         	make_PO_and_transfer_qty(report);
 	}    
 	}

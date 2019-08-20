@@ -466,6 +466,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 	details = frappe.get_meta("Purchase Order").get("fields")
 	print "supplier-----------------", supplier
+	#print "details----------------------",details
 	
 	if items_List:
 		outerJson_Transfer = {
@@ -489,81 +490,88 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				if defaults.default:
 					supplier = defaults.default
 					default_address = fetch_supplier_address(supplier)
-					supplier_tax = frappe.get_doc("Address", supplier)
+					supplier_tax = frappe.get_all("Supplier", {"supplier_name":supplier}, "pch_tax_template")
 					print "supplier_tax------------",supplier_tax
 					outerJson_Transfer['supplier'] = defaults.default
-
-					if supplier_tax.pch_tax_template:
-						tax_template = supplier_tax.pch_tax_template
-						outerJson_Transfer['taxes_and_charges'] = tax_template
+					for supplier in supplier_tax:
+						if supplier.pch_tax_template:
+							tax_template = supplier.pch_tax_template
+							outerJson_Transfer['taxes_and_charges'] = tax_template
 					
 					if default_address:
 						outerJson_Transfer["supplier_address"] = default_address[0]['name']
 						outerJson_Transfer["tc_name"] = default_address[0]['pch_terms']
-						
-						terms_and_conditios = frappe.get_doc("Terms and Conditions", default_address[0]['pch_terms'])
-						if terms_and_conditios.terms:
-							outerJson_Transfer["terms"] = terms_and_conditios.terms
+						if default_address[0]['pch_terms']:
+							terms_and_conditios = frappe.get_doc("Terms and Conditions", default_address[0]['pch_terms'])
+							if terms_and_conditios.terms:
+								outerJson_Transfer["terms"] = terms_and_conditios.terms
 					else:
 						outerJson_Transfer["supplier_address"] = ""
 						outerJson_Transfer["tc_name"] = ""
+					for suppliers in supplier_tax:
+						if suppliers.pch_tax_template:
+							tax_template = suppliers.pch_tax_template
+							outerJson_Transfer['taxes_and_charges'] = tax_template
+							purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
+							print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
 
-					if supplier_tax.pch_tax_template:
-						tax_template = supplier_tax.pch_tax_template
-						outerJson_Transfer['taxes_and_charges'] = tax_template
-						purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
-						print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
-
-						for data in purchase_taxes.taxes:
-							charge_type = data.charge_type
-							account_head = data.account_head
-							rate = data.rate
-							tax_amount = data.tax_amount
-							description = data.description
-							inner_json_for_taxes = {
-								"charge_type" : charge_type,
-								"account_head":account_head,
-								"rate":rate,
-								"tax_amount": tax_amount,
-								"description" :description,
-							}
-							outerJson_Transfer["taxes"].append(inner_json_for_taxes)
+							for data in purchase_taxes.taxes:
+								charge_type = data.charge_type
+								account_head = data.account_head
+								rate = data.rate
+								tax_amount = data.tax_amount
+								description = data.description
+								row_id = data.row_id
+								inner_json_for_taxes = {
+									"charge_type" : charge_type,
+									"account_head":account_head,
+									"rate":rate,
+									"tax_amount": tax_amount,
+									"description" :description,
+									"row_id" : row_id,
+								}
+								outerJson_Transfer["taxes"].append(inner_json_for_taxes)
 				else:
 					address = fetch_supplier_address(supplier)
 					print "address-----------------", address
-					supplier_data = frappe.get_doc("Supplier", supplier)
+					supplier_data = frappe.get_doc("Supplier", {"supplier_name":supplier}, "pch_tax_template")
 
 					if address:
 						outerJson_Transfer["supplier_address"] = address[0]['name']
 						outerJson_Transfer["tc_name"] = address[0]['pch_terms']
-						terms_and_conditios = frappe.get_doc("Terms and Conditions", address[0]['pch_terms'])
+						terms_and_conditios = ""
+						if address[0]['pch_terms'] is not None:
+						
+							terms_and_conditios = frappe.get_doc("Terms and Conditions", address[0]['pch_terms'])
 
-						if terms_and_conditios.terms:
-							outerJson_Transfer["terms"] = terms_and_conditios.terms
+							if terms_and_conditios.terms:
+								outerJson_Transfer["terms"] = terms_and_conditios.terms
 					else:
 						outerJson_Transfer["supplier_address"] = ""
 						outerJson_Transfer["tc_name"] = ""
+					for supplier_dt in supplier_data:
+						if supplier_dt.pch_tax_template:
+							tax_template = supplier_dt.pch_tax_template
+							outerJson_Transfer['taxes_and_charges'] = tax_template
+							purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
 
-					if supplier_data.pch_tax_template:
-						tax_template = supplier_data.pch_tax_template
-						outerJson_Transfer['taxes_and_charges'] = tax_template
-						purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
-
-						print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
-						for data in purchase_taxes.taxes:
-							charge_type = data.charge_type
-							account_head = data.account_head
-							rate = data.rate
-							tax_amount = data.tax_amount
-							description = data.description
-							inner_json_for_taxes = {
-								"charge_type" : charge_type,
-								"account_head":account_head,
-								"rate":rate,
-								"tax_amount": tax_amount,
-								"description" :description,
-							}
-							outerJson_Transfer["taxes"].append(inner_json_for_taxes)
+							print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+							for data in purchase_taxes.taxes:
+								charge_type = data.charge_type
+								account_head = data.account_head
+								rate = data.rate
+								tax_amount = data.tax_amount
+								description = data.description
+								row_id = data.row_id
+								inner_json_for_taxes = {
+									"charge_type" : charge_type,
+									"account_head":account_head,
+									"rate":rate,
+									"tax_amount": tax_amount,
+									"description" :description,
+									"row_id": row_id,
+								}
+								outerJson_Transfer["taxes"].append(inner_json_for_taxes)
 
 			if defaults.fieldname == "customer":
 				#print "customer Default---", defaults.default
@@ -745,16 +753,11 @@ def fields(doc_name):
 		if "pch_terms" not in fieldname:
 			frappe.msgprint("Terms and Condition field is not created in: "+doc_name+" doctype")
 			flag = 0
-		else:
-			flag =1
-	if doc_name == "Address":
-		fieldname = []
-		for field in field_details:
-			fieldname.append(field.fieldname)
-		if "pch_tax_template" not in fieldname:
+		elif "pch_tax_template" not in fieldname:
 			frappe.msgprint("Tax Template field is not created in: "+doc_name)
 			flag = 0
 		else:
-			flag = 1
+			flag =1
+	
 	return flag
 
