@@ -491,11 +491,11 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 					supplier = defaults.default
 					default_address = fetch_supplier_address(supplier)
 					supplier_tax = frappe.get_all("Supplier", {"supplier_name":supplier}, "pch_tax_template")
-					print "supplier_tax------------",supplier_tax
+					#print "supplier_tax------------",supplier_tax
 					outerJson_Transfer['supplier'] = defaults.default
-					for supplier in supplier_tax:
-						if supplier.pch_tax_template:
-							tax_template = supplier.pch_tax_template
+					for suppliers in supplier_tax:
+						if suppliers.pch_tax_template:
+							tax_template = suppliers.pch_tax_template
 							outerJson_Transfer['taxes_and_charges'] = tax_template
 					
 					if default_address:
@@ -534,8 +534,9 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				else:
 					address = fetch_supplier_address(supplier)
 					print "address-----------------", address
-					supplier_data = frappe.get_doc("Supplier", {"supplier_name":supplier}, "pch_tax_template")
-
+					#supplier_data = frappe.get_doc("Supplier", {"supplier_name":supplier}, "pch_tax_template")
+					supplier_data = frappe.get_all("Supplier", {"supplier_name":supplier}, "pch_tax_template")
+					#print "supplier_data-----------",supplier_data
 					if address:
 						outerJson_Transfer["supplier_address"] = address[0]['name']
 						outerJson_Transfer["tc_name"] = address[0]['pch_terms']
@@ -555,7 +556,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 							outerJson_Transfer['taxes_and_charges'] = tax_template
 							purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
 
-							print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+							#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
 							for data in purchase_taxes.taxes:
 								charge_type = data.charge_type
 								account_head = data.account_head
@@ -760,4 +761,5 @@ def fields(doc_name):
 			flag =1
 	
 	return flag
+
 
