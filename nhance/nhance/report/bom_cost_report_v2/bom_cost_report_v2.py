@@ -28,9 +28,9 @@ def execute(filters=None):
 	bom_item = bom_details(company , bom)
 	total_bom_qty = 0.0
 	total_last_purchase_rate = 0.0
-	total_item_cose_base_on_last_purchase = 0.0
+	total_item_cost_base_on_last_purchase = 0.0
 	total_stock_valuation_price = 0.0
-	total_item_cose_based_on_valuation_rate = 0.0
+	total_item_cost_based_on_valuation_rate = 0.0
 	total_max_purchase = 0.0
 	total_avg_purchase = 0.0
 	total_min_purchase = 0.0
@@ -57,11 +57,12 @@ def execute(filters=None):
 			purchase_dict = ""
 			#print "purchase_order_no=========",purchase_order_no
 			stock_ledger_entry = get_stock_ledger_entry(item_code)
-			print "stock_ledger_entry===============",stock_ledger_entry
+			#print "stock_ledger_entry===============",stock_ledger_entry
 			for stock in stock_ledger_entry:
-				stock_valuation_price = stock.valuation_rate
-				print "item code --------------",item_code
-				print "stock_valuation_price=============",stock_valuation_price
+				if stock.valuation_rate is not None:
+					stock_valuation_price = stock.valuation_rate
+				#print "item code --------------",item_code
+				#print "stock_valuation_price=============",stock_valuation_price
 			if stock_valuation_price is not None:
 				total_stock_valuation_price += stock_valuation_price
 				total_stock_valuation_price = round(float(total_stock_valuation_price),2)
@@ -79,8 +80,8 @@ def execute(filters=None):
 			max_purchase = 0.0
 			min_purchase = 0.0
 			last_purchase = 0.0
-			item_cose_base_on_last_purchase = 0.0
-			item_cose_based_on_valuation_rate = 0.0
+			item_cost_base_on_last_purchase = 0.0
+			item_cost_based_on_valuation_rate = 0.0
 			item_details = get_item_details(item_code)
 			for code in item_details:
 				purchase_uom = code.purchase_uom
@@ -88,8 +89,9 @@ def execute(filters=None):
 				item_group = code.item_group
 				last_purchase = code.last_purchase_rate
 				if last_purchase > 0:
-					last_purchase_rate = code.last_purchase_rate
-					check_last_purchase_rate = "Y"
+					if code.last_purchase_rate is not None:
+						last_purchase_rate = code.last_purchase_rate
+						check_last_purchase_rate = "Y"
 				else:
 					last_purchase_rate = stock_valuation_price
 					check_last_purchase_rate = "N"
@@ -97,14 +99,19 @@ def execute(filters=None):
 				last_purchase_rate = round(float(last_purchase_rate),2)
 				total_last_purchase_rate +=  last_purchase_rate
 				total_last_purchase_rate = round(float(total_last_purchase_rate),2)
-			item_cose_base_on_last_purchase = last_purchase_rate * stock_qty *  conversion_factor
-			item_cose_base_on_last_purchase = round(float(item_cose_base_on_last_purchase),2)
-			total_item_cose_base_on_last_purchase += item_cose_base_on_last_purchase
-			total_item_cose_base_on_last_purchase = round(float(total_item_cose_base_on_last_purchase),2)
-			item_cose_based_on_valuation_rate = stock_valuation_price * stock_qty
-			item_cose_based_on_valuation_rate = round(float(item_cose_based_on_valuation_rate),2)
-			total_item_cose_based_on_valuation_rate += item_cose_based_on_valuation_rate
-			total_item_cose_based_on_valuation_rate = round(float(total_item_cose_based_on_valuation_rate),2)
+
+			if conversion_factor is not None and stock_qty is not None and last_purchase_rate is not None:
+				item_cost_base_on_last_purchase = last_purchase_rate * stock_qty *  conversion_factor
+				item_cost_base_on_last_purchase = round(float(item_cost_base_on_last_purchase),2)
+			total_item_cost_base_on_last_purchase += item_cost_base_on_last_purchase
+			total_item_cost_base_on_last_purchase = round(float(total_item_cost_base_on_last_purchase),2)
+
+			if stock_valuation_price is not None:
+				item_cost_based_on_valuation_rate = stock_valuation_price * stock_qty
+				item_cost_based_on_valuation_rate = round(float(item_cost_based_on_valuation_rate),2)
+			total_item_cost_based_on_valuation_rate += item_cost_based_on_valuation_rate
+			total_item_cost_based_on_valuation_rate = round(float(total_item_cost_based_on_valuation_rate),2)
+
 			number_of_purchase = get_number_of_purchase(item_code)
 			for num in number_of_purchase:
 				number_of_purchase = num.num_of_purchase
@@ -118,9 +125,11 @@ def execute(filters=None):
 			avg_purchase = round(float(avg_purchase),2)
 			max_purchase = round(float(max_purchase),2)
 			min_purchase = round(float(min_purchase),2)
+
 			total_avg_purchase += avg_purchase
 			total_max_purchase += max_purchase
 			total_min_purchase += min_purchase
+
 			total_avg_purchase = round(float(total_avg_purchase),2)
 			total_max_purchase = round(float(total_max_purchase),2)
 			total_min_purchase = round(float(total_min_purchase),2)
@@ -163,11 +172,11 @@ def execute(filters=None):
 			total_llp += llp
 			total_llp = round(float(total_llp),2)
 			data.append([bom_name,item_group,item_code,stock_qty,stock_uom,purchase_uom,conversion_factor,last_purchase_rate,
-					item_cose_base_on_last_purchase ,llp,stock_valuation_price,item_cose_based_on_valuation_rate
+					item_cost_base_on_last_purchase ,llp,stock_valuation_price,item_cost_based_on_valuation_rate
 					,max_purchase , avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
 	data.append(["","","","","","","","","","","","","",""])
-	data.append(["Total","","",total_bom_qty,"","","",total_last_purchase_rate,total_item_cose_base_on_last_purchase,total_llp
-		,total_stock_valuation_price,total_item_cose_based_on_valuation_rate,total_max_purchase,
+	data.append(["Total","","",total_bom_qty,"","","",total_last_purchase_rate,total_item_cost_base_on_last_purchase,total_llp
+		,total_stock_valuation_price,total_item_cost_based_on_valuation_rate,total_max_purchase,
 		total_avg_purchase,total_min_purchase,"",""])
 	return columns, data
 
