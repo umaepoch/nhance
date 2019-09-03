@@ -20,7 +20,7 @@ frappe.query_reports["Project Material Ordering Tool"] = {
         "options": "Warehouse"
     }],
     onload: function(report) {
-        console.log("Make PO and Transfer Existing/Required Quantity..........");
+        //console.log("Make PO and Transfer Existing/Required Quantity..........");
         report.page.add_inner_button(__("Make PO and Transfer Existing/Required Quantity"),
             function() {
 		
@@ -29,6 +29,7 @@ frappe.query_reports["Project Material Ordering Tool"] = {
             });
     },
     make_PO_and_transfer_qty: function(report) {
+	frappe.query_report.refresh();
 	var doc_name1 = "Supplier";
 	var supplier_fields = get_supplier_field(doc_name1);
 	//console.log("address_fields-----------"+address_fields);
@@ -37,6 +38,7 @@ frappe.query_reports["Project Material Ordering Tool"] = {
         	make_PO_and_transfer_qty(report);
 	}    
 	}
+	
 }
 
 function validate_project_details(project, query_report) {
@@ -72,7 +74,9 @@ function make_PO_and_transfer_qty(report) {
     var filters = report.get_values();
     var source_warehouse = filters.source_warehouse;
     var project = filters.project;
-    var reportData = getReportData();
+    var project_filter = frappe.query_report.get_filter_value("project");
+    var swh_filter = frappe.query_report.get_filter_value("source_warehouse");
+    var reportData = getReportData(project_filter,swh_filter);
     var materialTransferMap = new Map();
     var purchaseOrderMap = new Map();
 
@@ -288,20 +292,20 @@ function make_PO_and_transfer_qty(report) {
                                 var stock_uom = no_supplier_items[i].stock_uom;
                                 var qty = no_supplier_items[i].qty;
                                 var check_flag = get_UOM_Details(stock_uom);
-                                console.log("no_supplier_items of qty------------" + no_supplier_items[i].qty);
-                                console.log("check_flag------------" + check_flag);
+                                //console.log("no_supplier_items of qty------------" + no_supplier_items[i].qty);
+                               // console.log("check_flag------------" + check_flag);
                                 if (check_flag) {
                                     var processedQty = processQuantity(check_args, qty);
-                                    console.log("no_supplier_items of processedQty is--------------::" + processedQty);
+                                    //console.log("no_supplier_items of processedQty is--------------::" + processedQty);
 				    var purchase_uom = getPurchaseUom(no_supplier_items[i].item_code.toString());
 				    var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, processedQty);
-                                    console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
+                                  //  console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
                                     no_supplier_items[i].qty = puom_qty;
 
                                 } //end of if..
                             } //end of for loop..
 
-                            console.log("no_supplier_items--------" + JSON.stringify(no_supplier_items));
+                            //console.log("no_supplier_items--------" + JSON.stringify(no_supplier_items));
                             makePO(sreq_no, supplier, no_supplier_items);
                         }
 
@@ -312,16 +316,19 @@ function make_PO_and_transfer_qty(report) {
                                 var stock_uom = supplier_items[i].stock_uom;
                                 var qty = supplier_items[i].qty;
                                 var check_flag = get_UOM_Details(stock_uom);
-                                console.log("supplier_items of qty------------" + supplier_items[i].qty);
-                                console.log("check_flag------------" + check_flag);
+                               // console.log("supplier_items of qty------------" + supplier_items[i].qty);
+                               // console.log("check_flag------------" + check_flag);
 
                                 if (check_flag) {
+				    //console.log("item code ------------"+supplier_items[i].item_code.toString());
                                     var processedQty = processQuantity(check_args, qty);
-                                    console.log("supplier_items of processedQty is---------------::" + processedQty);
+                                    //console.log("supplier_items of processedQty is---------------::" + processedQty);
 				    var purchase_uom = getPurchaseUom(supplier_items[i].item_code.toString());
 				    var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
                                     console.log("supplier_items of puom_qty is-------------::" + puom_qty);
-                                    supplier_items[i].qty = puom_qty;
+				    if (puom_qty != undefined){
+                                   	supplier_items[i].qty = puom_qty;
+				   }
                                 } //end of if..
 
                             } //end of for loop..
@@ -351,6 +358,8 @@ function make_PO_and_transfer_qty(report) {
 function check_puom(purchase_uom, item_code,req_po_qty) {
     if (purchase_uom != null && purchase_uom != undefined && purchase_uom != "") {
         var cf = fetch_conversion_factor(item_code, purchase_uom);
+	//console.log("item-code-----------------"+item_code);
+	//console.log("cf-----------------------"+cf);
         if (cf != 0) {
             po_qty = req_po_qty / cf;
 	    return po_qty;
@@ -404,7 +413,7 @@ function fetch_conversion_factor(item_code, purchase_uom) {
 
 function makePO(sreq_no, supplier, po_items) {
 
-    console.log("supplier----" + supplier);
+    //console.log("supplier----" + supplier);
     frappe.call({
         method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.make_purchase_orders",
         args: {
@@ -548,10 +557,14 @@ function getReserveWarehouse(project) {
 
 }
 
-function getReportData() {
+function getReportData(project_filter,swh_filter) {
     var reportData = [];
     frappe.call({
         method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.get_report_data",
+	 args: {
+            "project_filter":project_filter,
+	    "swh_filter":swh_filter
+        },
         async: false,
         callback: function(r) {
             //console.log("reportData::" + JSON.stringify(r.message));
@@ -626,3 +639,4 @@ function get_supplier_field(doc_name){
     }); //end of frappe call..
     return reportData;
 }
+

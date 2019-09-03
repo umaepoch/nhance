@@ -15,7 +15,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sum_data = []
+sum_data=[]
 def execute(filters=None):
 	swh = ""
 	global sum_data
@@ -251,7 +251,9 @@ def fetch_pending_sreqnos(project,swh):
 
 @frappe.whitelist()
 def fetch_conversion_factor(parent,uom):
+	print "parent -------------",parent
 	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent=%s and uom=%s""", (parent, uom), as_dict=1)
+	print "records--------------",records
 	if records:
 		conversion_factor = records[0]['conversion_factor']
 		return conversion_factor
@@ -271,7 +273,7 @@ def fetch_po_items_details(item_code,po_list):
 			stock_qty = stock_qty + float(po_data['stock_qty'])
 	po_items['qty'] = qty
 	po_items['stock_qty'] = stock_qty
-	#print "po_items-------", po_items
+	print "po_items-------", po_items
 	return po_items
 
 def fetch_item_purchase_uom(item_code):
@@ -462,6 +464,7 @@ def updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no):
 def make_purchase_orders(sreq_no,supplier,po_items):
 	tax_template = ""
 	items_List = json.loads(po_items)
+	print "items_List-----------------", items_List
 	creation_Date = datetime.datetime.now()
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 	details = frappe.get_meta("Purchase Order").get("fields")
@@ -486,7 +489,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 
 		for defaults in details:
 			if defaults.fieldname == "supplier":
-				print "Default Supplier------------------------", defaults.default
+				#print "Default Supplier------------------------", defaults.default
 				if defaults.default:
 					supplier = defaults.default
 					default_address = fetch_supplier_address(supplier)
@@ -513,7 +516,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 							tax_template = suppliers.pch_tax_template
 							outerJson_Transfer['taxes_and_charges'] = tax_template
 							purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
-							print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+							#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
 
 							for data in purchase_taxes.taxes:
 								charge_type = data.charge_type
@@ -533,7 +536,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 								outerJson_Transfer["taxes"].append(inner_json_for_taxes)
 				else:
 					address = fetch_supplier_address(supplier)
-					print "address-----------------", address
+					#print "address-----------------", address
 					#supplier_data = frappe.get_doc("Supplier", {"supplier_name":supplier}, "pch_tax_template")
 					supplier_data = frappe.get_all("Supplier", {"supplier_name":supplier}, "pch_tax_template")
 					#print "supplier_data-----------",supplier_data
@@ -556,7 +559,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 							outerJson_Transfer['taxes_and_charges'] = tax_template
 							purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
 
-							#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+							print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
 							for data in purchase_taxes.taxes:
 								charge_type = data.charge_type
 								account_head = data.account_head
@@ -655,6 +658,9 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 					outerJson_Transfer['customer_contact_person'] = defaults.default
 			
 		for items in items_List:
+			print "item ----------------------",items['item_code']
+			print "item----------------",items['qty']
+			
 			innerJson_Transfer ={
 				"creation": creation_Date,
 				"qty": items['qty'],
@@ -687,10 +693,42 @@ def fetch_supplier_address(supplier):
 		return None
 
 @frappe.whitelist()
-def get_report_data():
+def get_report_data(project_filter,swh_filter):
 	report_data = []
 	details = {}
-	for rows in sum_data:
+	sum_datas =[]
+	if project_filter:
+		#project = filters.get("project")
+		items_map = fetch_pending_sreqnos(project_filter,swh_filter)	
+		if items_map:
+			for (sreq_no) in sorted(items_map):
+				data = items_map[sreq_no]
+				for sreq_dict in data:
+					#print "sreq_dict-----", sreq_dict['sreq_no']
+					#print "bom-----", sreq_dict['bom']
+					sum_datas.append([				
+					sreq_dict['sreq_no'],
+					project_filter,
+					sreq_dict['item_code'],
+					sreq_dict['sreq_qty'],
+					sreq_dict['sreq_uom'],
+					sreq_dict['stock_uom'],
+					sreq_dict['sreq_qty_in_stock_uom'],
+					sreq_dict['qty_available_in_swh'],
+					sreq_dict['excess_to_be_ordered'],
+					sreq_dict['po_uom'],
+					sreq_dict['conversion_factor'],
+					sreq_dict['qty_in_po_uom'],
+					sreq_dict['default_supplier'],
+					sreq_dict['last_purchase_price'],
+					sreq_dict['no_of_purchase_transactions'],
+					sreq_dict['max_price_of_last_10_purchase_transactions'],
+					sreq_dict['min_price_of_last_10_purchase_transactions'],
+					sreq_dict['avg_price_of_last_10_purchase_transactions'],
+					sreq_dict['bom'],
+					sreq_dict['fulFilledQty']
+					])
+	for rows in sum_datas:
 		#print "row-----", rows
 		sreq_no = rows[0]
 		project = rows[1]
