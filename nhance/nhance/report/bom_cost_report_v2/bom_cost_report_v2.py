@@ -113,6 +113,13 @@ def execute(filters=None):
 					for conversion in items_conversion:
 						conversion_factor = conversion.conversion_factor
 						conversion_factor = round(float(conversion_factor),2)
+			else:
+				items_conversion = get_conversion_factore(item_code, stock_uom)
+				
+				if items_conversion is not None:
+					for conversion in items_conversion:
+						conversion_factor = conversion.conversion_factor
+						conversion_factor = round(float(conversion_factor),2)
 			if last_purchase_rate is not None:
 				last_purchase_rate = round(float(last_purchase_rate),2)
 				total_last_purchase_rate +=  last_purchase_rate
@@ -190,12 +197,13 @@ def execute(filters=None):
 			total_llp += llp
 			total_llp = round(float(total_llp),2)
 			'''
-			if purchase_uom:
+			if conversion_factor != 0:
 				data.append([bom_name,item_group,item_code,stock_qty,stock_uom,purchase_uom,conversion_factor,last_purchase_rate,
-						item_cost_base_on_last_purchase ,stock_valuation_price,item_cost_based_on_valuation_rate
-						,max_purchase , avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
+							item_cost_base_on_last_purchase ,stock_valuation_price,item_cost_based_on_valuation_rate
+							,max_purchase , avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
 			else:
-				frappe.throw(_("Purchase UOM is empty for item  "+'"'+item_code+'"' +"  please set purchase uom in Item Master and run  this Report again"))
+				if(purchase_uom is not None):
+					frappe.throw("Please define Conversion Factor for purchase uom "+'"'+purchase_uom+'"'+ " of this "+'"'+item_code+'"'+" in Item Master and run this report again")
 	get_total = get_report_total_row()
 	#print "get_total------------",get_total
 	if get_total[0].add_total_row == 0:
@@ -303,6 +311,9 @@ def get_conversion_factore(item_code,purchase_uom):
 	print "item_code==============",item_code
 	print "conversion---------------",conversion
 	'''
+	print "item_code==============",item_code
+	print "item_code==============",purchase_uom
+	print "conversion---------------",conversion
 	return conversion
 def get_report_total_row():
 	total_row_checking = frappe.db.sql("""select add_total_row from `tabReport` where report_name = 'BOM-Cost-Report v2'""",as_dict =1)
