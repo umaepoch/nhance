@@ -28,9 +28,9 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 											}
 			},
 			"on_change": function(query_report) {
-											console.log(" Changed project ********* ");
+											//console.log(" Changed project ********* ");
 											var project = frappe.query_report.get_filter_value("project");
-											console.log("Selected project******************:::::"+project);
+											//console.log("Selected project******************:::::"+project);
 											frappe.call({
 													method: "nhance.nhance.report.project_material_requisition_tool.project_material_requisition_tool.fetch_project_details",
 													args: {
@@ -42,8 +42,8 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 																				if(r.message){
 																				var master_bom = r.message[0].master_bom;
 																				project_details = r.message[0]
-																				console.log("project_details  :::::"+JSON.stringify(project_details));
-																				console.log("MAster Bom :::::"+master_bom);
+																				//////console.log("project_details  :::::"+JSON.stringify(project_details));
+																				//console.log("MAster Bom :::::"+master_bom);
 
 																				}//end of if..
 													}//end of call-back function..
@@ -63,25 +63,29 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 
 	],
 	onload: function(report) {
-				console.log("onload.............");
-				console.log("Make Stock Requisition button created...");
+				//console.log("onload.............");
+				//console.log("Make Stock Requisition button created...");
+
 				report.page.add_inner_button(__("Make Stock Requistion"),
 						function() {
 								frappe.query_report.refresh();  //beacause of that col data issue
 								frappe.query_report.refresh();	//beacause of that col data issue
-								frappe.query_report.refresh();	//beacause of that col data issue
+
+								var onclick_project = frappe.query_report.get_filter_value("project");
+
 								var reporter = frappe.query_reports["Project Material Requisition Tool"];
-								console.log("Button Clicked...");
+								//console.log("Button Clicked...");
 								frappe.call({
 										method: "nhance.nhance.report.project_material_requisition_tool.project_material_requisition_tool.get_col_data",
+										args:{
+											"onclick_project":onclick_project
+										},
 										async: false,
 										callback: function(r)
 										{
 																	if(r.message){
 																	col_data = r.message
-																	console.log("COl data::"+ JSON.stringify(col_data));
-
-
+																	//console.log("COl data::"+ JSON.stringify(col_data));
 																	}//end of if..
 										}//end of call-back function..
 								});//end of frappe call..
@@ -89,12 +93,12 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 								  var short_qty_flag="false"
 									for (i = 0; i < col_data.length; i++) {
 										var short_qty = parseFloat (col_data[i][12])
-										console.log("Short qty "+i +"st row"+  short_qty );
+										//console.log("Short qty "+i +"st row"+  short_qty );
 
-										console.log("Short qty type"+ typeof short_qty );
+										//console.log("Short qty type"+ typeof short_qty );
 
 										if (short_qty > 0) {
-											console.log("came inside check loop");
+											//console.log("came inside check loop");
 											short_qty_flag = "true";
 											break;
 										}
@@ -112,10 +116,10 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 	},//end of onload..
 
 	makeStockRequisition: function(report, status) {
-				console.log("from first makeStockRequisition fun entry check ");
+				//console.log("from first makeStockRequisition fun entry check ");
 				var filters = report.get_values();
-				console.log("makeStockRequisition fun inside filters:: "+filters);
-				console.log("makeStockRequisition fun inside filters:: "+filters.project);
+				//console.log("makeStockRequisition fun inside filters:: "+filters);
+				//console.log("makeStockRequisition fun inside filters:: "+filters.project);
 
         var flag = "";
         makeStockRequistionn(filters);
@@ -123,14 +127,14 @@ frappe.query_reports["Project Material Requisition Tool"] = {
 } //end of frappe.query_reports
 
 function makeStockRequistionn(filters) {
-		console.log("from second makeStockRequisition fun entry check ");
-		console.log("makeStockRequisition fun inside filters:: "+filters.project);
+		//console.log("from second makeStockRequisition fun entry check ");
+		//console.log("makeStockRequisition fun inside filters:: "+filters.project);
 
 		if (project_details['reserve_warehouse'] == null){
 			frappe.throw("Please update Reserver Warehouse field for Project" +filters.project+" and try running the report again")
 		}
 		else{
-			console.log("reserve_warehouse is there:"+project_details['reserve_warehouse']);
+			//console.log("reserve_warehouse is there:"+project_details['reserve_warehouse']);
 		}
 
 		var required_date ;
@@ -147,8 +151,8 @@ function makeStockRequistionn(filters) {
 				primary_action : function() {
 					dialog.hide();
 
-					console.log("After submit dialog.get_values()"+JSON.stringify( dialog.get_values() ));
-					console.log("After submit ,COl data::"+ JSON.stringify(col_data));
+					//console.log("After submit dialog.get_values()"+JSON.stringify( dialog.get_values() ));
+					//console.log("After submit ,COl data::"+ JSON.stringify(col_data));
 
 					//workflowStatus =get_workflowStatus(col_data);  //for future puprose pass it as argu
 					//console.log("After submit ,workflowStatus"+ workflowStatus );
@@ -198,9 +202,9 @@ function get_workflowStatus(col_data)
 			callback: function(r)
 			{
 										if(r.message){
-										console.log("get_workflowStatus"+ JSON.stringify(r.message));
+										//console.log("get_workflowStatus"+ JSON.stringify(r.message));
 										workflowStatus = r.message
-										console.log("COl data::"+ JSON.stringify(col_data));
+										//console.log("COl data::"+ JSON.stringify(col_data));
 
 										}//end of if..
 			}//end of call-back function..
@@ -210,18 +214,18 @@ function get_workflowStatus(col_data)
 }
 
 function makeStockOperations(report, status, flag) {
-		console.log("Inside make makeStockOperations ");
+		//console.log("Inside make makeStockOperations ");
     var filters = report.get_values();
     var project = frappe.query_report.get_filter_value("project");
-		console.log("makeStockRequisition fun project:::::::: "+project);
+		//console.log("makeStockRequisition fun project:::::::: "+project);
 		var warehouse = getWarehouseName(project)
-		console.log("makeStockRequisition fun warehouse::::: "+warehouse);
+		//console.log("makeStockRequisition fun warehouse::::: "+warehouse);
 
 
 }
 
 function getWarehouseName(project_name) {
-		console.log("from getWarehouseName ::::: "+project_name);
+		//console.log("from getWarehouseName ::::: "+project_name);
 
     var wharehouse = "";
     frappe.call({
@@ -241,4 +245,5 @@ function getWarehouseName(project_name) {
         }
     });
     return wharehouse;
-}workflow
+
+}

@@ -174,8 +174,57 @@ def get_master_bom_qty(master_bom):
 
 
 @frappe.whitelist()
-def get_col_data():
- return sum_data
+def get_col_data(onclick_project):
+    onclick_sum_data = []
+    columns = []
+    columns = get_columns()
+    master_bom = frappe.db.get_value('Project', onclick_project, 'master_bom')
+    project_name = frappe.db.get_value('Project',onclick_project, 'name')
+    company.append(frappe.db.get_value('BOM', master_bom, 'company'))
+    project_warehouse =  frappe.db.get_value('Project', onclick_project, 'project_warehouse')
+    reserve_warehouse =  frappe.db.get_value('Project', onclick_project, 'reserve_warehouse')
+
+    if  master_bom and project_warehouse and reserve_warehouse:
+        items_data = get__bom_items(master_bom)  #exploded items
+
+        for item_data in sorted(items_data):
+            item_code = item_data.item_code
+            bom_item_qty = item_data.bi_qty
+            warehouse_qty = 0
+            reserve_warehouse_qty = 0
+            qty_consumed_in_manufacture= 0
+            sreq_sub_not_approved = 0
+            sreq_sub_not_ordered = 0
+            po_total_qty = 0
+
+            warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
+            qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,item_code)
+
+            delta_qty = warehouse_qty - bom_item_qty
+
+            reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
+
+            rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
+
+            sreq_sub_not_approved = get_sreq_sub_not_approved(item_code,project_name)
+            sreq_sub_not_ordered = get_sreq_sub_not_ordered(item_code,project_name) # have to create project custom field and add to query condition
+            po_total_qty = get_po_total_qty(item_code,project_name) # have to create project custom field and add to query condition
+
+            qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty
+            tot_qty_covered =  qty_planned_nrec +  rw_pb_cons_qty
+
+            short_qty =  bom_item_qty - tot_qty_covered
+
+            if short_qty < 0:
+              short_qty = 0
+
+            onclick_sum_data.append([str(item_code),str(bom_item_qty),str(warehouse_qty),str(delta_qty),
+                  str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_sub_not_approved),str(sreq_sub_not_ordered),str(po_total_qty),str(qty_planned_nrec),
+                  str(tot_qty_covered),str(short_qty)])
+    return onclick_sum_data
+
+
+
 
 
 @frappe.whitelist()
@@ -235,7 +284,7 @@ def	make_stock_requisition(project,company,col_data,required_date,master_bom):
     "requested_by":project,
     "items": []
     }
-    for c in sum_data:
+    for c in col_data:
 
         item_code = c[0]
         short_qty = c[12]
