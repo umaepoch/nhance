@@ -126,13 +126,13 @@ def execute(filters=None):
 				total_last_purchase_rate = round(float(total_last_purchase_rate),2)
 			
 			if conversion_factor is not None and stock_qty is not None and last_purchase_rate is not None:
-				item_cost_base_on_last_purchase = last_purchase_rate * stock_qty *  conversion_factor
+				item_cost_base_on_last_purchase = stock_qty * last_purchase_rate
 				item_cost_base_on_last_purchase = round(float(item_cost_base_on_last_purchase),2)
 			total_item_cost_base_on_last_purchase += item_cost_base_on_last_purchase
 			total_item_cost_base_on_last_purchase = round(float(total_item_cost_base_on_last_purchase),2)
 
 			if stock_valuation_price is not None:
-				item_cost_based_on_valuation_rate = stock_valuation_price * stock_qty
+				item_cost_based_on_valuation_rate = stock_qty * stock_valuation_price
 				item_cost_based_on_valuation_rate = round(float(item_cost_based_on_valuation_rate),2)
 			total_item_cost_based_on_valuation_rate += item_cost_based_on_valuation_rate
 			total_item_cost_based_on_valuation_rate = round(float(total_item_cost_based_on_valuation_rate),2)
@@ -147,17 +147,7 @@ def execute(filters=None):
 				if num.min_purchase is not None:
 					min_purchase = num.min_purchase
 
-			avg_purchase = round(float(avg_purchase),2)
-			max_purchase = round(float(max_purchase),2)
-			min_purchase = round(float(min_purchase),2)
-
-			total_avg_purchase += avg_purchase
-			total_max_purchase += max_purchase
-			total_min_purchase += min_purchase
-
-			total_avg_purchase = round(float(total_avg_purchase),2)
-			total_max_purchase = round(float(total_max_purchase),2)
-			total_min_purchase = round(float(total_min_purchase),2)
+			
 			required_qty = 1
 			'''
 			Amount_valuation_rate = (stock_valuation_price*stock_qty )/required_qty
@@ -198,18 +188,32 @@ def execute(filters=None):
 			total_llp = round(float(total_llp),2)
 			'''
 			if conversion_factor != 0:
-				data.append([bom_name,item_group,item_code,stock_qty,stock_uom,purchase_uom,conversion_factor,last_purchase_rate,
+				max_purchase = max_purchase/conversion_factor
+				min_purchase = min_purchase/conversion_factor
+				avg_purchase = avg_purchase/conversion_factor
+
+				avg_purchase = round(float(avg_purchase),2)
+				max_purchase = round(float(max_purchase),2)
+				min_purchase = round(float(min_purchase),2)
+
+				total_avg_purchase += avg_purchase
+				total_max_purchase += max_purchase
+				total_min_purchase += min_purchase
+
+				total_avg_purchase = round(float(total_avg_purchase),2)
+				total_max_purchase = round(float(total_max_purchase),2)
+				total_min_purchase = round(float(total_min_purchase),2)
+				data.append([bom_name,item_group,item_code,stock_qty,stock_uom,last_purchase_rate,
 							item_cost_base_on_last_purchase ,stock_valuation_price,item_cost_based_on_valuation_rate
-							,max_purchase , avg_purchase,min_purchase,number_of_purchase,check_last_purchase_rate])
+							,max_purchase , avg_purchase,min_purchase,number_of_purchase])
 			else:
-				if(purchase_uom is not None):
-					frappe.throw("Please define Conversion Factor for purchase uom "+'"'+purchase_uom+'"'+ " of this "+'"'+item_code+'"'+" in Item Master and run this report again")
+				frappe.throw("Please define Conversion Factor for purchase uom "+'"'+purchase_uom+'"'+ " of this "+'"'+item_code+'"'+" in Item Master and run this report again")
 	get_total = get_report_total_row()
 	#print "get_total------------",get_total
 	if get_total[0].add_total_row == 0:
 		#print "get_total------------",get_total[0].add_total_row
 		data.append(["","","","","","","","","","","","","",""])
-		data.append(["Total","","",total_bom_qty,"","","",total_last_purchase_rate,total_item_cost_base_on_last_purchase
+		data.append(["Total","","",total_bom_qty,"",total_last_purchase_rate,total_item_cost_base_on_last_purchase
 			,total_stock_valuation_price,total_item_cost_based_on_valuation_rate,total_max_purchase,
 			total_avg_purchase,total_min_purchase,"",""])
 	return columns, data
@@ -223,8 +227,6 @@ def get_columns():
 		_("Bom Item ") + ":Link/Item:110",
 		_("Bom Item Qty") + "::110",
 		_("Stock UOM") + "::110",
-		_("Purchase UOM") + "::110",
-		_("Conversion Factor")+"::110",
 		_("Last Purchase Price") + "::130",
 		_("Total Bom Item Cost Based on Last Purchase Price") + "::180",
 		_("Current Valuation Rate") + "::130",
@@ -232,8 +234,7 @@ def get_columns():
 		_("Last N Purchases - Highest") + "::160",
 		_("Last N Purchases - Average") + "::160",
 		_("Last N Purchases - Lowest") + "::160",
-		_("Number of Purchase Transactions that exist") + "::250",
-		_("Was there Last Purchase Price? ") + "::150"
+		_("Number of Purchase Transactions that exist") + "::250"
 
 	]
 '''
