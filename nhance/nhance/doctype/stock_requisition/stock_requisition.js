@@ -292,7 +292,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
                     			frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
                 		}
             		}
-           
+
         	}//end of for
         	//End validating purchase uom and conversion conversion_factor
 
@@ -341,6 +341,16 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						var expense_account1 = itemsList[arrayLength].expense_account;
 						var purchase_uom = getPurchaseUom(item_code);
 						var check_flag = get_UOM_Details(stock_uom);
+						var pch_bom_reference = "" ;
+						var project = "" ;
+						if( itemsList[arrayLength].pch_bom_reference != null && itemsList[arrayLength].pch_bom_reference != undefined){
+							pch_bom_reference= itemsList[arrayLength].pch_bom_reference;
+						}
+						if( itemsList[arrayLength].project != null && itemsList[arrayLength].project != undefined){
+							project= itemsList[arrayLength].project;
+						}
+						console.log("purchase_uom::"+purchase_uom);
+
 						/**
 						console.log("purchase_uom::"+purchase_uom);
 						console.log("qty::"+qty);
@@ -383,7 +393,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 							//var warehouse = item_default_details[0]['default_warehouse'];
 							price_list = item_default_details[0]['default_price_list'];
 						}
-						
+
 						if (price_list != null && price_list != ""){
 							var item_price = fetch_item_price(item_code,price_list);
 							arr['price_list_rate'] = item_price;
@@ -407,14 +417,14 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 							arr['cost_center'] = cost_center1;
 						}
-		
+
 						if (expense_account != null && expense_account != ""){
 							arr['expense_account'] = expense_account;
 							itemsList[arrayLength].expense_account = expense_account;
 						}else{
 							arr['expense_account'] = expense_account1;
 						}
-						
+
 
 						arr['item_code'] = item_code;
    						arr['supplier'] = default_supplier;
@@ -422,9 +432,11 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['stock_qty'] = stock_qty;
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
-						arr['warehouse'] = warehouse;
+								arr['warehouse'] = warehouse;
+								arr['pch_bom_reference'] = pch_bom_reference;
+								arr['project'] = project;
     						//arr['price'] = standard_rate;
-    						
+
     						arr['conversion_factor'] = conversion_factor;
 
 						if(default_supplier == null || default_supplier == ""){
