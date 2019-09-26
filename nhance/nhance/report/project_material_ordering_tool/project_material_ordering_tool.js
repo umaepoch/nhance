@@ -23,7 +23,7 @@ frappe.query_reports["Project Material Ordering Tool"] = {
         //console.log("Make PO and Transfer Existing/Required Quantity..........");
         report.page.add_inner_button(__("Make PO and Transfer Existing/Required Quantity"),
             function() {
-		
+
                 var reporter = frappe.query_reports["Project Material Ordering Tool"];
                 reporter.make_PO_and_transfer_qty(report);
             });
@@ -36,9 +36,9 @@ frappe.query_reports["Project Material Ordering Tool"] = {
 	//console.log("supplier flag========="+supplier_fields);
 	if (supplier_fields == 1) {
         	make_PO_and_transfer_qty(report);
-	}    
 	}
-	
+	}
+
 }
 
 function validate_project_details(project, query_report) {
@@ -105,12 +105,13 @@ function make_PO_and_transfer_qty(report) {
         var bom = reportData[i]['bom'];
         var fulfilled_qty = reportData[i]['fulfilled_qty'];
         var conversion_factor = reportData[i]['conversion_factor'];
+	var last_purchase_price = reportData[i]['last_purchase_price'];
 
         if (bom == null || bom == undefined) {
             bom = "";
         }
-
-        if (mt_qty > 0 && fulfilled_qty > 0) {
+	
+        if (mt_qty > 0) {
             materialItems['item_code'] = item_code;
             materialItems['sreq_no'] = sreq_no;
             materialItems['s_warehouse'] = source_warehouse;
@@ -214,6 +215,7 @@ function make_PO_and_transfer_qty(report) {
             poItems['bom'] = bom;
             poItems['project'] = project;
             poItems['conversion_factor'] = conversion_factor;
+	    poItems['last_purchase_price']= last_purchase_price;
 
             if (purchaseOrderMap.has(sreq_no)) {
                 var arrList = purchaseOrderMap.get(sreq_no);
@@ -227,25 +229,28 @@ function make_PO_and_transfer_qty(report) {
             }
         }
     } //end of for loop...
-
+    
     console.log("PurchaseItemsList-----length---" + checkPurchaseItemsList.length);
     console.log("MaterialTransferList-----length---" + materialTransferList.length);
-
+    if(checkPurchaseItemsList.length == 0 && materialTransferList.length == 0){
+		frappe.msgprint("All quantities of items related to this project have been ordered and/or transfered, Nothing to do!");
+	}
     if (checkPurchaseItemsList.length != 0) {
         if (!flag) {
             var dialog = new frappe.ui.Dialog({
                 title: __("Select Round Type"),
                 fields: [
                     {
+                      'fieldname': 'round_up_fractions',
+                      'fieldtype': 'Check',
+                      "label": __("Round Up Fractions")
+                    },
+                    {
                         'fieldname': 'round_fractions',
                         'fieldtype': 'Check',
                         "label": __("Round Fractions")
                     },
-                    {
-                        'fieldname': 'round_up_fractions',
-                        'fieldtype': 'Check',
-                        "label": __("Round Up Fractions")
-                    },
+
                     {
                         'fieldname': 'round_down_fractions',
                         'fieldtype': 'Check',
@@ -260,13 +265,14 @@ function make_PO_and_transfer_qty(report) {
                 primary_action: function() {
                     dialog.hide();
                     var check_args = dialog.get_values();
+		console.log("logs are working fine");
 
                     //Creating PO's..
                     for (const entry of purchaseOrderMap.entries()) {
                         var supplier_map = new Map();
                         var sreq_no = entry[0];
                         var no_supplier_items = [];
-                        var po_items_list = purchaseOrderMap.get(sreq_no);
+                        var po_items_list = purchaseOrderMap.get(sreq_no); //key will be sreqno
 
                         for (var i = 0; i < po_items_list.length; i++) {
                             var supplier = po_items_list[i].supplier;
@@ -295,17 +301,33 @@ function make_PO_and_transfer_qty(report) {
                                 //console.log("no_supplier_items of qty------------" + no_supplier_items[i].qty);
                                // console.log("check_flag------------" + check_flag);
                                 if (check_flag) {
-                                    var processedQty = processQuantity(check_args, qty);
-                                    //console.log("no_supplier_items of processedQty is--------------::" + processedQty);
-				    var purchase_uom = getPurchaseUom(no_supplier_items[i].item_code.toString());
-				    var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, processedQty);
-                                  //  console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
-                                    no_supplier_items[i].qty = puom_qty;
+                                      var processedQty = processQuantity(check_args, qty);
+                                      //console.log("no_supplier_items of processedQty is--------------::" + processedQty);
+
+                                      var purchase_uom = getPurchaseUom(no_supplier_items[i].item_code.toString());
+
+                                      //******************
+                                      if( purchase_uom == null){
+                                          console.log("********no suppliers Purchase uom is null for item : "+no_supplier_items[i].item_code.toString() );
+                                          no_supplier_items[i].qty = processedQty ;
+                                          //no_supplier_items[i].qty = 20 ; //testing
+
+
+                                      }
+                                      else{
+                                        var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, processedQty);
+                                        console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
+					var processedQty1 = processQuantity(check_args, puom_qty);
+                                        no_supplier_items[i].qty = processedQty1;
+                                      }
+
+                                      //**********************
+
 
                                 } //end of if..
                             } //end of for loop..
 
-                            //console.log("no_supplier_items--------" + JSON.stringify(no_supplier_items));
+                            console.log("*************Suresh no_supplier_items--------" + JSON.stringify(no_supplier_items));
                             makePO(sreq_no, supplier, no_supplier_items);
                         }
 
@@ -320,15 +342,31 @@ function make_PO_and_transfer_qty(report) {
                                // console.log("check_flag------------" + check_flag);
 
                                 if (check_flag) {
-				    //console.log("item code ------------"+supplier_items[i].item_code.toString());
-                                    var processedQty = processQuantity(check_args, qty);
-                                    //console.log("supplier_items of processedQty is---------------::" + processedQty);
-				    var purchase_uom = getPurchaseUom(supplier_items[i].item_code.toString());
-				    var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
-                                    console.log("supplier_items of puom_qty is-------------::" + puom_qty);
-				    if (puom_qty != undefined){
-                                   	supplier_items[i].qty = puom_qty;
-				   }
+                                          //console.log("item code ------------"+supplier_items[i].item_code.toString());
+                                          var processedQty = processQuantity(check_args, qty);
+                                          //console.log("supplier_items of processedQty is---------------::" + processedQty);
+                                          var purchase_uom = getPurchaseUom(supplier_items[i].item_code.toString());
+
+                                        //*********
+                                        if( purchase_uom == null){
+                                          console.log("****supplier_items   Purchase uom is null for item : "+ supplier_items[i].item_code.toString() );
+
+                                          supplier_items[i].qty = processedQty ;
+                                         // supplier_items[i].qty = 20 ; //testing
+
+                                        }
+                                        else{
+					  console.log("processedQty--------------"+processedQty);
+                                          var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
+					    var processedQty1 = processQuantity(check_args, puom_qty);
+                                          console.log("supplier_items of puom_qty is-------------::" + processedQty1);
+                                          supplier_items[i].qty = processedQty1
+					
+
+                                        }
+                                        //********
+
+                                          ;
                                 } //end of if..
 
                             } //end of for loop..
@@ -372,8 +410,11 @@ function check_puom(purchase_uom, item_code,req_po_qty) {
 function processQuantity(check_args, qty) {
     var quantity = 0;
     if (check_args.round_up_fractions == 1) {
+	console.log("round up ");
         var check_qty = Math.floor(qty);
+	console.log("check_qty----------"+check_qty);
         check_qty = qty - check_qty;
+	console.log("check_qty after subtract with qty--------------"+check_qty);
         if (check_qty != 0.0) {
             quantity = Math.ceil(qty);
             quantity = parseInt(quantity);
@@ -382,8 +423,10 @@ function processQuantity(check_args, qty) {
         }
 
     } else if (check_args.round_down_fractions == 1) {
+	console.log("round_down_fractions");
         quantity = parseInt(qty);
     } else if (check_args.round_fractions == 1) {
+	console.log("round_fractions");
         quantity = Math.round(qty);
     }
     if (quantity == 0) {
@@ -639,4 +682,3 @@ function get_supplier_field(doc_name){
     }); //end of frappe call..
     return reportData;
 }
-

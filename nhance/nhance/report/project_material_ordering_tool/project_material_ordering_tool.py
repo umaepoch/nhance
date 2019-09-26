@@ -26,14 +26,74 @@ def execute(filters=None):
 		swh = filters.get("source_warehouse")
 	if filters.get("project"):
 		project = filters.get("project")
-		items_map = fetch_pending_sreqnos(project,swh)	
+		project_warehouse =  frappe.db.get_value('Project', project, 'project_warehouse')
+    		reserve_warehouse =  frappe.db.get_value('Project', project, 'reserve_warehouse')
+		#print "project_warehouse----------------",project_warehouse
+		#print "reserve_warehouse----------------",reserve_warehouse
+		items_map = fetch_pending_sreqnos(project,swh)
 		if items_map:
 			for (sreq_no) in sorted(items_map):
 				data = items_map[sreq_no]
 				for sreq_dict in data:
 					#print "sreq_dict-----", sreq_dict['sreq_no']
 					#print "bom-----", sreq_dict['bom']
-					sum_data.append([				
+					sreq_qty_in_stock_uom = sreq_dict['sreq_qty_in_stock_uom']
+					excess_to_be_ordered = sreq_dict['excess_to_be_ordered']
+					mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
+					qty_available_in_swh = sreq_dict['qty_available_in_swh']
+					sreq_qty = sreq_dict['sreq_qty']
+					
+					item_code = sreq_dict['item_code']
+
+					warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
+					reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
+					qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,item_code)
+					rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
+
+					sreq_qty_in_stock_uom = sreq_dict['sreq_qty_in_stock_uom']
+					qty_due_to_transfer = sreq_qty_in_stock_uom - rw_pb_cons_qty
+					report_qty_due_to_transfer = 0
+					quantities_are_covered = 0
+					draft_poi_qty = 0
+					submitted_poi_qty =0
+
+					if qty_due_to_transfer > 0:
+						report_qty_due_to_transfer = qty_due_to_transfer
+					else:
+						report_qty_due_to_transfer = 0
+					
+					purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project,item_code)
+					purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project,item_code)
+					
+					
+					if purchase_order_with_one_docstatus[0].submitted is not None:
+						submitted_poi_qty = purchase_order_with_one_docstatus[0].submitted
+
+					if purchase_order_with_zero_docstatus[0].draft is not None:
+						draft_poi_qty = purchase_order_with_zero_docstatus[0].draft
+
+					quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
+					report_qty_that_can_be_transfer = 0
+
+					qty_that_can_be_transfer = report_qty_due_to_transfer - quantities_are_covered
+					if qty_that_can_be_transfer < sreq_dict['qty_available_in_swh']:
+						report_qty_that_can_be_transfer = qty_that_can_be_transfer
+					elif qty_that_can_be_transfer >= sreq_dict['qty_available_in_swh']:
+						report_qty_that_can_be_transfer = sreq_dict['qty_available_in_swh']
+					if report_qty_that_can_be_transfer < 0:
+						report_qty_that_can_be_transfer = 0
+
+					to_be_order = float(sreq_qty_in_stock_uom) -float(quantities_are_covered) -  float(report_qty_that_can_be_transfer)
+					
+					need_to_be_order = 0.0
+					if to_be_order > 0:
+						need_to_be_order = to_be_order
+					else:
+						need_to_be_order = 0
+
+					#print "report_qty_that_can_be_transfer------------",report_qty_that_can_be_transfer
+					#print "mt_qty------------------",mt_qty
+					sum_data.append([
 					sreq_dict['sreq_no'],
 					project,
 					sreq_dict['item_code'],
@@ -41,8 +101,14 @@ def execute(filters=None):
 					sreq_dict['sreq_uom'],
 					sreq_dict['stock_uom'],
 					sreq_dict['sreq_qty_in_stock_uom'],
+					rw_pb_cons_qty,
+					report_qty_due_to_transfer,
 					sreq_dict['qty_available_in_swh'],
-					sreq_dict['excess_to_be_ordered'],
+					draft_poi_qty,
+					submitted_poi_qty,
+					quantities_are_covered,
+					report_qty_that_can_be_transfer,
+					need_to_be_order,
 					sreq_dict['po_uom'],
 					sreq_dict['conversion_factor'],
 					sreq_dict['qty_in_po_uom'],
@@ -54,7 +120,7 @@ def execute(filters=None):
 					sreq_dict['avg_price_of_last_10_purchase_transactions'],
 					sreq_dict['bom'],
 					sreq_dict['fulFilledQty']
-					])	
+					])
 
 	return columns, sum_data
 
@@ -69,7 +135,7 @@ def fetch_pending_sreqnos(project,swh):
 		for sreq_data in sreq_nos_data:
 			sreq_no = sreq_data['parent']
 			po_list = sreq_data['po_list']
-			
+
 			if po_list:
 				sreq_items = fetch_sreq_item_details(sreq_no)
 				if sreq_items:
@@ -137,13 +203,13 @@ def fetch_pending_sreqnos(project,swh):
 								prev_sreq_list = items_map[key]
 								item_entry = {}
 								item_entry["sreq_no"] = key
-								item_entry["item_code"] = items_data['item_code'] 
+								item_entry["item_code"] = items_data['item_code']
 								item_entry["sreq_qty"] = sreq_qty
-								item_entry["sreq_uom"] = items_data['uom']  
+								item_entry["sreq_uom"] = items_data['uom']
 								item_entry["stock_uom"] = items_data['stock_uom']
 								item_entry["sreq_qty_in_stock_uom"] = float(items_data['stock_qty'])
 								item_entry["qty_available_in_swh"] = float(qty_available_in_swh)
-								item_entry["excess_to_be_ordered"] = excess_to_be_ordered 
+								item_entry["excess_to_be_ordered"] = excess_to_be_ordered
 								item_entry["po_uom"] = po_uom
 								item_entry["conversion_factor"] = conversion_factor
 								item_entry["qty_in_po_uom"] = qty_in_po_uom
@@ -157,10 +223,10 @@ def fetch_pending_sreqnos(project,swh):
 								item_entry["fulFilledQty"] =  fulFilledQty
 								prev_sreq_list.append(item_entry)
 								items_map[key] = prev_sreq_list
-						
-				
-					
-				
+
+
+
+
 			else:
 				sreq_items = fetch_sreq_item_details(sreq_no)
 				if sreq_items:
@@ -223,13 +289,13 @@ def fetch_pending_sreqnos(project,swh):
 							prev_sreq_list = items_map[key]
 							item_entry = {}
 							item_entry["sreq_no"] = key
-							item_entry["item_code"] = items_data['item_code'] 
+							item_entry["item_code"] = items_data['item_code']
 							item_entry["sreq_qty"] = float(items_data['qty'])
-							item_entry["sreq_uom"] = items_data['uom']  
+							item_entry["sreq_uom"] = items_data['uom']
 							item_entry["stock_uom"] = items_data['stock_uom']
 							item_entry["sreq_qty_in_stock_uom"] = float(items_data['stock_qty'])
 							item_entry["qty_available_in_swh"] = float(qty_available_in_swh)
-							item_entry["excess_to_be_ordered"] = excess_to_be_ordered 
+							item_entry["excess_to_be_ordered"] = excess_to_be_ordered
 							item_entry["po_uom"] = po_uom
 							item_entry["conversion_factor"] = conversion_factor
 							item_entry["qty_in_po_uom"] = 0
@@ -244,16 +310,16 @@ def fetch_pending_sreqnos(project,swh):
 							prev_sreq_list.append(item_entry)
 							items_map[key] = prev_sreq_list
 		#print "items_map-----", items_map
-						
+
 		return items_map
 	else:
 		return None
 
 @frappe.whitelist()
 def fetch_conversion_factor(parent,uom):
-	print "parent -------------",parent
+	#print "parent -------------",parent
 	records = frappe.db.sql("""select conversion_factor from `tabUOM Conversion Detail` where parent=%s and uom=%s""", (parent, uom), as_dict=1)
-	print "records--------------",records
+	#print "records--------------",records
 	if records:
 		conversion_factor = records[0]['conversion_factor']
 		return conversion_factor
@@ -273,7 +339,7 @@ def fetch_po_items_details(item_code,po_list):
 			stock_qty = stock_qty + float(po_data['stock_qty'])
 	po_items['qty'] = qty
 	po_items['stock_qty'] = stock_qty
-	print "po_items-------", po_items
+	#print "po_items-------", po_items
 	return po_items
 
 def fetch_item_purchase_uom(item_code):
@@ -285,7 +351,7 @@ def fetch_item_purchase_uom(item_code):
 		else:
 			purchase_uom = details[0]['stock_uom']
 	return purchase_uom
-	
+
 
 def fetch_po_data(item_code,po):
 	po_data = frappe.db.sql(""" select item_code,qty,conversion_factor,uom,stock_qty from `tabPurchase Order Item` where item_code=%s and parent=%s""", (item_code,po), as_dict=1)
@@ -297,7 +363,7 @@ def fetch_po_data(item_code,po):
 		items_data = {"qty": po_data[0]['qty'],"stock_qty":stock_qty}
 		return items_data
 	else:
-		return 
+		return
 
 def fetch_no_of_purchase_transactions(item_code,uom):
 	po_count = frappe.db.sql("""select count(po.name) as po_count from `tabPurchase Order` po , `tabPurchase Order Item` poi where po.docstatus=1 and poi.item_code=%s and poi.uom=%s and po.name=poi.parent""", (item_code,uom), as_dict=1)
@@ -356,7 +422,7 @@ def fetch_default_supplier(company,item_code):
 		return ds[0]['default_supplier']
 	else:
 		return ""
-	
+
 def fetch_sreq_item_details(sreq_no):
 	details = frappe.db.sql(""" select * from `tabStock Requisition Item` where parent=%s""", sreq_no, as_dict=1)
 	return details
@@ -445,7 +511,7 @@ def updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no):
 			original_fulfilled_qty = 0
 			item_code = items_data['item_code']
 			fulfilled_quantity = items_data['fulfilled_quantity']
-			
+
 			if item_code in mt_items_map:
 				transfered_qty = mt_items_map[item_code]
 				original_fulfilled_qty = float(fulfilled_quantity) + float(transfered_qty)
@@ -458,19 +524,19 @@ def updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no):
 			fulfilled_quantity = sreq_data['fulfilled_qty']
 
 			frappe.db.sql("""update `tabStock Requisition Item` sri set fulfilled_quantity=%s where sri.parent = %s and sri.item_code = %s """, (fulfilled_quantity,sreq_no,item_code))
-				
+
 
 @frappe.whitelist()
 def make_purchase_orders(sreq_no,supplier,po_items):
 	tax_template = ""
 	items_List = json.loads(po_items)
-	print "items_List-----------------", items_List
+	#print "items_List-----------------", items_List
 	creation_Date = datetime.datetime.now()
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 	details = frappe.get_meta("Purchase Order").get("fields")
-	print "supplier-----------------", supplier
+	#print "supplier-----------------", supplier
 	#print "details----------------------",details
-	
+
 	if items_List:
 		outerJson_Transfer = {
 			"doctype": "Purchase Order",
@@ -500,7 +566,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 						if suppliers.pch_tax_template:
 							tax_template = suppliers.pch_tax_template
 							outerJson_Transfer['taxes_and_charges'] = tax_template
-					
+
 					if default_address:
 						outerJson_Transfer["supplier_address"] = default_address[0]['name']
 						outerJson_Transfer["tc_name"] = default_address[0]['pch_terms']
@@ -545,7 +611,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 						outerJson_Transfer["tc_name"] = address[0]['pch_terms']
 						terms_and_conditios = ""
 						if address[0]['pch_terms'] is not None:
-						
+
 							terms_and_conditios = frappe.get_doc("Terms and Conditions", address[0]['pch_terms'])
 
 							if terms_and_conditios.terms:
@@ -656,11 +722,11 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				#print "customer_contact_person Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['customer_contact_person'] = defaults.default
-			
+
 		for items in items_List:
-			print "item ----------------------",items['item_code']
-			print "item----------------",items['qty']
-			
+			#print "item ----------------------",items['item_code']
+			#print "item----------------",items['qty']
+
 			innerJson_Transfer ={
 				"creation": creation_Date,
 				"qty": items['qty'],
@@ -672,17 +738,19 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				"parenttype": "Purchase Order",
 				"schedule_date": creation_Date,
 				"parentfield": "items",
-				"warehouse": items['warehouse']
+				"warehouse": items['warehouse'],
+				"rate": items['last_purchase_price']
 			   	}
+			print "innerJson_Transfer ----------------------",innerJson_Transfer
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-			
+
 		doc = frappe.new_doc("Purchase Order")
 		doc.update(outerJson_Transfer)
 		doc.save()
 		ret = doc.doctype
 		if ret:
 			frappe.msgprint("Purchase Order is Created:"+doc.name)
-	
+
 
 def fetch_supplier_address(supplier):
 	address = frappe.db.sql("""select name,pch_terms from `tabSupplier` where name=%s""", supplier, as_dict=1)
@@ -699,14 +767,16 @@ def get_report_data(project_filter,swh_filter):
 	sum_datas =[]
 	if project_filter:
 		#project = filters.get("project")
-		items_map = fetch_pending_sreqnos(project_filter,swh_filter)	
+		items_map = fetch_pending_sreqnos(project_filter,swh_filter)
+		#project_warehouse =  frappe.db.get_value('Project', project_filter, 'project_warehouse')
+    		#reserve_warehouse =  frappe.db.get_value('Project', project_filter, 'reserve_warehouse')
 		if items_map:
 			for (sreq_no) in sorted(items_map):
 				data = items_map[sreq_no]
 				for sreq_dict in data:
 					#print "sreq_dict-----", sreq_dict['sreq_no']
 					#print "bom-----", sreq_dict['bom']
-					sum_datas.append([				
+					sum_datas.append([
 					sreq_dict['sreq_no'],
 					project_filter,
 					sreq_dict['item_code'],
@@ -729,6 +799,50 @@ def get_report_data(project_filter,swh_filter):
 					sreq_dict['fulFilledQty']
 					])
 	for rows in sum_datas:
+		if project_filter:
+			project_warehouse =  frappe.db.get_value('Project', project_filter, 'project_warehouse')
+	    		reserve_warehouse =  frappe.db.get_value('Project', project_filter, 'reserve_warehouse')
+			warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
+			reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
+			qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
+			rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
+
+			purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project_filter,rows[2])
+			purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project_filter,rows[2])
+			
+			submitted_poi_qty = 0
+			draft_poi_qty = 0	
+			if purchase_order_with_one_docstatus[0].submitted is not None:
+				submitted_poi_qty = purchase_order_with_one_docstatus[0].submitted
+			if purchase_order_with_zero_docstatus[0].draft is not None:
+				draft_poi_qty = purchase_order_with_zero_docstatus[0].draft
+			quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
+
+			print "quantities_are_covered ------------",quantities_are_covered
+			qty_due_to_transfer = rows[7] - rw_pb_cons_qty
+			print "qty_due_to_transfer------------",qty_due_to_transfer
+			qty_can_be_transfered = qty_due_to_transfer - quantities_are_covered
+
+			print "qty_can_be_transfered------------------",qty_can_be_transfered
+			mt_qty = 0
+			if qty_can_be_transfered < rows[7]:
+				mt_qty = qty_can_be_transfered
+			elif qty_can_be_transfered >= rows[7]:
+				mt_qty = rows[7]
+		
+			if mt_qty < 0:
+				mt_qty = 0
+			print "mt_qty-------------------",mt_qty
+			print "rows[6]-----------------",rows[6]
+			to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
+			print "to_be_order---------------",to_be_order	
+			need_to_be_order = 0
+			if to_be_order > 0:
+				need_to_be_order = to_be_order
+			else:
+				need_to_be_order = 0
+			print "need_to_be_order---------------",need_to_be_order
+			
 		#print "row-----", rows
 		sreq_no = rows[0]
 		project = rows[1]
@@ -741,18 +855,20 @@ def get_report_data(project_filter,swh_filter):
 		supplier = rows[12]
 		bom_reference = rows[18]
 		fulfilled_qty = rows[19]
-		mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
+		last_purchase_price = rows[13]
+		#mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
 		details = {"sreq_no":sreq_no,
 			   "project":project,
 			   "item_code":item_code,
 			   "stock_uom":stock_uom,
 			   "mt_qty":mt_qty,
-			   "po_qty":excess_to_be_ordered,
+			   "po_qty":need_to_be_order,
 			   "conversion_factor":conversion_factor,
 			   "po_uom":po_uom,
 			   "supplier":supplier,
 			   "bom":bom_reference,
-			   "fulfilled_qty":fulfilled_qty
+			   "fulfilled_qty":fulfilled_qty,
+			   "last_purchase_price":last_purchase_price
 			}
 		report_data.append(details)
 	return report_data
@@ -767,8 +883,14 @@ def get_columns():
 		_("SREQ UOM")+"::140",
 		_("Stock UOM")+"::100",
 		_("SREQ Quantity in Stock UOM")+"::150",
+		_("Quantity Transfered")+"::100",
+		_("Quantity due to be transferred")+"::120",
 		_("Quantity Available in Source Warehouse (Stock UOM)")+"::150",
-		_("Excess to be Ordered")+"::90",
+		_("Draft PO.s that are in the system for the Project")+"::150",
+		_("Ordered PO.s that are in the System for the Project")+"::150",
+		_("Quantities that are covered")+"::130",
+		_("Quantities that can be Transferred")+"::130",
+		_("Quantities that need to be ordered")+"::130",
 		_("PO UOM")+"::100",
 		_("Conversion Factor")+"::",
 		_("Qty in PO UOM")+"::100",
@@ -797,7 +919,39 @@ def fields(doc_name):
 			flag = 0
 		else:
 			flag =1
-	
+
 	return flag
+def get_warehouse_qty(warehouse,item_code):
+ whse_qty = 0
+ details = frappe.db.sql("""select actual_qty from `tabBin` where warehouse=%s and item_code=%s and actual_qty > 0 """, (warehouse,item_code), as_dict=1)
+ if len(details)!=0:
+   if details[0]['actual_qty'] is not None:
+     whse_qty = details[0]['actual_qty']
+ return whse_qty
 
+def get_stock_entry_quantities(warehouse,item_code):
+    total_qty = 0
+    po_details = {}
+    qty_consumed_in_manufacture = 0
 
+    details = frappe.db.sql("""select sed.item_code,sed.qty,se.purpose from `tabStock Entry Detail` sed,
+        `tabStock Entry` se where sed.item_code=%s and sed.s_warehouse=%s and se.purpose='Manufacture' and
+        sed.parent=se.name and se.docstatus=1""", (item_code,warehouse), as_dict=1)
+
+    if len(details)!=0:
+      for entries in details:
+        if entries['qty'] is None:
+          qty = 0
+        else:
+          qty = float(entries['qty'])
+        total_qty = total_qty + qty
+
+    return total_qty
+def get_purchase_order_with_zero_docstatus(project,item_code):
+	number_of_purchase_with_zero_docstatus = frappe.db.sql("""select sum(qty) as draft from `tabPurchase Order Item` where project = %s and item_code = %s and docstatus =0""",(project,item_code), as_dict =1)
+	
+	return number_of_purchase_with_zero_docstatus
+
+def get_purchase_order_with_one_docstatus(project,item_code):
+	number_of_purchase_with_one_docstatus = frappe.db.sql("""select sum(qty) as submitted from `tabPurchase Order Item` where project = %s and item_code = %s and docstatus =1""",(project,item_code), as_dict =1)
+	return number_of_purchase_with_one_docstatus
