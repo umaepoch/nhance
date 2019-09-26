@@ -209,7 +209,7 @@ def execute(filters=None):
 				total_max_purchase = round(float(total_max_purchase),2)
 				total_min_purchase = round(float(total_min_purchase),2)
 
-				data.append([bom_name,item_group,item_code,stock_qty,stock_uom,conversion_factor,last_purchase_rate,
+				data.append([bom_name,item_group,item_code,stock_qty,stock_uom,last_purchase_rate,
 						item_cost_base_on_last_purchase ,stock_valuation_price,item_cost_based_on_valuation_rate
 						,max_purchase , avg_purchase,min_purchase,number_of_purchase])
 			else:
@@ -219,7 +219,7 @@ def execute(filters=None):
 	if get_total[0].add_total_row == 0:
 		#print "get_total------------",get_total[0].add_total_row
 		data.append(["","","","","","","","","","","","","",""])
-		data.append(["Total","","",total_bom_qty,"","",total_last_purchase_rate,total_item_cost_base_on_last_purchase
+		data.append(["Total","","",total_bom_qty,"",total_last_purchase_rate,total_item_cost_base_on_last_purchase
 			,total_stock_valuation_price,total_item_cost_based_on_valuation_rate,total_max_purchase,
 			total_avg_purchase,total_min_purchase,"",""])
 	return columns, data
@@ -233,7 +233,6 @@ def get_columns():
 		_("Bom Item ") + ":Link/Item:110",
 		_("Bom Item Qty") + "::110",
 		_("Stock UOM") + "::110",
-		_("Conversion Factor") + "::110",
 		_("Last Purchase Price") + "::130",
 		_("Total Bom Item Cost Based on Last Purchase Price") + "::180",
 		_("Current Valuation Rate") + "::130",
@@ -304,23 +303,22 @@ def get_purchase_order_no(item_code):
 						poi.item_code = %s  and docstatus = 1
 						""",item_code, as_dict =1)
 
-	lowest_purchase_item_rate = frappe.db.sql("""SELECT tbl.parent,tbl.rate,tbl.conversion_factor,tbl.item_code 
-						 FROM `tabPurchase Order Item` tbl   INNER JOIN   
-						(SELECT parent, min(rate) as min_rate     FROM `tabPurchase Order Item`     
-						GROUP BY parent   ) tbl1   ON tbl1.parent = tbl.parent
-				 WHERE tbl1.min_rate = tbl.rate and tbl.item_code = %s and tbl.docstatus =1""",item_code, as_dict =1)
+	lowest_purchase_item_rate = frappe.db.sql("""SELECT parent,rate,item_code,conversion_factor from `tabPurchase Order Item`  where rate = (select min(rate) from `tabPurchase Order Item` where item_code = %s and docstatus =1) and item_code = %s and conversion_factor = (select max(conversion_factor) from `tabPurchase Order Item` where item_code = %s and docstatus =1) and docstatus =1""",(item_code,item_code,item_code), as_dict =1)
 
-	highest_purchase_item_rate = frappe.db.sql("""SELECT parent, rate, conversion_factor , item_code  FROM  `tabPurchase Order Item`  
-					WHERE  rate  = ( SELECT MAX(rate) FROM `tabPurchase Order Item` where item_code = %s) 					and docstatus =1 and conversion_factor = (select min(conversion_factor) from `tabPurchase Order Item` where 					item_code = %s) 
-					and item_code = %s""",(item_code,item_code,item_code), as_dict =1)
+	highest_purchase_item_rate = frappe.db.sql("""SELECT parent,rate,item_code,min(conversion_factor) as conversion_factor
+	from `tabPurchase Order Item`  
+	where rate = (select max(rate) from `tabPurchase Order Item` where item_code = %s and docstatus =1) 
+		and item_code = %s and docstatus =1""",(item_code,item_code), as_dict =1)
 	if highest_purchase_item_rate:
 		for highest in highest_purchase_item_rate:
-			highest_rate = highest.rate / highest.conversion_factor
+			if highest.rate is not None and highest.conversion_factor is not None:
+				highest_rate = highest.rate / highest.conversion_factor
 	#print "highest rate -------------",highest_rate
 	
 	if lowest_purchase_item_rate:
 		for lowest in lowest_purchase_item_rate:
-			lowest_rate = lowest.rate / lowest.conversion_factor
+			if lowest.rate is not None and lowest.conversion_factor is not None:
+				lowest_rate = lowest.rate / lowest.conversion_factor
 	#print "lowest_rate--------------",lowest_rate
 	if purchase_order:
 		for purchase in purchase_order:
