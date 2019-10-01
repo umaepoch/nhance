@@ -53,6 +53,9 @@ def execute(filters=None):
             sreq_sub_not_ordered = get_sreq_sub_not_ordered(item_code,project_name) # have to create project custom field and add to query condition
             po_total_qty = get_po_total_qty(item_code,project_name) # have to create project custom field and add to query condition
 
+	    submitted_po = get_submitted_po(item_code,project_name)
+	    draft_po = get_draft_po(item_code,project_name)
+	    #print "submitted_po----------------",submitted_po
             qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty
             tot_qty_covered =  qty_planned_nrec +  rw_pb_cons_qty
 
@@ -62,7 +65,7 @@ def execute(filters=None):
               short_qty = 0
 
             sum_data.append([str(item_code),str(bom_item_qty),str(warehouse_qty),str(delta_qty),
-                  str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_sub_not_approved),str(sreq_sub_not_ordered),str(po_total_qty),str(qty_planned_nrec),
+                  str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_sub_not_approved),draft_po,submitted_po,str(sreq_sub_not_ordered),str(po_total_qty),str(qty_planned_nrec),
                   str(tot_qty_covered),str(short_qty)])
 
     return columns, sum_data
@@ -77,8 +80,10 @@ def get_columns():
       _("RW WAREHOUSE QTY")+"::100",
       _("Quantity consumed in Manufacturte")+"::150",
       _("RW+PB+Consumed QTY")+"::150",
-      _("SREQs  Submitted but not Approved")+":Link/UOM:90",
-      _("SREQs  Submitted but not Ordered")+":Link/UOM:90",
+      _("SREQs  Submitted but not Approved")+"::90",
+      _("Draft PO Qty ")+"::90",
+      _("Submitted PO Qty ")+"::90",
+      _("SREQs  Submitted but not Ordered")+"::90",
       _("PO Quantities Ordered but not Delivered")+"::150",
       _("Sum Quantity Planned but Not Received Material")+"::150",
       _("Total Quantity Covered")+"::150",
@@ -138,15 +143,35 @@ def get_sreq_sub_not_approved(item_code,project_name):
 
 def get_sreq_sub_not_ordered(item_code,project_name):
     sreq_datas = frappe.db.sql("""select sri.project, sri.item_code,sri.qty,sri.quantity_to_be_ordered,sri.parent,sri.uom,sri.warehouse,sri.schedule_date,sri.stock_uom,sri.description,sr.docstatus,sr.transaction_date,sr.schedule_date from `tabStock Requisition Item` sri,`tabStock Requisition` sr where sri.item_code=%s  and sri.parent=sr.name and sr.docstatus=1 and sri.project=%s""",(item_code,project_name), as_dict=1)
+    print "sreq_datas---------------",sreq_datas
+    po_draft_qty = frappe.db.sql("""select qty,parent,stock_qty from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 0""",(item_code,project_name), as_dict=1)
+    po_submitted_qty = frappe.db.sql("""select qty,parent,stock_qty from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 1""",(item_code,project_name), as_dict=1) 
+    
     sreq_total_qty = 0
     quantity_to_be_ordered = 0
     print "total db data",sreq_datas
+    '''
     for sreq_data in sreq_datas:
         if sreq_data['quantity_to_be_ordered']:
               quantity_to_be_ordered = float(sreq_data['quantity_to_be_ordered'])
               sreq_total_qty = sreq_total_qty + quantity_to_be_ordered
               print "Yes quantity_to_be_ordered is there ::",sreq_data['item_code'],quantity_to_be_ordered
               print "sreq_total_qty from loop",sreq_data['item_code'], sreq_total_qty
+	'''
+    draft_qty = 0
+    submitted_qty = 0
+    for drft in po_draft_qty:
+	 if drft:
+	 	draft_qty += drft.stock_qty 
+    for submit in po_submitted_qty:
+	if submit:
+		submitted_qty += submit.stock_qty
+    total_po_qty = draft_qty + submitted_qty
+    sreq_total_qty = 0.0
+    if len(sreq_datas) > 0:
+    	sreq_total_qty = sreq_datas[0].qty - total_po_qty
+    if sreq_total_qty < 0:
+	   sreq_total_qty =0
     return sreq_total_qty
 
 
@@ -324,3 +349,29 @@ def	make_stock_requisition(project,company,col_data,required_date,master_bom):
         return ret
     else:
         return "failed"
+
+def get_submitted_po(item_code,project_name):
+	submitted = frappe.db.sql("""select qty,stock_qty, parent, item_code, project from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 1""",(item_code, project_name),as_dict=1)
+	print "submitted------------------",submitted
+	total_submitted_qty = 0
+	for purchase in submitted:
+		if purchase:
+			total_submitted_qty += purchase.stock_qty
+		else:
+			total_submitted_qty += 0
+	print "total_submitted_qty---------------",total_submitted_qty
+	return total_submitted_qty
+
+def get_draft_po(item_code,project_name):
+	draft = frappe.db.sql("""select qty,stock_qty, parent, item_code, project from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 0""",(item_code, project_name),as_dict=1)
+	print "draft------------------",draft
+	total_draft_qty = 0
+	for purchase in draft:
+		if purchase:
+			total_draft_qty += purchase.stock_qty
+		else:
+			total_draft_qty += 0
+	print "total_draft_qty---------------",total_draft_qty
+	return total_draft_qty
+
+

@@ -106,6 +106,7 @@ function make_PO_and_transfer_qty(report) {
         var fulfilled_qty = reportData[i]['fulfilled_qty'];
         var conversion_factor = reportData[i]['conversion_factor'];
 	var last_purchase_price = reportData[i]['last_purchase_price'];
+	var conversion_factor = reportData[i]['conversion_factor'];
 
         if (bom == null || bom == undefined) {
             bom = "";
@@ -216,6 +217,7 @@ function make_PO_and_transfer_qty(report) {
             poItems['project'] = project;
             poItems['conversion_factor'] = conversion_factor;
 	    poItems['last_purchase_price']= last_purchase_price;
+	    poItems['conversion_factor'] = conversion_factor;
 
             if (purchaseOrderMap.has(sreq_no)) {
                 var arrList = purchaseOrderMap.get(sreq_no);
@@ -315,7 +317,7 @@ function make_PO_and_transfer_qty(report) {
 
                                       }
                                       else{
-                                        var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, processedQty);
+                                        var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, qty);
                                         console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
 					var processedQty1 = processQuantity(check_args, puom_qty);
                                         no_supplier_items[i].qty = processedQty1;
@@ -357,9 +359,10 @@ function make_PO_and_transfer_qty(report) {
                                         }
                                         else{
 					  console.log("processedQty--------------"+processedQty);
-                                          var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
+                                          var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, qty);
+				            console.log("supplier_items of puom_qty is-------------::" + puom_qty);
 					    var processedQty1 = processQuantity(check_args, puom_qty);
-                                          console.log("supplier_items of puom_qty is-------------::" + processedQty1);
+                                          
                                           supplier_items[i].qty = processedQty1
 					
 

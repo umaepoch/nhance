@@ -90,7 +90,8 @@ def execute(filters=None):
 						need_to_be_order = to_be_order
 					else:
 						need_to_be_order = 0
-
+					qty_in_poum = need_to_be_order * sreq_dict['conversion_factor']
+					qty_in_poum = round(qty_in_poum , 4)
 					#print "report_qty_that_can_be_transfer------------",report_qty_that_can_be_transfer
 					#print "mt_qty------------------",mt_qty
 					sum_data.append([
@@ -112,6 +113,7 @@ def execute(filters=None):
 					sreq_dict['po_uom'],
 					sreq_dict['conversion_factor'],
 					sreq_dict['qty_in_po_uom'],
+					qty_in_poum,
 					sreq_dict['default_supplier'],
 					sreq_dict['last_purchase_price'],
 					sreq_dict['no_of_purchase_transactions'],
@@ -388,30 +390,30 @@ def fetch_last_purchase_price(item_code,uom):
 def fetch_max_price_of_last_10_purchase_transactions(item_code,uom):
 	max_price_of_last_10_purchase_transactions = frappe.db.sql("""select max(rate) as max_price_rate from (select parent,rate from `tabPurchase Order Item`  as tpoi where item_code = %s and uom = %s and DATE(creation) > (NOW() - INTERVAL 10 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled')) order by rate desc limit 1) t1""", (item_code,uom), as_dict=1)
 
-	#print "max_price_of_last_10_purchase_transactions---------------------", max_price_of_last_10_purchase_transactions
+	print "max_price_of_last_10_purchase_transactions---------------------", max_price_of_last_10_purchase_transactions
 
 	if max_price_of_last_10_purchase_transactions:
-		max_price_of_last_10_purchase_transactions[0]['max_price_rate']
+		return max_price_of_last_10_purchase_transactions[0]['max_price_rate']
 	else:
 		return 0
 
 def fetch_min_price_of_last_10_purchase_transactions(item_code,uom):
 	min_price_of_last_10_purchase_transactions = frappe.db.sql("""select min(rate) as min_price_rate from (select rate from `tabPurchase Order Item`  as tpoi where item_code = %s and uom = %s and DATE(creation) > (NOW() - INTERVAL 10 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled')) order by rate asc limit 1) t1""", (item_code,uom), as_dict=1)
 
-	#print "min_price_of_last_10_purchase_transactions---------------------", min_price_of_last_10_purchase_transactions
+	print "min_price_of_last_10_purchase_transactions---------------------", min_price_of_last_10_purchase_transactions
 
 	if min_price_of_last_10_purchase_transactions:
-		min_price_of_last_10_purchase_transactions[0]['min_price_rate']
+		return min_price_of_last_10_purchase_transactions[0]['min_price_rate']
 	else:
 		return 0
 
 def fetch_avg_price_of_last_10_purchase_transactions(item_code,uom):
 	avg_price_of_last_10_purchase_transactions = frappe.db.sql("""select avg(rate) as avg_price from `tabPurchase Order Item` as tpoi where item_code = %s and uom = %s and DATE(creation) > (NOW() - INTERVAL 180 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled'))""", (item_code,uom), as_dict=1)
 
-	#print "avg_price_of_last_10_purchase_transactions---------------------", avg_price_of_last_10_purchase_transactions
+	print "avg_price_of_last_10_purchase_transactions---------------------", avg_price_of_last_10_purchase_transactions
 
 	if avg_price_of_last_10_purchase_transactions:
-		avg_price_of_last_10_purchase_transactions[0]['avg_price']
+		return avg_price_of_last_10_purchase_transactions[0]['avg_price']
 	else:
 		return 0
 
@@ -725,8 +727,10 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 
 		for items in items_List:
 			#print "item ----------------------",items['item_code']
-			#print "item----------------",items['qty']
-
+			print "item-----qty-----------",items['qty']
+			stock_qty = items['qty'] * items['conversion_factor']
+			stock_qty = round(stock_qty)
+			print "stock_qty-----qty-----------",stock_qty
 			innerJson_Transfer ={
 				"creation": creation_Date,
 				"qty": items['qty'],
@@ -743,13 +747,15 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 			   	}
 			print "innerJson_Transfer ----------------------",innerJson_Transfer
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-
+		print "outerJson_Transfer--------------------",outerJson_Transfer
 		doc = frappe.new_doc("Purchase Order")
 		doc.update(outerJson_Transfer)
 		doc.save()
+		print "doc.name ------------",doc.name
 		ret = doc.doctype
 		if ret:
-			frappe.msgprint("Purchase Order is Created:"+doc.name)
+			
+			frappe.msgprint("Purchase Order is Created: "+doc.name)
 
 
 def fetch_supplier_address(supplier):
@@ -763,6 +769,7 @@ def fetch_supplier_address(supplier):
 @frappe.whitelist()
 def get_report_data(project_filter,swh_filter):
 	report_data = []
+	qty_in_poum = 0.0
 	details = {}
 	sum_datas =[]
 	if project_filter:
@@ -832,16 +839,15 @@ def get_report_data(project_filter,swh_filter):
 		
 			if mt_qty < 0:
 				mt_qty = 0
-			print "mt_qty-------------------",mt_qty
-			print "rows[6]-----------------",rows[6]
+			
 			to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
-			print "to_be_order---------------",to_be_order	
 			need_to_be_order = 0
 			if to_be_order > 0:
 				need_to_be_order = to_be_order
 			else:
 				need_to_be_order = 0
-			print "need_to_be_order---------------",need_to_be_order
+			qty_in_poum = need_to_be_order * rows[10]
+			qty_in_poum = round(qty_in_poum , 2)
 			
 		#print "row-----", rows
 		sreq_no = rows[0]
@@ -862,7 +868,7 @@ def get_report_data(project_filter,swh_filter):
 			   "item_code":item_code,
 			   "stock_uom":stock_uom,
 			   "mt_qty":mt_qty,
-			   "po_qty":need_to_be_order,
+			   "po_qty":qty_in_poum,
 			   "conversion_factor":conversion_factor,
 			   "po_uom":po_uom,
 			   "supplier":supplier,
@@ -890,10 +896,11 @@ def get_columns():
 		_("Ordered PO.s that are in the System for the Project")+"::150",
 		_("Quantities that are covered")+"::130",
 		_("Quantities that can be Transferred")+"::130",
-		_("Quantities that need to be ordered")+"::130",
-		_("PO UOM")+"::100",
+		_("Quantities that need to be ordered (Stock Uom)")+"::130",
+		_("PO UOM")+":Link/UOM:100",
 		_("Conversion Factor")+"::",
 		_("Qty in PO UOM")+"::100",
+		_("Qty in PUOM")+"::100",
 		_("Default Supplier")+"::140",
 		_("Last Purchase Price (Stock UOM)")+"::100",
 		_("Number of Purchase Transactions")+"::150",
