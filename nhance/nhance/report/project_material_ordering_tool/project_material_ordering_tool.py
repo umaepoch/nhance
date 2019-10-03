@@ -93,7 +93,7 @@ def execute(filters=None):
 						need_to_be_order = to_be_order
 					else:
 						need_to_be_order = 0
-					qty_in_poum = need_to_be_order * sreq_dict['conversion_factor']
+					qty_in_poum = need_to_be_order / sreq_dict['conversion_factor']
 					qty_in_poum = round(qty_in_poum , 4)
 					#print "report_qty_that_can_be_transfer------------",report_qty_that_can_be_transfer
 					#print "mt_qty------------------",mt_qty
@@ -861,8 +861,8 @@ def get_report_data(project_filter,swh_filter):
 				need_to_be_order = to_be_order
 			else:
 				need_to_be_order = 0
-			qty_in_poum = need_to_be_order * rows[10]
-			qty_in_poum = round(qty_in_poum , 2)
+			qty_in_poum = need_to_be_order / rows[10]
+			qty_in_poum = round(qty_in_poum , 4)
 			
 		#print "row-----", rows
 		sreq_no = rows[0]
