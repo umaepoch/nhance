@@ -1721,6 +1721,11 @@ def get_serial_number_details(duplicate_serial):
     print "serial_no_list----",serial_no_list
     return serial_no_list
 
-
-
+#Stock Entry 
+@frappe.whitelist()
+def get_serial_number(work_order_update):
+	print "coming inside get_serial_number----"
+	serial_no=frappe.db.sql("""select max(serial_no) as serial_no from `tabSerial No` where serial_no like '"""+work_order_update+"%""'""",as_dict=1)
+	print "serial_no----",serial_no
+	return serial_no
 
