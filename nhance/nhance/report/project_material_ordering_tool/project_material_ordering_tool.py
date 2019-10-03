@@ -16,9 +16,12 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 sum_data=[]
+doc_name_created = []
 def execute(filters=None):
 	swh = ""
 	global sum_data
+	global doc_name_created
+	doc_name_created = []
 	columns = []
 	sum_data = []
 	columns = get_columns()
@@ -390,7 +393,7 @@ def fetch_last_purchase_price(item_code,uom):
 def fetch_max_price_of_last_10_purchase_transactions(item_code,uom):
 	max_price_of_last_10_purchase_transactions = frappe.db.sql("""select max(rate) as max_price_rate from (select parent,rate from `tabPurchase Order Item`  as tpoi where item_code = %s and uom = %s and DATE(creation) > (NOW() - INTERVAL 10 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled')) order by rate desc limit 1) t1""", (item_code,uom), as_dict=1)
 
-	print "max_price_of_last_10_purchase_transactions---------------------", max_price_of_last_10_purchase_transactions
+	#print "max_price_of_last_10_purchase_transactions---------------------", max_price_of_last_10_purchase_transactions
 
 	if max_price_of_last_10_purchase_transactions:
 		return max_price_of_last_10_purchase_transactions[0]['max_price_rate']
@@ -400,7 +403,7 @@ def fetch_max_price_of_last_10_purchase_transactions(item_code,uom):
 def fetch_min_price_of_last_10_purchase_transactions(item_code,uom):
 	min_price_of_last_10_purchase_transactions = frappe.db.sql("""select min(rate) as min_price_rate from (select rate from `tabPurchase Order Item`  as tpoi where item_code = %s and uom = %s and DATE(creation) > (NOW() - INTERVAL 10 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled')) order by rate asc limit 1) t1""", (item_code,uom), as_dict=1)
 
-	print "min_price_of_last_10_purchase_transactions---------------------", min_price_of_last_10_purchase_transactions
+	#print "min_price_of_last_10_purchase_transactions---------------------", min_price_of_last_10_purchase_transactions
 
 	if min_price_of_last_10_purchase_transactions:
 		return min_price_of_last_10_purchase_transactions[0]['min_price_rate']
@@ -410,7 +413,7 @@ def fetch_min_price_of_last_10_purchase_transactions(item_code,uom):
 def fetch_avg_price_of_last_10_purchase_transactions(item_code,uom):
 	avg_price_of_last_10_purchase_transactions = frappe.db.sql("""select avg(rate) as avg_price from `tabPurchase Order Item` as tpoi where item_code = %s and uom = %s and DATE(creation) > (NOW() - INTERVAL 180 DAY) and ((select status from `tabPurchase Order` where name=tpoi.parent) not in ('Draft','Cancelled'))""", (item_code,uom), as_dict=1)
 
-	print "avg_price_of_last_10_purchase_transactions---------------------", avg_price_of_last_10_purchase_transactions
+	#print "avg_price_of_last_10_purchase_transactions---------------------", avg_price_of_last_10_purchase_transactions
 
 	if avg_price_of_last_10_purchase_transactions:
 		return avg_price_of_last_10_purchase_transactions[0]['avg_price']
@@ -530,6 +533,7 @@ def updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no):
 
 @frappe.whitelist()
 def make_purchase_orders(sreq_no,supplier,po_items):
+	flag = ""
 	tax_template = ""
 	items_List = json.loads(po_items)
 	#print "items_List-----------------", items_List
@@ -627,7 +631,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 							outerJson_Transfer['taxes_and_charges'] = tax_template
 							purchase_taxes = frappe.get_doc("Purchase Taxes and Charges Template", tax_template)
 
-							print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
+							#print "purchase_taxes------", purchase_taxes.taxes, type(purchase_taxes.taxes)
 							for data in purchase_taxes.taxes:
 								charge_type = data.charge_type
 								account_head = data.account_head
@@ -727,10 +731,10 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 
 		for items in items_List:
 			#print "item ----------------------",items['item_code']
-			print "item-----qty-----------",items['qty']
+			#print "item-----qty-----------",items['qty']
 			stock_qty = items['qty'] * items['conversion_factor']
 			stock_qty = round(stock_qty)
-			print "stock_qty-----qty-----------",stock_qty
+			#print "stock_qty-----qty-----------",stock_qty
 			innerJson_Transfer ={
 				"creation": creation_Date,
 				"qty": items['qty'],
@@ -745,18 +749,27 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				"warehouse": items['warehouse'],
 				"rate": items['last_purchase_price']
 			   	}
-			print "innerJson_Transfer ----------------------",innerJson_Transfer
+			#print "innerJson_Transfer ----------------------",innerJson_Transfer
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-		print "outerJson_Transfer--------------------",outerJson_Transfer
+		#print "outerJson_Transfer--------------------",outerJson_Transfer
 		doc = frappe.new_doc("Purchase Order")
 		doc.update(outerJson_Transfer)
 		doc.save()
-		print "doc.name ------------",doc.name
+		
+		print "doc.name 1------------",doc.name
+		doc_name_created.append(doc.name)
+		#msgDisplayAfterCreatePurchaseOrder(doc.name)
+		
+		#frappe.msgprint("Purchase Order is Created: "+doc.name)
+		if doc.name:
+			flag = doc.name
 		ret = doc.doctype
+		'''
 		if ret:
 			
 			frappe.msgprint("Purchase Order is Created: "+doc.name)
-
+		'''
+	return flag
 
 def fetch_supplier_address(supplier):
 	address = frappe.db.sql("""select name,pch_terms from `tabSupplier` where name=%s""", supplier, as_dict=1)
@@ -765,7 +778,9 @@ def fetch_supplier_address(supplier):
 		return address
 	else:
 		return None
-
+def msgDisplayAfterCreatePurchaseOrder(docname):
+	frappe.msgprint("Purchase Order is Created: "+docname)
+	return 1
 @frappe.whitelist()
 def get_report_data(project_filter,swh_filter):
 	report_data = []
@@ -825,12 +840,12 @@ def get_report_data(project_filter,swh_filter):
 				draft_poi_qty = purchase_order_with_zero_docstatus[0].draft
 			quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
 
-			print "quantities_are_covered ------------",quantities_are_covered
+			#print "quantities_are_covered ------------",quantities_are_covered
 			qty_due_to_transfer = rows[7] - rw_pb_cons_qty
-			print "qty_due_to_transfer------------",qty_due_to_transfer
+			#print "qty_due_to_transfer------------",qty_due_to_transfer
 			qty_can_be_transfered = qty_due_to_transfer - quantities_are_covered
 
-			print "qty_can_be_transfered------------------",qty_can_be_transfered
+			#print "qty_can_be_transfered------------------",qty_can_be_transfered
 			mt_qty = 0
 			if qty_can_be_transfered < rows[7]:
 				mt_qty = qty_can_be_transfered
@@ -862,6 +877,7 @@ def get_report_data(project_filter,swh_filter):
 		bom_reference = rows[18]
 		fulfilled_qty = rows[19]
 		last_purchase_price = rows[13]
+		sreq_qty = rows[3]
 		#mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
 		details = {"sreq_no":sreq_no,
 			   "project":project,
@@ -874,7 +890,8 @@ def get_report_data(project_filter,swh_filter):
 			   "supplier":supplier,
 			   "bom":bom_reference,
 			   "fulfilled_qty":fulfilled_qty,
-			   "last_purchase_price":last_purchase_price
+			   "last_purchase_price":last_purchase_price,
+			   "sreq_qty":sreq_qty
 			}
 		report_data.append(details)
 	return report_data
@@ -962,3 +979,22 @@ def get_purchase_order_with_zero_docstatus(project,item_code):
 def get_purchase_order_with_one_docstatus(project,item_code):
 	number_of_purchase_with_one_docstatus = frappe.db.sql("""select sum(qty) as submitted from `tabPurchase Order Item` where project = %s and item_code = %s and docstatus =1""",(project,item_code), as_dict =1)
 	return number_of_purchase_with_one_docstatus
+
+@frappe.whitelist()
+def check_and_update(data,sreq_no):
+	
+	print "sreq_no------------------",sreq_no
+	#print "supplier_items-----------------",supplier_items
+	print "data---------------",data
+	items_List = json.loads(data)
+	for items in items_List:
+		item_code = items['item_code']
+		round_qty = items['round_qty']
+		frappe.db.sql("""update `tabStock Requisition Item`  set qty_allowed_to_be_order = %s  where item_code = %s and parent = %s""", (round_qty, item_code, sreq_no))
+		
+	return 1
+
+@frappe.whitelist()
+def getQtyAllowed(stockRequisitionID):
+	allowed_qty = frappe.db.sql("""select item_code,qty_allowed_to_be_order from `tabStock Requisition Item` where parent = %s """,stockRequisitionID, as_dict =1)
+	return allowed_qty
