@@ -56,16 +56,18 @@ def execute(filters=None):
 	    submitted_po = get_submitted_po(item_code,project_name)
 	    draft_po = get_draft_po(item_code,project_name)
 	    #print "submitted_po----------------",submitted_po
-            qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty
+
+           
+	    # qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty
+	    qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + draft_po + submitted_po
+	    if qty_planned_nrec < 0:
+	    	qty_planned_nrec = 0
             tot_qty_covered =  qty_planned_nrec +  rw_pb_cons_qty
-
-            short_qty =  bom_item_qty - tot_qty_covered
-
-            if short_qty < 0:
-              short_qty = 0
-
+	    short_qty =  bom_item_qty - tot_qty_covered
+	    if short_qty < 0:
+            	short_qty = 0
             sum_data.append([str(item_code),str(bom_item_qty),str(warehouse_qty),str(delta_qty),
-                  str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_sub_not_approved),draft_po,submitted_po,str(sreq_sub_not_ordered),str(po_total_qty),str(qty_planned_nrec),
+                  str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_sub_not_approved),str(sreq_sub_not_ordered),draft_po,submitted_po,str(po_total_qty),str(qty_planned_nrec),
                   str(tot_qty_covered),str(short_qty)])
 
     return columns, sum_data
@@ -81,10 +83,10 @@ def get_columns():
       _("Quantity consumed in Manufacturte")+"::150",
       _("RW+PB+Consumed QTY")+"::150",
       _("SREQs  Submitted but not Approved")+"::90",
-      _("Draft PO Qty ")+"::90",
-      _("Submitted PO Qty ")+"::90",
       _("SREQs  Submitted but not Ordered")+"::90",
-      _("PO Quantities Ordered but not Delivered")+"::150",
+      _("Draft PO Qty ")+"::90",
+      _("PO Quantities Ordered but not Delivered")+"::90",
+      _("POs Quantities Ordered but not Delivered")+"::150",
       _("Sum Quantity Planned but Not Received Material")+"::150",
       _("Total Quantity Covered")+"::150",
       _("Short Qty (Excess Quantity is reported as 0)")+"::150"
@@ -160,6 +162,9 @@ def get_sreq_sub_not_ordered(item_code,project_name):
 	'''
     draft_qty = 0
     submitted_qty = 0
+    sreq_qty = 0
+    for srq in sreq_datas:
+	sreq_qty += srq.qty
     for drft in po_draft_qty:
 	 if drft:
 	 	draft_qty += drft.stock_qty 
@@ -169,7 +174,7 @@ def get_sreq_sub_not_ordered(item_code,project_name):
     total_po_qty = draft_qty + submitted_qty
     sreq_total_qty = 0.0
     if len(sreq_datas) > 0:
-    	sreq_total_qty = sreq_datas[0].qty - total_po_qty
+    	sreq_total_qty = sreq_qty - total_po_qty
     if sreq_total_qty < 0:
 	   sreq_total_qty =0
     return sreq_total_qty
