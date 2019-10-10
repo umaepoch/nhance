@@ -304,13 +304,19 @@ function make_PO_and_transfer_qty(report) {
                                 var check_flag = get_UOM_Details(stock_uom);
                                 //console.log("no_supplier_items of qty------------" + no_supplier_items[i].qty);
                                // console.log("check_flag------------" + check_flag);
+				var processedQty = 0.0;
                                 if (check_flag) {
-                                      var processedQty = processQuantity(check_args, qty);
+                                     processedQty = processQuantity(check_args, qty);
                                       //console.log("no_supplier_items of processedQty is--------------::" + processedQty);
 
-                                      var purchase_uom = getPurchaseUom(no_supplier_items[i].item_code.toString());
+                                     
 
                                       //******************
+				 } //end of if..
+				else{
+					processedQty = qty;
+				}
+				 var purchase_uom = getPurchaseUom(no_supplier_items[i].item_code.toString());
                                       if( purchase_uom == null){
                                         //  console.log("********no suppliers Purchase uom is null for item : "+no_supplier_items[i].item_code.toString() );
                                           no_supplier_items[i].qty = processedQty ;
@@ -319,16 +325,22 @@ function make_PO_and_transfer_qty(report) {
 
                                       }
                                       else{
-                                        var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, qty);
-                                        console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
-					var processedQty1 = processQuantity(check_args, puom_qty);
-                                        no_supplier_items[i].qty = processedQty1;
+                                        var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, processedQty);
+					var purchase_check_flag = get_UOM_Details(purchase_uom);
+					if(purchase_check_flag){
+                                        	console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
+						var processedQty1 = processQuantity(check_args, puom_qty);
+		                                no_supplier_items[i].qty = processedQty1;
+					}
+					else{
+						no_supplier_items[i].qty = puom_qty;
+					}
                                       }
 
                                       //**********************
 
 
-                                } //end of if..
+                               
                             } //end of for loop..
 
                             //console.log("*************Suresh no_supplier_items--------" + JSON.stringify(no_supplier_items));
@@ -346,35 +358,45 @@ function make_PO_and_transfer_qty(report) {
                                 var check_flag = get_UOM_Details(stock_uom);
                                // console.log("supplier_items of qty------------" + supplier_items[i].qty);
                                // console.log("check_flag------------" + check_flag);
-
+				var processedQty = 0.0;
                                 if (check_flag) {
                                           //console.log("item code ------------"+supplier_items[i].item_code.toString());
-                                          var processedQty = processQuantity(check_args, qty);
+                                           processedQty = processQuantity(check_args, qty);
                                           //console.log("supplier_items of processedQty is---------------::" + processedQty);
-                                          var purchase_uom = getPurchaseUom(supplier_items[i].item_code.toString());
+                                         
+				} //end of if..
+				else{
 
+					processedQty = qty
+				}
                                         //*********
-                                        if( purchase_uom == null){
-                                          console.log("****supplier_items   Purchase uom is null for item : "+ supplier_items[i].item_code.toString() );
+				var purchase_uom = getPurchaseUom(supplier_items[i].item_code.toString());
+                                if( purchase_uom == null){
+                                	console.log("****supplier_items   Purchase uom is null for item : "+ supplier_items[i].item_code.toString() );
 
-                                          supplier_items[i].qty = processedQty ;
+                                        supplier_items[i].qty = processedQty ;
                                          // supplier_items[i].qty = 20 ; //testing
 
-                                        }
-                                        else{
-					  //console.log("processedQty--------------"+processedQty);
-                                          var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, qty);
-				            //console.log("supplier_items of puom_qty is-------------::" + puom_qty);
-					    var processedQty1 = processQuantity(check_args, puom_qty);
+                                 }
+                                 else{
+				 	//console.log("processedQty--------------"+processedQty);
+                                        var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
+				        //console.log("supplier_items of puom_qty is-------------::" + puom_qty);
+					var purchase_check_flag = get_UOM_Details(purchase_uom);
+					if (purchase_check_flag){ 
+						var processedQty1 = processQuantity(check_args, puom_qty);
                                           
-                                          supplier_items[i].qty = processedQty1
-					
+                                          	supplier_items[i].qty = processedQty1
+					}
+					else{
+						supplier_items[i].qty = puom_qty
 
+					}					
                                         }
                                         //********
 
                                           ;
-                                } //end of if..
+                                
 
                             } //end of for loop..
                             //console.log("supplier_items--------" + JSON.stringify(supplier_items));
