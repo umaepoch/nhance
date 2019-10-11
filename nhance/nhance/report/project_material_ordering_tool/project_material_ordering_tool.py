@@ -71,10 +71,10 @@ def execute(filters=None):
 					
 					if purchase_order_with_one_docstatus[0].submitted is not None:
 						submitted_poi_qty = purchase_order_with_one_docstatus[0].submitted
-
+						submitted_poi_qty=round(float(submitted_poi_qty),2)
 					if purchase_order_with_zero_docstatus[0].draft is not None:
 						draft_poi_qty = purchase_order_with_zero_docstatus[0].draft
-
+						draft_poi_qty = round(float(draft_poi_qty),2)
 					quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
 					report_qty_that_can_be_transfer = 0
 
@@ -180,6 +180,8 @@ def fetch_pending_sreqnos(project,swh):
 
 						if po_items:
 							sreq_qty = float(items_data['qty']) - float(po_items['qty'])
+							if sreq_qty < 0:
+								sreq_qty = 0
 							qty_in_po_uom = float(po_items['stock_qty'])
 
 						if sreq_qty > 0:
@@ -367,8 +369,9 @@ def fetch_po_data(item_code,po):
 	if po_data:
 		conversion_factor = po_data[0]['conversion_factor']
 		qty = po_data[0]['stock_qty']
+		qty = round(float(qty),2)
 		stock_qty = qty / conversion_factor
-		items_data = {"qty": po_data[0]['qty'],"stock_qty":stock_qty}
+		items_data = {"qty": qty,"stock_qty":stock_qty}
 		return items_data
 	else:
 		return
@@ -549,7 +552,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 	if items_List:
 		outerJson_Transfer = {
 			"doctype": "Purchase Order",
-			"title": "Purchase Order",
+			"title": supplier,
 			"creation": creation_Date,
 			"owner": "Administrator",
 			"company": company,
