@@ -79,10 +79,13 @@ def execute(filters=None):
 					report_qty_that_can_be_transfer = 0
 
 					qty_that_can_be_transfer = report_qty_due_to_transfer - quantities_are_covered
+					#print "**********sur debug qty_that_can_be_transfer",qty_that_can_be_transfer
 					if qty_that_can_be_transfer < sreq_dict['qty_available_in_swh']:
 						report_qty_that_can_be_transfer = qty_that_can_be_transfer
+						#print "**********sur debug came inside qty_that_can_be_transfer <"
 					elif qty_that_can_be_transfer >= sreq_dict['qty_available_in_swh']:
 						report_qty_that_can_be_transfer = sreq_dict['qty_available_in_swh']
+						#print "**********sur debug came inside qty_that_can_be_transfer >="
 					if report_qty_that_can_be_transfer < 0:
 						report_qty_that_can_be_transfer = 0
 
@@ -98,8 +101,7 @@ def execute(filters=None):
 					qty_in_poum = round(qty_in_poum , 4)
 					poum_qty = sreq_dict['qty_in_po_uom']
 					poum_qty = round(poum_qty , 4)
-					#print "report_qty_that_can_be_transfer------------",report_qty_that_can_be_transfer
-					#print "mt_qty------------------",mt_qty
+					#print "**********sur debug data append report_qty_that_can_be_transfer",report_qty_that_can_be_transfer
 					sum_data.append([
 					sreq_dict['sreq_no'],
 					project,
@@ -470,6 +472,7 @@ def make_stock_entry(sreq_no,mt_list):
 	mt_items_map = {}
 	sreq_items_list = []
 	materialTransferItems = eval(mt_list)
+        print "materialTransferItems------------",materialTransferItems
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 
 	if materialTransferItems:
@@ -496,6 +499,7 @@ def make_stock_entry(sreq_no,mt_list):
 				"s_warehouse":items['s_warehouse'],
 				"t_warehouse":items['t_warehouse'],
 				"qty":items['qty'],
+                                #"qty":10,
 				"pch_bom_reference":items['bom'],
 				"pch_project_reference":items['project'],
 				"doctype": "Stock Entry Detail"
@@ -542,7 +546,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 	flag = ""
 	tax_template = ""
 	items_List = json.loads(po_items)
-	#print "items_List-----------------", items_List
+	print "items_List-----------------", items_List
 	creation_Date = datetime.datetime.now()
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 	details = frappe.get_meta("Purchase Order").get("fields")
@@ -798,6 +802,7 @@ def get_report_data(project_filter,swh_filter):
 		items_map = fetch_pending_sreqnos(project_filter,swh_filter)
 		#project_warehouse =  frappe.db.get_value('Project', project_filter, 'project_warehouse')
     		#reserve_warehouse =  frappe.db.get_value('Project', project_filter, 'reserve_warehouse')
+
 		if items_map:
 			for (sreq_no) in sorted(items_map):
 				data = items_map[sreq_no]
@@ -807,12 +812,12 @@ def get_report_data(project_filter,swh_filter):
 					sum_datas.append([
 					sreq_dict['sreq_no'],
 					project_filter,
-					sreq_dict['item_code'],
+					sreq_dict['item_code'],#2
 					sreq_dict['sreq_qty'],
 					sreq_dict['sreq_uom'],
 					sreq_dict['stock_uom'],
-					sreq_dict['sreq_qty_in_stock_uom'],
-					sreq_dict['qty_available_in_swh'],
+					sreq_dict['sreq_qty_in_stock_uom'],#6
+					sreq_dict['qty_available_in_swh'], #7
 					sreq_dict['excess_to_be_ordered'],
 					sreq_dict['po_uom'],
 					sreq_dict['conversion_factor'],
@@ -847,17 +852,28 @@ def get_report_data(project_filter,swh_filter):
 			quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
 
 			#print "quantities_are_covered ------------",quantities_are_covered
-			qty_due_to_transfer = rows[7] - rw_pb_cons_qty
+			qty_due_to_transfer = rows[6] - rw_pb_cons_qty    #rows[7] is changed to rows[6] and added below condition
+			report_qty_due_to_transfer = 0
+	
+			if qty_due_to_transfer > 0:
+				report_qty_due_to_transfer = qty_due_to_transfer
+			else:
+				report_qty_due_to_transfer = 0 #upto here
+
+
 			#print "qty_due_to_transfer------------",qty_due_to_transfer
-			qty_can_be_transfered = qty_due_to_transfer - quantities_are_covered
+			qty_can_be_transfered = report_qty_due_to_transfer - quantities_are_covered
 
 			#print "qty_can_be_transfered------------------",qty_can_be_transfered
+
 			mt_qty = 0
 			if qty_can_be_transfered < rows[7]:
 				mt_qty = qty_can_be_transfered
+				#print "**********sur debug qty_can_be_transfered < rows[7]: mt_qty ",mt_qty
+				#print "**********sur debug qty_can_be_transfered < rows[7]: qty_can_be_transfered ",qty_can_be_transfered
 			elif qty_can_be_transfered >= rows[7]:
 				mt_qty = rows[7]
-		
+				#print "**********sur debug qty_can_be_transfered >= rows[7] mt_qty ",mt_qty
 			if mt_qty < 0:
 				mt_qty = 0
 			
@@ -869,9 +885,9 @@ def get_report_data(project_filter,swh_filter):
 				need_to_be_order = 0
 			qty_in_poum = need_to_be_order / rows[10]
 			qty_in_poum = round(qty_in_poum , 4)
-			print "qty_in_poum-------------------",qty_in_poum
+			#print "qty_in_poum-------------------",qty_in_poum
 			
-		#print "row-----", rows
+		print "row-----", rows
 		sreq_no = rows[0]
 		project = rows[1]
 		item_code = rows[2]
@@ -886,6 +902,7 @@ def get_report_data(project_filter,swh_filter):
 		last_purchase_price = rows[13]
 		sreq_qty = rows[3]
 		#mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
+		#print "**********sur debug from get_report_data mt_qty",mt_qty
 		details = {"sreq_no":sreq_no,
 			   "project":project,
 			   "item_code":item_code,
