@@ -77,6 +77,7 @@ function make_PO_and_transfer_qty(report) {
     var project_filter = frappe.query_report.get_filter_value("project");
     var swh_filter = frappe.query_report.get_filter_value("source_warehouse");
     var reportData = getReportData(project_filter,swh_filter);
+    console.log("reportData.......",reportData);
     var materialTransferMap = new Map();
     var purchaseOrderMap = new Map();
 
@@ -101,6 +102,7 @@ function make_PO_and_transfer_qty(report) {
         var sreq_no = reportData[i]['sreq_no'];
         var po_qty = reportData[i]['po_qty'];
         var mt_qty = reportData[i]['mt_qty'];
+        console.log("mt_qty",mt_qty);
         var supplier = reportData[i]['supplier'];
         var bom = reportData[i]['bom'];
         var fulfilled_qty = reportData[i]['fulfilled_qty'];
@@ -211,6 +213,7 @@ function make_PO_and_transfer_qty(report) {
             poItems['stock_uom'] = stock_uom;
             poItems['supplier'] = supplier;
             poItems['qty'] = po_qty;
+            //poItems['qty'] = mt_qty;
             poItems['bom'] = bom;
             poItems['warehouse'] = reserve_whse;
             poItems['price_list_rate'] = rate;

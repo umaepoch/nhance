@@ -1430,7 +1430,19 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 			bom_main_item = parent.bom_item
 			boq_records = frappe.db.sql("""select * from `tabBOQ Lite Item` where parent=%s and immediate_parent_item=%s and is_raw_material='No' order by immediate_parent_item desc""", (boq_record.name,bom_main_item), as_dict=1)
 			print "bom_main_item--------", bom_main_item
-
+			'''
+			name_bom = "BOM-"+str(bom_main_item)+"-"
+			len_name_bom = len(name_bom)
+			check_status = frappe.db.sql("""select max(name) as name from `tabBOM` where name LIKE '"""+name_bom+"%""'""", as_dict = 1)
+			for check in check_status:
+				name_check = check.name
+				var = name_check.split("-")
+			increas_no = var[-1]
+			increased_no = int(increas_no)+1
+			print "increas_no--------------",increas_no
+			print "increas_no--------------",int(increas_no)+1
+			convert = "{0:len(increas_no)}".format(increased_no)
+			'''
 			if not boq_records:
 				bom_qty = 1
 				raw_boms.append(bom_main_item)
@@ -1517,6 +1529,11 @@ def submit_assembly_boms(name,bom_main_item,company):
 		if outer_json["items"]:
 			doc = frappe.new_doc("BOM")
 			doc.update(outer_json)
+			'''
+			name_bom = "BOM-"+str(bom_main_item)+"-"
+			check_status = frappe.db.sql("""select max(name) from `tabBOM` where name LIKE '"""+name_bom+"%""'""", as_dict = 1)
+			print "check_status-------------",check_status
+			'''
 			doc.save()
 			frappe.db.commit()
 			doc.submit()
@@ -1662,12 +1679,15 @@ def get_sreq_items_data(stockRequisitionID):
 def update_sreq_items_data(updated_sreq_items_data,stockRequisitionID): #from po submission
 
 	updated_sreq_items_data = json.loads(updated_sreq_items_data)
+	print "updated_sreq_items_data--------------------",updated_sreq_items_data
 	for updated_sreq_item_data in updated_sreq_items_data:
 		sreq_item_code = updated_sreq_item_data['sreq_item_code']
 		quantity_ordered = updated_sreq_item_data['quantity_ordered']
-		quantity_to_be_order =  updated_sreq_item_data ['quantity_to_be_order']
-		fulfilled_qty =  updated_sreq_item_data ['fulfilled_qty']
-		frappe.db.sql("""update `tabStock Requisition Item` sri  set sri.quantity_ordered = %s, sri.quantity_to_be_ordered =%s, fulfilled_quantity=%s where sri.parent = %s and sri.item_code = %s """, (quantity_ordered, quantity_to_be_order,fulfilled_qty,stockRequisitionID,sreq_item_code))
+		#quantity_to_be_order =  updated_sreq_item_data ['quantity_to_be_order']
+		#fulfilled_qty =  updated_sreq_item_data ['fulfilled_qty']
+		#frappe.db.sql("""update `tabStock Requisition Item` sri  set sri.quantity_ordered = %s, sri.quantity_to_be_ordered =%s, fulfilled_quantity=%s where sri.parent = %s and sri.item_code = %s """, (quantity_ordered, quantity_to_be_order,fulfilled_qty,stockRequisitionID,sreq_item_code))
+		frappe.db.sql("""update `tabStock Requisition Item` sri  set sri.quantity_ordered = %s where sri.parent = %s and sri.item_code = %s """, (quantity_ordered,stockRequisitionID,sreq_item_code))#jyoti changed previous query to this
+
 
 	return "done"
 
@@ -1713,19 +1733,4 @@ def cancel_stock_entry_material_receipt(pch_ste_pull_short_rm):
     frappe.msgprint("The Stock Entry is cancelled successfully!!")
     return 1
 
-#Purchase Receipt
-@frappe.whitelist()
-def get_serial_number_details(duplicate_serial):
-    print "coming inside get_serial_number_details---"
-    serial_no_list = frappe.db.sql("""select max(serial_no) as serial_no from `tabSerial No` where serial_no like '"""+duplicate_serial+"%""'""", as_dict=1)
-    print "serial_no_list----",serial_no_list
-    return serial_no_list
-
-#Stock Entry 
-@frappe.whitelist()
-def get_serial_number(work_order_update):
-	print "coming inside get_serial_number----"
-	serial_no=frappe.db.sql("""select max(serial_no) as serial_no from `tabSerial No` where serial_no like '"""+work_order_update+"%""'""",as_dict=1)
-	print "serial_no----",serial_no
-	return serial_no
 

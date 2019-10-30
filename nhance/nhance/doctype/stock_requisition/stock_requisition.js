@@ -49,7 +49,9 @@ frappe.ui.form.on('Stock Requisition', {
 				for (var i = 0; i < sreq_items_data.length; i++) {
 					var sreq_item_code = sreq_items_data[i]['item_code'];
 					var sreq_qty = sreq_items_data[i]['qty'];
-					var quantity_to_be_order = sreq_qty ;
+					var sreq_fulfilled_qty = sreq_items_data[i]['fulfilled_quantity'];//jyoti added this
+					//var quantity_to_be_order = sreq_qty ;
+					var quantity_to_be_order = sreq_qty - sreq_fulfilled_qty;//jyoti changed the formula
 
 					updated_sreq_items_data.push(
 						{
