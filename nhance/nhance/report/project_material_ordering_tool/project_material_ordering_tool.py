@@ -37,7 +37,6 @@ def execute(filters=None):
 		if items_map:
 			for (sreq_no) in sorted(items_map):
 				data = items_map[sreq_no]
-				print "data-------",data
 				for sreq_dict in data:
 					#print "sreq_dict-----", sreq_dict['sreq_no']
 					#print "bom-----", sreq_dict['bom']
@@ -46,11 +45,11 @@ def execute(filters=None):
 					mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
 					qty_available_in_swh = sreq_dict['qty_available_in_swh']
 					sreq_qty = sreq_dict['sreq_qty']
+					
+					item_code = sreq_dict['item_code']
 					#jyoti
 					fulfilled_qty = sreq_dict['fulFilledQty']
 					print "fulfilled_qty---",fulfilled_qty#
-
-					item_code = sreq_dict['item_code']
 
 					warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
 					reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
@@ -59,6 +58,7 @@ def execute(filters=None):
 					#jyoti added
 					rw_pb_cons_qty = fulfilled_qty
 					print "rw_pb_cons_qty--",rw_pb_cons_qty#
+
 					sreq_qty_in_stock_uom = sreq_dict['sreq_qty_in_stock_uom']
 					qty_due_to_transfer = sreq_qty_in_stock_uom - rw_pb_cons_qty
 					report_qty_due_to_transfer = 0
@@ -839,8 +839,8 @@ def get_report_data(project_filter,swh_filter):
 			warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
 			reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
 			qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
-			#rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
-			rw_pb_cons_qty = rows[19] #jyoti added
+			rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
+			
 			purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project_filter,rows[2])
 			purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project_filter,rows[2])
 			
@@ -853,7 +853,7 @@ def get_report_data(project_filter,swh_filter):
 			quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
 
 			#print "quantities_are_covered ------------",quantities_are_covered
-			qty_due_to_transfer = rows[7] - rw_pb_cons_qty
+			qty_due_to_transfer = rows[6] - rw_pb_cons_qty
 			#print "qty_due_to_transfer------------",qty_due_to_transfer
 			qty_can_be_transfered = qty_due_to_transfer - quantities_are_covered
 
