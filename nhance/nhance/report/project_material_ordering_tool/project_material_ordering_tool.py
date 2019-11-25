@@ -839,8 +839,13 @@ def get_report_data(project_filter,swh_filter):
 			warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
 			reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
 			qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
-			rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
-			
+			#rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
+			#jyoti
+			fulfilled_qty = sreq_dict['fulFilledQty']
+			print "fulfilled_qty---",fulfilled_qty
+			#jyoti added
+			rw_pb_cons_qty = fulfilled_qty
+			print "rw_pb_cons_qty--",rw_pb_cons_qty
 			purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project_filter,rows[2])
 			purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project_filter,rows[2])
 			
