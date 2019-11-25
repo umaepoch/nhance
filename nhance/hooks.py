@@ -11,6 +11,7 @@ app_color = "grey"
 app_email = "support@epochconsulting.in"
 app_license = "MIT"
 
+
 # Includes in <head>
 # ------------------
 
@@ -129,4 +130,8 @@ scheduler_events = {
 #override_whitelisted_methods = {
 # 	"erpnext.crm.doctype.opportunity.opportunity.make_quotation": "nhance.nhance.api.make_opp_quotation"
 #}
+
+
+
+
 

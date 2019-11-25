@@ -1733,4 +1733,9 @@ def cancel_stock_entry_material_receipt(pch_ste_pull_short_rm):
     frappe.msgprint("The Stock Entry is cancelled successfully!!")
     return 1
 
-
+@frappe.whitelist()#jyoti added this for workflow action of material request
+def update_material_request_workflow():
+	print "coming inside update_workflow---"
+	frappe.db.sql("""update `tabWorkflow` set is_active=1 where document_type='Material Request' """ )
+	frappe.db.commit() 
+	return 1

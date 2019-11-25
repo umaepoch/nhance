@@ -181,8 +181,8 @@ def get_sreq_sub_not_ordered(item_code,project_name):
     total_po_qty = draft_qty + submitted_qty
     sreq_total_qty = 0.0
     if len(sreq_datas) > 0:
-	#sreq_total_qty = sreq_stock_qty -total_po_qty
-    	sreq_total_qty = sreq_stock_qty -(total_po_qty+sreq_fulfilled_qty)#jyoti changed formula
+	#sreq_total_qty = sreq_stock_qty -total_po_qty #old requirement
+    	sreq_total_qty = sreq_stock_qty -(total_po_qty+sreq_fulfilled_qty)#jyoti changed formula new requirement
     if sreq_total_qty < 0:
 	   sreq_total_qty =0
     sreq_total_qty = round(float(sreq_total_qty),2)
