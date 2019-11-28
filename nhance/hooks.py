@@ -11,6 +11,10 @@ app_color = "grey"
 app_email = "support@epochconsulting.in"
 app_license = "MIT"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> c1846a64a57ea02cba2665878c72c134572b293c
 # Includes in <head>
 # ------------------
 
@@ -130,3 +134,10 @@ scheduler_events = {
 # 	"erpnext.crm.doctype.opportunity.opportunity.make_quotation": "nhance.nhance.api.make_opp_quotation"
 #}
 
+<<<<<<< HEAD
+=======
+
+
+
+
+>>>>>>> c1846a64a57ea02cba2665878c72c134572b293c
