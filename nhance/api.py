@@ -710,7 +710,7 @@ def get_item_price_details(item_code):
 	item_details.append(min_last_180Days_Details)
 	item_details.append(last_180Days_Avg_Price)
 	item_details.append(supplier_details)
-	print "###############-item_details::", item_details
+	#print "###############-item_details::", item_details
 	return item_details
 
 
@@ -1198,7 +1198,7 @@ def get_bom_list_for_so(item_code):
 ##- Start of making .PRN file for Purchase Invoice Doc.
 @frappe.whitelist()
 def make_prnfile(invoice,ncopies,label):
-	print "-------invoice-------------", invoice
+	#print "-------invoice-------------", invoice
 	invoice_data = frappe.get_doc("Purchase Invoice", invoice)
 	printer_details = frappe.get_doc("Label Printer", label)
 	address = printer_details.address
@@ -1323,13 +1323,13 @@ def getSupplierContent(po_name):
 ## Start of- Rounding and Charging Off for Purchase Receipt.
 @frappe.whitelist()
 def make_stock_entry(materialIssueList,mterialReceiptList,company):
-	print "company-------------", company 
+	#print "company-------------", company 
 	materialItemsIssue=eval(materialIssueList)
 	mterialItemsReceipt=eval(mterialReceiptList)
 	basic_rate = 0
 	ret = ""
 	difference_account = frappe.db.get_single_value("Stock Settings", "material_round_off_amounts_changed_to")
-	print "difference_account -------------", difference_account 
+	#print "difference_account -------------", difference_account 
 	if(len(materialItemsIssue)!=0):
 		outerJson_Transfer = {
 			"naming_series": "STE-",
@@ -1354,7 +1354,7 @@ def make_stock_entry(materialIssueList,mterialReceiptList,company):
 			if difference_account is not None:
 				innerJson_Transfer["expense_account"] = difference_account
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-		print "########-Final make_stock_entry Json::", outerJson_Transfer
+		#print "########-Final make_stock_entry Json::", outerJson_Transfer
 		doc = frappe.new_doc("Stock Entry")
 		doc.update(outerJson_Transfer)
 		doc.save()
@@ -1385,7 +1385,7 @@ def make_stock_entry(materialIssueList,mterialReceiptList,company):
 			if difference_account is not None:
 				innerJson_Transfer["expense_account"] = difference_account
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-		print "########-Final make_stock_entry Json::", outerJson_Transfer
+		#print "########-Final make_stock_entry Json::", outerJson_Transfer
 		doc = frappe.new_doc("Stock Entry")
 		doc.update(outerJson_Transfer)
 		doc.save()
@@ -1411,8 +1411,8 @@ def fax_number_test():
 		if left is not None and len(left)!=0:
 			lft = left[0]['lft']
 			rgt = left[0]['rgt']
-			print "lft----------", lft
-			print "rgt----------", rgt
+			#print "lft----------", lft
+			#print "rgt----------", rgt
 	
 	return left
 
@@ -1429,7 +1429,7 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 		for parent in boq_lite_items:
 			bom_main_item = parent.bom_item
 			boq_records = frappe.db.sql("""select * from `tabBOQ Lite Item` where parent=%s and immediate_parent_item=%s and is_raw_material='No' order by immediate_parent_item desc""", (boq_record.name,bom_main_item), as_dict=1)
-			print "bom_main_item--------", bom_main_item
+			#print "bom_main_item--------", bom_main_item
 			'''
 			name_bom = "BOM-"+str(bom_main_item)+"-"
 			len_name_bom = len(name_bom)
@@ -1439,8 +1439,8 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 				var = name_check.split("-")
 			increas_no = var[-1]
 			increased_no = int(increas_no)+1
-			print "increas_no--------------",increas_no
-			print "increas_no--------------",int(increas_no)+1
+			#print "increas_no--------------",increas_no
+			#print "increas_no--------------",int(increas_no)+1
 			convert = "{0:len(increas_no)}".format(increased_no)
 			'''
 			if not boq_records:
@@ -1483,7 +1483,7 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 						docname = doc.name
 						frappe.msgprint(_("BOM Created - " + docname))
 		if raw_boms:
-			print "raw_boms--------------", raw_boms
+			#print "raw_boms--------------", raw_boms
 			global parent_list
 			parent_list = []
 			for bom_item in raw_boms:
@@ -1491,11 +1491,11 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 				if parent:
 					for main_item in parent:
 						bom_main_item = main_item.bom_main_item
-						print "*****parent for*****",bom_item, bom_main_item
+						#print "*****parent for*****",bom_item, bom_main_item
 						if bom_main_item not in parent_list:
 							parent_list.append(bom_main_item)
 							submit_assembly_boms(name,bom_main_item,company)
-					print "*****parent_list*****", parent_list
+					#print "*****parent_list*****", parent_list
 					
 			
 def submit_assembly_boms(name,bom_main_item,company):
@@ -1532,7 +1532,7 @@ def submit_assembly_boms(name,bom_main_item,company):
 			'''
 			name_bom = "BOM-"+str(bom_main_item)+"-"
 			check_status = frappe.db.sql("""select max(name) from `tabBOM` where name LIKE '"""+name_bom+"%""'""", as_dict = 1)
-			print "check_status-------------",check_status
+			#print "check_status-------------",check_status
 			'''
 			doc.save()
 			frappe.db.commit()
@@ -1545,7 +1545,7 @@ def submit_assembly_boms(name,bom_main_item,company):
 			parent_item = main_item.bom_main_item
 
 			multi_parent_list = check_multiple_parent_items(name,parent_item)
-			print "***2nd**parent for*****", bom_main_item, parent_item
+			#print "***2nd**parent for*****", bom_main_item, parent_item
 			if multi_parent_list:
 				for parent in multi_parent_list:
 					if parent not in parent_list:
@@ -1630,7 +1630,7 @@ def make_material_receipt(mterialReceiptList,difference_account):
 			if difference_account is not None:
 				innerJson_Transfer["expense_account"] = difference_account
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-		print "########-Final make_stock_entry Json::", outerJson_Transfer
+		#print "########-Final make_stock_entry Json::", outerJson_Transfer
 		doc = frappe.new_doc("Stock Entry")
 		doc.update(outerJson_Transfer)
 		doc.save()
@@ -1679,7 +1679,7 @@ def get_sreq_items_data(stockRequisitionID):
 def update_sreq_items_data(updated_sreq_items_data,stockRequisitionID): #from po submission
 
 	updated_sreq_items_data = json.loads(updated_sreq_items_data)
-	print "updated_sreq_items_data--------------------",updated_sreq_items_data
+	#print "updated_sreq_items_data--------------------",updated_sreq_items_data
 	for updated_sreq_item_data in updated_sreq_items_data:
 		sreq_item_code = updated_sreq_item_data['sreq_item_code']
 		quantity_ordered = updated_sreq_item_data['quantity_ordered']
@@ -1733,13 +1733,3 @@ def cancel_stock_entry_material_receipt(pch_ste_pull_short_rm):
     frappe.msgprint("The Stock Entry is cancelled successfully!!")
     return 1
 
-<<<<<<< HEAD
-
-=======
-@frappe.whitelist()#jyoti added this for workflow action of material request
-def update_material_request_workflow():
-	print "coming inside update_workflow---"
-	frappe.db.sql("""update `tabWorkflow` set is_active=1 where document_type='Material Request' """ )
-	frappe.db.commit() 
-	return 1
->>>>>>> c1846a64a57ea02cba2665878c72c134572b293c

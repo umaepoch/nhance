@@ -263,11 +263,7 @@ def make_purchase_order(source_name, target_doc=None):
 
 def get_Purchase_Taxes_and_Charges(account_head, tax_name):
 	tax_List = frappe.db.sql("""select rate, charge_type, description,row_id  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", (account_head, tax_name), as_dict=1)
-<<<<<<< HEAD
 	#print "tax_List-------------",tax_List
-=======
-	print "tax_List-------------",tax_List
->>>>>>> c1846a64a57ea02cba2665878c72c134572b293c
 	return tax_List
 
 
