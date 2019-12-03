@@ -952,13 +952,13 @@ def get_business_type_details(sales):
 					mapped_items_list = item_entry["mapped_items"]
 					new_list = []
 					for mapped_items in mapped_items_list:
-				    		tax_rate_list.append(mapped_items["tax_rate"])
-						data_rate = list(set(tax_rate_list))
+					  tax_rate_list.append(mapped_items["tax_rate"])
+					  data_rate = list(set(tax_rate_list))
 					if tax_rate in data_rate:
 					    	for items in mapped_items_list:
-					   		 if float(tax_rate) == float(items["tax_rate"]):
-					    			qty_temp = items["net_amount"]
-								items["net_amount"] = (qty_temp) + (net_amount)
+							    if float(tax_rate) == float(items["tax_rate"]):
+							      qty_temp = items["net_amount"]
+							      items["net_amount"] = (qty_temp) + (net_amount)
 					else :
 						new_list.append({
 									"tax_rate": tax_rate,
@@ -1312,17 +1312,17 @@ def get_hsn_uqc_list(sales):
 						item_tax_rate = data.tax_rate
 						integrated_tax_amount = net_amount * data.tax_rate/100
 				if key in invoice_map:
-				    	item_entry = invoice_map[key]
-					qty_temp = item_entry["net_amount"]
-					qty_count = item_entry["qty"]
-					integrated_tmp = item_entry["integrated_tax_amount_total"]
-					central_tmp = item_entry["central_tax_amount_total"]
-					state_tmp = item_entry["state_tax_amount_total"]
-					item_entry["net_amount"] = (qty_temp) + (net_amount)
-					item_entry["qty"] = (qty_count) + (qty)
-					item_entry["integrated_tax_amount_total"] = (integrated_tmp) + (integrated_tax_amount)
-					item_entry["central_tax_amount_total"] = (central_tmp) + (central_tax_amount)
-					item_entry["state_tax_amount_total"] = (state_tmp) + (state_tax_amount)
+				  item_entry = invoice_map[key]
+				  qty_temp = item_entry["net_amount"]
+				  qty_count = item_entry["qty"]
+				  integrated_tmp = item_entry["integrated_tax_amount_total"]
+				  central_tmp = item_entry["central_tax_amount_total"]
+				  state_tmp = item_entry["state_tax_amount_total"]
+				  item_entry["net_amount"] = (qty_temp) + (net_amount)
+				  item_entry["qty"] = (qty_count) + (qty)
+				  item_entry["integrated_tax_amount_total"] = (integrated_tmp) + (integrated_tax_amount)
+				  item_entry["central_tax_amount_total"] = (central_tmp) + (central_tax_amount)
+				  item_entry["state_tax_amount_total"] = (state_tmp) + (state_tax_amount)
 				else :
 
 					invoice_map[key] = frappe._dict({
@@ -1382,3 +1382,4 @@ def get_hsn_uqc_list(sales):
 							"item_code":item_code
 							})
 	return invoice_map
+

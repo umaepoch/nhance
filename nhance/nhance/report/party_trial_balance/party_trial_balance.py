@@ -18,7 +18,7 @@ def execute(filters=None):
 
 	balances_within_period = get_balances_within_period1(filters)
 	#print "balances_within_period----------------", balances_within_period
-	
+
 	final_result = []
 	opening_balance_map = {}
 	total_credit = 0.0
@@ -31,7 +31,7 @@ def execute(filters=None):
 	company_currency = frappe.db.get_value("Company", filters.company, "default_currency")
 	party_name_field = "{0}_name".format(frappe.scrub(filters.get('party_type')))
 	party_filters1 = {"name": filters.get("party")} if filters.get("party") else {}
-	parties1 = frappe.get_all(filters.get("party_type"), fields = ["name", party_name_field], 
+	parties1 = frappe.get_all(filters.get("party_type"), fields = ["name", party_name_field],
 		filters = party_filters1, order_by="name")
 	for opening_balance in opening_balances:
 		credit = 0.0
@@ -41,8 +41,8 @@ def execute(filters=None):
 		debit = opening_balance['credit']
 		if key not in opening_balance_map:
 			opening_balance_map[key] = frappe._dict({
-				"opening_credit": credit, 
-				"opening_debit": debit	   
+				"opening_credit": credit,
+				"opening_debit": debit
 				})
 
 	for balances in balances_within_period:
@@ -55,7 +55,7 @@ def execute(filters=None):
 		account = balances['account']
 		debit = balances['debit']
 		credit = balances['credit']
-		
+
 		if name in opening_balance_map:
 			balance_entry = opening_balance_map[name]
 			opening_debit, opening_credit = toggle_debit_credit(balance_entry.opening_debit, balance_entry.opening_credit)
@@ -66,13 +66,13 @@ def execute(filters=None):
 			balances['opening_debit'] = opening_debit
 
 		closing_debit, closing_credit = toggle_debit_credit(balances['opening_debit'] + debit, balances['opening_credit'] + credit)
-		
+
 		balances['closing_credit'] = closing_credit
 		balances['closing_debit'] = closing_debit
-		
+
 		total_credit = total_credit + credit
 		total_debit = total_debit + debit
-		
+
 		total_opening_debit = total_opening_debit + balances['opening_debit']
 		total_opening_credit = total_opening_credit + balances['opening_credit']
 
@@ -80,7 +80,7 @@ def execute(filters=None):
 		total_closing_credit = total_closing_credit + balances['closing_credit']
 
 		party_list.append(party)
-		
+
 		final_result.append([party, account, balances['opening_debit'], balances['opening_credit'], debit, credit, balances['closing_debit'], balances['closing_credit'], company_currency])
 
 	if filters.get("show_zero_values") == 1:
@@ -118,24 +118,24 @@ def get_balances_within_period1(filters):
 		return None
 
 def get_filter_conditions(filters,balance_type):
-	conditions = []
-	if filters.get("company"):
-		conditions.append("company=%(company)s")
-    	if balance_type == "":
-    		if filters.get("from_date"):
-			conditions.append("posting_date >=%(from_date)s")
-    		if filters.get("to_date"):
-			conditions.append("posting_date <=%(to_date)s")
-   	else:
-		if filters.get("from_date"):
-			conditions.append("posting_date <%(from_date)s")
-    	if filters.get("party_type"):
-		conditions.append("party_type =%(party_type)s")
-    	if filters.get("party"):
-		conditions.append("party =%(party)s")
-    	if filters.get("account"):
-		conditions.append("account =%(account)s")
-	return conditions
+  conditions = []
+  if filters.get("company"):
+    conditions.append("company=%(company)s")
+    if balance_type == "":
+      if filters.get("from_date"):
+        conditions.append("posting_date >=%(from_date)s")
+      if filters.get("to_date"):
+        conditions.append("posting_date <=%(to_date)s")
+  else:
+    if filters.get("from_date"):
+      conditions.append("posting_date <%(from_date)s")
+    if filters.get("party_type"):
+      conditions.append("party_type =%(party_type)s")
+    if filters.get("party"):
+      conditions.append("party =%(party)s")
+    if filters.get("account"):
+      conditions.append("account =%(account)s")
+  return conditions
 
 def toggle_debit_credit(debit, credit):
 	if flt(debit) > flt(credit):
@@ -237,3 +237,4 @@ def is_party_name_visible(filters):
 		show_party_name = True
 
 	return show_party_name
+

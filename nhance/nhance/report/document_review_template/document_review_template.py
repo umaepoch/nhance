@@ -17,8 +17,8 @@ def execute(filters=None):
 	doctype = filters.get("document_type")
 	docIds = filters.get("docIds")
 	doc_filter = filters.get("details")
-	print "doctype----",doctype
-	print "docids-----",docIds
+	#print "doctype----",doctype
+	#print "docids-----",docIds
 	review_outcome = filters.get("review_outcome")
 	if review_outcome == "Information/Read Only":
 		if doctype is not None and docIds is not None:
@@ -285,10 +285,10 @@ def date_details(doctype,docIdss):
 @frappe.whitelist()
 def cancel_and_amend_doc(doctype,docIdss,newdate):
 	stock_requisition = frappe.get_doc(doctype, docIdss)
-	print "stock_requisition------------",stock_requisition
+	#print "stock_requisition------------",stock_requisition
 	#stock_requisition.cancel()
 	#date = str(date).strftime('%Y-%m-%d')
-	print "date-----",newdate
+	#print "date-----",newdate
 	#date = datetime(date)
 	#date = datetime.datetime.strptime(date,"%Y-%m-%d")
 	#stock_requisition.delivery_date = date
@@ -304,7 +304,7 @@ def cancel_and_amend_doc(doctype,docIdss,newdate):
 	#print "new_doc--------",new_pr.delivery_date
 	new_pr.save()
 	sales_name = new_pr.name
-	print "name------------",sales_name
+	#print "name------------",sales_name
 	new_pr.submit()
 	frappe.msgprint(" Successfully created new Doc "+doctype+" as Amended "+sales_name+" !!")
 	if doctype == "Sales Order":

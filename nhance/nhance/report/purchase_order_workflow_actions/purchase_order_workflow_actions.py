@@ -74,22 +74,22 @@ def purchase_order_with_status(purchase_data):
 @frappe.whitelist()
 def workflow_details(purchase_name):
 	status = ""
-	print "purchase_name--------------",eval(purchase_name)
+	#print "purchase_name--------------",eval(purchase_name)
 	for purchase in eval(purchase_name):
 		status = purchase['status']
-	print "status--------------------",status
+	#print "status--------------------",status
 	#name = frappe.db.get_value("Customer", {"name": ("like Purchase Order%")})
 	#print "name---------",name
-        name1=frappe.db.sql("""select name from  `tabWorkflow` where name='Purchase Order' and is_active =1""",as_dict =1)
-	print "name---------",name1
+	name1=frappe.db.sql("""select name from  `tabWorkflow` where name='Purchase Order' and is_active =1""",as_dict =1)
+	#print "name---------",name1
 	name2 = name1[0].name
-	print "name2-----------------",name2
+	#print "name2-----------------",name2
 	name = "Purchase Order"
 	workflow = frappe.db.sql("""select * from `tabWorkflow Transition` where state = %s and parent = %s """,(status,name2), as_dict =1)
 	#role =  frappe.get_roles(frappe.session.user)
 	#print "role-----------",role
 	
-	print "workflow--------------",workflow
+	#print "workflow--------------",workflow
 	return workflow
 
 @frappe.whitelist()
@@ -102,17 +102,17 @@ def user_details(user,role):
 
 @frappe.whitelist()
 def ready_to_update_workflow_state(action,purchase_name):
-	print "action------------",action
+	#print "action------------",action
 	flag = 0
-	print "purchase_name-------------",purchase_name
+	#print "purchase_name-------------",purchase_name
 	now = datetime.now()
  
-	print "now =", now
+	#print "now =", now
 	# dd/mm/YY H:M:S
 	dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
-	print "date and time =--------------", dt_string
+	#print "date and time =--------------", dt_string
 	name1=frappe.db.sql("""select name from  `tabWorkflow` where name='Purchase Order' and is_active =1""",as_dict =1)
-	print "name---------",name1
+	#print "name---------",name1
 	name2 = name1[0].name	
 	for purchase in eval(purchase_name):
 		current_status = purchase['status']
@@ -121,10 +121,10 @@ def ready_to_update_workflow_state(action,purchase_name):
 		next_state = get_next_state[0].next_state
 		get_doc_status = frappe.db.sql("""select doc_status from `tabWorkflow Document State` where state = %s and parent=%s""",(get_next_state[0].next_state,name2), as_dict=1)
 		doc_status = get_doc_status[0].doc_status
-		print "doc_status -----------",str(doc_status)
+		#print "doc_status -----------",str(doc_status)
 		if str(doc_status) == "0":
 			flag = 1
-			print "zero status--------------------"
+			#print "zero status--------------------"
 			doc = frappe.get_doc("Purchase Order",current_purchase_name)
 			
 			update_statues = frappe.db.sql("""update `tabPurchase Order`  set workflow_state = %s , docstatus = %s, modified = %s where name = %s """, (next_state,doc_status,dt_string,current_purchase_name))
@@ -136,5 +136,5 @@ def ready_to_update_workflow_state(action,purchase_name):
 			update_status_items = frappe.db.sql("""update `tabPurchase Order Item`  set docstatus = %s , modified = %s where parent = %s """, (doc_status,dt_string,current_purchase_name))
 			#doc = frappe.get_doc("Purchase Order",current_purchase_name)
 			#doc.update()
-	print "flag --------------",flag
+	#print "flag --------------",flag
 	return flag

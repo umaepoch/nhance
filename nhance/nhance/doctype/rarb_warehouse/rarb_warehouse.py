@@ -50,11 +50,11 @@ def make_rarb_warehouse(source_name, target_doc=None, ignore_permissions=False):
 def get_higher_date(warehouse,start_date,name):
 	end_date = ""
 	start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-	print "start_date----------------",start_date
+	#print "start_date----------------",start_date
 	dates = frappe.db.sql("""select name,start_date from `tabRARB Warehouse` where warehouse = %s and start_date > %s and docstatus =1 order by start_date asc limit 1 """,(warehouse,start_date), as_dict = 1)
-	print "dates----------------",dates
+	#print "dates----------------",dates
 	dates_lower = frappe.db.sql("""select name,start_date from `tabRARB Warehouse` where warehouse = %s and start_date < %s and docstatus = 1 order by start_date desc limit 1 """,(warehouse,start_date), as_dict = 1)
-	print "dates_lower---------------",dates_lower
+	#print "dates_lower---------------",dates_lower
 	if dates_lower:
 		for date in dates:
 			end_date = start_date - timedelta(days=1)
@@ -148,18 +148,18 @@ def get_is_active_update(warehouse,start_date,name):
 		names = date.name
 		previous_start_date = date.start_date
 		previous_end_date = date.end_date
-		print "type(previous_start_date) ----------",type(previous_start_date)
-		print "type(previous_end_date) ----------",type(previous_end_date)
-		print "type(current_date) ----------",type(current_date)
+		#print "type(previous_start_date) ----------",type(previous_start_date)
+		#print "type(previous_end_date) ----------",type(previous_end_date)
+		#print "type(current_date) ----------",type(current_date)
 		if str(previous_start_date) <= current_date and str(previous_end_date) >= current_date:
 			#print "yeah date is greater then"
 			is_active = 1
 			#flag = True
-			print "is_active===============",is_active
+			#print "is_active===============",is_active
 			frappe.db.sql("""update `tabRARB Warehouse` set is_active = '"""+ str(is_active)+"""' where warehouse='"""+str(warehouse)+"""' and name = '"""+names+"""'""")
 		else :
 			is_active = 0
-			print "is_active===============",is_active
+			#print "is_active===============",is_active
 			#flag = False
 			frappe.db.sql("""update `tabRARB Warehouse` set is_active = '"""+ str(is_active)+"""' where warehouse='"""+str(warehouse)+"""' and name = '"""+names+"""'""")
 	return True
@@ -198,7 +198,7 @@ def get_update_doc_value(name,end_date):
 @frappe.whitelist()
 def get_rarb_warehouse(warehouse):
 	rarb_warehouse = frappe.db.sql("""select warehouse from `tabRARB Warehouse` where warehouse = '"""+warehouse+"""' and is_active =1 and docstatus =1""", as_dict =1)
-	print "rarb_warehouse------------",rarb_warehouse
+	#print "rarb_warehouse------------",rarb_warehouse
 	if rarb_warehouse:
 		return rarb_warehouse
 	else:

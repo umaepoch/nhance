@@ -20,7 +20,7 @@ sys.setdefaultencoding('utf-8')
 
 def execute(filters=None):
 	global summ_data
-	global purchase_invoice_id 
+	global purchase_invoice_id
 	global end_date
 	global columns
 	global start_date
@@ -74,7 +74,7 @@ def execute(filters=None):
 				elif "CESS" in account_head:
 					total = purchase.tax_amount
 					cess_total = cess_total+total
-	
+
 		total_net_value = 0.0
 		ex_cess_total = 0.0
 		purchase_d = purchase_invoice_data()
@@ -102,7 +102,7 @@ def execute(filters=None):
 					if "CESS" in account_head:
 						total = no.tax_amount
 						nx_cess_total = nx_cess_total+total
-				
+
 		reverse_net_total = 0.0
 		tx_igst_total = 0.0
 		tx_sgst_total = 0.0
@@ -153,8 +153,8 @@ def execute(filters=None):
 				elif "CESS" in account_head:
 					total = tax.tax_amount
 					rv_cess_total = tx_cess_total+total
-		
-		
+
+
 		grand_total_net = total_net+reverse_total+reverse_net_total+no_tax_total+total_net_value
 		grand_total_igst = igst_total+rv_igst_total+tx_igst_total+igst_total
 		grand_total_cgst = cgst_total+rv_cgst_total+tx_cgst_total+cgst_total
@@ -164,12 +164,12 @@ def execute(filters=None):
 
 		summ_data.append([" Outward Taxable  supplies  (zero rated )",total_net_value, "0" , "0" , "0" ,ex_cess_total ])
 
-	
+
 		summ_data.append([" Other Outward Taxable  supplies (Nil rated, exempted)",no_tax_total, "0" , "0" , "0" ,nx_cess_total ])
-	
+
 		summ_data.append([" Inward supplies (liable to reverse charge) ",reverse_total,  rv_igst_total,rv_cgst_total,rv_sgst_total ,rv_cess_total,grand_total_cgst,grand_total_sgst,grand_total_cess])
-	
-	
+
+
 		summ_data.append([" Non-GST Outward supplies",reverse_net_total, tx_igst_total,tx_cgst_total ,tx_sgst_total ,tx_cess_total])
 		summ_data.append(["","",""])
 		summ_data.append(["Total",grand_total_net,grand_total_igst,grand_total_cgst,grand_total_sgst,grand_total_cess])
@@ -296,7 +296,7 @@ def execute(filters=None):
 			net_total = isd.net_total
 			isd_net_total = isd_net_total + net_total
 			tax_isd_details = isd_itc_taxs(invoice_id)
-			print "tax_isd_details----------",tax_isd_details
+			#print "tax_isd_details----------",tax_isd_details
 			for tax_isd in tax_isd_details:
 				account_head = tax_isd.account_head
 				if "CGST" in account_head:
@@ -327,7 +327,7 @@ def execute(filters=None):
 
 		grand_total_value = float(total_taxable_value)+float(isd_net_total)+float(itc_net_total)+float(no_compos_total)+float(reverse_total)+float(sr_total+total_net)
 		grand_total_igst = float(integrated_tax) + float(igst_isd_total) + float(igst_itc_total) + float(cm_igst_total) +float(rv_igst_total)+float(sr_igst_total)+float(tx_igst_total)
-		grand_total_cgst = float(central_tax)+ float(cgst_isd_total) + float(cgst_itc_total) + float(cm_cgst_total) +float(rv_cgst_total) 
+		grand_total_cgst = float(central_tax)+ float(cgst_isd_total) + float(cgst_itc_total) + float(cm_cgst_total) +float(rv_cgst_total)
 		grand_total_sgst = float(state_ut_tax) + float(sgst_isd_total) + float(sgst_itc_total) + float(cm_sgst_total) +float(rv_sgst_total)
 		grand_total_cess = cess + cess_isd_total + itc_cess_total + cm_cess_total +rv_cess_total + sr_cess_total +tx_cess_total
 
@@ -344,7 +344,7 @@ def execute(filters=None):
 		summ_data.append([" Ineligible ITC","",""])
 		summ_data.append([" As per section 17(5) of CGST//SGST Act",no_compos_total,cm_igst_total,cm_cgst_total,cm_sgst_total,cm_cess_total])
 		summ_data.append(["Others",0,0,0,0])
-	
+
 	elif type_of_taxes =="exempt, Nil-rated and non-GST":
 		columns=get_columns2()
 		gst_state_number = 0
@@ -398,7 +398,7 @@ def execute(filters=None):
 			central_tax = int_details.central_tax
 			state_ut_tax = int_details.state_ut_tax
 			cess = int_details.cess
-			summ_data.append(["Interest",integrated_tax,central_tax,state_ut_tax,cess])		
+			summ_data.append(["Interest",integrated_tax,central_tax,state_ut_tax,cess])
 
 	elif type_of_taxes == "State Supplier Taxes":
 		columns=get_columns3()
@@ -432,7 +432,7 @@ def execute(filters=None):
 						tax_amount = paymnet_data.tax_amount
 						customer_individual_tax_total = customer_individual_tax_total + tax_amount
 				sale_composite = sale_invoice_composite(state)
-		
+
 				sales_amount = get_total_amount(sale_composite)
 				if sales_amount is not None:
 					for net_amount in sales_amount:
@@ -449,7 +449,7 @@ def execute(filters=None):
 						paym_details = comp_payment[paym]
 						compo_tax_amount = paym_details.tax_amount
 						composite_tax_total = composite_tax_total +compo_tax_amount
-				else: 
+				else:
 					compo_tax_amount = 0.0
 					composite_tax_total = composite_tax_total +compo_tax_amount
 				sales_uin = sales_uin_holder(state)
@@ -469,7 +469,7 @@ def execute(filters=None):
 						uin_details = payment_uin_tax[uin]
 						uin_tax_amount = uin_details.tax_amount
 						customer_uin_tax_total = customer_uin_tax_total + uin_tax_amount
-				else: 
+				else:
 					uin_tax_amount = 0.0
 					customer_uin_tax_total = customer_uin_tax_total + uin_tax_amount
 				summ_data.append([state,net_total,tax_amount,composit_amount,compo_tax_amount,uin_net_total,uin_tax_amount])
@@ -493,11 +493,11 @@ def purchase_invoice_data():
 
 def purchasse_taxes(ids):
 	purchase_data = frappe.db.sql("""select parent,account_head,tax_amount from `tabPurchase Taxes and Charges` where parent = %s; """, (ids), as_dict=1)
-	
+
 	return purchase_data
 def not_taxes_charges():
 	taxes_charges = frappe.db.sql("""select name, net_total from `tabPurchase Invoice` where posting_date >= %s AND posting_date <= %s AND name NOT IN (select parent from `tabPurchase Taxes and Charges` where account_head IN ('IGST - BBC','SGST - BBC','CGST - BBC'));""",(start_date, end_date), as_dict=1)
-	
+
 	return taxes_charges
 
 def no_taxes_gst(name):
@@ -511,7 +511,7 @@ def reverse_charges():
 def taxs_for_reverse(ids):
 	taxes_for = frappe.db.sql("""select parent,account_head,tax_amount from `tabPurchase Taxes and Charges` where parent = %s; """, (ids), as_dict=1)
 	return taxes_for
-		
+
 def purchase_revers():
 	taxes_and_charge = frappe.db.sql("""select name, net_total from `tabPurchase Invoice` where reverse_charge = 'Y' AND posting_date >= %s AND posting_date <= %s;""", (start_date, end_date), as_dict=1)
 	return taxes_and_charge
@@ -519,13 +519,13 @@ def purchase_revers():
 def reverse_taxes_charges(ids):
 	taxs_charges = frappe.db.sql("""select parent,account_head,tax_amount from `tabPurchase Taxes and Charges` where parent = %s; """, (ids), as_dict=1)
 	return taxs_charges
-	
+
 def get_columns():
 	return [
-		_("Nature of Supplies") + "::350", 
+		_("Nature of Supplies") + "::350",
 		_("Total Taxable value ") + "::180",
 		_("Integrated Tax ") + "::120",
-		_("Central Tax") + "::120", 
+		_("Central Tax") + "::120",
 		_("State/UT Tax ") + "::120",
 		_("Cess ") + "::120"
 	]
@@ -533,7 +533,7 @@ def get_columns():
 @frappe.whitelist()
 def for_gstin():
 	purchase_invoice = frappe.db.sql ("""select company_gstin from `tabPurchase Invoice""",as_dict = 1)
-	
+
 	return purchase_invoice
 '''
 def purchase_invoice_for():
@@ -586,10 +586,10 @@ def isd_itc_taxs(invoice_id):
 
 def get_columns1():
 	return [
-		_("Details") + "::350", 
+		_("Details") + "::350",
 		_("Total Taxable value ") + "::180",
 		_("Integrated Tax ") + "::120",
-		_("Central Tax") + "::120", 
+		_("Central Tax") + "::120",
 		_("State/UT Tax ") + "::120",
 		_("Cess ") + "::120"
 	]
@@ -597,16 +597,16 @@ def get_columns1():
 def purchase_invoice_tax():
 	purchase = frappe.db.sql("""select name,net_total,supplier_address,shipping_address,posting_date from `tabPurchase Invoice` where supplier IN (select name from `tabSupplier` where india_gst_supplier_status IN ("Composite Dealer","Exempt","Nil Rated")) AND invoice_type = "Regular"AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s
 """, (start_date, end_date), as_dict=1)
-	
+
 	return purchase
 def address(supplier_address):
 	addrs = frappe.db.sql("""select gst_state_number,name from `tabAddress` where name = %s""",(supplier_address), as_dict = 1)
-	
+
 	return addrs
-	
+
 def shipping_address(company_address):
 	company = frappe.db.sql("""select gst_state_number,name from `tabAddress` where name = %s""",(company_address), as_dict = 1)
-	
+
 	return company
 def purchase_detail_ex():
 	purchase_de = frappe.db.sql("""select name,net_total,supplier_address from `tabPurchase Invoice` where supplier IN (select name from `tabSupplier` where india_gst_supplier_status IN ("Non-GST"))AND invoice_type = "Regular"AND eligibility_for_itc = "ineligible" AND posting_date >= %s AND posting_date <= %s
@@ -619,10 +619,10 @@ def address_detail(supplier_address):
 
 def get_columns2():
 	return [
-		_("Nature of Supplies") + "::550", 
+		_("Nature of Supplies") + "::550",
 		_("Inter-State supplies ") + "::180",
 		_("Intra-state supplies ") + "::120"
-		
+
 	]
 
 def sales_invoice():
@@ -662,8 +662,8 @@ def get_unique_state_list(items_list):
 
 			else:
 				items_state[key] = frappe._dict({
-						"place_of_supply": place_of_supply, 
-						"net_total": net_total, 
+						"place_of_supply": place_of_supply,
+						"net_total": net_total,
 						})
 		return items_state
 def get_unique_tax_amount(payment):
@@ -680,10 +680,10 @@ def get_unique_tax_amount(payment):
 
 			else:
 				payment_tax[key] = frappe._dict({
-						"place_of_supply": place_of_supply, 
-						"tax_amount": tax_amount, 
+						"place_of_supply": place_of_supply,
+						"tax_amount": tax_amount,
 						})
-		
+
 		return payment_tax
 
 def get_total_amount(sale_composite):
@@ -700,8 +700,8 @@ def get_total_amount(sale_composite):
 
 			else:
 				composite_map[key] = frappe._dict({
-						"place_of_supply": place_of_supply, 
-						"net_total": net_total, 
+						"place_of_supply": place_of_supply,
+						"net_total": net_total,
 						})
 		return composite_map
 
@@ -719,10 +719,10 @@ def get_tax_amount_com(composit_payment):
 
 			else:
 				composite_tax[key] = frappe._dict({
-						"place_of_supply": place_of_supply, 
-						"tax_amount": tax_amount, 
+						"place_of_supply": place_of_supply,
+						"tax_amount": tax_amount,
 						})
-		
+
 		return composite_tax
 
 def get_uin_amount(sales_uin):
@@ -739,10 +739,10 @@ def get_uin_amount(sales_uin):
 
 			else:
 				uin_map[key] = frappe._dict({
-						"place_of_supply": place_of_supply, 
-						"net_total": net_total, 
+						"place_of_supply": place_of_supply,
+						"net_total": net_total,
 						})
-		
+
 		return uin_map
 
 def get_tax_for_uin(payment_uin):
@@ -759,8 +759,8 @@ def get_tax_for_uin(payment_uin):
 
 			else:
 				uin_tax_map[key] = frappe._dict({
-						"place_of_supply": place_of_supply, 
-						"tax_amount": tax_amount, 
+						"place_of_supply": place_of_supply,
+						"tax_amount": tax_amount,
 						})
 		return uin_tax_map
 
@@ -773,16 +773,17 @@ def get_columns3():
 		_("Integrated Tax(Composition Persons) ") + "::250",
 		_("Total Taxable value(UIN holders)") + "::250",
 		_("Integrated Tax(UIN holders) ") + "::230"
-		
+
 	]
 def get_columns4():
 	return [
-		_("Description") + "::150", 
+		_("Description") + "::150",
 		_("Integrated Tax ") + "::120",
-		_("Central Tax") + "::120", 
+		_("Central Tax") + "::120",
 		_("State/UT Tax ") + "::120",
 		_("Cess ") + "::120"
 	]
 def intrest_details():
 	intrest_data = frappe.db.sql("""select taxable_value,integrated_tax,central_tax,state_ut_tax,cess from `tabGSTR 3B INTEREST AND RULES`""",as_dict = 1)
 	return intrest_data
+

@@ -24,18 +24,18 @@ def execute(filters=None):
 	if filters.get("company"):
 		company = filters.get("company")
 
-	print "entering under execute method----"
+	#print "entering under execute method----"
 
 	columns = get_columns()
 	po_details = fetching_po_details()
 
 	if po_details:
-		print "po_details--------", po_details
+		#print "po_details--------", po_details
 		for po_data in po_details:
 			if po_data['pending_qty'] > 0:
 				sum_data.append([po_data['name'], po_data['item_code'], po_data['ordered_qty'], po_data['received_qty'], po_data['pending_qty'], po_data['warehouse'], po_data['stock_uom'], po_data['supplier'], po_data['rate']])
-					 					     					    					
-	
+
+
 	return columns, sum_data
 
 
@@ -58,7 +58,7 @@ def get_report_data():
 	report_data = []
 	details = {}
 	for rows in sum_data:
-		print "row-----", rows
+		#print "row-----", rows
 		po = rows[0]
 		warehouse = rows[5]
 		item = rows[1]
@@ -94,7 +94,7 @@ def make_purchase_receipt():
 		}
 
 	for rows in sum_data:
-		print "rows------", rows
+		#print "rows------", rows
 		purchase_receipt_items_json =	{
 			"item_code": rows[1],
 			"qty": rows[4],
@@ -112,7 +112,7 @@ def make_purchase_receipt():
 	ret = doc.doctype
 	if ret:
 		frappe.msgprint("Purchase Receipt is created successfully : "+doc.name)
-	
+
 
 def get_columns():
 	"""return columns"""
@@ -124,3 +124,4 @@ def get_columns():
 		_("Pending Quantity")+"::100"
 		 ]
 	return columns
+

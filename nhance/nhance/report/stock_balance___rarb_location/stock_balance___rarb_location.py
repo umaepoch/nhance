@@ -26,11 +26,11 @@ def execute(filters=None):
 	iwb_map = get_item_warehouse_map(filters, sle)
 	item_map = get_item_details(items, sle, filters)
 	item_reorder_detail_map = get_item_reorder_details(item_map.keys())
-	print "iwb_map----------------",iwb_map
+	#print "iwb_map----------------",iwb_map
 	data = []
 	conversion_factors = []
 	rarb_voucher = get_rarb_vouchers(sle)
-	print "rarb_voucher---------------",rarb_voucher
+	#print "rarb_voucher---------------",rarb_voucher
 	for (company, item, warehouse) in sorted(iwb_map):
 		if item_map.get(item):
 			qty_dict = iwb_map[(company, item, warehouse)]
