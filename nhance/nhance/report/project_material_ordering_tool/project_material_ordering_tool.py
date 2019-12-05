@@ -49,7 +49,7 @@ def execute(filters=None):
 					item_code = sreq_dict['item_code']
 					#jyoti
 					fulfilled_qty = sreq_dict['fulFilledQty']
-					print "fulfilled_qty---",fulfilled_qty#
+					#print "fulfilled_qty---",fulfilled_qty#
 
 					warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
 					reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
@@ -57,7 +57,7 @@ def execute(filters=None):
 					#rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
 					#jyoti added
 					rw_pb_cons_qty = fulfilled_qty
-					print "rw_pb_cons_qty--",rw_pb_cons_qty#
+					#print "rw_pb_cons_qty--",rw_pb_cons_qty#
 
 					sreq_qty_in_stock_uom = sreq_dict['sreq_qty_in_stock_uom']
 					qty_due_to_transfer = sreq_qty_in_stock_uom - rw_pb_cons_qty
@@ -100,7 +100,7 @@ def execute(filters=None):
 						need_to_be_order = round(need_to_be_order , 2)
 					else:
 						need_to_be_order = 0
-					qty_in_poum = need_to_be_order / sreq_dict['conversion_factor']
+					qty_in_poum = float(need_to_be_order )/ float(sreq_dict['conversion_factor'])
 					qty_in_poum = round(qty_in_poum , 4)
 					poum_qty = sreq_dict['qty_in_po_uom']
 					poum_qty = round(poum_qty , 4)
@@ -768,7 +768,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 		doc.update(outerJson_Transfer)
 		doc.save()
 		
-		print "doc.name 1------------",doc.name
+		#print "doc.name 1------------",doc.name
 		doc_name_created.append(doc.name)
 		#msgDisplayAfterCreatePurchaseOrder(doc.name)
 		
@@ -842,10 +842,10 @@ def get_report_data(project_filter,swh_filter):
 			#rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
 			#jyoti
 			fulfilled_qty = sreq_dict['fulFilledQty']
-			print "fulfilled_qty---",fulfilled_qty
+			#print "fulfilled_qty---",fulfilled_qty
 			#jyoti added
 			rw_pb_cons_qty = fulfilled_qty
-			print "rw_pb_cons_qty--",rw_pb_cons_qty
+			#print "rw_pb_cons_qty--",rw_pb_cons_qty
 			purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project_filter,rows[2])
 			purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project_filter,rows[2])
 			
@@ -880,7 +880,7 @@ def get_report_data(project_filter,swh_filter):
 				need_to_be_order = 0
 			qty_in_poum = need_to_be_order / rows[10]
 			qty_in_poum = round(qty_in_poum , 4)
-			print "qty_in_poum-------------------",qty_in_poum
+			#print "qty_in_poum-------------------",qty_in_poum
 			
 		#print "row-----", rows
 		sreq_no = rows[0]
@@ -1001,9 +1001,9 @@ def get_purchase_order_with_one_docstatus(project,item_code):
 @frappe.whitelist()
 def check_and_update(data,sreq_no):
 	
-	print "sreq_no------------------",sreq_no
+	#print "sreq_no------------------",sreq_no
 	#print "supplier_items-----------------",supplier_items
-	print "data---------------",data
+	#print "data---------------",data
 	items_List = json.loads(data)
 	for items in items_List:
 		item_code = items['item_code']
