@@ -37,6 +37,7 @@ def execute(filters=None):
 		if items_map:
 			for (sreq_no) in sorted(items_map):
 				data = items_map[sreq_no]
+				print "final_debug data:",data
 				for sreq_dict in data:
 					#print "sreq_dict-----", sreq_dict['sreq_no']
 					#print "bom-----", sreq_dict['bom']
@@ -49,7 +50,7 @@ def execute(filters=None):
 					item_code = sreq_dict['item_code']
 					#jyoti
 					fulfilled_qty = sreq_dict['fulFilledQty']
-					#print "fulfilled_qty---",fulfilled_qty#
+					print "fulfilled_qty---",fulfilled_qty
 
 					warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
 					reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
@@ -57,7 +58,7 @@ def execute(filters=None):
 					#rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
 					#jyoti added
 					rw_pb_cons_qty = fulfilled_qty
-					#print "rw_pb_cons_qty--",rw_pb_cons_qty#
+					print "rw_pb_cons_qty--",rw_pb_cons_qty
 
 					sreq_qty_in_stock_uom = sreq_dict['sreq_qty_in_stock_uom']
 					qty_due_to_transfer = sreq_qty_in_stock_uom - rw_pb_cons_qty
@@ -93,21 +94,32 @@ def execute(filters=None):
 						report_qty_that_can_be_transfer = 0
 
 					to_be_order = float(sreq_qty_in_stock_uom) -float(quantities_are_covered) -  float(report_qty_that_can_be_transfer)
-					
+					print "Type of to_be_order",type(to_be_order)
+					print "to_be_order",to_be_order
+
 					need_to_be_order = 0.0
 					if to_be_order > 0:
 						need_to_be_order = to_be_order
 						need_to_be_order = round(need_to_be_order , 2)
 					else:
 						need_to_be_order = 0
-					print  "item_code",sreq_dict['item_code']
+					print "item_code",sreq_dict['item_code']
+
 					print "conversion_factor",sreq_dict['conversion_factor']
-					qty_in_poum = float(need_to_be_order )/ float(sreq_dict['conversion_factor'])
+					print "Type of conversion_factor",type(sreq_dict['conversion_factor'])
+
+					print "need_to_be_order",need_to_be_order
+					print "Type of need_to_be_order", (type(need_to_be_order))
+  
+					conversion_fact = sreq_dict['conversion_factor']
+					qty_in_poum = need_to_be_order / conversion_fact
 					qty_in_poum = round(qty_in_poum , 4)
+					print "qty_in_poum",qty_in_poum
 					poum_qty = sreq_dict['qty_in_po_uom']
 					poum_qty = round(poum_qty , 4)
 					#print "report_qty_that_can_be_transfer------------",report_qty_that_can_be_transfer
 					#print "mt_qty------------------",mt_qty
+					print "final_debug inside for loop sum_data :",sum_data
 					sum_data.append([
 					sreq_dict['sreq_no'],
 					project,
