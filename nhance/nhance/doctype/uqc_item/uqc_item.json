@@ -1,0 +1,50 @@
+{
+ "creation": "2019-08-05 10:37:34.868316",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "quantity",
+  "quantity_type",
+  "uqc_code",
+  "erpnext_uom_link"
+ ],
+ "fields": [
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "quantity_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Quantity Type"
+  },
+  {
+   "fieldname": "uqc_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "UQC Code"
+  },
+  {
+   "fieldname": "erpnext_uom_link",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "ERPNext UOM Link",
+   "options": "UOM"
+  }
+ ],
+ "istable": 1,
+ "modified": "2019-08-05 10:42:35.504757",
+ "modified_by": "Administrator",
+ "module": "Nhance",
+ "name": "UQC Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

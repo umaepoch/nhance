@@ -1,0 +1,52 @@
+{
+ "creation": "2019-08-28 09:58:31.395861",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "pch_reusable_scrap_account",
+  "pch_role_pull_reusable_scrap",
+  "pch_force_source_wh_manufacture"
+ ],
+ "fields": [
+  {
+   "fieldname": "pch_reusable_scrap_account",
+   "fieldtype": "Link",
+   "label": "Reusable Scrap Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "pch_role_pull_reusable_scrap",
+   "fieldtype": "Link",
+   "label": "Role Authorized To Pull Short Raw Material",
+   "options": "Role"
+  },
+  {
+   "default": "0",
+   "fieldname": "pch_force_source_wh_manufacture",
+   "fieldtype": "Check",
+   "label": "Force Source Warehouse For Manufacturing Entries"
+  }
+ ],
+ "issingle": 1,
+ "modified": "2019-08-28 09:58:31.395861",
+ "modified_by": "Administrator",
+ "module": "Nhance",
+ "name": "Nhance Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

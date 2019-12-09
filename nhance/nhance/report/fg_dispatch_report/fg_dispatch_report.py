@@ -17,58 +17,58 @@ import sys
 
 sum_data = []
 def execute(filters=None):
-	global sum_data
-	columns = []
-	sum_data = []
-	company = ""
-        sales_order=""
-	data_rate = []
-	if filters.get("sales_order"):
-                company = filters.get("company")
-		sales_order = filters.get("sales_order")
-	#print "sales_order=============",sales_order
+  global sum_data
+  columns = []
+  sum_data = []
+  company = ""
+  sales_order=""
+  data_rate = []
+  if filters.get("sales_order"):
+    company = filters.get("company")
+    sales_order = filters.get("sales_order")
+    #print "sales_order=============",sales_order
 
 
-	#print "entering under execute method----"
+  #print "entering under execute method----"
 
-	columns = get_columns()
-	po_details = fetching_po_details(sales_order)
+  columns = get_columns()
+  po_details = fetching_po_details(sales_order)
 
-	#if po_details:
-		#print "so_details--------", po_details
-	for po_data in po_details:
-		ordered_qty = po_data["ordered_qty"]
-		delivered_qty = po_data["delivered_qty"]
-		pending_qty =ordered_qty - delivered_qty
-		actual_qty = po_data['qty']
-		item_code = po_data['item_code']
-		#warehouse = count(po_data['warehouse'])
-                #actual_qty =""
-                #print "GOOOOOOOOOOOOOOD--------",warehouse
-		Shortage_Qty=actual_qty -pending_qty
-                #print "po_data['qty']--------", po_data['qty']
-		if pending_qty > 0  and actual_qty>0:
-			data_rate.append(item_code)
+  #if po_details:
+  #print "so_details--------", po_details
+  for po_data in po_details:
+    ordered_qty = po_data["ordered_qty"]
+    delivered_qty = po_data["delivered_qty"]
+    pending_qty =ordered_qty - delivered_qty
+    actual_qty = po_data['qty']
+    item_code = po_data['item_code']
+    #warehouse = count(po_data['warehouse'])
+    #actual_qty =""
+    #print "GOOOOOOOOOOOOOOD--------",warehouse
+    Shortage_Qty=actual_qty -pending_qty
+    #print "po_data['qty']--------", po_data['qty']
+    if pending_qty > 0  and actual_qty>0:
+      data_rate.append(item_code)
 
-			#print "data_rate==============", data_rate
-     			#if item_code not in data_rate:
-			#if actual_qty > 0:
-			if item_code   in data_rate and actual_qty > 0:
-				sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'],
-					po_data['delivered_qty'], pending_qty, po_data['warehouse'],actual_qty,Shortage_Qty,
-					po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
-                        ])
-		else:
-			if actual_qty==0:
-				if item_code  not in data_rate :
-					data_rate.append(item_code)
-					#print "data rate============",data_rate
-					sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'],
-					po_data['delivered_qty'], pending_qty,"",actual_qty,Shortage_Qty,
-					po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
-                        ])
+      #print "data_rate==============", data_rate
+    #if item_code not in data_rate:
+    #if actual_qty > 0:
+    if item_code   in data_rate and actual_qty > 0:
+      sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'],
+      po_data['delivered_qty'], pending_qty, po_data['warehouse'],actual_qty,Shortage_Qty,
+      po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
+      ])
+    else:
+      if actual_qty==0:
+        if item_code  not in data_rate :
+          data_rate.append(item_code)
+          #print "data rate============",data_rate
+          sum_data.append([ po_data['item_code'],po_data['item_name'], po_data['ordered_qty'],
+          po_data['delivered_qty'], pending_qty,"",actual_qty,Shortage_Qty,
+          po_data['stock_qty'], po_data['stock_uom'], po_data['supplier'],   po_data['rate']
+          ])
 
-	return columns, sum_data
+  return columns, sum_data
 
 def fetching_po_details(sales_order):
 	po_data = frappe.db.sql("""select

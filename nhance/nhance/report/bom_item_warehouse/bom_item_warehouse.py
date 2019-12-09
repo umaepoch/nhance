@@ -216,13 +216,14 @@ def get_columns():
 def get_conditions(filters):
 	conditions = ""
 	if filters.get("company"):
-		conditions += " and bo.company = '%s'" % frappe.db.escape(filters.get("company"), percent=False)
-
+		#print ("-----------------",filters.get("company"))
+		conditions += ' and bo.company = "%s"' % frappe.db.escape(filters.get("company"), percent=False)
+		#print ("-----------------",filters.get("company"))
 	if filters.get("item_code"):
 		conditions += " and bi.item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
 	if filters.get("for") == "BOM":
 		if filters.get("docIds"):
-			conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("docIds"), percent=False)
+			conditions += ' and bi.parent = "%s"' % frappe.db.escape(filters.get("docIds"), percent=False)
 	if filters.get("for") == "Sales Order":
 		hidden_bom = filters.get("hidden_bom")
 		if hidden_bom is not "" and hidden_bom is not None:
@@ -230,7 +231,7 @@ def get_conditions(filters):
 			if len(bom_list)==1:
 				for bom in bom_list:
 					#print "bom::", bom
-					conditions += " and bi.parent = '%s'" % frappe.db.escape(bom, percent=False)
+					conditions += ' and bi.parent = "%s"' % frappe.db.escape(bom, percent=False)
 			else:
 				total_boms = ""
 				for bom in bom_list:
@@ -247,20 +248,23 @@ def get_conditions(filters):
 					conditions += " and bi.parent = 'null'"
 	if filters.get("for") == "Project":
 		#print filters.get("master_bom_hidden")
-		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("master_bom_hidden"), percent=False)
+		conditions += ' and bi.parent = "%s"' % frappe.db.escape(filters.get("master_bom_hidden"), percent=False)
 
 	if filters.get("for") == "Production Order":
 		#print filters.get("production_bom_hidden")
 		conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("production_bom_hidden"), percent=False)
+	#print ("---------conditions-----selected------------::", conditions)
 	return conditions
 
 def get_sales_order_entries(filters):
 	conditions = get_conditions(filters)
-	#print "---------conditions::", conditions
+	#print ("---------conditions-----------------::", conditions)
+
 	if filters.get("include_exploded_items") == "Y":
-		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
+
+		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = 1 %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
 	else:
-		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1" %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
+		return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code as bi_item, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = 1 %s order by bo.name, bi.item_code""" % conditions, as_dict=1)
 
 def get_item_warehouse_map(filters):
 	iwb_map = {}

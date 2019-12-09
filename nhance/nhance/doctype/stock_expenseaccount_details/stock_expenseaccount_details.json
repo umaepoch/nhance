@@ -1,0 +1,36 @@
+{
+ "creation": "2019-08-28 10:07:12.253807",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "purpose",
+  "expense_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Purpose"
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Expense Account",
+   "options": "Account"
+  }
+ ],
+ "istable": 1,
+ "modified": "2019-08-28 10:07:28.058697",
+ "modified_by": "Administrator",
+ "module": "Nhance",
+ "name": "Stock ExpenseAccount Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

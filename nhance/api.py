@@ -190,111 +190,110 @@ def set_missing_values(source, target_doc):
 
 @frappe.whitelist()
 def make_quotation(source_name, target_doc=None):
-	boq_record = frappe.get_doc("Bill of Quantity", source_name)
-	set_bom_level(boq_record)
-	get_assembly_price(source_name)
+  boq_record = frappe.get_doc("Bill of Quantity", source_name)
+  set_bom_level(boq_record)
+  get_assembly_price(source_name)
 
-	company = boq_record.company
+  company = boq_record.company
 
-	boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boqi.immediate_parent_item, boq.customer as customer, boqi.qty as qty, boqi.sub_assembly_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and boqi.print_in_quotation = '1'""" , (boq_record.name), as_dict=1)
+  boq_record_items = frappe.db.sql("""select boqi.item_code as boq_item, boqi.immediate_parent_item, boq.customer as customer, boqi.qty as qty, boqi.sub_assembly_price as amount, boqi.markup as markup, boqi.print_in_quotation as piq, boqi.list_in_boq as list_in_boq, boqi.next_exploded as next_exploded from `tabBill of Quantity` boq, `tabBill of Quantity Item` boqi where boqi.parent = %s and boq.name = boqi.parent and boqi.print_in_quotation = '1'""" , (boq_record.name), as_dict=1)
 
-	if boq_record_items:
-		newJson = {
-				"company": company,
-				"doctype": "Quotation",
-				"customer": boq_record.customer,
-				"boq": source_name,
-				"items": [
-				]
-				}
+  if boq_record_items:
+    newJson = {
+        "company": company,
+        "doctype": "Quotation",
+        "customer": boq_record.customer,
+        "boq": source_name,
+        "items": [
+        ]
+        }
 
-		for record in boq_record_items:
-			item = record.boq_item
-			qty = record.qty
-			piq = record.piq
-			lib = record.list_in_boq
-			next_exploded = record.next_exploded
-			markup = record.markup
-			if item:
-				item_record = frappe.get_doc("Item", item)
+    for record in boq_record_items:
+      item = record.boq_item
+      qty = record.qty
+      piq = record.piq
+      lib = record.list_in_boq
+      next_exploded = record.next_exploded
+      markup = record.markup
+      if item:
+        item_record = frappe.get_doc("Item", item)
 
-				innerJson =	{
-					"doctype": "Quotation Item",
-					"item_code": item,
-					"description": item_record.description,
-					"uom": item_record.stock_uom,
-					"qty": qty,
-					"rate": record.amount,
-					"display_in_quotation": piq,
-					"list_in_boq": lib,
-					"next_exploded": next_exploded,
-					"grouping": record.immediate_parent_item
+        innerJson =	{
+        "doctype": "Quotation Item",
+        "item_code": item,
+        "description": item_record.description,
+        "uom": item_record.stock_uom,
+        "qty": qty,
+        "rate": record.amount,
+        "display_in_quotation": piq,
+        "list_in_boq": lib,
+        "next_exploded": next_exploded,
+        "grouping": record.immediate_parent_item
 
-					}
+        }
 
-				newJson["items"].append(innerJson)
+        newJson["items"].append(innerJson)
 
-		doc = frappe.new_doc("Quotation")
-		doc.update(newJson)
-		doc.save()
-		frappe.db.commit()
-		docname = doc.name
-		frappe.msgprint(_("Quotation Created - " + docname))
+    doc = frappe.new_doc("Quotation")
+    doc.update(newJson)
+    doc.save()
+    frappe.db.commit()
+    docname = doc.name
+    frappe.msgprint(_("Quotation Created - " + docname))
 
-	else:
-		boq_main_item = frappe.db.sql("""select boq.item as boq_item, boq.customer as customer from `tabBill of Quantity` boq where boq.name = %s""" , (boq_record.name), as_dict=1)
+  else:
+    boq_main_item = frappe.db.sql("""select boq.item as boq_item, boq.customer as customer from `tabBill of Quantity` boq where boq.name = %s""" , (boq_record.name), as_dict=1)
 
-		if boq_main_item:
-			newJson = {
-				"company": company,
-				"doctype": "Quotation",
-				"customer": boq_record.customer,
-				"boq": source_name,
-				"items": [
-				]
-			}
+    if boq_main_item:
+      newJson = {
+        "company": company,
+        "doctype": "Quotation",
+        "customer": boq_record.customer,
+        "boq": source_name,
+        "items": [
+        ]
+        }
 
-			tot_ass_price = flt(frappe.db.sql("""select sum(sub_assembly_price)
-				from `tabBill of Quantity Item` boqi
-				where boqi.parent=%s""",
-				(boq_record.name))[0][0])
-			if tot_ass_price == 0:
+      tot_ass_price = flt(frappe.db.sql("""select sum(sub_assembly_price)
+                            from `tabBill of Quantity Item` boqi
+                            where boqi.parent=%s""",
+                            (boq_record.name))[0][0])
+      if tot_ass_price == 0:
+        tot_ass_price = flt(frappe.db.sql("""select sum(selling_price * qty)
+        from `tabBill of Quantity Item` boqi
+        where boqi.parent=%s""",
+        (boq_record.name))[0][0])
+      for record in boq_main_item:
+        item = record.boq_item
+        qty = 1
+        piq = 1
+        lib = 1
 
-				tot_ass_price = flt(frappe.db.sql("""select sum(selling_price * qty)
-				from `tabBill of Quantity Item` boqi
-				where boqi.parent=%s""",
-				(boq_record.name))[0][0])
-			for record in boq_main_item:
-				item = record.boq_item
-				qty = 1
-				piq = 1
-				lib = 1
+        if item:
+          item_record = frappe.get_doc("Item", item)
 
-				if item:
-					item_record = frappe.get_doc("Item", item)
+          innerJson =	{
+          "doctype": "Quotation Item",
+          "item_code": item,
+          "description": item_record.description,
+          "uom": item_record.stock_uom,
+          "qty": qty,
+          "rate": tot_ass_price,
+          "display_in_quotation": piq,
+          "list_in_boq": lib,
+          #						"next_exploded": next_exploded,
+          #						"grouping": record.immediate_parent_item
 
-					innerJson =	{
-						"doctype": "Quotation Item",
-						"item_code": item,
-						"description": item_record.description,
-						"uom": item_record.stock_uom,
-						"qty": qty,
-						"rate": tot_ass_price,
-						"display_in_quotation": piq,
-						"list_in_boq": lib,
-#						"next_exploded": next_exploded,
-#						"grouping": record.immediate_parent_item
+          }
 
-						}
+          newJson["items"].append(innerJson)
 
-					newJson["items"].append(innerJson)
-
-			doc = frappe.new_doc("Quotation")
-			doc.update(newJson)
-			doc.save()
-			frappe.db.commit()
-			docname = doc.name
-			frappe.msgprint(_("Quotation Created - " + docname))
+      doc = frappe.new_doc("Quotation")
+      doc.update(newJson)
+      doc.save()
+      frappe.db.commit()
+      docname = doc.name
+      frappe.msgprint(_("Quotation Created - " + docname))
 
 
 
@@ -494,39 +493,39 @@ def set_bom_level(boq_record):
 
 @frappe.whitelist()
 def make_cust_project(source_name, target_doc=None):
-	global alloc_whse
-	def postprocess(source, doc):
-		doc.project_type = "External"
-		sales_record = frappe.get_doc("Sales Order", source_name)
-		customer = sales_record.customer
-		doc.project_name = customer + "-" + source_name[-5:]
-		doc.production_bench = get_free_workbenches()
+  global alloc_whse
+  def postprocess(source, doc):
+    doc.project_type = "External"
+    sales_record = frappe.get_doc("Sales Order", source_name)
+    customer = sales_record.customer
+    doc.project_name = customer + "-" + source_name[-5:]
+    doc.production_bench = get_free_workbenches()
 
-		if doc.production_bench:
-			pass
-		else:
-			frappe.msgprint(_("There is no free production bench available. Please allocate manually"))
+    if doc.production_bench:
+    	pass
+    else:
+    	frappe.msgprint(_("There is no free production bench available. Please allocate manually"))
 
-	doc = get_mapped_doc("Sales Order", source_name, {
-		"Sales Order": {
-			"doctype": "Project",
-			"validation": {
-				"docstatus": ["=", 1]
-			},
-			"field_map":{
-				"name" : "sales_order",
-				"base_grand_total" : "estimated_costing",
-			}
-		},
-		"Sales Order Item": {
-			"doctype": "Project Task",
-			"field_map": {
-				"description": "title",
-			},
-		}
-	}, target_doc, postprocess)
+  doc = get_mapped_doc("Sales Order", source_name, {
+        "Sales Order": {
+          "doctype": "Project",
+          "validation": {
+          "docstatus": ["=", 1]
+          },
+          "field_map":{
+          "name" : "sales_order",
+          "base_grand_total" : "estimated_costing",
+          }
+          },
+          "Sales Order Item": {
+          "doctype": "Project Task",
+          "field_map": {
+          "description": "title",
+          },
+        }
+  }, target_doc, postprocess)
 
-	return doc
+  return doc
 
 @frappe.whitelist()
 def get_free_workbenches():
@@ -1280,10 +1279,9 @@ def getPoData():
 		today_date = utils.today()
 		day_name = datetime.datetime.strptime(today_date,'%Y-%m-%d').strftime('%A')
 
-		if day_name == "Sunday":
-			pass
+		#if day_name == "Sunday":
 			#print "The mails are not send on sunday"
-		elif day_name == "Saturday":
+		if day_name == "Saturday":
 			one_day_after = add_days(utils.today(),1)
 			two_days_after= add_days(utils.today(),2)
 			request_doc=frappe.db.sql("""select  name from `tabPurchase Order` where schedule_date in (%s,%s) and docstatus=1""", (one_day_after,two_days_after),as_dict = 1)
@@ -1431,7 +1429,19 @@ def make_bom_for_boq_lite(source_name, target_doc=None):
 			bom_main_item = parent.bom_item
 			boq_records = frappe.db.sql("""select * from `tabBOQ Lite Item` where parent=%s and immediate_parent_item=%s and is_raw_material='No' order by immediate_parent_item desc""", (boq_record.name,bom_main_item), as_dict=1)
 			#print "bom_main_item--------", bom_main_item
-
+			'''
+			name_bom = "BOM-"+str(bom_main_item)+"-"
+			len_name_bom = len(name_bom)
+			check_status = frappe.db.sql("""select max(name) as name from `tabBOM` where name LIKE '"""+name_bom+"%""'""", as_dict = 1)
+			for check in check_status:
+				name_check = check.name
+				var = name_check.split("-")
+			increas_no = var[-1]
+			increased_no = int(increas_no)+1
+			#print "increas_no--------------",increas_no
+			#print "increas_no--------------",int(increas_no)+1
+			convert = "{0:len(increas_no)}".format(increased_no)
+			'''
 			if not boq_records:
 				bom_qty = 1
 				raw_boms.append(bom_main_item)
@@ -1518,6 +1528,11 @@ def submit_assembly_boms(name,bom_main_item,company):
 		if outer_json["items"]:
 			doc = frappe.new_doc("BOM")
 			doc.update(outer_json)
+			'''
+			name_bom = "BOM-"+str(bom_main_item)+"-"
+			check_status = frappe.db.sql("""select max(name) from `tabBOM` where name LIKE '"""+name_bom+"%""'""", as_dict = 1)
+			print "check_status-------------",check_status
+			'''
 			doc.save()
 			frappe.db.commit()
 			doc.submit()
@@ -1663,12 +1678,15 @@ def get_sreq_items_data(stockRequisitionID):
 def update_sreq_items_data(updated_sreq_items_data,stockRequisitionID): #from po submission
 
 	updated_sreq_items_data = json.loads(updated_sreq_items_data)
+	#print "updated_sreq_items_data--------------------",updated_sreq_items_data
 	for updated_sreq_item_data in updated_sreq_items_data:
 		sreq_item_code = updated_sreq_item_data['sreq_item_code']
 		quantity_ordered = updated_sreq_item_data['quantity_ordered']
-		quantity_to_be_order =  updated_sreq_item_data ['quantity_to_be_order']
-		fulfilled_qty =  updated_sreq_item_data ['fulfilled_qty']
-		frappe.db.sql("""update `tabStock Requisition Item` sri  set sri.quantity_ordered = %s, sri.quantity_to_be_ordered =%s, fulfilled_quantity=%s where sri.parent = %s and sri.item_code = %s """, (quantity_ordered, quantity_to_be_order,fulfilled_qty,stockRequisitionID,sreq_item_code))
+		#quantity_to_be_order =  updated_sreq_item_data ['quantity_to_be_order']
+		#fulfilled_qty =  updated_sreq_item_data ['fulfilled_qty']
+		#frappe.db.sql("""update `tabStock Requisition Item` sri  set sri.quantity_ordered = %s, sri.quantity_to_be_ordered =%s, fulfilled_quantity=%s where sri.parent = %s and sri.item_code = %s """, (quantity_ordered, quantity_to_be_order,fulfilled_qty,stockRequisitionID,sreq_item_code))
+		frappe.db.sql("""update `tabStock Requisition Item` sri  set sri.quantity_ordered = %s where sri.parent = %s and sri.item_code = %s """, (quantity_ordered,stockRequisitionID,sreq_item_code))#jyoti changed previous query to this
+
 
 	return "done"
 
