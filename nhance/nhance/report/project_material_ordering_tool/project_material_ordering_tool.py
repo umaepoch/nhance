@@ -12,8 +12,8 @@ import math
 import json
 import ast
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
+#reload(sys)
+#sys.setdefaultencoding('utf-8')
 
 sum_data=[]
 doc_name_created = []

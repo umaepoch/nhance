@@ -148,7 +148,7 @@ frappe.query_reports["Raw Material Variabilities"] = {
     			    var new_bom_qty = checkStockRequistionForBOM(new_bom,item_code);
 			    var final_qty = [parseFloat(new_qty) - (parseFloat(old_bom_qty) + parseFloat(new_bom_qty))];
 			    excees_qty = parseFloat(excees_qty) * (-1);
-			    
+
 			    console.log("old_bom_qty................."+old_bom_qty);
 			    console.log("new_bom_qty................."+new_bom_qty);
 			    console.log("final_qty................."+final_qty);
@@ -171,13 +171,13 @@ frappe.query_reports["Raw Material Variabilities"] = {
 			console.log("materialIssueList............." + JSON.stringify(materialIssueList));
 			stockRequisitionItemsList = materialIssueList;
                         makeStockRequistion(stockRequisitionItemsList,checkMaterialRequestType,"","");
-                    } 
+                    }
                 } else if (checkMaterialRequestType == "Purchase") {
                     if (materialPurchaseList.length != 0) {
 			console.log("materialPurchaseList............." + JSON.stringify(materialPurchaseList));
                         stockRequisitionItemsList = materialPurchaseList;
                         makeStockRequistion(stockRequisitionItemsList,checkMaterialRequestType,workflow_status,new_bom);
-                    } 
+                    }
                 }
             } //end of primary fun
         }); //end of dialog box..
@@ -238,4 +238,3 @@ function getReportData() {
     }); //end of frappe call..
     return reportData;
 }
-

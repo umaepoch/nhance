@@ -25,4 +25,3 @@ frappe.query_reports["Requisition Items Not Ordered"] = {
 		}
 	]
 }
-

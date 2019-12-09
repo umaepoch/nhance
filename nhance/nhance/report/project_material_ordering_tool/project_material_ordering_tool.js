@@ -20,7 +20,7 @@ frappe.query_reports["Project Material Ordering Tool"] = {
         "options": "Warehouse"
     }],
     onload: function(report) {
-        console.log("Make PO and Transfer Existing/Required Quantity..........");
+        //console.log("Make PO and Transfer Existing/Required Quantity..........");
         report.page.add_inner_button(__("Make PO and Transfer Existing/Required Quantity"),
             function() {
 
@@ -29,16 +29,16 @@ frappe.query_reports["Project Material Ordering Tool"] = {
             });
     },
     make_PO_and_transfer_qty: function(report) {
+	frappe.query_report.refresh();
 	var doc_name1 = "Supplier";
-	var doc_name2 = "Address";
 	var supplier_fields = get_supplier_field(doc_name1);
-	var address_fields = get_supplier_field(doc_name2);
 	//console.log("address_fields-----------"+address_fields);
 	//console.log("supplier flag========="+supplier_fields);
-	if (address_fields == 1 && supplier_fields == 1) {
+	if (supplier_fields == 1) {
         	make_PO_and_transfer_qty(report);
 	}
 	}
+
 }
 
 function validate_project_details(project, query_report) {
@@ -87,7 +87,7 @@ function make_PO_and_transfer_qty(report) {
 
     var checkPurchaseItemsList = [];
     var materialTransferList = [];
-
+    var sreq_qty = 0.0;
     for (var i = 0; i < reportData.length; i++) {
         var materialItems = {};
         var poItems = {};
@@ -103,12 +103,15 @@ function make_PO_and_transfer_qty(report) {
         var bom = reportData[i]['bom'];
         var fulfilled_qty = reportData[i]['fulfilled_qty'];
         var conversion_factor = reportData[i]['conversion_factor'];
+	var last_purchase_price = reportData[i]['last_purchase_price'];
+	var conversion_factor = reportData[i]['conversion_factor'];
+	sreq_qty = reportData[i]['sreq_qty'];
 
         if (bom == null || bom == undefined) {
             bom = "";
         }
 
-        if (mt_qty > 0 && fulfilled_qty > 0) {
+        if (mt_qty > 0) {
             materialItems['item_code'] = item_code;
             materialItems['sreq_no'] = sreq_no;
             materialItems['s_warehouse'] = source_warehouse;
@@ -212,6 +215,9 @@ function make_PO_and_transfer_qty(report) {
             poItems['bom'] = bom;
             poItems['project'] = project;
             poItems['conversion_factor'] = conversion_factor;
+	    poItems['last_purchase_price']= last_purchase_price;
+	    poItems['conversion_factor'] = conversion_factor;
+	    poItems['sreq_qty'] = sreq_qty;
 
             if (purchaseOrderMap.has(sreq_no)) {
                 var arrList = purchaseOrderMap.get(sreq_no);
@@ -226,24 +232,27 @@ function make_PO_and_transfer_qty(report) {
         }
     } //end of for loop...
 
-    console.log("PurchaseItemsList-----length---" + checkPurchaseItemsList.length);
-    console.log("MaterialTransferList-----length---" + materialTransferList.length);
-
+   // console.log("PurchaseItemsList-----length---" + checkPurchaseItemsList.length);
+   // console.log("MaterialTransferList-----length---" + materialTransferList.length);
+    if(checkPurchaseItemsList.length == 0 && materialTransferList.length == 0){
+		frappe.msgprint("All quantities of items related to this project have been ordered and/or transfered, Nothing to do!");
+	}
     if (checkPurchaseItemsList.length != 0) {
         if (!flag) {
             var dialog = new frappe.ui.Dialog({
                 title: __("Select Round Type"),
                 fields: [
                     {
+                      'fieldname': 'round_up_fractions',
+                      'fieldtype': 'Check',
+                      "label": __("Round Up Fractions")
+                    },
+                    {
                         'fieldname': 'round_fractions',
                         'fieldtype': 'Check',
                         "label": __("Round Fractions")
                     },
-                    {
-                        'fieldname': 'round_up_fractions',
-                        'fieldtype': 'Check',
-                        "label": __("Round Up Fractions")
-                    },
+
                     {
                         'fieldname': 'round_down_fractions',
                         'fieldtype': 'Check',
@@ -264,7 +273,7 @@ function make_PO_and_transfer_qty(report) {
                         var supplier_map = new Map();
                         var sreq_no = entry[0];
                         var no_supplier_items = [];
-                        var po_items_list = purchaseOrderMap.get(sreq_no);
+                        var po_items_list = purchaseOrderMap.get(sreq_no); //key will be sreqno
 
                         for (var i = 0; i < po_items_list.length; i++) {
                             var supplier = po_items_list[i].supplier;
@@ -290,21 +299,51 @@ function make_PO_and_transfer_qty(report) {
                                 var stock_uom = no_supplier_items[i].stock_uom;
                                 var qty = no_supplier_items[i].qty;
                                 var check_flag = get_UOM_Details(stock_uom);
-                                console.log("no_supplier_items of qty------------" + no_supplier_items[i].qty);
-                                console.log("check_flag------------" + check_flag);
+                                //console.log("no_supplier_items of qty------------" + no_supplier_items[i].qty);
+                               // console.log("check_flag------------" + check_flag);
+				var processedQty = 0.0;
                                 if (check_flag) {
-                                    var processedQty = processQuantity(check_args, qty);
-                                    console.log("no_supplier_items of processedQty is--------------::" + processedQty);
-				    var purchase_uom = getPurchaseUom(no_supplier_items[i].item_code.toString());
-				    var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, processedQty);
-                                    console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
-                                    no_supplier_items[i].qty = puom_qty;
+                                     processedQty = processQuantity(check_args, qty);
+                                      //console.log("no_supplier_items of processedQty is--------------::" + processedQty);
 
-                                } //end of if..
+
+
+                                      //******************
+				 } //end of if..
+				else{
+					processedQty = qty;
+				}
+				 var purchase_uom = getPurchaseUom(no_supplier_items[i].item_code.toString());
+                                      if( purchase_uom == null){
+                                        //  console.log("********no suppliers Purchase uom is null for item : "+no_supplier_items[i].item_code.toString() );
+                                          no_supplier_items[i].qty = processedQty ;
+                                          //no_supplier_items[i].qty = 20 ; //testing
+
+
+                                      }
+                                      else{
+                                        var puom_qty = check_puom(purchase_uom,no_supplier_items[i].item_code, processedQty);
+					var purchase_check_flag = get_UOM_Details(purchase_uom);
+					if(purchase_check_flag){
+                                        	console.log("no_supplier_items of puom_qty is-------------::" + puom_qty);
+						var processedQty1 = processQuantity(check_args, puom_qty);
+		                                no_supplier_items[i].qty = processedQty1;
+					}
+					else{
+						no_supplier_items[i].qty = puom_qty;
+					}
+                                      }
+
+                                      //**********************
+
+
+
                             } //end of for loop..
 
-                            console.log("no_supplier_items--------" + JSON.stringify(no_supplier_items));
+                            //console.log("*************Suresh no_supplier_items--------" + JSON.stringify(no_supplier_items));
                             makePO(sreq_no, supplier, no_supplier_items);
+			    //console.log("sreq_qty----before call-------------"+sreq_qty)
+			    validate_qty(sreq_no,no_supplier_items,check_args);
                         }
 
                         for (const entry of supplier_map.entries()) {
@@ -314,21 +353,52 @@ function make_PO_and_transfer_qty(report) {
                                 var stock_uom = supplier_items[i].stock_uom;
                                 var qty = supplier_items[i].qty;
                                 var check_flag = get_UOM_Details(stock_uom);
-                                console.log("supplier_items of qty------------" + supplier_items[i].qty);
-                                console.log("check_flag------------" + check_flag);
-
+                               // console.log("supplier_items of qty------------" + supplier_items[i].qty);
+                               // console.log("check_flag------------" + check_flag);
+				var processedQty = 0.0;
                                 if (check_flag) {
-                                    var processedQty = processQuantity(check_args, qty);
-                                    console.log("supplier_items of processedQty is---------------::" + processedQty);
-				    var purchase_uom = getPurchaseUom(supplier_items[i].item_code.toString());
-				    var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
-                                    console.log("supplier_items of puom_qty is-------------::" + puom_qty);
-                                    supplier_items[i].qty = puom_qty;
-                                } //end of if..
+                                          //console.log("item code ------------"+supplier_items[i].item_code.toString());
+                                           processedQty = processQuantity(check_args, qty);
+                                          //console.log("supplier_items of processedQty is---------------::" + processedQty);
+
+				} //end of if..
+				else{
+
+					processedQty = qty
+				}
+                                        //*********
+				var purchase_uom = getPurchaseUom(supplier_items[i].item_code.toString());
+                                if( purchase_uom == null){
+                                	console.log("****supplier_items   Purchase uom is null for item : "+ supplier_items[i].item_code.toString() );
+
+                                        supplier_items[i].qty = processedQty ;
+                                         // supplier_items[i].qty = 20 ; //testing
+
+                                 }
+                                 else{
+				 	//console.log("processedQty--------------"+processedQty);
+                                        var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
+				        //console.log("supplier_items of puom_qty is-------------::" + puom_qty);
+					var purchase_check_flag = get_UOM_Details(purchase_uom);
+					if (purchase_check_flag){
+						var processedQty1 = processQuantity(check_args, puom_qty);
+
+                                          	supplier_items[i].qty = processedQty1
+					}
+					else{
+						supplier_items[i].qty = puom_qty
+
+					}
+                                        }
+                                        //********
+
+                                          ;
+
 
                             } //end of for loop..
-                            console.log("supplier_items--------" + JSON.stringify(supplier_items));
+                            //console.log("supplier_items--------" + JSON.stringify(supplier_items));
                             makePO(sreq_no, supplier, supplier_items);
+			    validate_qty(sreq_no,supplier_items,check_args);
                         }
 
                     } //end of purchaseOrderMap
@@ -353,6 +423,8 @@ function make_PO_and_transfer_qty(report) {
 function check_puom(purchase_uom, item_code,req_po_qty) {
     if (purchase_uom != null && purchase_uom != undefined && purchase_uom != "") {
         var cf = fetch_conversion_factor(item_code, purchase_uom);
+	//console.log("item-code-----------------"+item_code);
+	//console.log("cf-----------------------"+cf);
         if (cf != 0) {
             po_qty = req_po_qty / cf;
 	    return po_qty;
@@ -365,8 +437,11 @@ function check_puom(purchase_uom, item_code,req_po_qty) {
 function processQuantity(check_args, qty) {
     var quantity = 0;
     if (check_args.round_up_fractions == 1) {
+	//console.log("round up ");
         var check_qty = Math.floor(qty);
+	//console.log("check_qty----------"+check_qty);
         check_qty = qty - check_qty;
+	//console.log("check_qty after subtract with qty--------------"+check_qty);
         if (check_qty != 0.0) {
             quantity = Math.ceil(qty);
             quantity = parseInt(quantity);
@@ -375,8 +450,10 @@ function processQuantity(check_args, qty) {
         }
 
     } else if (check_args.round_down_fractions == 1) {
+	console.log("round_down_fractions");
         quantity = parseInt(qty);
     } else if (check_args.round_fractions == 1) {
+	console.log("round_fractions");
         quantity = Math.round(qty);
     }
     if (quantity == 0) {
@@ -406,7 +483,7 @@ function fetch_conversion_factor(item_code, purchase_uom) {
 
 function makePO(sreq_no, supplier, po_items) {
 
-    console.log("supplier----" + supplier);
+    //console.log("supplier----" + supplier);
     frappe.call({
         method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.make_purchase_orders",
         args: {
@@ -415,7 +492,10 @@ function makePO(sreq_no, supplier, po_items) {
             "po_items": po_items
         },
         async: false,
-        callback: function(r) {} //end of call-back function..
+        callback: function(r) {
+		//console.log("flag---------------"+JSON.stringify(r.message));
+		frappe.msgprint("Purchase Order is Created : "+r.message);
+		} //end of call-back function..
     }); //end of frappe call..
 }
 
@@ -550,10 +630,14 @@ function getReserveWarehouse(project) {
 
 }
 
-function getReportData() {
+function getReportData(project_filter,swh_filter) {
     var reportData = [];
     frappe.call({
         method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.get_report_data",
+	 args: {
+            "project_filter":project_filter,
+	    "swh_filter":swh_filter
+        },
         async: false,
         callback: function(r) {
             //console.log("reportData::" + JSON.stringify(r.message));
@@ -627,4 +711,39 @@ function get_supplier_field(doc_name){
         } //end of call-back function..
     }); //end of frappe call..
     return reportData;
+}
+function validate_qty(sreq_no,supplier_items,check_args){
+	var reportData = 0;
+	var data = [];
+	var sreq_qty = 0.0;
+	for(var i =0; i < supplier_items.length; i++){
+		console.log("supplier items------------------"+supplier_items[i]);
+		sreq_qty = supplier_items[i].sreq_qty
+		console.log("serq_qty---------------"+sreq_qty);
+		var round_qty = processQuantity(check_args, sreq_qty);
+		var item_code = supplier_items[i].item_code
+		console.log("round qty-------------"+round_qty);
+		console.log("item code-------------"+item_code);
+		data.push({"item_code":item_code,"round_qty":round_qty})
+	 }
+
+	console.log("data-----------------"+JSON.stringify(data));
+	//data.push({"sreq_no":sreq_no,"check_args":check_args});
+    frappe.call({
+        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.check_and_update",
+	 args: {
+            "data":data,
+	    "sreq_no":sreq_no
+        },
+        async: false,
+        callback: function(r) {
+            //console.log("reportData::" + JSON.stringify(r.message));
+            reportData = r.message;
+	    //console.log("reportData==========="+reportData);
+        } //end of call-back function..
+    }); //end of frappe call..
+    return reportData
+
+
+return 1;
 }

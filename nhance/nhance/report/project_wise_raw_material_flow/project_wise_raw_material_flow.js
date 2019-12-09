@@ -33,8 +33,8 @@ frappe.query_reports["Project Wise Raw Material Flow"] = {
          	 		"project":project
         		},
 			async: false,
-			callback: function(r) 
-      			{ 
+			callback: function(r)
+      			{
 				if(r.message){
 				console.log("docids options::"+r.message.length);
 				console.log("message::"+JSON.stringify(r.message));
@@ -55,7 +55,7 @@ frappe.query_reports["Project Wise Raw Material Flow"] = {
 				frappe.query_report.set_filter_value("warehouse", "");
 				frappe.query_report.refresh();
 				}
-				
+
 				if (reserve_warehouse != null) {
 				console.log("reserve_warehouse::"+ reserve_warehouse);
 				frappe.query_report.set_filter_value("reserve_warehouse", "");
@@ -70,7 +70,7 @@ frappe.query_reports["Project Wise Raw Material Flow"] = {
 				console.log("master_bom::"+ master_bom);
 				frappe.query_report.set_filter_value("bom", "");
 				frappe.query_report.set_filter_value("bom", master_bom);
-		
+
 				var qty = frappe.query_report.get_filter_value("qty_to_make");
 		    		var check_for_whole_number_flag = check_for_whole_number(master_bom, qty, query_report);
 		    		if (check_for_whole_number_flag) {
@@ -81,30 +81,30 @@ frappe.query_reports["Project Wise Raw Material Flow"] = {
 				frappe.query_report.set_filter_value("bom", "");
 				frappe.query_report.refresh();
 				}
-				
+
 				if (core_team_coordinator != null) {
 				frappe.query_report.set_filter_value("core_team_coordinator", "");
 				frappe.query_report.set_filter_value("core_team_coordinator", core_team_coordinator);
-				
+
 				frappe.query_report.refresh();
 				}else{
 				console.log("core_team_coordinator::"+ core_team_coordinator);
 				frappe.query_report.set_filter_value("core_team_coordinator", "null");
-				
+
 				frappe.query_report.refresh();
 				}
-				
+
 				if (planner != null) {
 				frappe.query_report.set_filter_value("planner", "");
 				frappe.query_report.set_filter_value("planner", planner);
-				
+
 				frappe.query_report.refresh();
 				}else{
 				console.log("planner::"+ planner);
 				frappe.query_report.set_filter_value("planner", "null");
 				frappe.query_report.refresh();
 				}
-				
+
 				if (start_date != null) {
 				frappe.query_report.set_filter_value("start_date", "");
 				frappe.query_report.set_filter_value("start_date", start_date);
@@ -292,5 +292,3 @@ function check_for_whole_number(bomNO, qty, query_report) {
     }) //end of frappe call..
     return check_for_whole_number;
 }
-
-

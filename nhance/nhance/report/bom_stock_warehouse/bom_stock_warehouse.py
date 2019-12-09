@@ -116,13 +116,13 @@ def get_conditions(filters):
                 frappe.throw(_("'To Date' is required"))
 
         if filters.get("item_code"):
-                conditions += ' and item_code = "%s"' % frappe.db.escape(filters.get("item_code"), percent=False)
+                conditions += " and item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
 
         if filters.get("bom"):
-                conditions += ' and bi.parent = "%s"' % frappe.db.escape(filters.get("bom"), percent=False)
+                conditions += " and bi.parent = '%s'" % frappe.db.escape(filters.get("bom"), percent=False)
 
         if filters.get("warehouse"):
-                conditions += ' and warehouse = "%s"' % frappe.db.escape(filters.get("warehouse"), percent=False)
+                conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
         return conditions
 
 def get_stock_ledger_entries(filters):

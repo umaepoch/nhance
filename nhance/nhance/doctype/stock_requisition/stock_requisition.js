@@ -49,7 +49,13 @@ frappe.ui.form.on('Stock Requisition', {
 				for (var i = 0; i < sreq_items_data.length; i++) {
 					var sreq_item_code = sreq_items_data[i]['item_code'];
 					var sreq_qty = sreq_items_data[i]['qty'];
+<<<<<<< HEAD
 					var quantity_to_be_order = sreq_qty ;
+=======
+					var sreq_fulfilled_qty = sreq_items_data[i]['fulfilled_quantity'];//jyoti added this
+					//var quantity_to_be_order = sreq_qty ;
+					var quantity_to_be_order = sreq_qty - sreq_fulfilled_qty;//jyoti changed the formula
+>>>>>>> 2694da8b27676ae0b56f81eb413bc858cce8bf3d
 
 					updated_sreq_items_data.push(
 						{
@@ -341,6 +347,19 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						var expense_account1 = itemsList[arrayLength].expense_account;
 						var purchase_uom = getPurchaseUom(item_code);
 						var check_flag = get_UOM_Details(stock_uom);
+<<<<<<< HEAD
+=======
+						var pch_bom_reference = "" ;
+						var project = "" ;
+						if( itemsList[arrayLength].pch_bom_reference != null && itemsList[arrayLength].pch_bom_reference != undefined){
+							pch_bom_reference= itemsList[arrayLength].pch_bom_reference;
+						}
+						if( itemsList[arrayLength].project != null && itemsList[arrayLength].project != undefined){
+							project= itemsList[arrayLength].project;
+						}
+						console.log("purchase_uom::"+purchase_uom);
+
+>>>>>>> 2694da8b27676ae0b56f81eb413bc858cce8bf3d
 						/**
 						console.log("purchase_uom::"+purchase_uom);
 						console.log("qty::"+qty);
@@ -422,7 +441,13 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     						arr['stock_qty'] = stock_qty;
     						arr['stock_uom'] = stock_uom;
     						arr['purchase_uom'] = purchase_uom;
+<<<<<<< HEAD
 						arr['warehouse'] = warehouse;
+=======
+								arr['warehouse'] = warehouse;
+								arr['pch_bom_reference'] = pch_bom_reference;
+								arr['project'] = project;
+>>>>>>> 2694da8b27676ae0b56f81eb413bc858cce8bf3d
     						//arr['price'] = standard_rate;
 
     						arr['conversion_factor'] = conversion_factor;

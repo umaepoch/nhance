@@ -14,8 +14,8 @@ import math
 import json
 import ast
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
+#reload(sys)
+#sys.setdefaultencoding('utf-8')
 
 
 def execute(filters=None):

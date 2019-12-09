@@ -51,7 +51,7 @@ def execute(filters=None):
 			#print "old_bom_item_qty--",old_bom_item_qty
 			details = {"item_code":item_code,"new_qty":qty,"old_qty":old_bom_item_qty}
 			old_bom_list.append(details)
-			
+
 	items_data = get_merge_bom_list(new_bom_list,old_bom_list)
 	#print "items_data---------", items_data
 	report_items_details = get_report_items(items_data,new_bom_items,old_bom_items,warehouse)
@@ -63,9 +63,9 @@ def execute(filters=None):
 		new_qty = items['new_qty']
 		excees_qty = items['excees_qty']
 		stock_qty = items['stock_qty']
-		delta_qty=items['delta_qty']	
+		delta_qty=items['delta_qty']
 		prepare_report_data.append([ item_code, old_qty, new_qty, excees_qty, stock_qty, delta_qty])
-	
+
 	columns = get_columns()
 	#print "DaTA----",prepare_report_data
 	return columns, prepare_report_data
@@ -96,16 +96,16 @@ def get_merge_bom_list(new_bom_list,old_bom_list):
 			new_old_qty=after_merge[new]['old_qty']
 			if new_item_code  not in item_data:
 				item_data.append(new_item_code)
-				break;	
-				
-	return item_data		
-		
+				break;
+
+	return item_data
+
 def get_report_items(items_data,new_bom_items,old_bom_items,warehouse):
 	new_qty=0
 	old_qty=0
 	excess_qty=0
 	stock_qty=0
-	data_for_report=[]	
+	data_for_report=[]
 	for data in items_data:
 		for new in range(0,len(new_bom_items)):
 			new_item_code=new_bom_items[new]['item_code']
@@ -116,7 +116,7 @@ def get_report_items(items_data,new_bom_items,old_bom_items,warehouse):
 			if str(data) == str(old_item_code):
 				old_qty = old_bom_items[old]['bi_qty']
 				#print "old_qty---------", old_qty
-		
+
 		excees_qty = old_qty - new_qty
 		item_code = data
 		stock_qty = get_stock(item_code, warehouse)
@@ -245,4 +245,3 @@ def make_stock_requisition(stockRequisitionItemsList, materialRequestType, workf
 	return_doc = doc.doctype
 	if return_doc:
 		return return_doc
-

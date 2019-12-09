@@ -117,4 +117,3 @@ def get_total_po_ord_qty ( sreq_name,sreq_item_code,filters):
 		total_po_ord_qty = total_po_ord_qty_list[0]['total_qty']
 
 	return total_po_ord_qty
-
