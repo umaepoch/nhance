@@ -267,6 +267,7 @@ def fetch_pending_sreqnos(project,swh):
 					fulFilledQty = 0
 					for items_data in sreq_items:
 						item_code = items_data['item_code']
+						stock_uom =  items_data['stock_uom']
 						bom_reference = items_data['pch_bom_reference']
 						fulFilledQty = items_data['fulfilled_quantity']
 						default_supplier = fetch_default_supplier(company,item_code)
@@ -278,7 +279,9 @@ def fetch_pending_sreqnos(project,swh):
 						if conversion_factor == 0:
 							#conversion_factor = 0.03125
 							#conversion_factor = round(conversion_factor , 5)
-							frappe.throw(_("Conversion factor for item  "+item_code+" is not defined between Purchase UOM "+po_uom+" and stock UOM "+items_data['stock_uom']+". Please: <br> 1.Remove Purchase UOM "+po_uom+" for Item "+item_code+" in the Item Master, OR <br> 2.Define the Conversion factor in the Item Master between Purchase UOM "+po_uom+" and Stock UOM "+items_data['stock_uom']+".<br><br> And try again!"))
+							get_error_msg(item_code,po_uom,stock_uom)
+							#print "get_error_msg----"
+						
 							
 							#print "conversion_factor in else",conversion_factor
 						last_purchase_price = fetch_last_purchase_price(str(item_code), str(items_data['uom']))
@@ -1039,3 +1042,6 @@ def check_and_update(data,sreq_no):
 def getQtyAllowed(stockRequisitionID):
 	allowed_qty = frappe.db.sql("""select item_code,qty_allowed_to_be_order from `tabStock Requisition Item` where parent = %s """,stockRequisitionID, as_dict =1)
 	return allowed_qty
+
+def get_error_msg(item_code,po_uom,stock_uom):
+	frappe.throw(_("Conversion factor for Item  <b>"+'"'+item_code+'"'+"</b> is not defined between Purchase UOM <b>"+'"'+po_uom+'"'+"</b> and Stock UOM <b>"+'"'+stock_uom+'"'+"</b>.<br><br>Please fix this in one of these two ways:<br> 1.Remove Purchase UOM <b>"+'"'+po_uom+'"'+"</b> for Item <b>"+'"'+item_code+'"'+"</b> in the Item Master, OR <br> 2.Define the Conversion factor in the Item Master between Purchase UOM <b>"+'"'+po_uom+'"'+"</b> and Stock UOM <b>"+'"'+stock_uom+'"'+"</b> for Item <b>"+'"'+item_code+'"'+"</b>.<br> <br>And try again! "))
