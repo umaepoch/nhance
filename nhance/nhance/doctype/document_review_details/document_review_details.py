@@ -45,6 +45,7 @@ def make_document_review_detials(source_name, target_doc=None, ignore_permission
 	return doclist
 @frappe.whitelist()
 def make_document_review(source_name, target_doc=None, ignore_permissions=False):
+	docname = "Purchase Order"
 	def set_missing_values(source, target):
 		target.is_pos = 0
 		target.ignore_pricing_rule = 1
@@ -75,7 +76,6 @@ def make_document_review(source_name, target_doc=None, ignore_permissions=False)
 			}
 		}
 	}, target_doc, postprocess, ignore_permissions=ignore_permissions)
-
 	return doclist
 
 @frappe.whitelist()
@@ -130,11 +130,11 @@ def get_doc_fields(doctype):
 
 @frappe.whitelist()
 def get_check_box_cheched(doctype,name):
+	frappe.db.set_value(doctype,name,"under_review" , 1);
 	#name = frappe.db.sql("""update `tab""" +doctype + """`set under_review = 1 where name = %s""",(name),as_dict=1)
-	frappe.db.set_value(doctype,name,"under_review",0)
-	return name
+	return True
 @frappe.whitelist()
 def get_uncheck_box_cheched(doctype,source_docname):
+	frappe.db.set_value(doctype,source_docname,"under_review" , 0);
 	#name = frappe.db.sql("""update `tab""" +doctype + """`set under_review = 0 where name = %s""", source_docname, as_dict=1)
-	frappe.db.set_value(doctype,source_docname,"under_review",1)
-	return name
+	return True

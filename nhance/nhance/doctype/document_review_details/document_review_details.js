@@ -5,7 +5,9 @@ var doc_id_value = "";
 frappe.ui.form.on('Document Review Details', {
     refresh: function(frm) {
         if (cur_frm.doc.__islocal) {
-            console.log("doc name =======" + cur_frm.doc.doctype_name);
+           // console.log("doctype name =======" + cur_frm.doc.doctype_name);
+	    //console.log("doc name =======" + cur_frm.doc.purchase_order);
+	  
             /*
             if(cur_frm.doc.doctype_name == "Sales Order"){
             		document_template_name = get_document_template_name(cur_frm.doc.doctype_name);
@@ -32,17 +34,17 @@ frappe.ui.form.on('Document Review Details', {
             }
           //  fields.push(msg);
             fields.push(data);
-            console.log("document type=========="+cur_frm.doc.doctype_name);
+           // console.log("document type=========="+cur_frm.doc.doctype_name);
            if (cur_frm.doc.doctype_name != undefined && cur_frm.doc.doctype_name != "") {
             var dialog = new frappe.ui.Dialog({
                 // msgprint("Please Select Document Template Want to Reveiew");
-                 title: __("Please Select Document Template Want to Reveiew"),
+                 title: __("Please select Document Reveiew Template"),
                 'fields': fields,
                 primary_action: function() {
                     dialog.hide();
                     var dialog_json = dialog.get_values();
                     Object.keys(dialog_json).forEach(function(key) {
-                        console.log("selected fields ===========" + dialog_json[key]);
+                        //console.log("selected fields ===========" + dialog_json[key]);
                         var document_review_template_fields = "";
                         var sales_order_values = "";
                         if (cur_frm.doc.doctype_name == "Sales Order") {
@@ -486,7 +488,7 @@ frappe.ui.form.on("Document Review Details", "refresh", function(frm, cdt, cdn) 
 });
 frappe.ui.form.on("Document Review Details", "before_save", function(frm, cdt, cdn) {
   console.log("before save");
-  /*
+  
   var source_docIds = "";
   var source_docname = ""
   if(cur_frm.doc.doctype_name != undefined){
@@ -506,7 +508,7 @@ frappe.ui.form.on("Document Review Details", "before_save", function(frm, cdt, c
   console.log("source_docname==========="+source_docname);
   console.log("source_docIds==========="+source_docIds);
   under_review_check(source_docname,source_docIds);
-*/
+
 });
 frappe.ui.form.on("Document Review Details", "on_submit", function(frm, cdt, cdn) {
 	console.log("cur_frm.doc.doctype_name============="+cur_frm.doc.doctype_name);
