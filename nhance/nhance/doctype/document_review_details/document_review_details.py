@@ -130,11 +130,11 @@ def get_doc_fields(doctype):
 
 @frappe.whitelist()
 def get_check_box_cheched(doctype,name):
-	name = frappe.db.sql("""update `tab""" +doctype + """`
-	set under_review = 1 where name = %s""",(name),as_dict=1)
+	#name = frappe.db.sql("""update `tab""" +doctype + """`set under_review = 1 where name = %s""",(name),as_dict=1)
+	frappe.db.set_value(doctype,name,"under_review",0)
 	return name
 @frappe.whitelist()
 def get_uncheck_box_cheched(doctype,source_docname):
-	name = frappe.db.sql("""update `tab""" +doctype + """`
-	set under_review = 0 where name = %s""", source_docname, as_dict=1)
+	#name = frappe.db.sql("""update `tab""" +doctype + """`set under_review = 0 where name = %s""", source_docname, as_dict=1)
+	frappe.db.set_value(doctype,source_docname,"under_review",1)
 	return name
