@@ -1,30 +1,4 @@
 {
-<<<<<<< HEAD
- "add_total_row": 0,
- "creation": "2019-12-03 11:06:02.942260",
- "disable_prepared_report": 0,
- "disabled": 0,
- "docstatus": 0,
- "doctype": "Report",
- "idx": 0,
- "is_standard": "Yes",
- "modified": "2019-12-03 11:06:02.942260",
- "modified_by": "Administrator",
- "module": "Nhance",
- "name": "INDIA-GSTR-2",
- "owner": "Administrator",
- "prepared_report": 0,
- "ref_doctype": "GL Entry",
- "report_name": "INDIA-GSTR-2",
- "report_type": "Script Report",
- "roles": [
-  {
-   "role": "Accounts User"
-  },
-  {
-   "role": "Accounts Manager"
-  },
-=======
  "add_total_row": 0, 
  "creation": "2019-01-23 12:13:20.497295", 
  "disabled": 0, 
@@ -48,7 +22,6 @@
   {
    "role": "Accounts Manager"
   }, 
->>>>>>> 2694da8b27676ae0b56f81eb413bc858cce8bf3d
   {
    "role": "Auditor"
   }

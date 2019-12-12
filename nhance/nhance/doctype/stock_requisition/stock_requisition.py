@@ -263,7 +263,7 @@ def make_purchase_order(source_name, target_doc=None):
 
 def get_Purchase_Taxes_and_Charges(account_head, tax_name):
 	tax_List = frappe.db.sql("""select rate, charge_type, description,row_id  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", (account_head, tax_name), as_dict=1)
-	print "tax_List-------------",tax_List
+	#print "tax_List-------------",tax_List
 	return tax_List
 
 
@@ -661,7 +661,7 @@ def po_list_value(srID,po_list):
 					data = {"item_code":po_item_code, "qty":sreq_qty}
 					items_list.append(data)
 					break;
-	print "items_list---------",items_list
+	#print "items_list---------",items_list
 	#print "sreq_qty11",items_list
 	return items_list
 
