@@ -24,7 +24,7 @@ cur_frm.cscript['Make BOM'] = function(cdt, cdn) {
             refresh_field("is_raw_material");
 
             update_boq_lite_item(item, cur_frm.doc.name, d.is_raw_material);
-
+           
         }); //end of each...
         refresh_field("items");
 
@@ -121,3 +121,4 @@ frappe.ui.form.on("BOQ Lite Item", "immediate_parent_item", function(frm, doctyp
     }
 });
 // End of- Repeat item validation with respective immediate_parent_item
+

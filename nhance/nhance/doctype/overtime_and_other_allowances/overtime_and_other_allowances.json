@@ -1,5 +1,6 @@
 {
  "allow_copy": 0, 
+ "allow_events_in_timeline": 0, 
  "allow_guest_to_view": 0, 
  "allow_import": 1, 
  "allow_rename": 1, 
@@ -16,10 +17,12 @@
  "fields": [
   {
    "allow_bulk_edit": 0, 
+   "allow_in_quick_entry": 0, 
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
+   "fetch_if_empty": 0, 
    "fieldname": "from_date", 
    "fieldtype": "Date", 
    "hidden": 0, 
@@ -47,10 +50,12 @@
   }, 
   {
    "allow_bulk_edit": 0, 
+   "allow_in_quick_entry": 0, 
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
+   "fetch_if_empty": 0, 
    "fieldname": "to_date", 
    "fieldtype": "Date", 
    "hidden": 0, 
@@ -78,10 +83,12 @@
   }, 
   {
    "allow_bulk_edit": 0, 
+   "allow_in_quick_entry": 0, 
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
+   "fetch_if_empty": 0, 
    "fieldname": "employees", 
    "fieldtype": "Table", 
    "hidden": 0, 
@@ -110,10 +117,12 @@
   }, 
   {
    "allow_bulk_edit": 0, 
+   "allow_in_quick_entry": 0, 
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
+   "fetch_if_empty": 0, 
    "fieldname": "amended_from", 
    "fieldtype": "Link", 
    "hidden": 0, 
@@ -151,7 +160,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2018-05-28 11:46:22.199059", 
+ "modified": "2019-12-12 11:47:05.489780", 
  "modified_by": "Administrator", 
  "module": "Nhance", 
  "name": "Overtime and Other Allowances", 
@@ -185,5 +194,6 @@
  "sort_field": "modified", 
  "sort_order": "ASC", 
  "track_changes": 1, 
- "track_seen": 0
+ "track_seen": 0, 
+ "track_views": 0
 }

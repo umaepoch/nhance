@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2019, Epoch and Contributors
+# Copyright (c) 2017, Epoch and Contributors
 # See license.txt
 from __future__ import unicode_literals
 
-# import frappe
+import frappe
 import unittest
 
 class TestStockRequisition(unittest.TestCase):

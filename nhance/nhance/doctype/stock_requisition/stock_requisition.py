@@ -14,7 +14,7 @@ from erpnext.stock.stock_balance import update_bin_qty, get_indented_qty
 from erpnext.controllers.buying_controller import BuyingController
 #from erpnext.manufacturing.doctype.production_order.production_order import get_item_details
 from erpnext.manufacturing.doctype.work_order.work_order import get_item_details
-from erpnext.buying.utils import check_on_hold_or_closed_status, validate_for_items
+from erpnext.buying.utils import check_for_closed_status, validate_for_items
 import datetime
 from collections import defaultdict
 import operator
@@ -64,9 +64,7 @@ class StockRequisition(BuyingController):
 	# Validate
 	# ---------------------
 	def validate(self):
-		print("***************From sr  Enters validate")
 		super(StockRequisition, self).validate()
-		print("***************From sr passed super validate()")
 
 		self.validate_schedule_date()
 		self.validate_uom_is_integer("uom", "qty")
@@ -109,7 +107,7 @@ class StockRequisition(BuyingController):
 
 	def before_cancel(self):
 		# if MRQ is already closed, no point saving the document
-		check_on_hold_or_closed_status(self.doctype, self.name)
+		check_for_closed_status(self.doctype, self.name)
 		self.set_status(update=True, status='Cancelled')
 
 	def check_modified_date(self):
@@ -264,7 +262,8 @@ def make_purchase_order(source_name, target_doc=None):
 	return doclist
 
 def get_Purchase_Taxes_and_Charges(account_head, tax_name):
-	tax_List = frappe.db.sql("""select rate, charge_type, description  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", (account_head, tax_name), as_dict=1)
+	tax_List = frappe.db.sql("""select rate, charge_type, description,row_id  from `tabPurchase Taxes and Charges` where account_head = %s and parent = %s""", (account_head, tax_name), as_dict=1)
+	print "tax_List-------------",tax_List
 	return tax_List
 
 
@@ -323,19 +322,22 @@ def making_PurchaseOrder_For_SupplierItems(args, company, tax_template, srID):
 			account_Name = taxes.account_head
 			if account_Name:
 				tax_Rate_List = get_Purchase_Taxes_and_Charges(account_Name, tax_Name.name)
+				#print "tax_Rate_List-----------",tax_Rate_List
 				#print "####-account_Name::", account_Name
 				#print "####-tax_Name::", tax_Name.name
 				if tax_Rate_List is not None and len(tax_Rate_List) != 0:
 					charge_type = tax_Rate_List[0]['charge_type']
 					rate = tax_Rate_List[0]['rate']
 					description = tax_Rate_List[0]['description']
+					row_id = tax_Rate_List[0]['row_id']
 					taxes_Json_Transfer = {"owner": "Administrator",
         						       "charge_type": charge_type,
         				                       "account_head": account_Name,
         						       "rate": rate,
         						       "parenttype": "Purchase Order",
         						       "description": description,
-        						       "parentfield": "taxes"
+        						       "parentfield": "taxes",
+								"row_id":row_id
 								}
 					outerJson_Transfer["taxes"].append(taxes_Json_Transfer)
 	i = 0
@@ -558,7 +560,7 @@ def update_po_list(srID, po_list):
 
 @frappe.whitelist()
 def get_stock_requisition_items(parent):
-	records = frappe.db.sql("""select item_code as hidden_item_code,stock_qty as hidden_qty from `tabStock Requisition Item` where
+	records = frappe.db.sql("""select item_code as hidden_item_code,stock_qty as hidden_qty,qty_allowed_to_be_order from `tabStock Requisition Item` where
 				parent=%s""", (parent), as_dict=1)
 	return records
 
@@ -635,7 +637,7 @@ def update_stock_requisition_status(srID,status):
 def po_list_value(srID,po_list):
 	sreq_qty=""
 	items_list = []
-	StockReqValue = frappe.db.sql("""select item_code as hidden_item_code,stock_qty as hidden_qty from `tabStock Requisition Item` where 				parent=%s""", (srID), as_dict=1)
+	StockReqValue = frappe.db.sql("""select item_code as hidden_item_code,qty_allowed_to_be_order as hidden_qty from `tabStock Requisition Item` where 				parent=%s""", (srID), as_dict=1)
 
 	PurchaseOrderValue= frappe.db.sql("""select tpoi.item_code,tpoi.stock_qty as qty from `tabPurchase Order Item` tpoi,
 				`tabPurchase Order` tpo where tpoi.parent=%s  and tpo.name=tpoi.parent""", (po_list), as_dict=1)
@@ -659,6 +661,7 @@ def po_list_value(srID,po_list):
 					data = {"item_code":po_item_code, "qty":sreq_qty}
 					items_list.append(data)
 					break;
+	print "items_list---------",items_list
 	#print "sreq_qty11",items_list
 	return items_list
 
@@ -778,3 +781,4 @@ def get_po_default_values():
 
 	#print "po_default_values",po_default_values
 	return po_default_values
+
