@@ -1,0 +1,64 @@
+{
+ "creation": "2019-11-18 15:10:20.956769",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "rarb_id",
+  "rarb_active",
+  "rarb_name",
+  "column_break_4",
+  "rarb_type",
+  "rarb_item"
+ ],
+ "fields": [
+  {
+   "fieldname": "rarb_id",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "RARB ID"
+  },
+  {
+   "fieldname": "rarb_active",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "RARB Active",
+   "options": "Yes\nNo"
+  },
+  {
+   "fieldname": "rarb_name",
+   "fieldtype": "Data",
+   "label": "RARB Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rarb_type",
+   "fieldtype": "Select",
+   "label": "RARB Type",
+   "options": "\nSpecific Item\nAny Item"
+  },
+  {
+   "depends_on": "eval:doc.rarb_type==\"Specific Item\"",
+   "fieldname": "rarb_item",
+   "fieldtype": "Link",
+   "label": "RARB Item",
+   "options": "Item"
+  }
+ ],
+ "istable": 1,
+ "modified": "2019-12-11 16:03:44.289291",
+ "modified_by": "Administrator",
+ "module": "Nhance",
+ "name": "RARB Warehouse Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
