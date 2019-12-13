@@ -148,9 +148,7 @@ def get_is_active_update(warehouse,start_date,name):
 		names = date.name
 		previous_start_date = date.start_date
 		previous_end_date = date.end_date
-		#print "type(previous_start_date) ----------",type(previous_start_date)
-		#print "type(previous_end_date) ----------",type(previous_end_date)
-		#print "type(current_date) ----------",type(current_date)
+		
 		if str(previous_start_date) <= current_date and str(previous_end_date) >= current_date:
 			#print "yeah date is greater then"
 			is_active = 1
@@ -205,7 +203,7 @@ def get_rarb_warehouse(warehouse):
 		return None
 @frappe.whitelist()
 def get_rarb_warehouse_item_name(warehouse):
-	rarb_id = frappe.db.sql("""select ri.rarb_id from `tabRARB Warehouse Item` ri , `tabRARB Warehouse` r where r.warehouse = '"""+warehouse+"""' and ri.rarb_active = "Yes" and r.name = ri.parent and r.docstatus =1 and r.is_active =1 order by ri.rarb_id asc""", as_dict=1)
+	rarb_id = frappe.db.sql("""select ri.rarb_id,ri.name from `tabRARB Warehouse Item` ri , `tabRARB Warehouse` r where r.warehouse = '"""+warehouse+"""' and ri.rarb_active = "Yes" and r.name = ri.parent and r.docstatus =1 and r.is_active =1 order by ri.rarb_id asc""", as_dict=1)
 	
 	return rarb_id
 @frappe.whitelist()
