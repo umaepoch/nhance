@@ -58,7 +58,11 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
+<<<<<<< HEAD
  "modified": "2019-12-12 10:09:22.327100", 
+=======
+ "modified": "2019-12-13 17:37:08.406268", 
+>>>>>>> dc3132310f5b458fb1eb22cd24fa0bd56d63288a
  "modified_by": "Administrator", 
  "module": "Nhance", 
  "name": "RARB ID", 

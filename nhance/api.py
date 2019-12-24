@@ -1731,3 +1731,16 @@ def cancel_stock_entry_material_receipt(pch_ste_pull_short_rm):
     frappe.db.commit()
     frappe.msgprint("The Stock Entry is cancelled successfully!!")
     return 1
+<<<<<<< HEAD
+=======
+
+#jyoti
+@frappe.whitelist()
+def get_serial_number_details(duplicate_serial):
+    #print "coming inside get_serial_number_details---"
+    serial_no_list = frappe.db.sql("""select max(serial_no) as serial_no from `tabSerial No` where serial_no like '"""+duplicate_serial+"%""'""", as_dict=1)
+    #print "serial_no_list----",serial_no_list
+    return serial_no_list
+
+
+>>>>>>> dc3132310f5b458fb1eb22cd24fa0bd56d63288a
