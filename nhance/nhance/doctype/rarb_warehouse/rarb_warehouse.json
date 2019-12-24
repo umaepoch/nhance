@@ -454,11 +454,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
-<<<<<<< HEAD
- "modified": "2019-12-11 17:48:30.324022", 
-=======
- "modified": "2019-12-13 17:36:49.677785", 
->>>>>>> dc3132310f5b458fb1eb22cd24fa0bd56d63288a
+ "modified": "2019-12-13 17:36:49.677785",
  "modified_by": "Administrator", 
  "module": "Nhance", 
  "name": "RARB Warehouse", 

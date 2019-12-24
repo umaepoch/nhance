@@ -79,13 +79,8 @@ frappe.ui.form.on('RARB Warehouse', {
 				for(var k =1; k <= cur_frm.doc.number_of_racks_per_aisle; k++){
 					for(var l = 1; l <= cur_frm.doc.number_of_bins_per_rack; l++){
 						var rarb_id = i+"-"+j+"-"+k+"-"+l;
-<<<<<<< HEAD
-						console.log(rarb_id);
-						var child = cur_frm.add_child("rarbs");
-=======
 						var child = cur_frm.add_child("rarbs");
 						console.log(rarb_id);
->>>>>>> dc3132310f5b458fb1eb22cd24fa0bd56d63288a
 				                frappe.model.set_value(child.doctype, child.name, "rarb_id", rarb_id);
 					}
 				}
