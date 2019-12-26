@@ -4,6 +4,8 @@ from frappe import _, msgprint
 from frappe.utils import flt, getdate, datetime
 from erpnext.stock.utils import get_latest_stock_qty
 import json
+from frappe import _, throw, msgprint, utils
+from frappe.utils import cint, flt, cstr, comma_or, getdate, add_days, getdate, rounded, date_diff, money_in_words
 
 
 
@@ -22,61 +24,61 @@ def get_permitted_doctype_data():
 	permitted_doctypes = frappe.db.sql("""select permitted_doctype,number_of_rfid_tags_per_record from `tabRFID Association Permitted for DocTypes`""",as_dict=1)
 	return permitted_doctypes
 
+#associate_doctype_rfid_tags()
 @frappe.whitelist()
-def custom_json_object_check(doc_type , doc_no,scanned_rfid_tag_data):
-	#print "suresh_android..*** scanned_rfid_tag_data:",scanned_rfid_tag_data
+def associate_doctype_rfid_tags(doc_type , doc_no,scanned_rfid_tag_data):
 	scanned_rfid_tag_data = json.loads(scanned_rfid_tag_data)
-	#print "suresh_android..*** doc_type ,doc_no",doc_type,doc_no
-
 	doc_to_be_update = frappe.get_doc(doc_type ,doc_no)
-
 	for tag_position in scanned_rfid_tag_data:
 		doc_to_be_update.db_set(tag_position, scanned_rfid_tag_data[tag_position])
 		doc_to_be_update.save()
 
-	#print "**********************************doc updated with respectiv vals"
-
 	updated_doc = frappe.get_doc(doc_type ,doc_no)
-	#print "***** Enters custom_json_object_check  after before update pch_rfid_tag1",updated_doc.pch_rfid_tag1
-	#print "***** Enters custom_json_object_check   after before update pch_rfid_tag2",updated_doc.pch_rfid_tag2
 	is_updated = 1
 	for tag_position in scanned_rfid_tag_data: #validation loop
 		none_check = getattr(updated_doc,tag_position)
 		if none_check == None  and  scanned_rfid_tag_data[tag_position] == " "  :
-			#print "***************from pass",tag_position
 			pass
 		elif scanned_rfid_tag_data[tag_position] != getattr(updated_doc,tag_position) :
-			#print "***************from elif",tag_position
 			is_updated = 0
 			break
 		else:
 			pass
-			#print "***************validation debugging uupdated tag_position",tag_position
 
 		if scanned_rfid_tag_data[tag_position] == getattr(updated_doc,tag_position) : #debugging
 			pass
-			#print "***************validation debugging uupdated status",tag_position
-
 	return is_updated
 
 @frappe.whitelist()
 def sample_update():
-
 	#print "***** Enters Sample update scanned_rfid_tag_data",scanned_rfid_tag_data
-	doc_upda = frappe.get_doc( "Item", "Vehicle")
-	#print "**********************************type of doc ",type(doc_upda)
-	fetch_data = getattr(doc_upda,"item_code")
+	rfid_tag_details_doc = frappe.get_doc( "Item", "Vehicle")
+	fetch_data = getattr(rfid_tag_details_doc,"item_code")
 	return fetch_data
 
+@frappe.whitelist()
+def update_rfid_tag_details_child_doc( doc_type,doc_no,matched_rfid_tag_details_name,rfid_tag_position ):
+	is_child_doc_updation_complete = 0
+	rfid_tag_details_doc = frappe.get_doc( "RFID Tag Details",matched_rfid_tag_details_name )
+	is_last_row_ed_updated = False
+	last_row_idx = 0 	# lastrow
+	for roww in rfid_tag_details_doc.rfid_tag_association_details:
+		last_row_idx = last_row_idx +1
 
+	for roww in rfid_tag_details_doc.rfid_tag_association_details:
+		if roww.idx == last_row_idx:
+			roww.pch_rfid_association_end_date = utils.now()
+			rfid_tag_details_doc.save()
+			is_last_row_ed_updated = True
 
+	if is_last_row_ed_updated == True:
+		row = rfid_tag_details_doc.append('rfid_tag_association_details',{})
+		row.pch_rfid_association_start_date = utils.now()
+		row.tag_association = rfid_tag_position
+		row.pch_rfid_docid_associated_with = doc_no
+		row.pch_rfid_doctype_associated_with = doc_type
+		row.idx = last_row_idx+1  #new rows
+		rfid_tag_details_doc.save()
+		is_child_doc_updation_complete = 1
+	return is_child_doc_updation_complete
 
-
-"""
-	for tag_position in scanned_rfid_tag_data:
-		doc_to_be_update.db_set(tag_position, scanned_rfid_tag_data[tag_position])
-		doc_to_be_update.save()
-		print "suresh_android..*** Entered for looop saved",tag_position
-		"""
-
-	#return "custom api updation done"
