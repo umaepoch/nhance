@@ -82,3 +82,30 @@ def update_rfid_tag_details_child_doc( doc_type,doc_no,matched_rfid_tag_details_
 		is_child_doc_updation_complete = 1
 	return is_child_doc_updation_complete
 
+@frappe.whitelist()
+def	create_rfid_tag_details_doc( scanned_rfid_tag_data,tag_association,pch_rfid_docid_associated_with,pch_rfid_doctype_associated_with):
+
+      rfid_child_doc_json = " "
+      rfid_doc_json = {
+      "doctype": "RFID Tag Details",
+      "rfid_tag": scanned_rfid_tag_data,
+      "rfid_tag_association_details": []
+      }
+
+      rfid_child_doc_json ={
+      "doctype": "RFID Tag Association Details",
+      "tag_association": tag_association,
+      "pch_rfid_docid_associated_with": pch_rfid_docid_associated_with,
+      "pch_rfid_doctype_associated_with": pch_rfid_doctype_associated_with ,
+      "idx":1
+      }
+      rfid_doc_json["rfid_tag_association_details"].append(rfid_child_doc_json) #end of for
+
+      #print "create_rfid_tag_details_doc checking rfid_doc_json**********",rfid_doc_json
+
+      doc = frappe.new_doc("RFID Tag Details")
+      doc.update(rfid_doc_json)
+      doc.save()
+      is_created = 1
+      return is_created
+
