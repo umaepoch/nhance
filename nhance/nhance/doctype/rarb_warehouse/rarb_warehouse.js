@@ -28,16 +28,18 @@ frappe.ui.form.on('RARB Warehouse', {
 			if(cur_frm.doc.end_date != undefined && cur_frm.doc.end_date != ""){
 				var higher_date = get_higher_date(cur_frm.doc.warehouse,cur_frm.doc.start_date,cur_frm.doc.name);
 				if(higher_date != undefined){
-					console.log("higher_date--------------"+higher_date);
+					//console.log("higher_date--------------"+higher_date);
 					cur_frm.set_value("end_date", higher_date);
 				}
 				else{
-					console.log("hieger date is not coming");
+					//console.log("hieger date is not coming");
 					cur_frm.set_value("end_date", "");
 				}
 				//console.log("higher_date----------------"+higher_date);
 				cur_date_py = get_current_date_format(cur_frm.doc.end_date, cur_frm.doc.start_date, cur_frm.doc.warehouse);
-				if(cur_date_py == true){
+				set_is_active(cur_frm.doc.name,cur_date_py,cur_frm.doc.docstatus);
+				//console.log("cur_date_py-------------"+cur_date_py);
+				/*if(cur_date_py == true){
 				    if(cur_frm.doc.docstatus ==1){
 					cur_frm.set_value("is_active", 1);
 				    }
@@ -46,7 +48,7 @@ frappe.ui.form.on('RARB Warehouse', {
 					}
 				}else if (cur_date_py == false){
 					cur_frm.set_value("is_active", 0);
-				}
+				}*/
 				
 			}else{
 				var higher_date = get_higher_date(cur_frm.doc.warehouse,cur_frm.doc.start_date,cur_frm.doc.name);
@@ -57,8 +59,10 @@ frappe.ui.form.on('RARB Warehouse', {
 					cur_frm.set_value("end_date", "");
 				}
 				var next_start_date = get_next_start_date(cur_frm.doc.warehouse,cur_frm.doc.start_date,cur_frm.doc.name);
-				console.log("next_start_date------------"+next_start_date);
-				if(next_start_date == true){
+				//console.log("next_start_date------------"+next_start_date);
+				set_is_active(cur_frm.doc.name,next_start_date,cur_frm.doc.docstatus);
+				//console.log("cur_date_py-------------"+next_start_date);
+				/*if(next_start_date == true){
 				     if(cur_frm.doc.docstatus ==1){
 					cur_frm.set_value("is_active", 1);
 					}
@@ -67,7 +71,7 @@ frappe.ui.form.on('RARB Warehouse', {
 					}
 				}else if (next_start_date == false){
 					cur_frm.set_value("is_active", 0);
-				}
+				}*/
 			}
 				}
 		
@@ -80,7 +84,7 @@ frappe.ui.form.on('RARB Warehouse', {
 					for(var l = 1; l <= cur_frm.doc.number_of_bins_per_rack; l++){
 						var rarb_id = i+"-"+j+"-"+k+"-"+l;
 						var child = cur_frm.add_child("rarbs");
-						console.log(rarb_id);
+						//console.log(rarb_id);
 				                frappe.model.set_value(child.doctype, child.name, "rarb_id", rarb_id);
 					}
 				}
@@ -88,7 +92,15 @@ frappe.ui.form.on('RARB Warehouse', {
 		cur_frm.refresh_field('rarbs');
 		}
 		cur_frm.set_df_property("make_rarbs", "hidden", true);
-	}
+	},
+	on_submit: function(frm){
+		var rarb_id = create_rarb_id(cur_frm.doc.name, cur_frm.doc.warehouse,cur_frm.doc.rarbs);
+	}/*,
+	start_date : function(frm){
+		if (cur_frm.doc.start_date == frappe.datetime.get_today()){
+			frappe.msgprint("Start Date Cannot be Today date please select future date");
+		}
+	}*/
 		
 });
 frappe.ui.form.on('RARB Warehouse', "on_submit", function(frm , cdt , cdn){
@@ -109,7 +121,7 @@ frappe.ui.form.on("RARB Warehouse" ,{
 });
 frappe.ui.form.on("RARB Warehouse","onload", function(frm, cdt, cdn){
 	$.each(frm.doc.rarbs, function(i, item) {
-		console.log("rarb active ---------"+item.rarb_active);
+		//console.log("rarb active ---------"+item.rarb_active);
 		if(item.rarb_active == "Yes"){
 			 cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_type", true)
 			}
@@ -120,7 +132,7 @@ frappe.ui.form.on("RARB Warehouse","onload", function(frm, cdt, cdn){
 	frappe.ui.form.on("RARB Warehouse Item", {
 
 		 rarb_active: function (frm, cdt, cdn){
-			console.log("hello-------------");
+			//console.log("hello-------------");
 			var d = locals[cdt][cdn];
 			if(d.rarb_active == "Yes"){
 				 cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_type", true)
@@ -135,7 +147,7 @@ frappe.ui.form.on("RARB Warehouse","onload", function(frm, cdt, cdn){
 				 cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_item", true)
 				}
 			else if(d.rarb_type == "Any Item"){
-				console.log("rarb type is not specific item");
+				//console.log("rarb type is not specific item");
 				 cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_item", false)
 			}
 		}
@@ -152,7 +164,7 @@ function get_higher_date(warehouse,start_date,name){
         },
         async: false,
         callback: function(r) {
-            console.log("supplier criticality..." + JSON.stringify(r.message));
+            //console.log("supplier criticality..." + JSON.stringify(r.message));
            supplier_criticality = r.message;
 	   // end_date = (new Date(supplier_criticality-1));
 	  // console.log("end date -------------"+supplier_criticality);
@@ -173,7 +185,7 @@ function get_current_date_format(end_date,start_date,warehouse){
         },
         async: false,
         callback: function(r) {
-            console.log("supplier criticality..." + JSON.stringify(r.message));
+           // console.log("supplier criticality..." + JSON.stringify(r.message));
            supplier_criticality = r.message;
 	   // end_date = (new Date(supplier_criticality-1));
 	  // console.log("end date -------------"+supplier_criticality);
@@ -184,7 +196,7 @@ function get_current_date_format(end_date,start_date,warehouse){
 
 }
 function get_next_start_date(warehouse,start_date,name){
-	console.log("no end date");
+	//console.log("no end date");
 	var supplier_criticality = "";
 	  frappe.call({
         method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.get_next_start_date',
@@ -195,7 +207,7 @@ function get_next_start_date(warehouse,start_date,name){
         },
         async: false,
         callback: function(r) {
-            console.log("supplier criticality..." + JSON.stringify(r.message));
+           // console.log("supplier criticality..." + JSON.stringify(r.message));
            supplier_criticality = r.message;
 	   // end_date = (new Date(supplier_criticality-1));
 	  // console.log("current date------------"+supplier_criticality);
@@ -216,7 +228,7 @@ function get_update_pre_doc(warehouse,start_date,name){
         },
         async: false,
         callback: function(r) {
-            console.log("supplier criticality..." + JSON.stringify(r.message));
+            //console.log("supplier criticality..." + JSON.stringify(r.message));
            supplier_criticality = r.message;
 	   // end_date = (new Date(supplier_criticality-1));
 	//   console.log("current date------------"+supplier_criticality);
@@ -236,7 +248,7 @@ function get_update_doc(name,end_date){
         },
         async: false,
         callback: function(r) {
-            console.log("supplier criticality..." + JSON.stringify(r.message));
+           // console.log("supplier criticality..." + JSON.stringify(r.message));
            supplier_criticality = r.message;
 	   // end_date = (new Date(supplier_criticality-1));
 	//   console.log("current date------------"+supplier_criticality);
@@ -254,12 +266,45 @@ function get_update_is_active(name,is_active){
         },
         async: false,
         callback: function(r) {
-            console.log("supplier criticality..." + JSON.stringify(r.message));
+           // console.log("supplier criticality..." + JSON.stringify(r.message));
            supplier_criticality = r.message;
 	   // end_date = (new Date(supplier_criticality-1));
-	  console.log("current date------------"+supplier_criticality);
+	//  console.log("current date------------"+supplier_criticality);
         }
     });
     return supplier_criticality;
 
+}
+function create_rarb_id(name, warehouse,rarbs){
+	var supplier_criticality = "";
+	  frappe.call({
+        method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.create_rarb_id',
+        args: {
+	   "name":name,
+	   "warehouse":warehouse,
+	   "rarbs":rarbs
+        },
+        async: false,
+        callback: function(r) {
+           // console.log("supplier criticality..." + JSON.stringify(r.message));
+           
+        }
+    });
+    return supplier_criticality;
+}
+function set_is_active(name,cur_date_py,docstatus){
+	var supplier_criticality = "";
+	  frappe.call({
+        method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.set_is_active',
+        args: {
+	   "name":name,
+	   "cur_date_py":cur_date_py,
+	   "docstatus":docstatus
+        },
+        async: false,
+        callback: function(r) {
+           // console.log("supplier criticality..." + JSON.stringify(r.message));
+           
+        }
+    });
 }

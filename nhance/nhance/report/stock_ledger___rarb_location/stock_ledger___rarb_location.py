@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
+import ast
 from erpnext.stock.utils import update_included_uom_in_report
 
 def execute(filters=None):
@@ -22,35 +23,59 @@ def execute(filters=None):
 		print "item code --------------",sle.item_code
 	'''
 	conversion_factors = []
+	stock_qty = 0.0
+	rarb_id = []
+	s_rarb = ""
+	t_rarb = ""
+	
 	if opening_row:
 		data.append(opening_row)
-
 	for sle in sl_entries:
 		item_detail = item_details[sle.item_code]
 		voucher_type = sle.voucher_type
 		voucher_no = sle.voucher_no
-		voucher_details = get_rarb_vouchers(voucher_type,voucher_no,sle.item_code)
+		warehouse = sle.warehouse
+		
+		voucher_details = get_rarb_vouchers(voucher_type,voucher_no,sle.item_code, sle.voucher_detail_no)
+		
 		for voucher in voucher_details:
-			if voucher.pch_rarb_location_src is not None and voucher.s_warehouse == sle.warehouse: 
+			item_code = voucher.item_code
+			if voucher.pch_rarb_location_src is not None and voucher.s_warehouse == sle.warehouse:
+				voucher_balance_qty = get_rarb_balance_src_qty(voucher_type,voucher_no,sle.item_code, sle.voucher_detail_no,warehouse,voucher.pch_rarb_location_src)
+				
+				available_qty = get_available_src_qty(voucher_balance_qty,stock_qty,rarb_id,voucher.pch_rarb_location_src,sle.item_code,sle.voucher_type)
+				
+				for qty in available_qty:
+					if voucher.pch_rarb_location_src == qty['id'] and item_code == qty['item_code']:
+						stock_qty = qty['stock_qty']
+
 				data.append([sle.date, sle.item_code, item_detail.item_name, item_detail.item_group,
 					voucher.pch_rarb_location_src,
 					item_detail.brand, item_detail.description, sle.warehouse,
-					item_detail.stock_uom, sle.actual_qty, sle.qty_after_transaction,
+					item_detail.stock_uom, sle.actual_qty, stock_qty,
 					(sle.incoming_rate if sle.actual_qty > 0 else 0.0),
 					sle.valuation_rate, sle.stock_value, sle.voucher_type, sle.voucher_no,
 					sle.batch_no, sle.serial_no, sle.project, sle.company])
 			elif voucher.pch_rarb_location_trg is not None and voucher.t_warehouse == sle.warehouse:
+				voucher_balance_qty = get_rarb_balance_qty(voucher_type,voucher_no,sle.item_code, sle.voucher_detail_no,warehouse,voucher.pch_rarb_location_trg)
+				
+				available_qty = get_available_qty(voucher_balance_qty,stock_qty,rarb_id,voucher.pch_rarb_location_trg,sle.item_code)
+				
+				
+				for qty in available_qty:
+					if voucher.pch_rarb_location_trg == qty['id'] and sle.item_code == qty['item_code']:
+						stock_qty = qty['stock_qty']
+						
 				data.append([sle.date, sle.item_code, item_detail.item_name, item_detail.item_group,
 					voucher.pch_rarb_location_trg,
 					item_detail.brand, item_detail.description, sle.warehouse,
-					item_detail.stock_uom, sle.actual_qty, sle.qty_after_transaction,
+					item_detail.stock_uom, sle.actual_qty, stock_qty,
 					(sle.incoming_rate if sle.actual_qty > 0 else 0.0),
 					sle.valuation_rate, sle.stock_value, sle.voucher_type, sle.voucher_no,
 					sle.batch_no, sle.serial_no, sle.project, sle.company])
 
 		if include_uom:
 			conversion_factors.append(item_detail.conversion_factor)
-
 	update_included_uom_in_report(columns, data, include_uom, conversion_factors)
 	return columns, data
 
@@ -91,8 +116,8 @@ def get_stock_ledger_entries(filters, items):
 
 	return frappe.db.sql("""select concat_ws(" ", posting_date, posting_time) as date,
 			item_code, warehouse, actual_qty, qty_after_transaction, incoming_rate, valuation_rate,
-			stock_value, voucher_type, voucher_no, batch_no, serial_no, company, project
-		from `tabStock Ledger Entry` sle
+			stock_value, voucher_type, voucher_no, batch_no, serial_no, company, project,voucher_detail_no
+		from `tabStock Ledger Entry` sle 
 		where company = %(company)s and
 			posting_date between %(from_date)s and %(to_date)s
 			{sle_conditions}
@@ -199,20 +224,20 @@ def get_item_group_condition(item_group):
 			item_group_details.rgt)
 
 	return ''
-def get_rarb_vouchers(voucher_type,voucher_no,item_code):
-	#print "voucher_no-------------",voucher_no
+def get_rarb_vouchers(voucher_type,voucher_no,item_code,voucher_detail_no):
 	rarb_locations = ""
 	if voucher_type == "Stock Entry":
 		
 		rarb_locations = frappe.db.sql("""
 						select 
-							sti.pch_rarb_location_src,sti.pch_rarb_location_trg, sti.s_warehouse as s_warehouse,
-							sti.t_warehouse as t_warehouse 
+							sti.pch_rarb_location_src,sti.pch_rarb_location_trg ,
+							sti.t_warehouse as t_warehouse, sti.s_warehouse as s_warehouse
 						from 
 							`tabStock Entry` st ,`tabStock Entry Detail` sti 
 						where 
 							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
-							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1""", as_dict =1)
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""'""", as_dict =1)
 	elif voucher_type == "Purchase Invoice":
 		
 		rarb_locations = frappe.db.sql("""
@@ -222,49 +247,238 @@ def get_rarb_vouchers(voucher_type,voucher_no,item_code):
 							`tabPurchase Invoice` st ,`tabPurchase Invoice Item` sti 
 						where 
 							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
-							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1""", as_dict =1)
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""'""", as_dict =1)
 	elif voucher_type == "Purchase Receipt":
 		
 		rarb_locations = frappe.db.sql("""
 						select 
-							sti.pch_rarb_location_trg, sti.item_code , sti.warehouse as t_warehouse
+							sti.pch_rarb_location_trg, sti.item_code, sti.warehouse as t_warehouse
 						from 
 							`tabPurchase Receipt` st ,`tabPurchase Receipt Item` sti 
 						where 
 							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
-							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1""", as_dict =1)
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""'""", as_dict =1)
 	elif voucher_type == "Sales Invoice":
 		
 		rarb_locations = frappe.db.sql("""
 						select 
-							sti.pch_rarb_location_src, sti.item_code , sti.warehouse as s_warehouse
+							sti.pch_rarb_location_src, sti.item_code, sti.warehouse as s_warehouse
 						from 
 							`tabSales Invoice` st ,`tabSales Invoice Item` sti 
 						where 
 							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
-							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1""", as_dict =1)
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""'""", as_dict =1)
 	elif voucher_type == "Stock Reconciliation":
 		
 		rarb_locations = frappe.db.sql("""
 						select 
-							sti.pch_rarb_location_src, sti.item_code , sti.warehouse as s_warehouse
+							sti.pch_rarb_location_src, sti.item_code,sti.warehouse as s_warehouse
 						from 
 							`tabStock Reconciliation` st ,`tabStock Reconciliation Item` sti 
 						where 
 							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
-							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1""", as_dict =1)
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							""", as_dict =1)
 	elif voucher_type == "Delivery Note":
 		
 		rarb_locations = frappe.db.sql("""
 						select 
-							sti.pch_rarb_location_src, sti.item_code ,sti.warehouse as s_warehouse
+							sti.pch_rarb_location_src, sti.item_code,sti.warehouse as s_warehouse
 						from 
 							`tabDelivery Note` st ,`tabDelivery Note Item` sti 
 						where 
 							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
-							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1""", as_dict =1)
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name = '"""+voucher_detail_no+"""'""", as_dict =1)
 	return rarb_locations
+def get_rarb_balance_qty(voucher_type,voucher_no,item_code,voucher_detail_no,warehouse,rarb_location):
+	stock_qty = 0.0
+	rarb_s_warehouse_qty = ""
+	rarb_t_warehouse_qty = ""
+	if voucher_type == "Stock Entry":
+		
+		rarb_t_warehouse_qty = frappe.db.sql("""
+						select 
+							 sti.qty as t_qty
+						from 
+							`tabStock Entry` st ,`tabStock Entry Detail` sti 
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""' and sti.t_warehouse = %s and
+							sti.pch_rarb_location_trg = %s""",(warehouse,rarb_location), as_dict =1)
+	elif voucher_type == "Purchase Invoice":
+		
+		rarb_t_warehouse_qty = frappe.db.sql("""
+						select
+							sti.qty as t_qty
+						from 
+							`tabPurchase Invoice`  st, `tabPurchase Invoice Item`  sti
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""' and sti.warehouse = %s and
+							sti.pch_rarb_location_trg = %s""",(warehouse,rarb_location), as_dict =1)
+	elif voucher_type == "Purchase Receipt":
+		
+		rarb_t_warehouse_qty = frappe.db.sql("""
+						select 
+							sti.qty as t_qty
+						from 
+							`tabPurchase Receipt` st, `tabPurchase Receipt Item` sti
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""' and sti.warehouse = %s and
+							sti.pch_rarb_location_trg = %s""",(warehouse,rarb_location), as_dict =1)
+	'''
+	elif voucher_type == "Stock Reconciliation":
+		
+		rarb_locations = frappe.db.sql("""
+						select 
+							sti.pch_rarb_location_src, sti.item_code,sti.warehouse as s_warehouse
+						from 
+							`tabStock Reconciliation` st ,`tabStock Reconciliation Item` sti 
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							""", as_dict =1)
+	'''
+	target_qty = 0.0
+	if rarb_t_warehouse_qty:
+		target_qty = rarb_t_warehouse_qty[0].t_qty
+	return target_qty
+def get_rarb_balance_src_qty(voucher_type,voucher_no,item_code,voucher_detail_no,warehouse,rarb_location):
+	stock_qty = 0.0
+	rarb_s_warehouse_qty = ""
+	rarb_t_warehouse_qty = ""
+	if voucher_type == "Stock Entry":
+		
+		rarb_s_warehouse_qty = frappe.db.sql("""
+						select 
+							sti.qty as s_qty
+						from 
+							`tabStock Entry` st ,`tabStock Entry Detail` sti 
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""' and sti.s_warehouse = %s and
+							sti.pch_rarb_location_src = %s""",(warehouse,rarb_location), as_dict =1)
+	elif voucher_type == "Sales Invoice":
+		
+		rarb_s_warehouse_qty = frappe.db.sql("""
+						select 
+							sti.qty as s_qty
+						from 
+							`tabSales Invoice`  st ,`tabSales Invoice Item`  sti
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""' and sti.warehouse = %s and
+							sti.pch_rarb_location_src = %s""",(warehouse,rarb_location), as_dict =1)
+	elif voucher_type == "Delivery Note":
+		
+		rarb_s_warehouse_qty = frappe.db.sql("""
+						select 
+							sti.qty as s_qty
+						from 
+							`tabDelivery Note` st, `tabDelivery Note Item`  sti
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.name ='"""+voucher_detail_no+"""' and sti.warehouse = %s and
+							sti.pch_rarb_location_src = %s""",(warehouse,rarb_location), as_dict =1)
+	
+	elif voucher_type == "Stock Reconciliation":
+		
+		rarb_s_warehouse_qty = frappe.db.sql("""
+						select 
+							sti.qty as s_qty
+						from 
+							`tabStock Reconciliation` st ,`tabStock Reconciliation Item` sti 
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.warehouse = %s and
+							sti.pch_rarb_location_src = %s""",(warehouse,rarb_location), as_dict =1)
+	
+	source_qty = 0.0
+	if rarb_s_warehouse_qty:
+		source_qty = rarb_s_warehouse_qty[0].s_qty
+	return source_qty
 
+def get_available_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location, item_code):
+	if rarb_id:
+		if rarb_location in [d['id'] for d in rarb_id 
+					if d['item_code'] == item_code]:
+			print "item_code--------------------",item_code
+			print "rarb_location-----------------",rarb_location
+			for rarb in rarb_id:
+				if rarb_location == rarb['id'] and rarb['item_code']== item_code:
+					
+					total_qty = rarb['stock_qty']
+					total_qty += voucher_balance_qty
+					rarb['stock_qty'] = total_qty
+		else:
+			rarb_id.append({
+				"id": rarb_location,
+				"item_code":item_code, 
+				"stock_qty": voucher_balance_qty
+				})
+	else:
+		rarb_id.append({
+			"id": rarb_location,
+			"item_code":item_code, 
+			"stock_qty": voucher_balance_qty
+		})
+	
+	print "rarb_id--------------------",rarb_id
+	
+	return rarb_id
+def get_available_src_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location,item_code,voucher_type):
+	if voucher_type != "Stock Reconciliation":
+		if rarb_id:
+			if rarb_location in [d['id'] for d in rarb_id] and item_code in [d['item_code'] for d in rarb_id]:
+				for rarb in rarb_id:
+					if rarb_location == rarb['id'] and rarb['item_code']== item_code:
+						total_qty = rarb['stock_qty']
+						total_qty -= voucher_balance_qty
+						#rarb_id = []
+						rarb['stock_qty'] = total_qty
 
-
-
+			else:
+				rarb_id.append({
+					"id": rarb_location,
+					"item_code":item_code,
+					"stock_qty": voucher_balance_qty
+					})
+		else:
+			rarb_id.append({
+				"id": rarb_location,
+				"item_code":item_code, 
+				"stock_qty": voucher_balance_qty
+			})
+	else:
+		if rarb_id:
+			if rarb_location in [d['id'] for d in rarb_id] and item_code in [d['item_code'] for d in rarb_id]:
+				for rarb in rarb_id:
+					if rarb_location == rarb['id'] and rarb['item_code']== item_code:
+						
+						
+						rarb['stock_qty'] = voucher_balance_qty
+			else:
+				rarb_id.append({
+					"id": rarb_location,
+					"item_code":item_code,
+					"stock_qty": voucher_balance_qty
+					})
+		else:
+			rarb_id.append({
+				"id": rarb_location,
+				"item_code":item_code, 
+				"stock_qty": voucher_balance_qty
+			})
+	return rarb_id
