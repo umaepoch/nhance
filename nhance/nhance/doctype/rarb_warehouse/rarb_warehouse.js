@@ -70,7 +70,7 @@ frappe.ui.form.on('RARB Warehouse', {
 				if (next_start_date == true){
 					 var flag = 1;
 					set_is_active(cur_frm.doc.name,flag,cur_frm.doc.docstatus);
-				}else if (next_start_date == true){
+				}else if (next_start_date == false){
 					 var flag = 0;
 					set_is_active(cur_frm.doc.name,flag,cur_frm.doc.docstatus);
 				}
