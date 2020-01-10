@@ -16,12 +16,6 @@ def execute(filters=None):
 	item_details = get_item_details(items, sl_entries, include_uom)
 	opening_row = get_opening_balance(filters, columns)
 	data = []
-	'''
-	for sle in sl_entries:
-		print "voucher type--------------",sle.voucher_type
-		print "voucher no--------------",sle.voucher_no
-		print "item code --------------",sle.item_code
-	'''
 	conversion_factors = []
 	stock_qty = 0.0
 	rarb_id = []
@@ -414,8 +408,8 @@ def get_available_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location, item_
 	if rarb_id:
 		if rarb_location in [d['id'] for d in rarb_id 
 					if d['item_code'] == item_code]:
-			print "item_code--------------------",item_code
-			print "rarb_location-----------------",rarb_location
+			#print "item_code--------------------",item_code
+			#print "rarb_location-----------------",rarb_location
 			for rarb in rarb_id:
 				if rarb_location == rarb['id'] and rarb['item_code']== item_code:
 					
@@ -435,7 +429,7 @@ def get_available_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location, item_
 			"stock_qty": voucher_balance_qty
 		})
 	
-	print "rarb_id--------------------",rarb_id
+	#print "rarb_id--------------------",rarb_id
 	
 	return rarb_id
 def get_available_src_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location,item_code,voucher_type):
