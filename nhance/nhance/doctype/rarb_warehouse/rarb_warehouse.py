@@ -467,10 +467,13 @@ def check_available_qty(stock,data):
 
 @frappe.whitelist()
 def set_is_active(name,cur_date_py,docstatus):
-	if cur_date_py == 'true':
-		if docstatus == 1:
+	if int(cur_date_py) == 1:
+		if int(docstatus) == 1:
 			frappe.db.set_value("RARB Warehouse", name, "is_active", 1)
-		elif docstatus == 2:
+			frappe.db.commit()
+		elif int(docstatus) == 2:
 			frappe.db.set_value("RARB Warehouse", name, "is_active", 0)
-	else:
+			frappe.db.commit()
+	elif int(cur_date_py) == 0:
 		frappe.db.set_value("RARB Warehouse", name, "is_active", 0)
+		frappe.db.commit()

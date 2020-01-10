@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('RARB Warehouse', {
-	onload: function(frm) {
+	refresh: function(frm) {
 		cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_type", true)
 		if (cur_frm.doc.__islocal){
 			if(cur_frm.doc.amended_from == undefined){
@@ -37,7 +37,14 @@ frappe.ui.form.on('RARB Warehouse', {
 				}
 				//console.log("higher_date----------------"+higher_date);
 				cur_date_py = get_current_date_format(cur_frm.doc.end_date, cur_frm.doc.start_date, cur_frm.doc.warehouse);
-				set_is_active(cur_frm.doc.name,cur_date_py,cur_frm.doc.docstatus);
+				//set_is_active(cur_frm.doc.name,cur_date_py,cur_frm.doc.docstatus);
+				if (cur_date_py == true){
+					 var flag = 1;
+					set_is_active(cur_frm.doc.name,flag,cur_frm.doc.docstatus);
+				}else if (cur_date_py == false){
+					 var flag = 0;
+					set_is_active(cur_frm.doc.name,flag,cur_frm.doc.docstatus);
+				}
 				//console.log("cur_date_py-------------"+cur_date_py);
 				/*if(cur_date_py == true){
 				    if(cur_frm.doc.docstatus ==1){
@@ -60,8 +67,15 @@ frappe.ui.form.on('RARB Warehouse', {
 				}
 				var next_start_date = get_next_start_date(cur_frm.doc.warehouse,cur_frm.doc.start_date,cur_frm.doc.name);
 				//console.log("next_start_date------------"+next_start_date);
-				set_is_active(cur_frm.doc.name,next_start_date,cur_frm.doc.docstatus);
-				//console.log("cur_date_py-------------"+next_start_date);
+				if (next_start_date == true){
+					 var flag = 1;
+					set_is_active(cur_frm.doc.name,flag,cur_frm.doc.docstatus);
+				}else if (next_start_date == true){
+					 var flag = 0;
+					set_is_active(cur_frm.doc.name,flag,cur_frm.doc.docstatus);
+				}
+					
+				console.log("cur_date_py-------------"+next_start_date);
 				/*if(next_start_date == true){
 				     if(cur_frm.doc.docstatus ==1){
 					cur_frm.set_value("is_active", 1);
