@@ -281,6 +281,17 @@ def set_rarb_location(stock,data):
 							and sti.t_warehouse = %s 
 							and sti.name = '"""+voucher_detail_no+"""'
 							""",(warehouse), as_dict =1)
+		src_rarb_locations = frappe.db.sql("""
+						select 
+							sti.pch_rarb_location_src as rarb_id_src, sti.qty as s_qty
+						from 
+							`tabStock Entry` st ,`tabStock Entry Detail` sti 
+						where 
+							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
+							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
+							and sti.s_warehouse = %s 
+							and sti.name = '"""+voucher_detail_no+"""'
+							""",(warehouse), as_dict =1)
 	elif voucher_type == "Purchase Invoice":
 	
 		trg_rarb_locations = frappe.db.sql("""
@@ -307,19 +318,8 @@ def set_rarb_location(stock,data):
 							sti.warehouse = %s 
 							and sti.name = '"""+voucher_detail_no+"""'
 							""",(warehouse), as_dict =1)
-	elif voucher_type == "Stock Entry":
 		
-		src_rarb_locations = frappe.db.sql("""
-						select 
-							sti.pch_rarb_location_src as rarb_id_src, sti.qty as s_qty
-						from 
-							`tabStock Entry` st ,`tabStock Entry Detail` sti 
-						where 
-							st.name = '"""+voucher_no+"""' and st.name = sti.parent and 
-							sti.item_code = '"""+item_code+"""' and  st.docstatus = 1
-							and sti.s_warehouse = %s 
-							and sti.name = '"""+voucher_detail_no+"""'
-							""",(warehouse), as_dict =1)
+		
 	elif voucher_type == "Sales Invoice":
 	
 		src_rarb_locations = frappe.db.sql("""
@@ -360,22 +360,7 @@ def set_rarb_location(stock,data):
 	if src_rarb_locations:
 		
 		frappe.db.set_value("Stock Ledger Entry", stock.name, "rarb_location", src_rarb_locations[0].rarb_id_src)
-		'''
-		rarb_name = frappe.db.sql("""select 
-
-						rbi.name,rbi.available_qty 
-					from 
-						`tabRARB Warehouse` rb , `tabRARB Warehouse Item` rbi 
-					where 
-						rb.warehouse = %s and rb.name = rbi.parent and rbi.rarb_id = %s and rb.is_active = 1"""
-						,(warehouse,src_rarb_locations[0].rarb_id_src),as_dict=1)
-
-		if voucher_type != "Stock Reconciliation":
-			available = rarb_name[0].available_qty
-			total = available + stock.actual_qty
-			if available < src_rarb_locations[0].s_qty:
-				frappe.throw("The Quantity "+'"'+str(src_rarb_locations[0].s_qty)+'"'+" for "+'"'+stock.item_code+'"'+" is not available at RARB Location "+'"'+src_rarb_locations[0].rarb_id_src+'"'+",Please use the currect RARB Location and try again..")
-		'''
+		
 	if trg_rarb_locations:
 		frappe.db.set_value("Stock Ledger Entry", stock.name, "rarb_location", trg_rarb_locations[0].rarb_id_trg)
 		
@@ -389,7 +374,7 @@ def check_available_qty(stock,data):
 	if voucher_type == "Stock Entry":
 		src_rarb_locations = frappe.db.sql("""
 						select 
-							sti.pch_rarb_location_src as rarb_id_src, sti.qty as s_qty
+							sti.pch_rarb_location_src as rarb_id_src, sti.transfer_qty as s_qty
 						from 
 							`tabStock Entry` st ,`tabStock Entry Detail` sti 
 						where 
@@ -402,7 +387,7 @@ def check_available_qty(stock,data):
 	
 		src_rarb_locations = frappe.db.sql("""
 						select
-							sti.pch_rarb_location_src as rarb_id_src, sti.qty as s_qty
+							sti.pch_rarb_location_src as rarb_id_src, sti.stock_qty as s_qty
 						from 
 							`tabSales Invoice` st ,`tabSales Invoice Item` sti 
 						where 
@@ -415,7 +400,7 @@ def check_available_qty(stock,data):
 	
 		src_rarb_locations = frappe.db.sql("""
 						select 
-							sti.pch_rarb_location_src as rarb_id_src, sti.qty as s_qty
+							sti.pch_rarb_location_src as rarb_id_src, sti.stock_qty as s_qty
 						from 
 							`tabDelivery Note` st ,`tabDelivery Note Item` sti 
 						where 
@@ -445,13 +430,15 @@ def check_available_qty(stock,data):
 				target_qty += led.actual_qty
 				bal_qty = target_qty - source_qty
 			elif led.voucher_type == "Stock Entry":
-				stock_entry_datails = frappe.get_list("Stock Entry Detail", filters={'parent': led.voucher_no,'t_warehouse': led.warehouse, 'item_code': led.item_code, 'pch_rarb_location_trg': src_rarb_locations[0].rarb_id_src }, fields=[qty])
-				target_qty += stock_entry_datails[0].qty
-				bal_qty = target_qty - source_qty
-			elif led.voucher_type == "Stock Entry":
-				stock_entry_datails = frappe.get_list("Stock Entry Detail", filters={'parent': led.voucher_no,'s_warehouse': led.warehouse, 'item_code': led.item_code, 'pch_rarb_location_src': src_rarb_locations[0].rarb_id_src }, fields=[qty])
-				source_qty += stock_entry_datails[0].qty
-				bal_qty = target_qty - source_qty
+				stock_entry_datails = frappe.get_list("Stock Entry Detail", filters={'parent': led.voucher_no,'t_warehouse': led.warehouse, 'item_code': led.item_code, 'pch_rarb_location_trg': src_rarb_locations[0].rarb_id_src }, fields=['transfer_qty'])
+				if stock_entry_datails:
+					target_qty += stock_entry_datails[0].transfer_qty
+					bal_qty = target_qty - source_qty
+
+				stock_entry_datails = frappe.get_list("Stock Entry Detail", filters={'parent': led.voucher_no,'s_warehouse': led.warehouse, 'item_code': led.item_code, 'pch_rarb_location_src': src_rarb_locations[0].rarb_id_src }, fields=['transfer_qty'])
+				if stock_entry_datails:
+					source_qty += stock_entry_datails[0].transfer_qty
+					bal_qty = target_qty - source_qty
 			elif led.voucher_type == "Sales Invoice":
 				source_qty -= led.actual_qty
 				bal_qty = target_qty - source_qty
@@ -463,7 +450,7 @@ def check_available_qty(stock,data):
 				target_qty = led.qty_after_transaction
 				target_qty += source_qty
 		if bal_qty < src_rarb_locations[0].s_qty:
-			frappe.throw(_("The Quantity is not available for "+frappe.bold(stock.item_code)+" at RARB Location "+frappe.bold(src_rarb_locations[0].rarb_id_src)+",Please use the currect RARB Location and try again..")+ '<br><br>' + _("Available qty is {0}, you need {1}").format(frappe.bold(bal_qty),frappe.bold(str(src_rarb_locations[0].s_qty))), title=_('Insufficient Stock'))
+			frappe.throw(_("The Quantity is not available for "+frappe.bold(stock.item_code)+" at RARB Location "+frappe.bold(src_rarb_locations[0].rarb_id_src)+",Please use the currect RARB Location and try again..")+ '<br><br>' + _("Available qty is {0} {1}, you need {2} {3}").format(frappe.bold(bal_qty),frappe.bold(stock.stock_uom),frappe.bold(str(src_rarb_locations[0].s_qty)),frappe.bold(stock.stock_uom)), title=_('Insufficient Stock in RARB Warehouse'))
 
 @frappe.whitelist()
 def set_is_active(name,cur_date_py,docstatus):

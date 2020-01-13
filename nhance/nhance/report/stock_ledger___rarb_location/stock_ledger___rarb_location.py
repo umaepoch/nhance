@@ -40,7 +40,7 @@ def execute(filters=None):
 				available_qty = get_available_src_qty(voucher_balance_qty,stock_qty,rarb_id,voucher.pch_rarb_location_src,sle.item_code,sle.voucher_type)
 				
 				for qty in available_qty:
-					if voucher.pch_rarb_location_src == qty['id'] and item_code == qty['item_code']:
+					if voucher.pch_rarb_location_src == qty['id'] and sle.item_code == qty['item_code']:
 						stock_qty = qty['stock_qty']
 
 				data.append([sle.date, sle.item_code, item_detail.item_name, item_detail.item_group,
@@ -353,7 +353,7 @@ def get_rarb_balance_src_qty(voucher_type,voucher_no,item_code,voucher_detail_no
 		
 		rarb_s_warehouse_qty = frappe.db.sql("""
 						select 
-							sti.qty as s_qty
+							sti.transfer_qty as s_qty
 						from 
 							`tabStock Entry` st ,`tabStock Entry Detail` sti 
 						where 
@@ -365,7 +365,7 @@ def get_rarb_balance_src_qty(voucher_type,voucher_no,item_code,voucher_detail_no
 		
 		rarb_s_warehouse_qty = frappe.db.sql("""
 						select 
-							sti.qty as s_qty
+							sti.stock_qty as s_qty
 						from 
 							`tabSales Invoice`  st ,`tabSales Invoice Item`  sti
 						where 
@@ -377,7 +377,7 @@ def get_rarb_balance_src_qty(voucher_type,voucher_no,item_code,voucher_detail_no
 		
 		rarb_s_warehouse_qty = frappe.db.sql("""
 						select 
-							sti.qty as s_qty
+							sti.stock_qty as s_qty
 						from 
 							`tabDelivery Note` st, `tabDelivery Note Item`  sti
 						where 
@@ -406,8 +406,7 @@ def get_rarb_balance_src_qty(voucher_type,voucher_no,item_code,voucher_detail_no
 
 def get_available_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location, item_code):
 	if rarb_id:
-		if rarb_location in [d['id'] for d in rarb_id 
-					if d['item_code'] == item_code]:
+		if rarb_location in [d['id'] for d in rarb_id if d['item_code'] == item_code]:
 			#print "item_code--------------------",item_code
 			#print "rarb_location-----------------",rarb_location
 			for rarb in rarb_id:
@@ -433,15 +432,18 @@ def get_available_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location, item_
 	
 	return rarb_id
 def get_available_src_qty(voucher_balance_qty,stock_qty,rarb_id,rarb_location,item_code,voucher_type):
+	
 	if voucher_type != "Stock Reconciliation":
 		if rarb_id:
-			if rarb_location in [d['id'] for d in rarb_id] and item_code in [d['item_code'] for d in rarb_id]:
+			if rarb_location in [d['id'] for d in rarb_id if d['item_code'] == item_code]:
 				for rarb in rarb_id:
 					if rarb_location == rarb['id'] and rarb['item_code']== item_code:
+						
 						total_qty = rarb['stock_qty']
 						total_qty -= voucher_balance_qty
 						#rarb_id = []
 						rarb['stock_qty'] = total_qty
+						
 
 			else:
 				rarb_id.append({
