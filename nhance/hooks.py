@@ -14,7 +14,7 @@ fixtures = ['Custom Field']
 doc_events = {
 	"Sales Order Review":{
 		"before_save":"nhance.nhance.doctype.sales_order_review.sales_order_review.get_check_box_cheched",
-		"before_submit":"nhance.nhance.doctype.sales_order_review.sales_order_review.get_check_box_cheched"
+		"on_submit":"nhance.nhance.doctype.sales_order_review.sales_order_review.get_check_box_cheched"
 	},
 	"Sales Order":{
 		"before_submit":"nhance.nhance.doctype.sales_order_review.sales_order_review.check_before_submit"
@@ -23,6 +23,9 @@ doc_events = {
 		"before_submit":"nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.check_available_qty",
 		"on_submit":"nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.set_rarb_location"
 	}
+}
+doctype_js = {
+	"Sales Order": "fixtures/custom_scripts/Sales Order.js"
 }
 # Includes in <head>
 # ------------------
