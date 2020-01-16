@@ -38,7 +38,7 @@ frappe.ui.form.on('Sales Order Review', {
 						}
 					    }
 					}
-				var update_sales_items = update_sales_order_items(sales_review_item,cur_frm.doc.name,cur_frm.doc.sales_order,item.item_code);
+				//var update_sales_items = update_sales_order_items(sales_review_item,cur_frm.doc.name,cur_frm.doc.sales_order,item.item_code);
 				});
 				var sales_review_taxes = [];
 				var sales_order_taxes_review = "Sales Taxes and Charges Review";
@@ -55,7 +55,7 @@ frappe.ui.form.on('Sales Order Review', {
 						}
 					    }
 					}
-				var update_sales_taxes = update_sales_order_taxes(sales_review_taxes,cur_frm.doc.name,cur_frm.doc.sales_order,item.account_head,cur_frm.doc.taxes_and_charges);
+				//var update_sales_taxes = update_sales_order_taxes(sales_review_taxes,cur_frm.doc.name,cur_frm.doc.sales_order,item.account_head,cur_frm.doc.taxes_and_charges);
 				});
 				var sales_review_sales_team = [];
 				var sales_order_team_review = "Sales Team Review";
