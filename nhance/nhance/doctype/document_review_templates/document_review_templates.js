@@ -23,7 +23,7 @@ frappe.ui.form.on('Document Review Templates', {
             var child_doc1 = "";
 	
             for (var i = 0; i < current_doc.length; i++) {
-                if (current_doc[i].fieldname != "pull" && current_doc[i].fieldname != "doc_type") {
+                if (current_doc[i].fieldname != "pull" && current_doc[i].fieldname != "doc_type" && current_doc[i].fieldname != "is_default") {
                     
                         cur_frm.set_df_property(current_doc[i].fieldname, "hidden", true);
                     }
