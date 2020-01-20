@@ -278,7 +278,7 @@ def create_sales_order(sales_review,name,sales_order):
 			for taxes_review in review_doc_taxes_field:
 				proposed_new = "propose_new_"+rev.fieldname
 				#proposed_new_value = "propose_new_"+r_doc.fieldname
-				if proposed_new == item_rev.fieldname:
+				if proposed_new == taxes_review.fieldname:
 					reject_field = "reject_"+rev.fieldname
 					get_checked = frappe.get_all('Sales Taxes and Charges Review', filters={'parent': name , reject_field:1}, fields=[str(proposed_new)])
 					get_original_order_data = frappe.get_all('Sales Taxes and Charges', filters={'parent': sales_order}, fields=[str(rev.fieldname)])
@@ -342,183 +342,103 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 			if get_checked[0].reject_delivery_date ==1:
 				if get_checked[0].propose_new_delivery_date is not None:
 					delivery_date = get_checked[0].propose_new_delivery_date
-				else:
-					delivery_date = get_checked[0].delivery_date
-			elif get_checked[0].accept_delivery_date ==1:
-				delivery_date = get_checked[0].delivery_date
-			else:
-				delivery_date = get_checked[0].delivery_date
+				
 		elif rev.fieldname == "customer" and rev.field_label == "Parent Field":
 			
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["customer","reject_customer","accept_customer","propose_new_customer"])
 			if get_checked[0].reject_customer ==1:
 				if get_checked[0].propose_new_customer is not None:
 					customer = get_checked[0].propose_new_customer
-				else:
-					customer = get_checked[0].customer
-			elif get_checked[0].accept_customer ==1:
-				customer = get_checked[0].customer
-			else:
-				customer = get_checked[0].customer
+				
 		elif rev.fieldname == "order_type" and rev.field_label == "Parent Field":
 			
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["order_type","reject_order_type","accept_order_type","propose_new_order_type"])
 			if get_checked[0].reject_order_type ==1:
 				if get_checked[0].propose_new_order_type is not None:
 					order_type = get_checked[0].propose_new_order_type
-				else:
-					order_type = get_checked[0].order_type
-			elif get_checked[0].accept_order_type ==1:
-				order_type = get_checked[0].order_type
-			else:
-				order_type = get_checked[0].order_type
+				
 		elif rev.fieldname == "company" and rev.field_label == "Parent Field":
 			
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["company","reject_company","accept_company","propose_new_company"])
 			if get_checked[0].reject_company ==1:
 				if get_checked[0].propose_new_company is not None:
 					company = get_checked[0].propose_new_company
-				else:
-					company = get_checked[0].company
-			elif get_checked[0].accept_company ==1:
-				company = get_checked[0].company
-			else:
-				company = get_checked[0].company
+				
 		elif rev.fieldname == "customer_address" and rev.field_label == "Parent Field":
 			
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["customer_address","reject_customer_address","accept_customer_address","propose_new_customer_address"])
 			if get_checked[0].reject_customer_address ==1:
 				if get_checked[0].propose_new_customer_address is not None:
 					customer_address = get_checked[0].propose_new_customer_address
-				else:
-					customer_address = get_checked[0].customer_address
-			elif get_checked[0].accept_customer_address ==1:
-				customer_address = get_checked[0].customer_address
-			else:
-				customer_address = get_checked[0].customer_address
+				
 		elif rev.fieldname == "shipping_address_name" and rev.field_label == "Parent Field":
 			
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["shipping_address_name","reject_shipping_address_name","accept_shipping_address_name","propose_new_shipping_address_name"])
 			if get_checked[0].reject_shipping_address_name ==1:
 				if get_checked[0].propose_new_shipping_address_name is not None:
 					shipping_address_name = get_checked[0].propose_new_shipping_address_name
-				else:
-					shipping_address_name = get_checked[0].shipping_address_name
-			elif get_checked[0].accept_shipping_address_name ==1:
-				shipping_address_name = get_checked[0].shipping_address_name
-			else:
-				shipping_address_name = get_checked[0].shipping_address_name
+				
 		elif rev.fieldname == "contact_person" and rev.field_label == "Parent Field":
 			
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["contact_person","reject_contact_person","accept_contact_person","propose_new_contact_person"])
 			if get_checked[0].reject_contact_person ==1:
 				if get_checked[0].propose_new_contact_person is not None:
 					contact_person = get_checked[0].propose_new_contact_person
-				else:
-					contact_person = get_checked[0].contact_person
-			elif get_checked[0].accept_contact_person ==1:
-				contact_person = get_checked[0].contact_person
-			else:
-				contact_person = get_checked[0].contact_person
+				
 		elif rev.fieldname == "company_address" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["company_address","reject_company_address","accept_company_address","propose_new_company_address"])
 			if get_checked[0].reject_company_address ==1:
 				if get_checked[0].propose_new_company_address is not None:
 					company_address = get_checked[0].propose_new_company_address
-				else:
-					company_address = get_checked[0].company_address
-			elif get_checked[0].accept_company_address ==1:
-				company_address = get_checked[0].company_address
-			else:
-				company_address = get_checked[0].company_address
+				
 		elif rev.fieldname == "set_warehouse" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["set_warehouse","reject_set_warehouse","accept_set_warehouse","propose_new_set_warehouse"])
 			if get_checked[0].reject_set_warehouse ==1:
 				if get_checked[0].propose_new_set_warehouse is not None:
 					set_warehouse = get_checked[0].propose_new_set_warehouse
-				else:
-					set_warehouse = get_checked[0].set_warehouse
-			elif get_checked[0].accept_set_warehouse ==1:
-				set_warehouse = get_checked[0].set_warehouse
-			else:
-				set_warehouse = get_checked[0].set_warehouse
+				
 		elif rev.fieldname == "apply_discount_on" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["apply_discount_on","reject_apply_discount_on","accept_apply_discount_on","propose_new_apply_discount_on"])
 			if get_checked[0].reject_apply_discount_on ==1:
 				if get_checked[0].propose_new_apply_discount_on is not None:
 					apply_discount_on = get_checked[0].propose_new_apply_discount_on
-				else:
-					apply_discount_on = get_checked[0].apply_discount_on
-			elif get_checked[0].accept_apply_discount_on ==1:
-				apply_discount_on = get_checked[0].apply_discount_on
-			else:
-				apply_discount_on = get_checked[0].apply_discount_on
+				
 		elif rev.fieldname == "base_discount_amount" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["base_discount_amount","reject_base_discount_amount","accept_base_discount_amount","propose_new_base_discount_amount"])
 			if get_checked[0].reject_base_discount_amount ==1:
 				if get_checked[0].propose_new_base_discount_amount is not None:
 					base_discount_amount = get_checked[0].propose_new_base_discount_amount
-				else:
-					base_discount_amount = get_checked[0].base_discount_amount
-			elif get_checked[0].accept_base_discount_amount ==1:
-				base_discount_amount = get_checked[0].base_discount_amount
-			else:
-				base_discount_amount = get_checked[0].base_discount_amount
+				
 		elif rev.fieldname == "additional_discount_percentage" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["additional_discount_percentage","reject_additional_discount_percentage","accept_additional_discount_percentage","propose_new_additional_discount_percentage"])
 			if get_checked[0].reject_additional_discount_percentage ==1:
 				if get_checked[0].propose_new_additional_discount_percentage is not None:
 					additional_discount_percentage = get_checked[0].propose_new_additional_discount_percentage
-				else:
-					additional_discount_percentage = get_checked[0].additional_discount_percentage
-			elif get_checked[0].accept_additional_discount_percentage ==1:
-				additional_discount_percentage = get_checked[0].additional_discount_percentage
-			else:
-				additional_discount_percentage = get_checked[0].additional_discount_percentage
+				
 		elif rev.fieldname == "discount_amount" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["discount_amount","reject_discount_amount","accept_discount_amount","propose_new_discount_amount"])
 			if get_checked[0].reject_discount_amount ==1:
 				if get_checked[0].propose_new_discount_amount is not None:
 					discount_amount = get_checked[0].propose_new_discount_amount
-				else:
-					discount_amount = get_checked[0].discount_amount
-			elif get_checked[0].accept_discount_amount ==1:
-				discount_amount = get_checked[0].discount_amount
-			else:
-				discount_amount = get_checked[0].discount_amount
+				
 		elif rev.fieldname == "project" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["project","reject_project","accept_project","propose_new_project"])
 			if get_checked[0].reject_project ==1:
 				if get_checked[0].propose_new_project is not None:
 					project = get_checked[0].propose_new_project
-				else:
-					project = get_checked[0].project
-			elif get_checked[0].accept_project ==1:
-				project = get_checked[0].project
-			else:
-				project = get_checked[0].project
+				
 		elif rev.fieldname == "source" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["source","reject_source","accept_source","propose_new_source"])
 			if get_checked[0].reject_source ==1:
 				if get_checked[0].propose_new_source is not None:
 					source = get_checked[0].propose_new_source
-				else:
-					source = get_checked[0].source
-			elif get_checked[0].accept_source ==1:
-				source = get_checked[0].source
-			else:
-				source = get_checked[0].source
+				
 		elif rev.fieldname == "campaign" and rev.field_label == "Parent Field":
 			get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["campaign","reject_campaign","accept_campaign","propose_new_campaign"])
 			if get_checked[0].reject_campaign ==1:
 				if get_checked[0].propose_new_campaign is not None:
 					campaign = get_checked[0].propose_new_campaign
-				else:
-					campaign = get_checked[0].campaign
-			elif get_checked[0].accept_campaign ==1:
-				campaign = get_checked[0].campaign
-			else:
-				campaign = get_checked[0].campaign
+				
 		
 	def update_item(source, target_doc, source_parent):
 		item_code = ""
@@ -534,6 +454,8 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		rate = 0.0
 		weight_per_unit = 0.0
 		weight_uom = ""
+		item_delivery_date = ""
+		warehouse = ""
 		get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name, "item_code":source.item_code}, fields=["item_code"])
 		if source.item_code == get_checked[0].item_code:
 			for rev in review_details:
@@ -543,165 +465,101 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 					if get_checked[0].reject_item_code ==1:
 						if get_checked[0].propose_new_item_code is not None:
 							item_code = get_checked[0].propose_new_item_code
-						else:
-							item_code = get_checked[0].item_code
-					elif get_checked[0].accept_item_code ==1:
-						item_code = get_checked[0].item_code
-					else:
-						item_code = get_checked[0].item_code
+						
 				elif rev.fieldname == "qty" and rev.field_label == "Item Field":
 			
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["qty","reject_qty","accept_qty","propose_new_qty"])
 					if get_checked[0].reject_qty ==1:
 						if get_checked[0].propose_new_qty is not None:
 							qty = get_checked[0].propose_new_qty
-						else:
-							qty = get_checked[0].qty
-					elif get_checked[0].accept_qty ==1:
-						qty = get_checked[0].qty
-					else:
-						qty = get_checked[0].qty
+						
 				elif rev.fieldname == "control_bom" and rev.field_label == "Item Field":
 			
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["control_bom","reject_control_bom","accept_control_bom","propose_new_control_bom"])
 					if get_checked[0].reject_control_bom ==1:
 						if get_checked[0].propose_new_control_bom is not None:
 							control_bom = get_checked[0].propose_new_control_bom
-						else:
-							control_bom = get_checked[0].control_bom
-					elif get_checked[0].accept_control_bom ==1:
-						control_bom = get_checked[0].control_bom
-					else:
-						control_bom = get_checked[0].control_bom
-				elif rev.fieldname == "control_bom" and rev.field_label == "Item Field":
-			
-					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["control_bom","reject_control_bom","accept_control_bom","propose_new_control_bom"])
-					if get_checked[0].reject_control_bom ==1:
-						if get_checked[0].propose_new_control_bom is not None:
-							control_bom = get_checked[0].propose_new_control_bom
-						else:
-							control_bom = get_checked[0].control_bom
-					elif get_checked[0].accept_control_bom ==1:
-						control_bom = get_checked[0].control_bom
-					else:
-						control_bom = get_checked[0].control_bom
+						
+						
 				elif rev.fieldname == "conversion_factor" and rev.field_label == "Item Field":
 			
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["conversion_factor","reject_conversion_factor","accept_conversion_factor","propose_new_conversion_factor"])
 					if get_checked[0].reject_conversion_factor ==1:
 						if get_checked[0].propose_new_conversion_factor is not None:
 							conversion_factor = get_checked[0].propose_new_conversion_factor
-						else:
-							conversion_factor = get_checked[0].conversion_factor
-					elif get_checked[0].accept_conversion_factor ==1:
-						conversion_factor = get_checked[0].conversion_factor
-					else:
-						conversion_factor = get_checked[0].conversion_factor
+						
 				elif rev.fieldname == "uom" and rev.field_label == "Item Field":
 			
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["uom","reject_uom","accept_uom","propose_new_uom"])
 					if get_checked[0].reject_uom ==1:
 						if get_checked[0].propose_new_uom is not None:
 							uom = get_checked[0].propose_new_uom
-						else:
-							uom = get_checked[0].uom
-					elif get_checked[0].accept_uom ==1:
-						uom = get_checked[0].uom
-					else:
-						uom = get_checked[0].uom
+						
 				elif rev.fieldname == "price_list_rate" and rev.field_label == "Item Field":
 			
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["price_list_rate","reject_price_list_rate","accept_price_list_rate","propose_new_price_list_rate"])
 					if get_checked[0].reject_price_list_rate ==1:
 						if get_checked[0].propose_new_price_list_rate is not None:
 							price_list_rate = get_checked[0].propose_new_price_list_rate
-						else:
-							price_list_rate = get_checked[0].price_list_rate
-					elif get_checked[0].accept_price_list_rate ==1:
-						price_list_rate = get_checked[0].price_list_rate
-					else:
-						price_list_rate = get_checked[0].price_list_rate
+						
 				elif rev.fieldname == "margin_type" and rev.field_label == "Item Field":
 			
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["margin_type","reject_margin_type","accept_margin_type","propose_new_margin_type"])
 					if get_checked[0].reject_margin_type ==1:
 						if get_checked[0].propose_new_margin_type is not None:
 							margin_type = get_checked[0].propose_new_margin_type
-						else:
-							margin_type = get_checked[0].margin_type
-					elif get_checked[0].accept_margin_type ==1:
-						margin_type = get_checked[0].margin_type
-					else:
-						margin_type = get_checked[0].margin_type
+						
 				elif rev.fieldname == "margin_rate_or_amount" and rev.field_label == "Item Field":
 			
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["margin_rate_or_amount","reject_margin_rate_or_amount","accept_margin_rate_or_amount","propose_new_margin_rate_or_amount"])
 					if get_checked[0].reject_margin_rate_or_amount ==1:
 						if get_checked[0].propose_new_margin_rate_or_amount is not None:
 							margin_rate_or_amount = get_checked[0].propose_new_margin_rate_or_amount
-						else:
-							margin_rate_or_amount = get_checked[0].margin_rate_or_amount
-					elif get_checked[0].accept_margin_rate_or_amount ==1:
-						margin_rate_or_amount = get_checked[0].margin_rate_or_amount
-					else:
-						margin_rate_or_amount = get_checked[0].margin_rate_or_amount
+						
 				elif rev.fieldname == "rate_with_margin" and rev.field_label == "Item Field":
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["rate_with_margin","reject_rate_with_margin","accept_rate_with_margin","propose_new_rate_with_margin"])
 					if get_checked[0].reject_rate_with_margin ==1:
 						if get_checked[0].propose_new_rate_with_margin is not None:
 							rate_with_margin = get_checked[0].propose_new_rate_with_margin
-						else:
-							rate_with_margin = get_checked[0].rate_with_margin
-					elif get_checked[0].accept_rate_with_margin ==1:
-						rate_with_margin = get_checked[0].rate_with_margin
-					else:
-						rate_with_margin = get_checked[0].rate_with_margin
+						
 				elif rev.fieldname == "discount_percentage" and rev.field_label == "Item Field":
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["discount_percentage","reject_discount_percentage","accept_discount_percentage","propose_new_discount_percentage"])
 					if get_checked[0].reject_discount_percentage ==1:
 						if get_checked[0].propose_new_discount_percentage is not None:
 							discount_percentage = get_checked[0].propose_new_discount_percentage
-						else:
-							discount_percentage = get_checked[0].discount_percentage
-					elif get_checked[0].accept_discount_percentage ==1:
-						discount_percentage = get_checked[0].discount_percentage
-					else:
-						discount_percentage = get_checked[0].discount_percentage
+						
 				elif rev.fieldname == "rate" and rev.field_label == "Item Field":
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["rate","reject_rate","accept_rate","propose_new_rate"])
 					if get_checked[0].reject_rate ==1:
 						if get_checked[0].propose_new_rate is not None:
 							rate = get_checked[0].propose_new_rate
-						else:
-							rate = get_checked[0].rate
-					elif get_checked[0].accept_rate ==1:
-						rate = get_checked[0].rate
-					else:
-						rate = get_checked[0].rate
+						
 				elif rev.fieldname == "weight_per_unit" and rev.field_label == "Item Field":
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["weight_per_unit","reject_weight_per_unit","accept_weight_per_unit","propose_new_weight_per_unit"])
 					if get_checked[0].reject_weight_per_unit ==1:
 						if get_checked[0].propose_new_weight_per_unit is not None:
 							weight_per_unit = get_checked[0].propose_new_weight_per_unit
-						else:
-							weight_per_unit = get_checked[0].weight_per_unit
-					elif get_checked[0].accept_weight_per_unit ==1:
-						weight_per_unit = get_checked[0].weight_per_unit
-					else:
-						weight_per_unit = get_checked[0].weight_per_unit
+						
 				elif rev.fieldname == "weight_uom" and rev.field_label == "Item Field":
 					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["weight_uom","reject_weight_uom","accept_weight_uom","propose_new_weight_uom"])
 					if get_checked[0].reject_weight_uom ==1:
 						if get_checked[0].propose_new_weight_uom is not None:
 							weight_per_unit = get_checked[0].propose_new_weight_uom
-						else:
-							weight_uom = get_checked[0].weight_uom
-					elif get_checked[0].accept_weight_uom ==1:
-						weight_uom = get_checked[0].weight_uom
-					else:
-						weight_uom = get_checked[0].weight_uom
+						
+				elif rev.fieldname == "delivery_date" and rev.field_label == "Item Field":
+					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["delivery_date","reject_delivery_date","accept_delivery_date","propose_new_delivery_date"])
+					if get_checked[0].reject_delivery_date ==1:
+						if get_checked[0].propose_new_delivery_date is not None:
+							item_delivery_date = get_checked[0].propose_new_delivery_date
+				elif rev.fieldname == "warehouse" and rev.field_label == "Item Field":
+					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["warehouse","reject_warehouse","accept_warehouse","propose_new_warehouse"])
+					if get_checked[0].reject_warehouse ==1:
+						if get_checked[0].propose_new_warehouse is not None:
+							warehouse = get_checked[0].propose_new_warehouse	
 			if delivery_date != "" and delivery_date != None:
 				target_doc.delivery_date = delivery_date
+			elif item_delivery_date != "" and item_delivery_date != None:
+				target_doc.delivery_date = item_delivery_date
 			else:
 				target_doc.delivery_date = source.delivery_date
 			if qty != 0.0 and qty != None:
@@ -764,6 +622,8 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				target_doc.weight_uom = source.weight_uom
 			if set_warehouse != "" and set_warehouse != None:
 				target_doc.warehouse = set_warehouse
+			elif warehouse != "" and warehouse != None:
+				target_doc.warehouse = warehouse
 			else:
 				target_doc.warehouse = source.warehouse
 		
@@ -789,48 +649,28 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 					if get_checked[0].reject_account_head ==1:
 						if get_checked[0].propose_new_account_head is not None:
 							account_head = get_checked[0].propose_new_account_head
-						else:
-							account_head = get_checked[0].account_head
-					elif get_checked[0].accept_account_head ==1:
-						account_head = get_checked[0].account_head
-					else:
-						account_head = get_checked[0].account_head
+						
 				elif rev.fieldname == "row_id" and rev.field_label == "Tax Field":
 			
 					get_checked = frappe.get_all('Sales Taxes and Charges Review', filters={'parent': source_name,"account_head":source.account_head}, fields=["row_id","reject_row_id","accept_row_id","propose_new_row_id"])
 					if get_checked[0].reject_row_id ==1:
 						if get_checked[0].propose_new_row_id is not None:
 							row_id = get_checked[0].propose_new_row_id
-						else:
-							row_id = get_checked[0].row_id
-					elif get_checked[0].accept_row_id ==1:
-						row_id = get_checked[0].row_id
-					else:
-						row_id = get_checked[0].row_id
+						
 				elif rev.fieldname == "charge_type" and rev.field_label == "Tax Field":
 			
 					get_checked = frappe.get_all('Sales Taxes and Charges Review', filters={'parent': source_name,"account_head":source.account_head}, fields=["charge_type","reject_charge_type","accept_charge_type","propose_new_charge_type"])
 					if get_checked[0].reject_charge_type ==1:
 						if get_checked[0].propose_new_charge_type is not None:
 							charge_type = get_checked[0].propose_new_charge_type
-						else:
-							charge_type = get_checked[0].charge_type
-					elif get_checked[0].accept_charge_type ==1:
-						charge_type = get_checked[0].charge_type
-					else:
-						charge_type = get_checked[0].charge_type
+						
 				elif rev.fieldname == "rate" and rev.field_label == "Tax Field":
 			
 					get_checked = frappe.get_all('Sales Taxes and Charges Review', filters={'parent': source_name,"account_head":source.account_head}, fields=["rate","reject_rate","accept_rate","propose_new_rate"])
 					if get_checked[0].reject_rate ==1:
 						if get_checked[0].propose_new_rate is not None:
 							rate = get_checked[0].propose_new_rate
-						else:
-							rate = get_checked[0].rate
-					elif get_checked[0].accept_rate ==1:
-						rate = get_checked[0].rate
-					else:
-						rate = get_checked[0].rate
+						
 			if rate != 0.0 and rate != None:
 				#print "rate---------------",rate
 				target_doc.rate = rate

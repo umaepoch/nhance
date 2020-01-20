@@ -134,10 +134,12 @@ frappe.ui.form.on('Sales Order Review', {
 
             }
             for (var j = 0; j < review_templates.length; j++) {
-                var accept_field = "accept_" + review_templates[j].fieldname
-                var reject_field = "reject_" + review_templates[j].fieldname
-                cur_frm.set_df_property(accept_field, "hidden", false);
-                cur_frm.set_df_property(reject_field, "hidden", false);
+		if (review_templates[j].field_label == "Parent Field"){
+		        var accept_field = "accept_" + review_templates[j].fieldname
+		        var reject_field = "reject_" + review_templates[j].fieldname
+		        cur_frm.set_df_property(accept_field, "hidden", false);
+		        cur_frm.set_df_property(reject_field, "hidden", false);
+		}
 
             }
             var doctype_item = "Sales Order Item";
@@ -150,8 +152,9 @@ frappe.ui.form.on('Sales Order Review', {
                 var reject_field = "reject_" + current_doc_child[i].fieldname
                 for (var j = 0; j < child_review_field.length; j++) {
                     if (accept_field == child_review_field[j].fieldname) {
-                        cur_frm.fields_dict.items.grid.toggle_display(accept_field, false);
-                        cur_frm.fields_dict.items.grid.toggle_display(reject_field, false);
+			
+		                cur_frm.fields_dict.items.grid.toggle_display(accept_field, false);
+		                cur_frm.fields_dict.items.grid.toggle_display(reject_field, false);
                     }
                 }
 
@@ -161,8 +164,10 @@ frappe.ui.form.on('Sales Order Review', {
                     var accept_field = "accept_" + review_templates[j].fieldname;
                     var reject_field = "reject_" + review_templates[j].fieldname;
                     if (accept_field == child_review_field[i].fieldname) {
-                        cur_frm.fields_dict.items.grid.toggle_display(accept_field, true);
-                        cur_frm.fields_dict.items.grid.toggle_display(reject_field, true);
+			if (review_templates[j].field_label == "Item Field"){
+		                cur_frm.fields_dict.items.grid.toggle_display(accept_field, true);
+		                cur_frm.fields_dict.items.grid.toggle_display(reject_field, true);
+			}
 
                     }
                 }
