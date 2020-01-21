@@ -589,7 +589,7 @@ def check_before_submit(before_submit,data):
 	sales_order_review = get_sales_order_review(before_submit.name)
 	if sales_order_review:
 		name = sales_order_review[0].name
-		print "frappe ------------",frappe.session.user
+		#print "frappe ------------",frappe.session.user
 		if sales_order_review[0].docstatus ==1:
 			get_varification = sales_order_review_values(sales_order_review[0].name,before_submit.name)
 			if len(overwriter_roles) ==0:
