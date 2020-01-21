@@ -25,7 +25,7 @@ doc_events = {
 	}
 }
 doctype_js = {
-	"Sales Order": "fixtures/custom_scripts/Sales Order.js"
+	"Sales Order": "fixtures/custom_scripts/Sales Order.js",
 	"Purchase Order": "fixtures/custom_scripts/Purchase Order.js"
 }
 # Includes in <head>
