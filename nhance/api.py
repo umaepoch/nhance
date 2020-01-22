@@ -1741,4 +1741,41 @@ def get_serial_number_details(duplicate_serial):
     #print "serial_no_list----",serial_no_list
     return serial_no_list
 
+#jyoti
+@frappe.whitelist()
+def get_file_url_pressure(attached_to_name):
+    #print "coming inside get_file_url---"
+    pressure = 'P'
+    get_file_url_pressure = frappe.db.sql("""select File_url from `tabFile` where  attached_to_name='"""+attached_to_name+"""' and file_name LIKE '"""+pressure+"%""'""" , as_dict=1)
+    #print "serial_no_list----",serial_no_list
+    return get_file_url_pressure
+
+#jyoti
+@frappe.whitelist()
+def get_file_url_coc(attached_to_name):
+    #print "coming inside get_file_url---"
+    coc = 'COC'
+    get_file_url_coc1= frappe.db.sql("""select File_url from `tabFile` where  attached_to_name='"""+attached_to_name+"""' and file_name LIKE '"""+coc+"%""'""" , as_dict=1)
+    #print "serial_no_list----",serial_no_list
+    return get_file_url_coc1
+
+#jyoti
+@frappe.whitelist()
+def get_file_url_build_sheet(attached_to_name):
+    #print "coming inside get_file_url---"
+    build_sheet = 'B'
+    get_file_url_build= frappe.db.sql("""select File_url from `tabFile` where  attached_to_name='"""+attached_to_name+"""' and file_name LIKE '"""+build_sheet+"%""'""" , as_dict=1)
+    #print "serial_no_list----",serial_no_list
+    return get_file_url_build
+
+
+#jyoti
+@frappe.whitelist()
+def get_combined_pdf(attached_to_name):
+    #print "coming inside get_file_url---"
+    combined = 'Com'
+    get_combined_file_url = frappe.db.sql("""select File_url from `tabFile` where  attached_to_name='"""+attached_to_name+"""' and file_name LIKE '"""+combined+"%""'""" , as_dict=1)
+    #print "serial_no_list----",serial_no_list
+    return get_combined_file_url
+
 
