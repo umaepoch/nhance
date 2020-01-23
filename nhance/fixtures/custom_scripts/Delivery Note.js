@@ -171,7 +171,7 @@ function get_serial_no(s_warehouse,batch,item_code,qty){
 function get_rarb_warehouses(warehouse){
 	var supplier_criticality = "";
 	frappe.call({
-		method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.get_rarb_warehouse',
+		method: 'nhance.nhance.doctype.pick_list.pick_list.get_rarb_warehouses',
 		args: {
 		   "warehouse":warehouse
 		},

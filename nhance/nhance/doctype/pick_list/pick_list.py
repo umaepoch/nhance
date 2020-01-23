@@ -44,3 +44,11 @@ def get_serial_no(s_warehouse,batch,item_code,qty):
 	serial_no = frappe.db.sql("""select name from `tabSerial No` where warehouse =%s and item_code =%s and batch_no =%s order by creation asc limit %s""",(s_warehouse,item_code,batch,qty),as_dict=1)
 	#print "serial_no---------------",serial_no
 	return serial_no
+@frappe.whitelist()
+def get_rarb_warehouses(warehouse):
+	rarb_warehouse = frappe.db.sql("""select warehouse from `tabRARB Warehouse` where warehouse = '"""+warehouse+"""' and is_active =1 and docstatus =1""", as_dict =1)
+	#print "rarb_warehouse------------",rarb_warehouse
+	if rarb_warehouse:
+		return rarb_warehouse
+	else:
+		return None
