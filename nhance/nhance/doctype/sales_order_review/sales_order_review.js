@@ -152,7 +152,7 @@ frappe.ui.form.on('Sales Order Review', {
                 var reject_field = "reject_" + current_doc_child[i].fieldname
                 for (var j = 0; j < child_review_field.length; j++) {
                     if (accept_field == child_review_field[j].fieldname) {
-			
+				console.log("current_doc_child-------------"+accept_field)
 		                cur_frm.fields_dict.items.grid.toggle_display(accept_field, false);
 		                cur_frm.fields_dict.items.grid.toggle_display(reject_field, false);
                     }
@@ -165,6 +165,7 @@ frappe.ui.form.on('Sales Order Review', {
                     var reject_field = "reject_" + review_templates[j].fieldname;
                     if (accept_field == child_review_field[i].fieldname) {
 			if (review_templates[j].field_label == "Item Field"){
+				console.log("unhide_child-------------"+accept_field)
 		                cur_frm.fields_dict.items.grid.toggle_display(accept_field, true);
 		                cur_frm.fields_dict.items.grid.toggle_display(reject_field, true);
 			}

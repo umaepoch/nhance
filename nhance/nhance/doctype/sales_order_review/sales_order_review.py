@@ -18,6 +18,7 @@ def make_document_review_detials(source_name, target_doc=None, ignore_permission
 	def update_item(source, target, source_parent):
 		target.delivery_date = source.delivery_date
 		target.rate = source.rate
+		target.price_list_rate = source.price_list_rate
 		target.qty = flt(source.qty) - flt(source.ordered_qty)
 		target.stock_qty = (flt(source.qty) - flt(source.ordered_qty)) * flt(source.conversion_factor)
 		target.project = source_parent.project
