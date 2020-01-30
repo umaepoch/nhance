@@ -54,10 +54,6 @@ def make_purchase_order_review(source_name, target_doc=None, ignore_permissions=
 				["conversion_factor", "conversion_factor"]
 		
 			],
-			"field_no_map": [
-				"rate",
-				"price_list_rate"
-			],
 			"condition": lambda doc: doc.qty and (doc.base_amount==0 or abs(doc.billed_amt) < abs(doc.amount))
 		},
 		"Purchase Taxes and Charges": {
@@ -154,7 +150,7 @@ def create_purchase_order(sales_review,name,sales_order):
 		doc = frappe.get_doc("Purchase Order",sales_order)
 		doc.save()
 		doc.submit()
-		frappe.msgprint('"'+sales_order+'"'+"Base Purchase Order has been submitted")
+		frappe.msgprint(frappe.bold(sales_order)+"  has been submitted")
 		return False
 	elif created_new_doc == True:
 		#frappe.throw("value dones not matched")
@@ -410,15 +406,19 @@ def mapped_purchase_order(source_name, target_doc=None, ignore_permissions=False
 				target_doc.bom = bom
 			else:
 				target_doc.bom = source.bom
-			
+			discount_amount = 0.0
 			if discount_percentage != 0 and discount_percentage != None:
 				target_doc.discount_percentage = discount_percentage
+				target_doc.discount_amount = (float(source.price_list_rate) * float(discount_percentage))/100
+				discount_amount = (float(source.price_list_rate) * float(discount_percentage))/100
 			else:
 				target_doc.discount_percentage = source.discount_percentage
 			if rate != 0.0 and rate != None:
 				target_doc.rate = rate
 			else:
 				target_doc.rate = source.rate
+			if discount_percentage:
+				target_doc.rate = target_doc.price_list_rate - discount_amount
 			if weight_per_unit != 0.0 and weight_per_unit != None:
 				target_doc.weight_per_unit = weight_per_unit
 			else:
@@ -576,7 +576,7 @@ def mapped_purchase_order(source_name, target_doc=None, ignore_permissions=False
 		}
 	}, target_doc, postprocess, ignore_permissions=ignore_permissions)
 	doclist.save()
-	frappe.msgprint("New Purchase Order has been Created "+doclist.name)			
+	frappe.msgprint(doclist.name+"  has been created")			
 	return doclist.name
 @frappe.whitelist()
 def check_before_submit(before_submit,data):
@@ -590,21 +590,21 @@ def check_before_submit(before_submit,data):
 	if sales_order_review:
 		name = sales_order_review[0].name
 		#print "frappe ------------",frappe.session.user
-		if sales_order_review[0].docstatus ==1:
-			get_varification = sales_order_review_values(sales_order_review[0].name,before_submit.name)
-			if len(overwriter_roles) ==0:
-				if reviewer_roles:
-					if get_varification == True:
-						frappe.throw("You cann't submit because something has changed in link doctype Sales Order Review "+frappe.bold(sales_order_review[0].name))
-				elif creator_roles:
-					if get_varification == True:
-						frappe.throw("You cann't submit because something has changed in link doctype Sales Order Review "+frappe.bold(sales_order_review[0].name))
+		if len(reviewer_roles) == 0:
+			if sales_order_review[0].docstatus ==1:
+				get_varification = sales_order_review_values(sales_order_review[0].name,before_submit.name)
+				if len(overwriter_roles) ==0:
+					if creator_roles:
+						if get_varification == True:
+							frappe.throw("You cann't submit because something has changed in link doctype Sales Order Review "+frappe.bold(sales_order_review[0].name))
 				
-				else:
-					frappe.throw("Dear user "+ frappe.bold(frappe.session.user) + " you don't have permission to ignore Purchase order review "+ frappe.bold(name))	
+					else:
+						frappe.throw("Access Rights Error! You do not have permission to perform this operation!")
 		
+			else:
+				frappe.throw("Please submit first Sales Order Review "+frappe.bold(name))
 		else:
-			frappe.throw("Please submit first Sales Order Review "+frappe.bold(name))
+			frappe.throw("Access Rights Error! You do not have permission to perform this operation!")
 @frappe.whitelist()
 def get_sales_order_review(name):
 	sales_order_review = frappe.db.sql("""select * from `tabPurchase Order Review` where purchase_order = %s order by name DESC limit 1 """,name, as_dict =1)
@@ -677,3 +677,111 @@ def get_check_box_cheched(sales_order,review):
 		frappe.db.set_value("Purchase Order",sales_order_no,"under_review" , 0);
 		#name = frappe.db.sql("""update `tab""" +doctype + """`set under_review = 1 where name = %s""",(name),as_dict=1)
 	return True
+@frappe.whitelist()
+def check_item_review_field(current_doc,review_doc,name):
+	validation = True
+	reviewer = "PO Reviewer"
+	defined_role = get_roles(frappe.session.user,reviewer)
+	if defined_role:
+		review_details = get_review_templates(review_doc)
+		review_doc_field = get_doc_details(current_doc)
+		for current in review_doc_field:
+			for rev in review_details:
+				#print "rev--------------",rev
+			
+				accept_field = "accept_"+rev.fieldname
+				reject_field = "reject_"+rev.fieldname
+				if accept_field == current.fieldname:
+					if rev.field_label == "Item Field":
+						propose_new = "propose_new_"+rev.fieldname
+						doc_details = frappe.get_all("Purchase Order Item Review", filters={'parent': name}, fields=[accept_field,reject_field,propose_new] )
+						#print "doc-------------",doc_details
+						for doc in doc_details:
+							if doc[str(accept_field)] == 1:
+								pass
+							elif doc[str(reject_field)] == 1:
+								if doc[str(propose_new)] is not None and doc[str(propose_new)] is not 0 and doc[str(propose_new)] is not 0.0:
+									pass
+								else:
+									frappe.throw("Please specify value in proposed new value field called "+frappe.bold(propose_new)+" Parent Field")
+									validation = False
+									break
+							else:
+								frappe.throw("Please give review either accept or reject for field "+frappe.bold(rev.fieldname)+ " Parent Field")
+								validation = False
+								break
+		return validation
+	else:
+		frappe.throw("Access Rights Error! You do not have permission to perform this operation!")
+@frappe.whitelist()
+def check_parent_review_field(current_doc,review_doc,name):
+	validation = True
+	reviewer = "PO Reviewer"
+	defined_role = get_roles(frappe.session.user,reviewer)
+	if defined_role:
+		review_details = get_review_templates(review_doc)
+		review_doc_field = get_doc_details(current_doc)
+		for current in review_doc_field:
+			for rev in review_details:
+				#print "rev--------------",rev
+			
+				accept_field = "accept_"+rev.fieldname
+				reject_field = "reject_"+rev.fieldname
+				if accept_field == current.fieldname:
+					if rev.field_label == "Parent Field":
+						propose_new = "propose_new_"+rev.fieldname
+						doc_details = frappe.get_all("Purchase Order Review", filters={'name': name}, fields=[accept_field,reject_field,propose_new] )
+						#print "doc-------------",doc_details
+						for doc in doc_details:
+							if doc[str(accept_field)] == 1:
+								pass
+							elif doc[str(reject_field)] == 1:
+								if doc[str(propose_new)] is not None and doc[str(propose_new)] is not 0 and doc[str(propose_new)] is not 0.0:
+									pass
+								else:
+									frappe.throw("Please specify value in proposed new value field called "+frappe.bold(propose_new)+" in Item field")
+									validation = False
+									break
+							else:
+								frappe.throw("Please give review either accept or reject for field "+frappe.bold(rev.fieldname)+" in Item Field")
+								validation = False
+								break
+	
+		return validation
+	else:
+		frappe.throw("Access Rights Error! You do not have permission to perform this operation!")
+@frappe.whitelist()
+def check_taxes_review_field(current_doc,review_doc,name):
+	validation = True
+	reviewer = "PO Reviewer"
+	defined_role = get_roles(frappe.session.user,reviewer)
+	if defined_role:
+		review_details = get_review_templates(review_doc)
+		review_doc_field = get_doc_details(current_doc)
+		for current in review_doc_field:
+			for rev in review_details:
+				#print "rev--------------",rev
+			
+				accept_field = "accept_"+rev.fieldname
+				reject_field = "reject_"+rev.fieldname
+				if accept_field == current.fieldname:
+					if rev.field_label == "Tax Field":
+						propose_new = "propose_new_"+rev.fieldname
+						doc_details = frappe.get_all("Purchase Taxes and Charges Review", filters={'parent': name}, fields=[accept_field,reject_field,propose_new] )
+						for doc in doc_details:
+							if doc[str(accept_field)] == 1:
+								pass
+							elif doc[str(reject_field)] == 1:
+								if doc[str(propose_new)] is not None and doc[str(propose_new)] != 0 and doc[str(propose_new)] != 0.0:
+									pass
+								else:
+									frappe.throw("Please specify value in proposed new value field called "+frappe.bold(propose_new)+" in Tax Field")
+									validation = False
+									break
+							else:
+								frappe.throw("Please give review either accept or reject for field "+frappe.bold(rev.fieldname)+ " in Tax Field")
+								validation = False
+								break
+		return validation
+	else:
+		frappe.throw("Access Rights Error! You do not have permission to perform this operation!")

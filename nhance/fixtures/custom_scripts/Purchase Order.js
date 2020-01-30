@@ -1,7 +1,9 @@
 frappe.ui.form.on("Purchase Order", "refresh", function(frm, cdt, cdn) {
     if (cur_frm.doc.status == "Draft") {
         var role = "PO Reviewer";
+	var creator_role = "PO Creator";
         var check_role = get_roles(frappe.session.user, role);
+	 var check_role_creator = get_roles(frappe.session.user, creator_role);
        // console.log("check_role------------" + check_role)
         cur_frm.add_custom_button(__('Make Purchase Order Review'), function() {
             //under_review_check(cur_frm.doc.doctype,cur_frm.doc.name);
@@ -10,8 +12,13 @@ frappe.ui.form.on("Purchase Order", "refresh", function(frm, cdt, cdn) {
                     method: "nhance.nhance.doctype.purchase_order_review.purchase_order_review.make_purchase_order_review",
                     frm: cur_frm
                 })
-            } else {
-                frappe.msgprint(frappe.session.user + " Don't have permission " + role + " to create Purchase Order Review");
+            }else if(check_role_creator != "" && check_role_creator != undefined){
+			 frappe.model.open_mapped_doc({
+                    method: "nhance.nhance.doctype.purchase_order_review.purchase_order_review.make_purchase_order_review",
+                    frm: cur_frm
+                })
+	   } else {
+                frappe.msgprint("Access Rights Error! You do not have permission to perform this operation!");
             }
         });
     }
@@ -120,3 +127,4 @@ function get_fields(doctype) {
     });
     return fields;
 }
+
