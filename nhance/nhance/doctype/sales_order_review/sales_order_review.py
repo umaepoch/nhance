@@ -299,7 +299,7 @@ def create_sales_order(sales_review,name,sales_order):
 		doc = frappe.get_doc("Sales Order",sales_order)
 		doc.save()
 		doc.submit()
-		frappe.msgprint(sales_order+" has been submitted, can you take the user to the submitted SO?")
+		frappe.msgprint(sales_order+" has been submitted")
 		return False
 	elif created_new_doc == True:
 		#frappe.throw("value dones not matched")
@@ -812,7 +812,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		}
 	}, target_doc, postprocess, ignore_permissions=ignore_permissions)
 	doclist.save()
-	frappe.msgprint(doclist.name+" has been created, can you take the user to the new SO?")			
+	frappe.msgprint(doclist.name+" has been created")			
 	return doclist.name
 @frappe.whitelist()
 def check_before_submit(before_submit,data):
