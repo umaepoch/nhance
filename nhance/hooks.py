@@ -22,13 +22,18 @@ doc_events = {
 	"Stock Ledger Entry":{
 		"before_submit":"nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.check_available_qty",
 		"on_submit":"nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.set_rarb_location"
+	},
+	"Purchase Order":{
+			"before_submit":"nhance.nhance.doctype.purchase_order_review.purchase_order_review.check_before_submit"	
+	},
+	"Purchase Order Review":{
+			"before_save":"nhance.nhance.doctype.purchase_order_review.purchase_order_review.get_check_box_cheched",
+			"on_submit":"nhance.nhance.doctype.purchase_order_review.purchase_order_review.get_check_box_cheched"
 	}
 }
 doctype_js = {
 	"Sales Order": "fixtures/custom_scripts/Sales Order.js",
-	"Purchase Order": "fixtures/custom_scripts/Purchase Order.js",
-	"Stock Entry": "fixtures/custom_scripts/Stock Entry.js",
-	"Delivery Note": "fixtures/custom_scripts/Delivery Note.js"
+	"Purchase Order":"fixtures/custom_scripts/Purchase Order.js"
 }
 # Includes in <head>
 # ------------------

@@ -85,12 +85,14 @@ frappe.ui.form.on('Sales Order Review', {
 				
 			}
 			else{
-				frappe.msgprint('"'+frappe.session.user+'"'+" Don't have permission "+'"'+role+'"' +" to perform accept proposed value");
+				frappe.msgprint("Access Rights Error! You do not have permission to perform this operation!ss");
 			}
 			
 		})
 	}
         if (cur_frm.doc.sales_order != undefined) {
+	    var role = "SO Reviewer";
+	    var check_role = get_roles(frappe.session.user, role);
             var doctype = "Sales Order";
             var current_doc = function_doc_details(doctype);
             for (var i = 0; i < current_doc.length; i++) {
@@ -133,15 +135,17 @@ frappe.ui.form.on('Sales Order Review', {
                 cur_frm.set_df_property(reject_field, "hidden", true);
 
             }
-            for (var j = 0; j < review_templates.length; j++) {
-		if (review_templates[j].field_label == "Parent Field"){
-		        var accept_field = "accept_" + review_templates[j].fieldname
-		        var reject_field = "reject_" + review_templates[j].fieldname
-		        cur_frm.set_df_property(accept_field, "hidden", false);
-		        cur_frm.set_df_property(reject_field, "hidden", false);
-		}
+	   if (check_role != "" && check_role != undefined){ 
+		    for (var j = 0; j < review_templates.length; j++) {
+			if (review_templates[j].field_label == "Parent Field"){
+				var accept_field = "accept_" + review_templates[j].fieldname
+				var reject_field = "reject_" + review_templates[j].fieldname
+				cur_frm.set_df_property(accept_field, "hidden", false);
+				cur_frm.set_df_property(reject_field, "hidden", false);
+			}
 
-            }
+		    }
+	    }
             var doctype_item = "Sales Order Item";
             var review_child_doc = "Sales Order Item Review";
             var child_review_field = function_doc_details(review_child_doc);
@@ -152,27 +156,29 @@ frappe.ui.form.on('Sales Order Review', {
                 var reject_field = "reject_" + current_doc_child[i].fieldname
                 for (var j = 0; j < child_review_field.length; j++) {
                     if (accept_field == child_review_field[j].fieldname) {
-				console.log("current_doc_child-------------"+accept_field)
+				//console.log("current_doc_child-------------"+accept_field)
 		                cur_frm.fields_dict.items.grid.toggle_display(accept_field, false);
 		                cur_frm.fields_dict.items.grid.toggle_display(reject_field, false);
                     }
                 }
 
             }
-            for (var i = 0; i < child_review_field.length; i++) {
-                for (var j = 0; j < review_templates.length; j++) {
-                    var accept_field = "accept_" + review_templates[j].fieldname;
-                    var reject_field = "reject_" + review_templates[j].fieldname;
-                    if (accept_field == child_review_field[i].fieldname) {
-			if (review_templates[j].field_label == "Item Field"){
-				console.log("unhide_child-------------"+accept_field)
-		                cur_frm.fields_dict.items.grid.toggle_display(accept_field, true);
-		                cur_frm.fields_dict.items.grid.toggle_display(reject_field, true);
-			}
+	    if (check_role != "" && check_role != undefined){
+		    for (var i = 0; i < child_review_field.length; i++) {
+		        for (var j = 0; j < review_templates.length; j++) {
+		            var accept_field = "accept_" + review_templates[j].fieldname;
+		            var reject_field = "reject_" + review_templates[j].fieldname;
+		            if (accept_field == child_review_field[i].fieldname) {
+				if (review_templates[j].field_label == "Item Field"){
+					//console.log("unhide_child-------------"+accept_field)
+				        cur_frm.fields_dict.items.grid.toggle_display(accept_field, true);
+				        cur_frm.fields_dict.items.grid.toggle_display(reject_field, true);
+				}
 
-                    }
-                }
-            }
+		            }
+		        }
+		    }
+	    }
             var doctype_tax = "Sales Taxes and Charges";
             var review_tax_doc = "Sales Taxes and Charges Review";
             var tax_review_field = function_doc_details(review_tax_doc);
@@ -189,17 +195,22 @@ frappe.ui.form.on('Sales Order Review', {
                 }
 
             }
-            for (var i = 0; i < tax_review_field.length; i++) {
-                for (var j = 0; j < review_templates.length; j++) {
-                    var accept_field = "accept_" + review_templates[j].fieldname;
-                    var reject_field = "reject_" + review_templates[j].fieldname;
-                    if (accept_field == tax_review_field[i].fieldname) {
-                        cur_frm.fields_dict.taxes.grid.toggle_display(accept_field, true);
-                        cur_frm.fields_dict.taxes.grid.toggle_display(reject_field, true);
+	    if (check_role != "" && check_role != undefined){
+		    for (var i = 0; i < tax_review_field.length; i++) {
+		        for (var j = 0; j < review_templates.length; j++) {
+		            var accept_field = "accept_" + review_templates[j].fieldname;
+		            var reject_field = "reject_" + review_templates[j].fieldname;
+		            if (accept_field == tax_review_field[i].fieldname) {
+				if (review_templates[j].field_label == "Tax Field"){
+					console.log("reject_field-------------",reject_field)
+				        cur_frm.fields_dict.taxes.grid.toggle_display(accept_field, true);
+				        cur_frm.fields_dict.taxes.grid.toggle_display(reject_field, true);
+				}
 
-                    }
-                }
-            }
+		            }
+		        }
+		    }
+	    }
             var doctype_tema = "Sales Team";
             var review_team_doc = "Sales Team Review";
             var team_review_field = function_doc_details(review_team_doc);
@@ -234,6 +245,58 @@ frappe.ui.form.on('Sales Order Review', {
     before_submit: function(frm, cdt, cdn) {
        
 	var sales_order = cur_frm.doc.sales_order;
+	var doc_review = "Sales Order"
+	var review_templates = get_review_templates(doc_review);
+	var doctype = "Sales Order";
+        var current_doc = function_doc_details(doctype);
+	var parent_validation = check_parent_review_field(doctype,doc_review,cur_frm.doc.name);
+	if (parent_validation != undefined){
+		if(parent_validation == false){
+			frappe.validated = false;
+		}
+	}
+	/*
+	 for (var j = 0; j < review_templates.length; j++) {
+		if (review_templates[j].field_label == "Parent Field"){
+		        var accept_field = "accept_" + review_templates[j].fieldname
+		        var reject_field = "reject_" + review_templates[j].fieldname
+			console.log("field value-----------"+cur_frm.doc.accept_field)
+		}
+	  }
+	*/
+	   
+            var review_child_doc = "Sales Order Item Review";
+          
+	   var item_validation =  check_item_review_field(review_child_doc,doc_review,cur_frm.doc.name);
+	   if (item_validation != undefined){
+		if(item_validation == false){
+			frappe.validated = false;
+		}
+		}
+	  var review_tax_doc = "Sales Taxes and Charges Review";
+	  var tax_validation =  check_taxes_review_field(review_tax_doc,doc_review,cur_frm.doc.name);
+	 if (tax_validation != undefined){
+		if(tax_validation == false){
+			frappe.validated = false;
+		}
+		}
+	    //frappe.validated = false;
+           /*
+	    $.each(frm.doc.items, function(i, d) {
+		for (var i = 0; i < current_doc_child.length; i++) {
+		        var accept_field = "accept_" + current_doc_child[i].fieldname
+		        var reject_field = "reject_" + current_doc_child[i].fieldname
+		        for (var j = 0; j < child_review_field.length; j++) {
+		            if (accept_field == child_review_field[j].fieldname) {
+					console.log("item field -----------------"+d.accept_field)
+					frappe.validated = false;
+				}
+			}
+		}
+	  })
+
+	*/	
+           
 	//under_review_uncheck(sales_order);
 	
        /* var review_templates = get_review_templates(doc_review);
@@ -499,6 +562,54 @@ function create_sales_order(sales_review,name,sales_order) {
 	    "sales_review":sales_review,
 	    "name":name,
             "sales_order": sales_order
+        },
+        async: false,
+        callback: function(r) {
+		doc_details = r.message;
+        }
+    });
+	return doc_details
+}
+function check_item_review_field(current_doc,review_doc,name){
+	 var doc_details = "";
+    frappe.call({
+        method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.check_item_review_field',
+        args: {
+	    "current_doc":current_doc,
+	    "review_doc":review_doc,
+	    "name":name
+        },
+        async: false,
+        callback: function(r) {
+		doc_details = r.message;
+        }
+    });
+	return doc_details
+}
+function check_parent_review_field(current_doc,review_doc,name){
+	 var doc_details = "";
+    frappe.call({
+        method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.check_parent_review_field',
+        args: {
+	    "current_doc":current_doc,
+	    "review_doc":review_doc,
+	    "name":name
+        },
+        async: false,
+        callback: function(r) {
+		doc_details = r.message;
+        }
+    });
+	return doc_details
+}
+function check_taxes_review_field(current_doc,review_doc,name){
+	 var doc_details = "";
+    frappe.call({
+        method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.check_taxes_review_field',
+        args: {
+	    "current_doc":current_doc,
+	    "review_doc":review_doc,
+	    "name":name
         },
         async: false,
         callback: function(r) {
