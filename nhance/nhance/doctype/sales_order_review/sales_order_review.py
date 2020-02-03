@@ -299,7 +299,7 @@ def create_sales_order(sales_review,name,sales_order):
 		doc = frappe.get_doc("Sales Order",sales_order)
 		doc.save()
 		doc.submit()
-		frappe.msgprint(sales_order+" has been submitted, can you take the user to the submitted SO?")
+		frappe.msgprint(sales_order+" has been submitted")
 		return False
 	elif created_new_doc == True:
 		#frappe.throw("value dones not matched")
