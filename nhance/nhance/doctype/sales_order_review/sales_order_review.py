@@ -923,7 +923,7 @@ def sales_order_review_values(name,sales_order):
 
 @frappe.whitelist()
 def remove_submit_permission_with_so(user,so_reviewed):
-	print "hello i am comming"
+	#print "hello i am comming"
 	role_so_creator = "SO Creator"
 	role_so_overriter = "SO Overwriter"
 	roles = frappe.get_all('Has Role', filters={'parent': user }, fields=['role'])
