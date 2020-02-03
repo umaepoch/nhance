@@ -3,8 +3,14 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
     var role_creator = "SO Creator";
     var check_role = get_roles(frappe.session.user, role);
     var check_role_creator = get_roles(frappe.session.user, role_creator);
-    //var removed_perm = remove_submit_permission(frappe.session.user);
-    
+  if (cur_frm.doc.so_reviewed){
+		var removed_perm = remove_submit_permission_with_so(frappe.session.user,cur_frm.doc.so_reviewed);
+	}
+   else{
+	if(!cur_frm.doc._islocal){
+    		var removed_perm = remove_submit_permission(frappe.session.user,cur_frm.doc.name);
+    }
+	}
 
     if (cur_frm.doc.docstatus == 0) {
         /*frm.add_custom_button(__("Make Document Review"), function() {
@@ -28,11 +34,10 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
                     frm: cur_frm
                 })
             } else {
-                frappe.msgprint("Access Rights Error! You do not have permission to perform this operation!");
+                frappe.msgprint(frappe.session.user + " Don't have permission "  + role + " to create Sales Order Review");
             }
         });
     }
-  
     if (cur_frm.doc.under_review == 1) {
         var fields_name = get_fields(cur_frm.doc.doctype);
         var item_fields = "";
@@ -100,7 +105,6 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
     } else {
         cur_frm.refresh_fields();
     }
- 
     cur_frm.set_query("control_bom", "items", function(frm, cdt, cdn) {
         var d = locals[cdt][cdn];
         var bom_list = [];
@@ -272,7 +276,7 @@ function remove_submit_permission(user,name){
 		method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.remove_submit_permission',
 		args: {
 		    "user": user,
-		    "name":name
+		    "name":name,
 		},
 		async: false,
 		callback: function(r) {
@@ -281,5 +285,21 @@ function remove_submit_permission(user,name){
 	    });
 	    return remove_perm;
 }
+function remove_submit_permission_with_so(user,so_reviewed){
+	 var remove_perm = "";
+	    frappe.call({
+		method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.remove_submit_permission_with_so',
+		args: {
+		    "user": user,
+		    "so_reviewed":so_reviewed
+		},
+		async: false,
+		callback: function(r) {
+		    remove_perm = r.message;
+		}
+	    });
+	    return remove_perm;
+}
+
 
 
