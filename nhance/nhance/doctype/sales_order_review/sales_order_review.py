@@ -923,60 +923,52 @@ def sales_order_review_values(name,sales_order):
 
 @frappe.whitelist()
 def remove_submit_permission_with_so(user,so_reviewed):
+	
 	#print "hello i am comming"
 	role_so_creator = "SO Creator"
 	role_so_overriter = "SO Overwriter"
 	roles = frappe.get_all('Has Role', filters={'parent': user }, fields=['role'])
-	
+	validation = False
 	defined_role = get_roles(user,role_so_creator)
 	overritter_role = get_roles(user,role_so_overriter)
 	doctype = "Sales Order"
-	if len(overritter_role) == 0:
-		if len(defined_role) != 0:
-			if so_reviewed is not None and so_reviewed != "":
-				docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':0, 'write':1 }, fields=['role','name'])
-				for role in roles:
-					for perm in docperm:
-						if perm.role == role.role:
-							frappe.db.set_value("DocPerm", perm.name, 'submit', 1)
-							frappe.db.set_value("DocPerm", perm.name, 'cancel', 1)
-							frappe.db.set_value("DocPerm", perm.name, 'amend', 1)
-							doc = frappe.get_doc("DocPerm",  perm.name)
-							doc1 = frappe.get_doc("DocType", "Sales Order")
-							doc.save()
-							doc1.save()
-							frappe.db.commit()
-							doc1.reload()
-		else:
-			docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':1, 'write':1 }, fields=['role','name'])
+	if len(defined_role) != 0:
+		if so_reviewed is not None and so_reviewed != "":
+			docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':0, 'write':1 }, fields=['role','name'])
 			for role in roles:
 				for perm in docperm:
 					if perm.role == role.role:
-						frappe.db.set_value("DocPerm", perm.name, 'submit', 0)
-						frappe.db.set_value("DocPerm", perm.name, 'cancel', 0)
-						frappe.db.set_value("DocPerm", perm.name, 'amend', 0)
+						frappe.db.set_value("DocPerm", perm.name, 'submit', 1)
+						frappe.db.set_value("DocPerm", perm.name, 'cancel', 1)
+						frappe.db.set_value("DocPerm", perm.name, 'amend', 1)
 						doc = frappe.get_doc("DocPerm",  perm.name)
 						doc1 = frappe.get_doc("DocType", "Sales Order")
 						doc.save()
 						doc1.save()
-						frappe.db.commit()
+						doc.reload()					
 						doc1.reload()
+						validation = True
 	else:
-		docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':0, 'write':1 }, fields=['role','name'])
+		docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':1, 'write':1 }, fields=['role','name'])
 		for role in roles:
 			for perm in docperm:
 				if perm.role == role.role:
-					frappe.db.set_value("DocPerm", perm.name, 'submit', 1)
-					frappe.db.set_value("DocPerm", perm.name, 'cancel', 1)
-					frappe.db.set_value("DocPerm", perm.name, 'amend', 1)
+					frappe.db.set_value("DocPerm", perm.name, 'submit', 0)
+					frappe.db.set_value("DocPerm", perm.name, 'cancel', 0)
+					frappe.db.set_value("DocPerm", perm.name, 'amend', 0)
 					doc = frappe.get_doc("DocPerm",  perm.name)
 					doc1 = frappe.get_doc("DocType", "Sales Order")
 					doc.save()
 					doc1.save()
-					frappe.db.commit()
+					doc.reload()					
 					doc1.reload()
+					validation = True
+	
+	return validation
 @frappe.whitelist()
 def remove_submit_permission(user,name):
+	current_doc = frappe.get_doc("Sales Order",  name)
+	validation = False
 	role_so_overrite = "SO Overwriter"
 	role_creator = "SO Creator"
 	roles = frappe.get_all('Has Role', filters={'parent': user }, fields=['role'])
@@ -985,40 +977,11 @@ def remove_submit_permission(user,name):
 	check_for_review = sales_order_review_data(name)
 	doctype = "Sales Order"
 	review_template = get_review_templates(doctype)
-	if len(defined_role) == 0:
-		if len(review_template) != 0:
-			if len(check_for_review) != 0:
-				if len(creator_role) != 0:
-					validation = sales_order_review_values(name,check_for_review[0].sales_order)
-					if validation == True:
-						docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':1, 'write':1 }, fields=['role','name'])
-						for role in roles:
-							for perm in docperm:
-								if perm.role == role.role:
-									frappe.db.set_value("DocPerm", perm.name, 'submit', 0)
-									frappe.db.set_value("DocPerm", perm.name, 'cancel', 0)
-									frappe.db.set_value("DocPerm", perm.name, 'amend', 0)
-									doc = frappe.get_doc("DocPerm",  perm.name)
-									doc1 = frappe.get_doc("DocType", "Sales Order")
-									doc.save()
-									doc1.save()
-									frappe.db.commit()
-									doc1.reload()
-					else:
-						docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':0, 'write':1 }, fields=['role','name'])
-						for role in roles:
-							for perm in docperm:
-								if perm.role == role.role:
-									frappe.db.set_value("DocPerm", perm.name, 'submit', 1)
-									frappe.db.set_value("DocPerm", perm.name, 'cancel', 1)
-									frappe.db.set_value("DocPerm", perm.name, 'amend', 1)
-									doc = frappe.get_doc("DocPerm",  perm.name)
-									doc1 = frappe.get_doc("DocType", "Sales Order")
-									doc.save()
-									doc1.save()
-									frappe.db.commit()
-									doc1.reload()
-				else:
+	if len(review_template) != 0:
+		if len(check_for_review) != 0:
+			if len(creator_role) != 0:
+				validation = sales_order_review_values(name,check_for_review[0].sales_order)
+				if validation == True:
 					docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':1, 'write':1 }, fields=['role','name'])
 					for role in roles:
 						for perm in docperm:
@@ -1030,8 +993,24 @@ def remove_submit_permission(user,name):
 								doc1 = frappe.get_doc("DocType", "Sales Order")
 								doc.save()
 								doc1.save()
-								frappe.db.commit()
+								doc.reload()					
 								doc1.reload()
+								validation = True
+				else:
+					docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':0, 'write':1 }, fields=['role','name'])
+					for role in roles:
+						for perm in docperm:
+							if perm.role == role.role:
+								frappe.db.set_value("DocPerm", perm.name, 'submit', 1)
+								frappe.db.set_value("DocPerm", perm.name, 'cancel', 1)
+								frappe.db.set_value("DocPerm", perm.name, 'amend', 1)
+								doc = frappe.get_doc("DocPerm",  perm.name)
+								doc1 = frappe.get_doc("DocType", "Sales Order")
+								doc.save()
+								doc1.save()
+								doc.reload()					
+								doc1.reload()
+								validation = True
 			else:
 				docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':1, 'write':1 }, fields=['role','name'])
 				for role in roles:
@@ -1044,11 +1023,35 @@ def remove_submit_permission(user,name):
 							doc1 = frappe.get_doc("DocType", "Sales Order")
 							doc.save()
 							doc1.save()
-							frappe.db.commit()
+							doc.reload()					
 							doc1.reload()
-		
-	else:
-		docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':0, 'write':1 }, fields=['role','name'])
+							validation = True
+		else:
+			docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':1, 'write':1 }, fields=['role','name'])
+			for role in roles:
+				for perm in docperm:
+					if perm.role == role.role:
+						frappe.db.set_value("DocPerm", perm.name, 'submit', 0)
+						frappe.db.set_value("DocPerm", perm.name, 'cancel', 0)
+						frappe.db.set_value("DocPerm", perm.name, 'amend', 0)
+						doc = frappe.get_doc("DocPerm",  perm.name)
+						doc1 = frappe.get_doc("DocType", "Sales Order")
+						doc.save()
+						doc1.save()
+						doc.reload()					
+						doc1.reload()
+						validation = True
+			
+	
+	return validation
+@frappe.whitelist()
+def add_submit_permission(user,name):
+	current_doc = frappe.get_doc("Sales Order",  name)
+	validation = False
+	roles = frappe.get_all('Has Role', filters={'parent': user }, fields=['role'])
+	docperm = frappe.get_all('DocPerm', filters={'parent': "Sales Order", 'submit':0, 'write':1}, fields=['role','name'])
+	if docperm:
+		#print "docperm-------------",docperm
 		for role in roles:
 			for perm in docperm:
 				if perm.role == role.role:
@@ -1059,12 +1062,10 @@ def remove_submit_permission(user,name):
 					doc1 = frappe.get_doc("DocType", "Sales Order")
 					doc.save()
 					doc1.save()
-					frappe.db.commit()
-					doc1.reload()
-			
-	
-	return True
-
+					doc.reload()				
+					#doc1.reload()
+					validation = True
+	return validation
 @frappe.whitelist()
 def check_item_review_field(current_doc,review_doc,name):
 	validation = True

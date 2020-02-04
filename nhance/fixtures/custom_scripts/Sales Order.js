@@ -1,26 +1,12 @@
 frappe.ui.form.on("Sales Order", "refresh", function(frm) {
     var role = "SO Reviewer";
     var role_creator = "SO Creator";
+    var role_overriter = "SO Overwriter";
     var check_role = get_roles(frappe.session.user, role);
     var check_role_creator = get_roles(frappe.session.user, role_creator);
-  if (cur_frm.doc.so_reviewed){
-		var removed_perm = remove_submit_permission_with_so(frappe.session.user,cur_frm.doc.so_reviewed);
-	}
-   else{
-	if(!cur_frm.doc._islocal){
-    		var removed_perm = remove_submit_permission(frappe.session.user,cur_frm.doc.name);
-    }
-	}
-
+    var check_role_overriter = get_roles(frappe.session.user, role_overriter);
+   
     if (cur_frm.doc.docstatus == 0) {
-        /*frm.add_custom_button(__("Make Document Review"), function() {
-	frappe.model.open_mapped_doc({
-            method: "nhance.nhance.doctype.document_review_details.document_review_details.make_document_review_detials",
-            frm: cur_frm
-        })
-	
-	});*/
-
         frm.add_custom_button(__("Make Sales Order Review"), function() {
             if (check_role_creator != "" && check_role_creator != undefined) {
                 frappe.model.open_mapped_doc({
@@ -34,10 +20,27 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
                     frm: cur_frm
                 })
             } else {
-                frappe.msgprint(frappe.session.user + " Don't have permission "  + role + " to create Sales Order Review");
+                frappe.msgprint("Access Rights Error! You do not have permission to perform this operation!");
             }
         });
     }
+     if (check_role_overriter){
+		if(!cur_frm.doc._islocal){
+		var removed_perm = add_submit_permission(frappe.session.user,cur_frm.doc.name);
+		//console.log("overrriter--------------------"+removed_perm);
+			}
+	}else{
+	    if (cur_frm.doc.so_reviewed){
+		var removed_perm = remove_submit_permission_with_so(frappe.session.user,cur_frm.doc.so_reviewed);
+			//console.log("revierw--------------------"+removed_perm);
+		}
+	   else {
+		if(!cur_frm.doc._islocal){
+	    		var removed_perm = remove_submit_permission(frappe.session.user,cur_frm.doc.name);
+			console.log("creator--------------------"+removed_perm);
+		}
+	    }
+	}	
     if (cur_frm.doc.under_review == 1) {
         var fields_name = get_fields(cur_frm.doc.doctype);
         var item_fields = "";
@@ -137,6 +140,7 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
     });
 
 });
+
 frappe.ui.form.on("Sales Order", "before_submit", function(cdt, cdn, frm) {
     //var removed_perm = remove_submit_permission(frappe.session.user,cur_frm.doc.name);
    /* if (cur_frm.doc.under_review == 1){
@@ -281,6 +285,9 @@ function remove_submit_permission(user,name){
 		async: false,
 		callback: function(r) {
 		    remove_perm = r.message;
+		   if (remove_perm == true ){
+				window.location.reload();
+			}
 		}
 	    });
 	    return remove_perm;
@@ -296,10 +303,30 @@ function remove_submit_permission_with_so(user,so_reviewed){
 		async: false,
 		callback: function(r) {
 		    remove_perm = r.message;
+		    if (remove_perm == true ){
+				window.location.reload();
+			}
 		}
 	    });
 	    return remove_perm;
 }
 
-
+function add_submit_permission(user,name){
+	var remove_perm = "";
+	    frappe.call({
+		method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.add_submit_permission',
+		args: {
+		    "user": user,
+		    "name":name,
+		},
+		async: false,
+		callback: function(r) {
+		    remove_perm = r.message;
+		      if (remove_perm == true ){
+				window.location.reload();
+			}
+		}
+	    });
+	    return remove_perm;
+}
 
