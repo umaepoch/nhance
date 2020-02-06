@@ -1,11 +1,8 @@
 frappe.ui.form.on("Sales Order", "refresh", function(frm) {
     var role = "SO Reviewer";
     var role_creator = "SO Creator";
-    var role_overriter = "SO Overwriter";
     var check_role = get_roles(frappe.session.user, role);
     var check_role_creator = get_roles(frappe.session.user, role_creator);
-    var check_role_overriter = get_roles(frappe.session.user, role_overriter);
-   
     if (cur_frm.doc.docstatus == 0) {
         frm.add_custom_button(__("Make Sales Order Review"), function() {
             if (check_role_creator != "" && check_role_creator != undefined) {
@@ -24,23 +21,6 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
             }
         });
     }
-     if (check_role_overriter){
-		if(!cur_frm.doc._islocal){
-		var removed_perm = add_submit_permission(frappe.session.user,cur_frm.doc.name);
-		//console.log("overrriter--------------------"+removed_perm);
-			}
-	}else{
-	    if (cur_frm.doc.so_reviewed){
-		var removed_perm = remove_submit_permission_with_so(frappe.session.user,cur_frm.doc.so_reviewed);
-			//console.log("revierw--------------------"+removed_perm);
-		}
-	   else {
-		if(!cur_frm.doc._islocal){
-	    		var removed_perm = remove_submit_permission(frappe.session.user,cur_frm.doc.name);
-			console.log("creator--------------------"+removed_perm);
-		}
-	    }
-	}	
     if (cur_frm.doc.under_review == 1) {
         var fields_name = get_fields(cur_frm.doc.doctype);
         var item_fields = "";
@@ -140,50 +120,40 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
     });
 
 });
-
 frappe.ui.form.on("Sales Order", "before_submit", function(cdt, cdn, frm) {
-    //var removed_perm = remove_submit_permission(frappe.session.user,cur_frm.doc.name);
-   /* if (cur_frm.doc.under_review == 1){
-    	frappe.throw("Sales Order is under Review Please submit first document review details");
-    	//frappe.validation = false;
-    }
-    var role_reviewer = "SO Reviewer";
-    var role_creator = "SO Creator";
-    var role_overwriter = "SO Overwrite";
-
-    var check_role_for_review = get_roles(frappe.session.user, role_reviewer);
-    var check_role_for_creator = get_roles(frappe.session.user, role_creator);
-    var check_role_for_overwrite = get_roles(frappe.session.user, role_overwriter);
-    var review_templates = get_review_templates(cur_frm.doc.doctype);
-    var check_sales_order_review = get_sales_order_review(cur_frm.doc.name);
-    var fields_name = get_fields(cur_frm.doc.doctype);
-    var doctype_name = "Sales Order Review";
-    var review_doc_field = get_fields(doctype_name);
-   
-    if (check_sales_order_review.length != 0) {
-	 var status = check_sales_order_review[0].docstatus;
-        if (check_role_for_review != "" && check_role_for_review != undefined) {
-            var status = check_sales_order_review[0].docstatus;
-            if (status == 1) {
-                get_check_before_submit(cur_frm.doc.doctype, cur_frm.doc.name);
-            } else {
-                frappe.throw("please first submite Sales order Review " + check_sales_order_review[0].name);
-            }
-        } else if (check_role_for_creator != "" && check_role_for_creator != undefined) {
-            var status = check_sales_order_review[0].docstatus;
-            if (status == 1) {
-                get_check_before_submit(cur_frm.doc.doctype, cur_frm.doc.name);
-            } else {
-                frappe.throw("please first submite Sales order Review " + check_sales_order_review[0].name);
-            }
-        } else if (check_role_for_overwrite != "" && check_role_for_overwrite != undefined) {
-
-            frappe.throw("Dear user "+ frappe.user + " you don't have permission " + '"' + role_overwriter + '"' + "to ignore sales order review " + check_sales_order_review[0].name);
-        } else {
-            frappe.throw("please first submite Sales order Review " + check_sales_order_review[0].name);
-        }
-    }
-*/
+        var role = "SO Reviewer";
+	var role_creator = "SO Creator";
+	var role_overriter = "SO Overwriter";
+        var check_role = get_roles(frappe.session.user, role);
+        var check_role_creator = get_roles(frappe.session.user, role_creator);
+        var check_role_overriter = get_roles(frappe.session.user, role_overriter);
+	//console.log("check_role_overriter==============="+check_role_overriter.length);
+	if (check_role_overriter.length == 0){
+	  if(check_role_creator){
+	    if (cur_frm.doc.so_reviewed){
+		var removed_perm = remove_submit_permission_with_so(frappe.session.user,cur_frm.doc.so_reviewed);
+			//console.log("revierw--------------------"+removed_perm);
+			if (removed_perm == false){
+				frappe.validated = false;
+			}
+		}
+	   else {
+		if(cur_frm.doc.name){
+			//console.log("hey i am here")
+	    		var removed_perm = remove_submit_permission(frappe.session.user,cur_frm.doc.name);
+			//console.log("creator--------------------"+removed_perm);
+			if (removed_perm == false){
+				frappe.validated = false;
+			}
+		}
+	    }
+	}
+	else{
+		 frappe.msgprint("Access Rights Error! You do not have permission to perform this operation!");
+		frappe.validated = false;
+		}
+	}	
+ 
 
 })
 
@@ -285,9 +255,6 @@ function remove_submit_permission(user,name){
 		async: false,
 		callback: function(r) {
 		    remove_perm = r.message;
-		   if (remove_perm == true ){
-				window.location.reload();
-			}
 		}
 	    });
 	    return remove_perm;
@@ -303,30 +270,10 @@ function remove_submit_permission_with_so(user,so_reviewed){
 		async: false,
 		callback: function(r) {
 		    remove_perm = r.message;
-		    if (remove_perm == true ){
-				window.location.reload();
-			}
 		}
 	    });
 	    return remove_perm;
 }
 
-function add_submit_permission(user,name){
-	var remove_perm = "";
-	    frappe.call({
-		method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.add_submit_permission',
-		args: {
-		    "user": user,
-		    "name":name,
-		},
-		async: false,
-		callback: function(r) {
-		    remove_perm = r.message;
-		      if (remove_perm == true ){
-				window.location.reload();
-			}
-		}
-	    });
-	    return remove_perm;
-}
+
 
