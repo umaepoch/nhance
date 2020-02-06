@@ -818,7 +818,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		frappe.msgprint(doclist.name+" has been created")
 		return doclist.name
 	else:
-		frappe.msgprint(validate_sales_order[0].name+" Alreadt accepted for this review")
+		frappe.msgprint(validate_sales_order[0].name+" Already accepted for this review")
 
 @frappe.whitelist()
 def check_before_submit(before_submit,data):
