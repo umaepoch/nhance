@@ -210,6 +210,13 @@ def get_sales_order_review(name):
 	sales_order_review = frappe.db.sql("""select * from `tabSales Order Review` where sales_order = %s order by name DESC limit 1""",(name), as_dict =1)
 	return sales_order_review
 @frappe.whitelist()
+def get_sales_order_review_with_so(name):
+	sales_order_review = frappe.db.sql("""select * from `tabSales Order Review` where name = %s order by name DESC limit 1""",(name), as_dict =1)
+	return sales_order_review
+def get_sales_order_review_with_so_again(name):
+	sales_order_review = frappe.db.sql("""select * from `tabSales Order Review` where sales_order = %s order by name DESC limit 1""",(name), as_dict =1)
+	return sales_order_review
+@frappe.whitelist()
 def get_check_box_uncheck(sales_order):
 	sales_order_no = sales_order.sales_order
 	frappe.db.set_value("Sales Order",sales_order_no,"under_review" , 0);
@@ -344,6 +351,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		source = ""
 		campaign = ""
 		item_code = ""
+		tc_name = ""
 		for rev in review_details:
 			if rev.fieldname == "delivery_date" and rev.field_label == "Parent Field":
 
@@ -447,7 +455,11 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				if get_checked[0].reject_campaign ==1:
 					if get_checked[0].propose_new_campaign is not None:
 						campaign = get_checked[0].propose_new_campaign
-
+			elif rev.fieldname == "tc_name" and rev.field_label == "Parent Field":
+				get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["tc_name","reject_tc_name","accept_tc_name","propose_new_tc_name"])
+				if get_checked[0].reject_tc_name ==1:
+					if get_checked[0].propose_new_tc_name is not None:
+						tc_name = get_checked[0].propose_new_tc_name
 
 		def update_item(source, target_doc, source_parent):
 			item_code = ""
@@ -465,6 +477,9 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 			weight_uom = ""
 			item_delivery_date = ""
 			warehouse = ""
+			image = ""
+			item_name = ""
+			description = ""
 			get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name, "item_code":source.item_code}, fields=["item_code"])
 			if source.item_code == get_checked[0].item_code:
 				for rev in review_details:
@@ -474,7 +489,18 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 						if get_checked[0].reject_item_code ==1:
 							if get_checked[0].propose_new_item_code is not None:
 								item_code = get_checked[0].propose_new_item_code
+					elif rev.fieldname == "item_name" and rev.field_label == "Item Field":
 
+						get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["item_name","reject_item_name","accept_item_name","propose_new_item_name"])
+						if get_checked[0].reject_item_name ==1:
+							if get_checked[0].propose_new_item_name is not None:
+								item_name = get_checked[0].propose_new_item_name
+					elif rev.fieldname == "description" and rev.field_label == "Item Field":
+
+						get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["description","reject_description","accept_description","propose_new_description"])
+						if get_checked[0].reject_description ==1:
+							if get_checked[0].propose_new_description is not None:
+								description = get_checked[0].propose_new_description
 					elif rev.fieldname == "qty" and rev.field_label == "Item Field":
 
 						get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["qty","reject_qty","accept_qty","propose_new_qty"])
@@ -558,12 +584,31 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 						if get_checked[0].reject_warehouse ==1:
 							if get_checked[0].propose_new_warehouse is not None:
 								warehouse = get_checked[0].propose_new_warehouse
+					elif rev.fieldname == "image" and rev.field_label == "Item Field":
+						get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': source_name,"item_code":source.item_code}, fields=["image","reject_image","accept_image","propose_new_image"])
+						if get_checked[0].reject_image ==1:
+							if get_checked[0].propose_new_image is not None:
+								image = get_checked[0].propose_new_image
+				if item_name != "" and item_name != None:
+					target_doc.item_name = item_name
+				else:
+					target_doc.item_name = source.item_name
+				if item_code != "" and item_code != None:
+					target_doc.item_code = item_code
+				else:
+					target_doc.item_code = source.item_code
+				
+				if description != "" and description != None:
+					target_doc.description = description
+				else:
+					target_doc.description = source.description
 				if delivery_date != "" and delivery_date != None:
 					target_doc.delivery_date = delivery_date
 				elif item_delivery_date != "" and item_delivery_date != None:
 					target_doc.delivery_date = item_delivery_date
 				else:
 					target_doc.delivery_date = source.delivery_date
+				
 				if qty != 0.0 and qty != None:
 					#target_doc.qty = qty
 					target_doc.qty = flt(qty) - flt(source.ordered_qty)
@@ -628,7 +673,10 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				else:
 					target_doc.warehouse = source.warehouse
 
-
+				if image != "" and image != None:
+					target_doc.image = image
+				else:
+					target_doc.image = source.image
 
 
 		def update_tax(source, target_doc, source_parent):
@@ -750,6 +798,15 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				target.delivery_date = delivery_date
 			else:
 				target.delivery_date = source.delivery_date
+			
+			if tc_name != "" and tc_name != None:
+				target.tc_name = tc_name
+				get_checked = frappe.get_all('Terms and Conditions', filters={'name': tc_name}, fields=["terms"])
+				target.terms = get_checked[0].terms
+				
+			else:
+				target.tc_name = source.tc_name
+				target.terms = source.terms
 			target.naming_series = "SAL-ORD-.YYYY.-.REV.-"
 			target.transaction_date = source.transaction_date
 			target.ignore_pricing_rule = source.ignore_pricing_rule
@@ -821,7 +878,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		frappe.msgprint(validate_sales_order[0].name+" Already accepted for this review")
 
 @frappe.whitelist()
-def check_before_submit(before_submit,data):
+def check_before_submit(before_submit,data):s
 	creator = "SO Creator"
 	reviewer = "SO Reviewer"
 	overritter = "SO Overwriter"
@@ -843,7 +900,7 @@ def check_before_submit(before_submit,data):
 					else:
 						frappe.throw("Please submit first Sales Order Review "+sales_order_review[0].name)
 			else:
-				frappe.throw(" Access Rights Error! You do not have permission to perform this operation!")
+				frappe.throw("Access Rights Error! You do not have permission to perform this operation!")
 		else:
 			pass
 	else:
@@ -923,24 +980,42 @@ def sales_order_review_values(name,sales_order):
 	return created_new_doc
 
 @frappe.whitelist()
-def remove_submit_permission_with_so(user,so_reviewed):
+def remove_submit_permission_with_so(user,so_reviewed,name):
 
 	#print "hello i am comming"
 	role_so_creator = "SO Creator"
 	role_so_overriter = "SO Overwriter"
 	roles = frappe.get_all('Has Role', filters={'parent': user }, fields=['role'])
-	validation = True
+	validations = True
 	defined_role = get_roles(user,role_so_creator)
 	overritter_role = get_roles(user,role_so_overriter)
+	check_for_review = get_sales_order_review_with_so(so_reviewed)
+	check_for_sales_review = get_sales_order_review_with_so_again(name)
+	#print "check_for_review---------------",check_for_review
 	doctype = "Sales Order"
 	if len(defined_role) != 0:
-		if so_reviewed is not None and so_reviewed != "":
-			validation = True
+		if check_for_review:
+			if check_for_sales_review:
+				#print "check_for_sales_review-------------",check_for_sales_review
+				validation = sales_order_review_values(check_for_sales_review[0].name,name)
+				#print "validation--------------",validation
+				if validation == True:
+					validations = False
+					frappe.throw("The values approved in the Sales Order Review document "+frappe.bold(check_for_sales_review[0].name)+" are different from the values you are using in this Sales Order document. Please review and change the values and try again. Or initiate a new document review if these are the values you want to use!")
+				else:
+					validations = True
+			else:
+				validation = sales_order_review_values(so_reviewed,check_for_review[0].sales_order)
+				if validation == True:
+					validations = False
+					frappe.throw("The values approved in the Sales Order Review document "+frappe.bold(so_reviewed)+" are different from the values you are using in this Sales Order document. Please review and change the values and try again. Or initiate a new document review if these are the values you want to use!")
+				else:
+					validations = True
 	else:
-		validation = False
+		validations = False
 		frappe.throw("Access Rights Error! You do not have permission to perform this operation!")
 
-	return validation
+	return validations
 @frappe.whitelist()
 def remove_submit_permission(user,name):
 	current_doc = frappe.get_doc("Sales Order",  name)

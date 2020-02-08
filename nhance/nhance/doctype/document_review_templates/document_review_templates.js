@@ -159,7 +159,7 @@ frappe.ui.form.on('Document Review Templates', {
         for (var i = 0; i < items.length; i++) {
             var item_fieldtype = (items[i].fieldtype || "");
             if (items[i].label != "" && items[i].label != undefined) {
-                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && item_fieldtype != "Text Editor" && fieldtype != "Text") {
+                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && fieldtype != "Text") {
                     if (i != item_index) {
 			if(items[i].fieldname == "rate"){
 				
@@ -187,6 +187,14 @@ frappe.ui.form.on('Document Review Templates', {
 					     "fieldtype": "Check",
 					    "label": "Delivery Date",
 					    "fieldname": "item_delivery_date"
+				}
+				fields.push(data);
+			}
+			else if(items[i].fieldname == "description"){
+				 var data = {
+					     "fieldtype": "Check",
+					    "label": "Description",
+					    "fieldname": "item_description"
 				}
 				fields.push(data);
 			}
@@ -262,7 +270,7 @@ frappe.ui.form.on('Document Review Templates', {
         for (var i = 0; i < taxes.length; i++) {
             var item_fieldtype = (taxes[i].fieldtype || "");
             if (taxes[i].label != "" && taxes[i].label != undefined) {
-                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && item_fieldtype != "Text Editor" && fieldtype != "Text") {
+                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && fieldtype != "Text") {
                     if (i != tax_index) {
 			if(taxes[i].fieldname == "rate"){
 		                var data = {
@@ -272,7 +280,16 @@ frappe.ui.form.on('Document Review Templates', {
 
 		                }
                        		 fields.push(data);
-			}else{
+			}
+			else if(items[i].fieldname == "description"){
+				 var data = {
+					     "fieldtype": "Check",
+					    "label": "Description",
+					    "fieldname": "tax_description"
+				}
+				fields.push(data);
+			}			
+			else{
 				 var data = {
 		                  
 				    "fieldtype": "Check",
@@ -367,6 +384,24 @@ frappe.ui.form.on('Document Review Templates', {
 				frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
 				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Date");
 				frappe.model.set_value(child.doctype, child.name, "fieldname", "schedule_date");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if (key == 'item_description' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Description");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Text Editor");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "description");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if (key == 'tax_description' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Description");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Tax Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Text Editor");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "description");
 				frappe.model.set_value(child.doctype, child.name, "options", "");
 				cur_frm.refresh_field('fields_descriptions');
 			}

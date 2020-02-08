@@ -85,7 +85,7 @@ frappe.ui.form.on('Sales Order Review', {
 				
 			}
 			else{
-				frappe.msgprint("Access Rights Error! You do not have permission to perform this operation!ss");
+				frappe.msgprint("Access Rights Error! You do not have permission to perform this operation!");
 			}
 			
 		})

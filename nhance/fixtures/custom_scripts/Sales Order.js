@@ -131,7 +131,7 @@ frappe.ui.form.on("Sales Order", "before_submit", function(cdt, cdn, frm) {
 	if (check_role_overriter.length == 0){
 	  if(check_role_creator){
 	    if (cur_frm.doc.so_reviewed){
-		var removed_perm = remove_submit_permission_with_so(frappe.session.user,cur_frm.doc.so_reviewed);
+		var removed_perm = remove_submit_permission_with_so(frappe.session.user,cur_frm.doc.so_reviewed,cur_frm.doc.name);
 			//console.log("revierw--------------------"+removed_perm);
 			if (removed_perm == false){
 				frappe.validated = false;
@@ -259,13 +259,14 @@ function remove_submit_permission(user,name){
 	    });
 	    return remove_perm;
 }
-function remove_submit_permission_with_so(user,so_reviewed){
+function remove_submit_permission_with_so(user,so_reviewed,name){
 	 var remove_perm = "";
 	    frappe.call({
 		method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.remove_submit_permission_with_so',
 		args: {
 		    "user": user,
-		    "so_reviewed":so_reviewed
+		    "so_reviewed":so_reviewed,
+		    "name":name
 		},
 		async: false,
 		callback: function(r) {
