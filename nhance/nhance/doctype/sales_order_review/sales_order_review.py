@@ -1005,7 +1005,7 @@ def remove_submit_permission_with_so(user,so_reviewed,name):
 				else:
 					validations = True
 			else:
-				validation = sales_order_review_values(so_reviewed,check_for_review[0].sales_order)
+				validation = sales_order_review_values(so_reviewed,name)
 				if validation == True:
 					validations = False
 					frappe.throw("The values approved in the Sales Order Review document "+frappe.bold(so_reviewed)+" are different from the values you are using in this Sales Order document. Please review and change the values and try again. Or initiate a new document review if these are the values you want to use!")
