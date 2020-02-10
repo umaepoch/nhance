@@ -878,7 +878,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		frappe.msgprint(validate_sales_order[0].name+" Already accepted for this review")
 
 @frappe.whitelist()
-def check_before_submit(before_submit,data):s
+def check_before_submit(before_submit,data):
 	creator = "SO Creator"
 	reviewer = "SO Reviewer"
 	overritter = "SO Overwriter"
