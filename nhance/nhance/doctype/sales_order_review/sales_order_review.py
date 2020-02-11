@@ -967,7 +967,7 @@ def sales_order_review_values(name,sales_order):
 			for taxes_review in review_doc_taxes_field:
 				proposed_new = "propose_new_"+rev.fieldname
 				#proposed_new_value = "propose_new_"+r_doc.fieldname
-				if proposed_new == item_rev.fieldname:
+				if proposed_new == taxes_review.fieldname:
 					reject_field = "reject_"+rev.fieldname
 					get_checked = frappe.get_all('Sales Taxes and Charges Review', filters={'parent': name , reject_field:1}, fields=[str(proposed_new)])
 					get_original_order_data = frappe.get_all('Sales Taxes and Charges', filters={'parent': sales_order}, fields=[str(rev.fieldname)])
