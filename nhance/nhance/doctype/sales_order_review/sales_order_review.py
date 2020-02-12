@@ -228,7 +228,7 @@ def get_check_before_submit(doctype,name):
 	doctype_field = "Sales Order Review"
 	review_doc_field = get_doc_details(doctype_field)
 	creator = "SO Creator"
-	overrider = "SO Overwriter"
+	overrider = "SO Overwritter"
 	reviewer = "SO Reviewer"
 	role_creator = get_roles(frappe.session.user,creator)
 	role_reviewer = get_roles(frappe.session.user,reviewer)
@@ -881,7 +881,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 def check_before_submit(before_submit,data):
 	creator = "SO Creator"
 	reviewer = "SO Reviewer"
-	overritter = "SO Overwriter"
+	overritter = "SO Overwritter"
 	role_creator = get_roles(frappe.session.user,creator)
 	role_reviewer = get_roles(frappe.session.user,reviewer)
 	role_overrider = get_roles(frappe.session.user,overritter)
@@ -941,42 +941,73 @@ def sales_order_review_values(name,sales_order):
 				#proposed_new_value = "propose_new_"+r_doc.fieldname
 				if proposed_new == r_doc.fieldname:
 					reject_field = "reject_"+rev.fieldname
-					get_checked = frappe.get_all('Sales Order Review', filters={'name': name , reject_field:1}, fields=[str(proposed_new)])
+					accept_field = "accept_"+rev.fieldname
+					get_checked = frappe.get_all('Sales Order Review', filters={'name': name}, fields=[str(rev.fieldname),str(proposed_new),str(accept_field),str(reject_field)])
 					get_original_order_data = frappe.get_all('Sales Order', filters={'name': sales_order}, fields=[str(rev.fieldname)])
 					if get_checked:
-						if get_checked[0][str(proposed_new)] is not None:
-							if get_checked[0][str(proposed_new)] != get_original_order_data[0][str(rev.fieldname)]:
+						for check in get_checked:
+							for checked in get_original_order_data:
+								if check[str(accept_field)] == 1:
+									if check[str(rev.fieldname)] != checked[str(rev.fieldname)]:
 
-								created_new_doc = True
-								break
+										created_new_doc = True
+										break
+								elif check[str(reject_field)] == 1:		
+									if check[str(proposed_new)] is not None:
+										if check[str(proposed_new)] != checked[str(rev.fieldname)]:
+
+											created_new_doc = True
+											break
 		elif rev.field_label == "Item Field":
 			for item_rev in review_doc_item_field:
 				proposed_new = "propose_new_"+rev.fieldname
 				#proposed_new_value = "propose_new_"+r_doc.fieldname
 				if proposed_new == item_rev.fieldname:
 					reject_field = "reject_"+rev.fieldname
-					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': name , reject_field:1}, fields=[str(proposed_new)])
-					get_original_order_data = frappe.get_all('Sales Order Item', filters={'parent': sales_order}, fields=[str(rev.fieldname)])
+					accept_field = "accept_"+rev.fieldname
+					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': name}, fields=[str(rev.fieldname),str(proposed_new),str(accept_field),str(reject_field),'item_code'])
+					get_original_order_data = frappe.get_all('Sales Order Item', filters={'parent': sales_order}, fields=[str(rev.fieldname),'item_code'])
+					#print "get_checked--------------",get_checked
+					#print "get_original_order_data--------------",get_original_order_data
 					if get_checked:
-						if get_checked[0][str(proposed_new)] is not None:
-							if get_checked[0][str(proposed_new)] != get_original_order_data[0][str(rev.fieldname)]:
+						for check in get_checked:
+							for checked in get_original_order_data:
+								if check['item_code'] == checked['item_code']:
+									if check[str(accept_field)] == 1:
+										if check[str(rev.fieldname)] != checked[str(rev.fieldname)]:
 
-								created_new_doc = True
-								break
+											created_new_doc = True
+											break
+									elif check[str(reject_field)] == 1:		
+										if check[str(proposed_new)] is not None:
+											if check[str(proposed_new)] != checked[str(rev.fieldname)]:
+
+												created_new_doc = True
+												break
 		elif rev.field_label == "Tax Field":
 			for taxes_review in review_doc_taxes_field:
 				proposed_new = "propose_new_"+rev.fieldname
 				#proposed_new_value = "propose_new_"+r_doc.fieldname
 				if proposed_new == taxes_review.fieldname:
 					reject_field = "reject_"+rev.fieldname
-					get_checked = frappe.get_all('Sales Taxes and Charges Review', filters={'parent': name , reject_field:1}, fields=[str(proposed_new)])
-					get_original_order_data = frappe.get_all('Sales Taxes and Charges', filters={'parent': sales_order}, fields=[str(rev.fieldname)])
+					accept_field = "accept_"+rev.fieldname
+					get_checked = frappe.get_all('Sales Order Item Review', filters={'parent': name}, fields=[str(rev.fieldname),str(proposed_new),str(accept_field),str(reject_field),'account_head'])
+					get_original_order_data = frappe.get_all('Sales Order Item', filters={'parent': sales_order}, fields=[str(rev.fieldname),'account_head'])
 					if get_checked:
-						if get_checked[0][str(proposed_new)] is not None:
-							if get_checked[0][str(proposed_new)] != get_original_order_data[0][str(rev.fieldname)]:
+						for check in get_checked:
+							for checked in get_original_order_data:
+								if check['account_head'] == checked['account_head']:
+									if check[str(accept_field)] == 1:
+										if check[str(rev.fieldname)] != checked[str(rev.fieldname)]:
 
-								created_new_doc = True
-								break
+											created_new_doc = True
+											break
+									elif check[str(reject_field)] == 1:		
+										if check[str(proposed_new)] is not None:
+											if check[str(proposed_new)] != checked[str(rev.fieldname)]:
+
+												created_new_doc = True
+												break
 	return created_new_doc
 
 @frappe.whitelist()
@@ -984,7 +1015,7 @@ def remove_submit_permission_with_so(user,so_reviewed,name):
 
 	#print "hello i am comming"
 	role_so_creator = "SO Creator"
-	role_so_overriter = "SO Overwriter"
+	role_so_overriter = "SO Overwritter"
 	roles = frappe.get_all('Has Role', filters={'parent': user }, fields=['role'])
 	validations = True
 	defined_role = get_roles(user,role_so_creator)
@@ -1020,7 +1051,7 @@ def remove_submit_permission_with_so(user,so_reviewed,name):
 def remove_submit_permission(user,name):
 	current_doc = frappe.get_doc("Sales Order",  name)
 	validations = True
-	role_so_overrite = "SO Overwriter"
+	role_so_overrite = "SO Overwritter"
 	role_creator = "SO Creator"
 	roles = frappe.get_all('Has Role', filters={'parent': user }, fields=['role'])
 	creator_role = get_roles(user,role_creator)
@@ -1102,22 +1133,20 @@ def check_parent_review_field(current_doc,review_doc,name):
 					if rev.field_label == "Parent Field":
 						propose_new = "propose_new_"+rev.fieldname
 						doc_details = frappe.get_all("Sales Order Review", filters={'name': name}, fields=[accept_field,reject_field,propose_new] )
-						#print "doc-------------",doc_details
 						for doc in doc_details:
 							if doc[str(accept_field)] == 1:
 								pass
 							elif doc[str(reject_field)] == 1:
-								if doc[str(propose_new)] is not None and doc[str(propose_new)] is not 0 and doc[str(propose_new)] is not 0.0:
+								if doc[str(propose_new)]!= None and doc[str(propose_new)] != 0 and doc[str(propose_new)] != 0.0:
 									pass
 								else:
-									frappe.throw("Please specify value in proposed new value field called "+frappe.bold(propose_new))
 									validation = False
+									frappe.throw("Please specify value in proposed new value field called "+frappe.bold(propose_new))
 									break
 							else:
-								frappe.throw("Please give review either accept or reject for field "+frappe.bold(rev.fieldname))
 								validation = False
+								frappe.throw("Please give review either accept or reject for field "+frappe.bold(rev.fieldname))
 								break
-
 		return validation
 	else:
 		frappe.throw("Access Rights Error! You do not have permission to perform this operation!")
@@ -1131,8 +1160,6 @@ def check_taxes_review_field(current_doc,review_doc,name):
 		review_doc_field = get_doc_details(current_doc)
 		for current in review_doc_field:
 			for rev in review_details:
-				#print "rev--------------",rev
-
 				accept_field = "accept_"+rev.fieldname
 				reject_field = "reject_"+rev.fieldname
 				if accept_field == current.fieldname:
@@ -1143,7 +1170,7 @@ def check_taxes_review_field(current_doc,review_doc,name):
 							if doc[str(accept_field)] == 1:
 								pass
 							elif doc[str(reject_field)] == 1:
-								if doc[str(propose_new)] is not None and doc[str(propose_new)] is not 0 and doc[str(propose_new)] is not 0.0:
+								if doc[str(propose_new)] != None and doc[str(propose_new)] != 0 and doc[str(propose_new)] != 0.0:
 									pass
 								else:
 									frappe.throw("Please specify value in proposed new value field called "+frappe.bold(propose_new))

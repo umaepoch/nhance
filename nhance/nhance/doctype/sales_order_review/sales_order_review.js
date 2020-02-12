@@ -243,16 +243,34 @@ frappe.ui.form.on('Sales Order Review', {
 
     },
     before_submit: function(frm, cdt, cdn) {
-       
 	var sales_order = cur_frm.doc.sales_order;
 	var doc_review = "Sales Order"
 	var review_templates = get_review_templates(doc_review);
-	var doctype = "Sales Order";
+	var doctype = "Sales Order Review";
         var current_doc = function_doc_details(doctype);
 	var parent_validation = check_parent_review_field(doctype,doc_review,cur_frm.doc.name);
+	
 	if (parent_validation != undefined){
 		if(parent_validation == false){
 			frappe.validated = false;
+		}
+		else if(parent_validation == true){
+			 var review_child_doc = "Sales Order Item Review";
+			   var item_validation =  check_item_review_field(review_child_doc,doc_review,cur_frm.doc.name);
+			   if (item_validation != undefined){
+				if(item_validation == false){
+					frappe.validated = false;
+				}
+				else if(item_validation == true)
+					 var review_tax_doc = "Sales Taxes and Charges Review";
+					  var tax_validation =  check_taxes_review_field("Sales Taxes and Charges Review",doc_review,cur_frm.doc.name);
+					 if (tax_validation != undefined){
+						if(tax_validation == false){
+							frappe.validated = false;
+						}
+					}
+				}
+			 
 		}
 	}
 	/*
@@ -265,21 +283,7 @@ frappe.ui.form.on('Sales Order Review', {
 	  }
 	*/
 	   
-            var review_child_doc = "Sales Order Item Review";
-          
-	   var item_validation =  check_item_review_field(review_child_doc,doc_review,cur_frm.doc.name);
-	   if (item_validation != undefined){
-		if(item_validation == false){
-			frappe.validated = false;
-		}
-		}
-	  var review_tax_doc = "Sales Taxes and Charges Review";
-	  var tax_validation =  check_taxes_review_field(review_tax_doc,doc_review,cur_frm.doc.name);
-	 if (tax_validation != undefined){
-		if(tax_validation == false){
-			frappe.validated = false;
-		}
-		}
+           
 	    //frappe.validated = false;
            /*
 	    $.each(frm.doc.items, function(i, d) {
@@ -598,16 +602,20 @@ function check_parent_review_field(current_doc,review_doc,name){
         async: false,
         callback: function(r) {
 		doc_details = r.message;
+		console.log("doc_details---------------"+doc_details)
         }
     });
 	return doc_details
 }
-function check_taxes_review_field(current_doc,review_doc,name){
+function check_taxes_review_field(review_tax_doc,review_doc,name){
+	console.log("current_doc--------------"+review_tax_doc)
+	console.log("review_doc--------------"+review_doc)
+	console.log("name--------------"+name)
 	 var doc_details = "";
     frappe.call({
         method: 'nhance.nhance.doctype.sales_order_review.sales_order_review.check_taxes_review_field',
         args: {
-	    "current_doc":current_doc,
+	    "current_doc":review_tax_doc,
 	    "review_doc":review_doc,
 	    "name":name
         },

@@ -123,7 +123,7 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
 frappe.ui.form.on("Sales Order", "before_submit", function(cdt, cdn, frm) {
         var role = "SO Reviewer";
 	var role_creator = "SO Creator";
-	var role_overriter = "SO Overwriter";
+	var role_overriter = "SO Overwritter";
         var check_role = get_roles(frappe.session.user, role);
         var check_role_creator = get_roles(frappe.session.user, role_creator);
         var check_role_overriter = get_roles(frappe.session.user, role_overriter);
@@ -275,6 +275,7 @@ function remove_submit_permission_with_so(user,so_reviewed,name){
 	    });
 	    return remove_perm;
 }
+
 
 
 
