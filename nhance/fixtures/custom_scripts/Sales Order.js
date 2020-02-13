@@ -54,37 +54,104 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
 
         }
     } else if (cur_frm.doc.under_review == 0) {
+	var sales_order_review = get_sales_order_review(cur_frm.doc.name)
+	var review_template = get_review_templates(cur_frm.doc.doctype)
         var fields_name = get_fields(cur_frm.doc.doctype);
+	console.log("hello------------"+sales_order_review.length)
         var item_fields = "";
         var tax_fields = "";
         var payment_fields = "";
-        for (var pf = 0; pf < fields_name.length; pf++) {
-            cur_frm.set_df_property(fields_name[pf].fieldname, "read_only", 0);
+	if (cur_frm.doc.so_reviewed == undefined){
+		if (sales_order_review.length != 0){
+		for (var pf = 0; pf < fields_name.length; pf++) {
+		   cur_frm.set_df_property(fields_name[pf].fieldname, "read_only", 1);
 
-            if (fields_name[pf].fieldname == "items") {
-                var child_field = fields_name[pf].options;
-                item_fields = get_fields(child_field);
-            } else if (fields_name[pf].fieldname == "taxes") {
-                var child_field = fields_name[pf].options;
-                tax_fields = get_fields(child_field);
-            } else if (fields_name[pf].fieldname == "payment_schedule") {
-                var child_field = fields_name[pf].options;
-                payment_fields = get_fields(child_field);
-            }
-        }
-        for (var itm_f = 0; itm_f < item_fields.length; itm_f++) {
-            cur_frm.fields_dict.items.grid.toggle_enable(item_fields[itm_f].fieldname, true);
+		    if (fields_name[pf].fieldname == "items") {
+		        var child_field = fields_name[pf].options;
+		        item_fields = get_fields(child_field);
+		    } else if (fields_name[pf].fieldname == "taxes") {
+		        var child_field = fields_name[pf].options;
+		        tax_fields = get_fields(child_field);
+		    } else if (fields_name[pf].fieldname == "payment_schedule") {
+		        var child_field = fields_name[pf].options;
+		        payment_fields = get_fields(child_field);
+		    }
+		}
+		 for (var rev = 0; rev < review_template.length; rev++){
+			if(review_template[rev].field_label == "Parent Field"){
+				
+			    			cur_frm.set_df_property(review_template[rev].fieldname, "read_only", 1);
+					}
+		}
+			for (var itm_f = 0; itm_f < item_fields.length; itm_f++) {
+			
+				cur_frm.fields_dict.items.grid.toggle_enable(item_fields[itm_f].fieldname, false);
+				}
+			 for (var rev = 0; rev < review_template.length; rev++){
+					if(review_template[rev].field_label == "Item Field"){
+		    			     cur_frm.fields_dict.items.grid.toggle_enable(review_template[rev].fieldname, true);
+				}
+			}
 
-        }
+			for (var tf = 0; tf < tax_fields.length; tf++) {
+			   
+					  cur_frm.fields_dict.taxes.grid.toggle_enable(tax_fields[tf].fieldname, false);
+			
+			}
+			   for (var rev = 0; rev < review_template.length; rev++){
+					if(review_template[rev].field_label == "Tax Field"){
+						console.log("tax field-----------"+review_template[rev].fieldname);
+		    			     cur_frm.fields_dict.taxes.grid.toggle_enable(review_template[rev].fieldname, true);
+				}
+			}
+		}
+	}else{
+		var sales_order_review = get_sales_order_review_with_so(cur_frm.doc.so_reviewed)
+		if (sales_order_review.length != 0){
+		for (var pf = 0; pf < fields_name.length; pf++) {
+		   cur_frm.set_df_property(fields_name[pf].fieldname, "read_only", 1);
 
-        for (var tf = 0; tf < tax_fields.length; tf++) {
-            cur_frm.fields_dict.taxes.grid.toggle_enable(tax_fields[tf].fieldname, true);
+		    if (fields_name[pf].fieldname == "items") {
+		        var child_field = fields_name[pf].options;
+		        item_fields = get_fields(child_field);
+		    } else if (fields_name[pf].fieldname == "taxes") {
+		        var child_field = fields_name[pf].options;
+		        tax_fields = get_fields(child_field);
+		    } else if (fields_name[pf].fieldname == "payment_schedule") {
+		        var child_field = fields_name[pf].options;
+		        payment_fields = get_fields(child_field);
+		    }
+		}
+		 for (var rev = 0; rev < review_template.length; rev++){
+			if(review_template[rev].field_label == "Parent Field"){
+				
+			    	cur_frm.set_df_property(review_template[rev].fieldname, "read_only", 0);
+					}
+		}
+			for (var itm_f = 0; itm_f < item_fields.length; itm_f++) {
+			
+				cur_frm.fields_dict.items.grid.toggle_enable(item_fields[itm_f].fieldname, false);
+				}
+			 for (var rev = 0; rev < review_template.length; rev++){
+					if(review_template[rev].field_label == "Item Field"){
+		    			     cur_frm.fields_dict.items.grid.toggle_enable(review_template[rev].fieldname, true);
+				}
+			}
 
-        }
-        for (var pf = 0; pf < payment_fields.length; pf++) {
-            cur_frm.fields_dict.payment_schedule.grid.toggle_enable(payment_fields[pf].fieldname, true);
+			for (var tf = 0; tf < tax_fields.length; tf++) {
+			   
+					  cur_frm.fields_dict.taxes.grid.toggle_enable(tax_fields[tf].fieldname, false);
+			
+			}
+			   for (var rev = 0; rev < review_template.length; rev++){
+					if(review_template[rev].field_label == "Tax Field"){
+						console.log("tax field-----------"+review_template[rev].fieldname);
+		    			     cur_frm.fields_dict.taxes.grid.toggle_enable(review_template[rev].fieldname, true);
+				}
+			}
+		}
 
-        }
+		}
     } else {
         cur_frm.refresh_fields();
     }
@@ -197,6 +264,24 @@ function get_sales_order_review(name) {
     var sales_order_review = "";
     frappe.call({
         method: "nhance.nhance.doctype.sales_order_review.sales_order_review.get_sales_order_review",
+        args: {
+            "name": name
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+
+                sales_order_review = r.message
+            }
+        }
+    });
+    return sales_order_review;
+
+}
+function get_sales_order_review_with_so(name) {
+    var sales_order_review = "";
+    frappe.call({
+        method: "nhance.nhance.doctype.sales_order_review.sales_order_review.get_sales_order_review_with_so",
         args: {
             "name": name
         },
