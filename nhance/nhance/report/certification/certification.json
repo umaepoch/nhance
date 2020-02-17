@@ -1,0 +1,31 @@
+{
+ "add_total_row": 0, 
+ "creation": "2020-02-14 17:03:09.101327", 
+ "disable_prepared_report": 0, 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "Standard", 
+ "modified": "2020-02-14 17:08:55.647561", 
+ "modified_by": "Administrator", 
+ "module": "Nhance", 
+ "name": "Certification", 
+ "owner": "Administrator", 
+ "prepared_report": 0, 
+ "ref_doctype": "Serial No", 
+ "report_name": "Certification", 
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Item Manager"
+  }, 
+  {
+   "role": "Stock Manager"
+  }, 
+  {
+   "role": "Stock User"
+  }
+ ]
+}
