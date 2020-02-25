@@ -322,6 +322,7 @@ def create_sales_order(sales_review,name,sales_order):
 @frappe.whitelist()
 def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 	validate_sales_order = get_checked = frappe.get_all('Sales Order', filters={'so_reviewed': source_name}, fields=["name"])
+	taxes_and_charges = ""
 	if len(validate_sales_order) == 0:
 		outerJson_Transfer = []
 		doctype_field = "Sales Order Review"
@@ -352,6 +353,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		campaign = ""
 		item_code = ""
 		tc_name = ""
+		
 		for rev in review_details:
 			if rev.fieldname == "delivery_date" and rev.field_label == "Parent Field":
 
@@ -460,7 +462,11 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				if get_checked[0].reject_tc_name ==1:
 					if get_checked[0].propose_new_tc_name is not None:
 						tc_name = get_checked[0].propose_new_tc_name
-
+			elif rev.fieldname == "taxes_and_charges" and rev.field_label == "Parent Field":
+				get_checked = frappe.get_all('Sales Order Review', filters={'name': source_name}, fields=["taxes_and_charges","reject_taxes_and_charges","accept_taxes_and_charges","propose_new_taxes_and_charges"])
+				if get_checked[0].reject_taxes_and_charges ==1:
+					if get_checked[0].propose_new_taxes_and_charges is not None:
+						taxes_and_charges = get_checked[0].propose_new_taxes_and_charges
 		def update_item(source, target_doc, source_parent):
 			item_code = ""
 			control_bom = ""
@@ -725,6 +731,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 					target_doc.rate = rate
 				else:
 					target_doc.rate = source.rate
+				
 		def set_missing_values(source, target):
 			target.is_pos = 0
 
@@ -807,6 +814,12 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 			else:
 				target.tc_name = source.tc_name
 				target.terms = source.terms
+			if taxes_and_charges != "" and taxes_and_charges != None:
+				target.taxes_and_charges = taxes_and_charges
+				target.taxes = ""
+				
+			else:
+				target.taxes_and_charges = source.taxes_and_charges
 			target.naming_series = "SAL-ORD-.YYYY.-.REV.-"
 			target.transaction_date = source.transaction_date
 			target.ignore_pricing_rule = source.ignore_pricing_rule
@@ -872,11 +885,26 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 			}
 		}, target_doc, postprocess, ignore_permissions=ignore_permissions)
 		doclist.save()
+		if taxes_and_charges != "" and taxes_and_charges != None:
+			get_checked = frappe.get_list('Sales Taxes and Charges', filters={'parent': taxes_and_charges}, fields=["account_head","rate","description","charge_type","row_id","idx"] , order_by='idx')
+			doc = frappe.get_doc("Sales Order",doclist.name)
+			rows = {}
+			for checked in get_checked:
+				rows.update({
+					'account_head':checked['account_head'],
+					'rate':checked['rate'],
+					'description':checked['description'],
+					'charge_type':checked['charge_type'],
+					'row_id':checked['row_id']
+				})
+				doc.append("taxes",rows)
+			doc.save()
 		frappe.msgprint(doclist.name+" has been created")
 		return doclist.name
 	else:
 		frappe.msgprint(validate_sales_order[0].name+" Already accepted for this review")
 
+	
 @frappe.whitelist()
 def check_before_submit(before_submit,data):
 	creator = "SO Creator"
