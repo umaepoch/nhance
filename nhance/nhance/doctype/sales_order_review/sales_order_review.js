@@ -374,9 +374,520 @@ frappe.ui.form.on('Sales Order Review', {
     before_save : function(frm){
 		var sales_order = cur_frm.doc.sales_order;
 	        // under_review_check(sales_order);
+	},
+	accept_customer:function(frm){
+		if (cur_frm.doc.accept_customer == 1){
+                	cur_frm.set_value('reject_customer', 0);
+		}
+	},
+	reject_customer:function(frm){
+		if (cur_frm.doc.reject_customer == 1){
+                	cur_frm.set_value('accept_customer', 0);
+		}
+	},
+	accept_order_type:function(frm){
+		if (cur_frm.doc.accept_order_type == 1){
+                	cur_frm.set_value('reject_order_type', 0);
+		}
+	},
+	reject_order_type:function(frm){
+		if (cur_frm.doc.reject_order_type == 1){
+                	cur_frm.set_value('accept_order_type', 0);
+		}
+	},
+	accept_company:function(frm){
+		if (cur_frm.doc.accept_company == 1){
+                	cur_frm.set_value('reject_company', 0);
+		}
+	},
+	reject_company:function(frm){
+		if (cur_frm.doc.reject_company == 1){
+                	cur_frm.set_value('accept_company', 0);
+		}
+	},
+	accept_delivery_date:function(frm){
+		if (cur_frm.doc.accept_delivery_date == 1){
+                	cur_frm.set_value('reject_delivery_date', 0);
+		}
+	},
+	reject_delivery_date:function(frm){
+		if (cur_frm.doc.reject_delivery_date == 1){
+                	cur_frm.set_value('accept_delivery_date', 0);
+		}
+	},
+	accept_customer_address:function(frm){
+		if (cur_frm.doc.accept_customer_address == 1){
+                	cur_frm.set_value('reject_customer_address', 0);
+		}
+	},
+	reject_customer_address:function(frm){
+		if (cur_frm.doc.reject_customer_address == 1){
+                	cur_frm.set_value('accept_customer_address', 0);
+		}
+	},
+	accept_contact_person:function(frm){
+		if (cur_frm.doc.accept_contact_person == 1){
+                	cur_frm.set_value('reject_contact_person', 0);
+		}
+	},
+	reject_contact_person:function(frm){
+		if (cur_frm.doc.reject_contact_person == 1){
+                	cur_frm.set_value('accept_contact_person', 0);
+		}
+	},
+	accept_company_address:function(frm){
+		if (cur_frm.doc.accept_company_address == 1){
+                	cur_frm.set_value('reject_company_address', 0);
+		}
+	},
+	reject_company_address:function(frm){
+		if (cur_frm.doc.reject_company_address == 1){
+                	cur_frm.set_value('accept_company_address', 0);
+		}
+	},
+	accept_shipping_address_name:function(frm){
+		if (cur_frm.doc.accept_shipping_address_name == 1){
+                	cur_frm.set_value('reject_shipping_address_name', 0);
+		}
+	},
+	reject_shipping_address_name:function(frm){
+		if (cur_frm.doc.reject_shipping_address_name == 1){
+                	cur_frm.set_value('accept_shipping_address_name', 0);
+		}
+	},
+	accept_set_warehouse:function(frm){
+		if (cur_frm.doc.accept_set_warehouse == 1){
+                	cur_frm.set_value('reject_set_warehouse', 0);
+		}
+	},
+	reject_set_warehouse:function(frm){
+		if (cur_frm.doc.reject_set_warehouse == 1){
+                	cur_frm.set_value('accept_set_warehouse', 0);
+		}
+	},
+	accept_taxes_and_charges:function(frm){
+		if (cur_frm.doc.accept_taxes_and_charges == 1){
+                	cur_frm.set_value('reject_taxes_and_charges', 0);
+		}
+	},
+	reject_taxes_and_charges:function(frm){
+		if (cur_frm.doc.reject_taxes_and_charges == 1){
+                	cur_frm.set_value('accept_taxes_and_charges', 0);
+		}
+	},
+	accept_apply_discount_on:function(frm){
+		if (cur_frm.doc.accept_apply_discount_on == 1){
+                	cur_frm.set_value('reject_apply_discount_on', 0);
+		}
+	},
+	reject_apply_discount_on:function(frm){
+		if (cur_frm.doc.reject_apply_discount_on == 1){
+                	cur_frm.set_value('accept_apply_discount_on', 0);
+		}
+	},
+	accept_additional_discount_percentage:function(frm){
+		if (cur_frm.doc.accept_additional_discount_percentage == 1){
+                	cur_frm.set_value('reject_additional_discount_percentage', 0);
+		}
+	},
+	reject_additional_discount_percentage:function(frm){
+		if (cur_frm.doc.reject_additional_discount_percentage == 1){
+                	cur_frm.set_value('accept_additional_discount_percentage', 0);
+		}
+	},
+	accept_tc_name:function(frm){
+		if (cur_frm.doc.accept_tc_name == 1){
+                	cur_frm.set_value('reject_tc_name', 0);
+		}
+	},
+	reject_tc_name:function(frm){
+		if (cur_frm.doc.reject_tc_name == 1){
+                	cur_frm.set_value('accept_tc_name', 0);
+		}
+	},
+	accept_project:function(frm){
+		if (cur_frm.doc.accept_project == 1){
+                	cur_frm.set_value('reject_project', 0);
+		}
+	},
+	reject_project:function(frm){
+		if (cur_frm.doc.reject_project == 1){
+                	cur_frm.set_value('accept_project', 0);
+		}
+	},
+	accept_source:function(frm){
+		if (cur_frm.doc.accept_source == 1){
+                	cur_frm.set_value('reject_source', 0);
+		}
+	},
+	reject_source:function(frm){
+		if (cur_frm.doc.reject_source == 1){
+                	cur_frm.set_value('accept_source', 0);
+		}
+	},
+	accept_campaign:function(frm){
+		if (cur_frm.doc.accept_campaign == 1){
+                	cur_frm.set_value('reject_campaign', 0);
+		}
+	},
+	reject_campaign:function(frm){
+		if (cur_frm.doc.reject_campaign == 1){
+                	cur_frm.set_value('accept_campaign', 0);
+		}
+	},
+	accept_base_discount_amount:function(frm){
+		if (cur_frm.doc.accept_base_discount_amount == 1){
+                	cur_frm.set_value('reject_base_discount_amount', 0);
+		}
+	},
+	reject_base_discount_amount:function(frm){
+		if (cur_frm.doc.reject_base_discount_amount == 1){
+                	cur_frm.set_value('accept_base_discount_amount', 0);
+		}
+	},
+	accept_discount_amount:function(frm){
+		if (cur_frm.doc.accept_discount_amount == 1){
+                	cur_frm.set_value('reject_discount_amount', 0);
+		}
+	},
+	reject_discount_amount:function(frm){
+		if (cur_frm.doc.reject_discount_amount == 1){
+                	cur_frm.set_value('accept_discount_amount', 0);
+		}
 	}
 });
+frappe.ui.form.on("Sales Order Item Review",{
+	accept_item_code:function(frm){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_item_code == 1){
+				d.reject_item_code = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_item_code:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_item_code == 1){
+				d.accept_item_code = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_item_name:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_item_name == 1){
+				d.reject_item_name = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_item_name:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_item_name == 1){
+				d.accept_item_name = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_description:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_description == 1){
+				d.reject_description = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_description:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_description == 1){
+				d.accept_description = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_delivery_date:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_delivery_date == 1){
+				d.reject_delivery_date = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_delivery_date:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_delivery_date == 1){
+				d.accept_delivery_date = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_image:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_image == 1){
+				d.reject_image = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_image:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_image == 1){
+				d.accept_image = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_qty:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_qty == 1){
+				d.reject_qty = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_qty:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_qty == 1){
+				d.accept_qty = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_uom:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_uom == 1){
+				d.reject_uom = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_uom:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_uom == 1){
+				d.accept_uom = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_conversion_factor:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_conversion_factor == 1){
+				d.reject_conversion_factor = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_conversion_factor:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_conversion_factor == 1){
+				d.accept_conversion_factor = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_price_list_rate:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_price_list_rate == 1){
+				d.reject_price_list_rate = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_price_list_rate:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_price_list_rate == 1){
+				d.accept_price_list_rate = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_rate:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_rate == 1){
+				d.reject_rate = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_rate:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_rate == 1){
+				d.accept_rate = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_discount_percentage:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_discount_percentage == 1){
+				d.reject_discount_percentage = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_discount_percentage:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_discount_percentage == 1){
+				d.accept_discount_percentage = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_margin_type:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_margin_type == 1){
+				d.reject_margin_type = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_margin_type:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_margin_type == 1){
+				d.accept_margin_type = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_margin_rate_or_amount:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_margin_rate_or_amount == 1){
+				d.reject_margin_rate_or_amount = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_margin_rate_or_amount:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_margin_rate_or_amount == 1){
+				d.accept_margin_rate_or_amount = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_rate_with_margin:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_rate_with_margin == 1){
+				d.reject_rate_with_margin = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_rate_with_margin:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_rate_with_margin == 1){
+				d.accept_rate_with_margin = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_weight_per_unit:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_weight_per_unit == 1){
+				d.reject_weight_per_unit = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_weight_per_unit:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_weight_per_unit == 1){
+				d.accept_weight_per_unit = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_weight_uom:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_weight_uom == 1){
+				d.reject_weight_uom = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_weight_uom:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_weight_uom == 1){
+				d.accept_weight_uom = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	accept_warehouse:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.accept_warehouse == 1){
+				d.reject_warehouse = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	},
+	reject_warehouse:function(frm,cdt,cdn){
+ 		$.each(frm.doc.items, function(i, d) {
+			if (d.reject_warehouse == 1){
+				d.accept_warehouse = 0;
+			
+			}
+			cur_frm.refresh_field("items");
+		})
+	}
 
+
+
+})
+
+frappe.ui.form.on("Sales Taxes and Charges Review",{
+	accept_rate:function(frm,cdt,cdn){
+ 		$.each(frm.doc.taxes, function(i, d) {
+			if (d.accept_rate == 1){
+				d.reject_rate = 0;
+			
+			}
+			cur_frm.refresh_field("taxes");
+		})
+	},
+	reject_rate:function(frm,cdt,cdn){
+ 		$.each(frm.doc.taxes, function(i, d) {
+			if (d.reject_rate == 1){
+				d.accept_rate = 0;
+			
+			}
+			cur_frm.refresh_field("taxes");
+		})
+	}
+})
 function function_doc_details(doctype) {
     var doc_details = "";
     frappe.call({

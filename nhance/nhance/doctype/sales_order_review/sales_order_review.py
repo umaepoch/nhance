@@ -886,7 +886,7 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		}, target_doc, postprocess, ignore_permissions=ignore_permissions)
 		doclist.save()
 		if taxes_and_charges != "" and taxes_and_charges != None:
-			get_checked = frappe.get_list('Sales Taxes and Charges', filters={'parent': taxes_and_charges}, fields=["account_head","rate","description","charge_type","row_id","idx"] , order_by='idx')
+			get_checked = frappe.get_list('Sales Taxes and Charges', filters={'parent': taxes_and_charges}, fields=["account_head","rate","description","charge_type","row_id","idx",'cost_center'] , order_by='idx')
 			doc = frappe.get_doc("Sales Order",doclist.name)
 			rows = {}
 			for checked in get_checked:
@@ -895,7 +895,8 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 					'rate':checked['rate'],
 					'description':checked['description'],
 					'charge_type':checked['charge_type'],
-					'row_id':checked['row_id']
+					'row_id':checked['row_id'],
+					'cost_center':checked['cost_center']
 				})
 				doc.append("taxes",rows)
 			doc.save()
