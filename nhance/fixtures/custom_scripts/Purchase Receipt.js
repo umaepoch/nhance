@@ -74,10 +74,10 @@ if(is_return!=1){
             return n;
         }
 
-        owner[i]['serial_no'] = "";
-        console.log("...", owner[i]['serial_no']);
+        //owner[i]['serial_no'] = "";
+        //console.log("...", owner[i]['serial_no']);
 
- if ( child_pch_supplier_workorder=="" || Hs==0 ) {
+ if (work_order==""  ||work_order==null || work_order==undefined ) {
 
             // call fun here 
             console.log("entered in else if");

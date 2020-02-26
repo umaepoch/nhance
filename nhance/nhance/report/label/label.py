@@ -25,8 +25,8 @@ def execute(filters=None):
         doctype=""
 	document_no=""
 	
-        doctype = filters.get("purchase_document_type")
-	document_no = filters.get("purchase_document_no")
+        doctype = filters.get("document_type")
+	document_no = filters.get("document_no_value")
 	#print "doctype=============",doctype
 	#print "stock_entry=============",document_no
 
@@ -56,10 +56,10 @@ def fetching_details(doctype,document_no):
 			from 
 				`tabSerial No` 
 			where 
-				purchase_document_type='"""+doctype+"""' and  purchase_document_no='"""+document_no+"""' """, 
+				purchase_document_type='"""+str(doctype)+"""' and  purchase_document_no='"""+str(document_no)+"""' """, 
 			 as_dict=1)
 
-	
+	#print "serial_data",serial_data
 	return serial_data
 
 
