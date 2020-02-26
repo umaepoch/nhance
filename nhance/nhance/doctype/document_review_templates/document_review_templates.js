@@ -4,7 +4,7 @@ frappe.ui.form.on('Document Review Templates', {
 	refresh: function(frm, cdt, cdn) {
         var d = locals[cdt][cdn];
         var doctype = "";
-	console.log("stutas ==========="+cur_frm.doc.status);
+	//console.log("stutas ==========="+cur_frm.doc.status);
 	if (d.doc_type != "" && d.doc_type != undefined) {
             doctype = d.doc_type;
 	    
@@ -14,7 +14,7 @@ frappe.ui.form.on('Document Review Templates', {
        // if (cur_frm.docstatus != 1 && cur_frm.status != "Draft") {
             //cur_frm.set_df_property("items_section", "hidden", true);
             //cur_frm.set_df_property("taxes_section", "hidden", true);
-            console.log("doctyep------------" + cur_frm.doc.doctype);
+           // console.log("doctyep------------" + cur_frm.doc.doctype);
             var cur_doctype = cur_frm.doc.doctype;
             var current_doc = function_doc_details(cur_doctype);
 	     
@@ -23,7 +23,7 @@ frappe.ui.form.on('Document Review Templates', {
             var child_doc1 = "";
 	
             for (var i = 0; i < current_doc.length; i++) {
-                if (current_doc[i].fieldname != "pull" && current_doc[i].fieldname != "doc_type") {
+                if (current_doc[i].fieldname != "pull" && current_doc[i].fieldname != "doc_type" && current_doc[i].fieldname != "is_default") {
                     
                         cur_frm.set_df_property(current_doc[i].fieldname, "hidden", true);
                     }
@@ -32,7 +32,7 @@ frappe.ui.form.on('Document Review Templates', {
 	},
 	pull: function(frm, cdt, cdn) {
 
-        console.log("clicked----");
+       // console.log("clicked----");
         var d = locals[cdt][cdn];
         var doctype = d.doc_type;
         var child_doc_fields = "";
@@ -41,7 +41,7 @@ frappe.ui.form.on('Document Review Templates', {
         var child_taxes_fields1 = "";
         var cur_doctype = cur_frm.doc.doctype;
 	var cur_name = cur_frm.doc.name;
-	console.log("current docname ========"+cur_name);
+	//console.log("current docname ========"+cur_name);
 	var current_doc_detials = "";
 	if(cur_name != undefined){
 	 	current_doc_detials = get_current_doc_details(cur_name);
@@ -51,7 +51,7 @@ frappe.ui.form.on('Document Review Templates', {
             for (var i = 0; i < current_doc.length; i++) {
               
                     if (current_doc[i].fieldname == "fields_descriptions" || current_doc[i].fieldname == "fields_details_section") {
-			console.log(current_doc[i].fieldname);
+			//console.log(current_doc[i].fieldname);
                         cur_frm.set_df_property(current_doc[i].fieldname, "hidden", false);
                     }
               
@@ -98,15 +98,34 @@ frappe.ui.form.on('Document Review Templates', {
             var fieldtype = (doc_details[i].fieldtype || "");
             if (doc_details[i].label != "" && doc_details[i].label != undefined) {
                 if (fieldtype != "Column Break" && fieldtype != "Section Break" && fieldtype != "Button" && fieldtype != "Code" && fieldtype != "Table"  && fieldtype != "Text") {
-                    if (i != field_index) {
-                        //console.log("fieldtype --=----------"+doc_details[i].fieldtype);
-                        var data = {
-                            "fieldtype": "Check",
-                            "label": doc_details[i].label,
-                            "fieldname": doc_details[i].fieldname
-                        }
-                        fields.push(data);
-                    } else if (i == field_index) {
+                    if (i < field_index) {
+                       if(doc_details[i].fieldname == "schedule_date"){
+				var data = {
+					     "fieldtype": "Check",
+					    "label": "Reqd By Date",
+					    "fieldname": "parent_schedule_date"
+
+					}
+		        	fields.push(data);
+			
+			}else if(doc_details[i].fieldname == "delivery_date"){
+				 var data = {
+					     "fieldtype": "Check",
+					    "label": "Delivery Date",
+					    "fieldname": "parent_delivery_date"
+				}
+				fields.push(data);
+			}
+			else{
+				 var data = {
+				            "fieldtype": "Check",
+					    "label": doc_details[i].label,
+					    "fieldname": doc_details[i].fieldname
+
+				        }
+				 fields.push(data);
+				}
+                    } else if (i >= field_index) {
                         field_index += field_index;
                         var data = {
                             "fieldtype": "Check",
@@ -140,23 +159,95 @@ frappe.ui.form.on('Document Review Templates', {
         for (var i = 0; i < items.length; i++) {
             var item_fieldtype = (items[i].fieldtype || "");
             if (items[i].label != "" && items[i].label != undefined) {
-                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && item_fieldtype != "Text Editor" && fieldtype != "Text") {
+                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && fieldtype != "Text") {
                     if (i != item_index) {
-                        var data = {
-                            "fieldtype": "Check",
-                            "label": items[i].label,
-                            "fieldname": items[i].fieldname
+			if(items[i].fieldname == "rate"){
+				
+					//if(items[i].fieldname != "delivery_date"){
+				var data = {
+					    "fieldtype": "Check",
+					    "label": "Rate",
+					    "fieldname": "item_rate"
 
-                        }
-                        fields.push(data);
+					}
+		        	fields.push(data);
+			
+			
+			}else if(items[i].fieldname == "schedule_date"){
+				var data = {
+					     "fieldtype": "Check",
+					    "label": "Reqd By Date",
+					    "fieldname": "item_schedule_date"
+
+					}
+		        	fields.push(data);
+			
+			}else if(items[i].fieldname == "delivery_date"){
+				 var data = {
+					     "fieldtype": "Check",
+					    "label": "Delivery Date",
+					    "fieldname": "item_delivery_date"
+				}
+				fields.push(data);
+			}
+			else if(items[i].fieldname == "description"){
+				 var data = {
+					     "fieldtype": "Check",
+					    "label": "Description",
+					    "fieldname": "item_description"
+				}
+				fields.push(data);
+			}
+			else{
+				 var data = {
+				            "fieldtype": "Check",
+					    "label": items[i].label,
+					    "fieldname": items[i].fieldname
+
+				        }
+				 fields.push(data);
+				}
+			
                     } else if (i == item_index) {
                         item_index += item_index;
-                        var data = {
-                            "fieldtype": "Check",
-                            "label": items[i].label,
-                            "fieldname": items[i].fieldname
+                       if(items[i].fieldname == "rate"){
+				
+					//if(items[i].fieldname != "delivery_date"){
+				var data = {
+					    "fieldtype": "Check",
+					    "label": items[i].label,
+					    "fieldname": items[i].fieldname
 
-                        }
+					}
+		        	fields.push(data);
+			
+			
+			}else if(items[i].fieldname == "schedule_date"){
+				var data = {
+					     "fieldtype": "Check",
+					    "label": "Schedule Date",
+					    "fieldname": "item_schedule_date"
+
+					}
+		        	fields.push(data);
+			
+			}else if(items[i].fieldname == "delivery_date"){
+				 var data = {
+					     "fieldtype": "Check",
+					    "label": "Delivery Date",
+					    "fieldname": "item_delivery_date"
+				}
+				fields.push(data);
+			}
+			else{
+				 var data = {
+				            "fieldtype": "Check",
+					    "label": items[i].label,
+					    "fieldname": items[i].fieldname
+
+				        }
+				 fields.push(data);
+				}
                         fields.push(data);
                         var column = {
                             "fieldtype": "Column Break",
@@ -179,15 +270,35 @@ frappe.ui.form.on('Document Review Templates', {
         for (var i = 0; i < taxes.length; i++) {
             var item_fieldtype = (taxes[i].fieldtype || "");
             if (taxes[i].label != "" && taxes[i].label != undefined) {
-                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && item_fieldtype != "Text Editor" && fieldtype != "Text") {
+                if (item_fieldtype != "Column Break" && item_fieldtype != "Small Text" && item_fieldtype != "Section Break" && item_fieldtype != "Section Break" && item_fieldtype != "Button" && item_fieldtype != "Code" && item_fieldtype != "Table" && fieldtype != "Text") {
                     if (i != tax_index) {
-                        var data = {
-                            "fieldtype": "Check",
-                            "label": taxes[i].label,
-                            "fieldname": taxes[i].fieldname
+			if(taxes[i].fieldname == "rate"){
+		                var data = {
+		                     "fieldtype": "Check",
+		                    "label": "Rate",
+		                    "fieldname": "tax_rate"
 
-                        }
-                        fields.push(data);
+		                }
+                       		 fields.push(data);
+			}
+			else if(items[i].fieldname == "description"){
+				 var data = {
+					     "fieldtype": "Check",
+					    "label": "Description",
+					    "fieldname": "tax_description"
+				}
+				fields.push(data);
+			}			
+			else{
+				 var data = {
+		                  
+				    "fieldtype": "Check",
+		                    "label": taxes[i].label,
+		                    "fieldname": taxes[i].fieldname
+
+		                }
+                       		 fields.push(data);
+				}
                     } else if (i == tax_index) {
                         tax_index += tax_index;
                         var data = {
@@ -220,10 +331,82 @@ frappe.ui.form.on('Document Review Templates', {
                // console.log(JSON.stringify(dialog_json));
                 Object.keys(dialog_json).forEach(function(key) {
                     // console.table("in dialog box==="+JSON.stringify(doc_details));
+		   // console.log(dialog_json[key]+"------value and key-----------"+key)
                     if (dialog_json[key] == 1) {
-			
+			if(key == 'item_rate' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Rate");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Float");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "rate");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if(key == 'parent_delivery_date' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Delivery Date");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Parent Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Date");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "delivery_date");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if(key == 'parent_schedule_date' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Reqd By Date");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Parent Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Date");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "schedule_date");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if(key == 'tax_rate' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Rate");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Tax Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Float");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "rate");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if(key == 'item_delivery_date' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Delivery Date");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Date");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "delivery_date");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if (key == 'item_schedule_date' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Reqd By Date");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Date");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "schedule_date");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if (key == 'item_description' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Description");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Text Editor");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "description");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
+			else if (key == 'tax_description' && dialog_json[key] == 1){
+				var child = cur_frm.add_child("fields_descriptions");
+				frappe.model.set_value(child.doctype, child.name, "label", "Description");
+				frappe.model.set_value(child.doctype, child.name, "field_label", "Tax Field");
+				frappe.model.set_value(child.doctype, child.name, "fieldtype", "Text Editor");
+				frappe.model.set_value(child.doctype, child.name, "fieldname", "description");
+				frappe.model.set_value(child.doctype, child.name, "options", "");
+				cur_frm.refresh_field('fields_descriptions');
+			}
                         //key = key.charAt(0).toUpperCase() + key.slice(1);
-                        // console.log(key);
+                        // console.log("---------------"+key);
 			if(cur_frm.doc.__islocal){
 			for(var doc_d =0; doc_d < doc_details.length; doc_d++){
 			    if(doc_details[doc_d].fieldname == key){
@@ -289,7 +472,7 @@ frappe.ui.form.on('Document Review Templates', {
 			for(var child_d = 0; child_d < child_doc_fields.length; child_d++){
 				if(child_doc_fields[child_d].fieldname == key){
 					if(!current_fields_list.includes(key)){
-					console.log("item fields =========="+key);
+					//console.log("item fields =========="+key);
 					var child = cur_frm.add_child("fields_descriptions");
 					frappe.model.set_value(child.doctype, child.name, "label", child_doc_fields[child_d].label);
 					frappe.model.set_value(child.doctype, child.name, "field_label", "Item Field");
@@ -304,7 +487,7 @@ frappe.ui.form.on('Document Review Templates', {
 			for(var tax_d = 0; tax_d < child_taxes_fields.length; tax_d++){
 				 if(child_taxes_fields[tax_d].fieldname == key){
 					if(!current_fields_list.includes(key)){
-					console.log("tax fields =========="+key);
+					//console.log("tax fields =========="+key);
 					var child = cur_frm.add_child("fields_descriptions");
 					frappe.model.set_value(child.doctype, child.name, "label", child_taxes_fields[tax_d].label);
 					frappe.model.set_value(child.doctype, child.name, "field_label", "Tax Field");
@@ -325,22 +508,44 @@ frappe.ui.form.on('Document Review Templates', {
 	 d.fields_dict.select_all.input.onclick = function() {
 			
 			var ckb_status = $("input[data-fieldname='select_all']").prop('checked');
-			console.log("ckb_status============="+ckb_status);
+			//console.log("ckb_status============="+ckb_status);
 			if(ckb_status == true){
 				for(var doc_d =0; doc_d < doc_details.length; doc_d++){
 				 var dialog_fieldtype = (doc_details[doc_d].fieldtype || "");
 				  if (doc_details[doc_d].label != "" && doc_details[doc_d].label != undefined) {
                 if (dialog_fieldtype != "Column Break"  && dialog_fieldtype != "Section Break" && dialog_fieldtype != "Button" && dialog_fieldtype != "Code" && dialog_fieldtype != "Table"  && dialog_fieldtype != "Text") {
 				   var fieldname = doc_details[doc_d].fieldname;
-				   $("input[data-fieldname = "+fieldname+"]").prop('checked', true);
+				   if(fieldname == "delivery_date"){
+				  	 $("input[data-fieldname = parent_delivery_date]").prop('checked', true);
+				   }
+				   else if(fieldname == "schedule_date"){
+					$("input[data-fieldname = parent_schedule_date]").prop('checked', true);
+				   }
+				  else{
+					 $("input[data-fieldname = "+fieldname+"]").prop('checked', true);
+				}
 				}
 			}
 		}
 		for(var child_d = 0; child_d < child_doc_fields.length; child_d++){
-		  $("input[data-fieldname = "+child_doc_fields[child_d].fieldname+"]").prop('checked', true);
+			if (child_doc_fields[child_d].fieldname == "delivery_date"){
+				$("input[data-fieldname = item_delivery_date]").prop('checked', true);
+			}else if (child_doc_fields[child_d].fieldname == "schedule_date"){
+				$("input[data-fieldname = item_schedule_date]").prop('checked', true);
+			}else if (child_doc_fields[child_d].fieldname == "rate"){
+				$("input[data-fieldname = item_rate]").prop('checked', true);
+			}
+			else{
+		  		$("input[data-fieldname = "+child_doc_fields[child_d].fieldname+"]").prop('checked', true);
+			}
 		}
 		for(var tax_d = 0; tax_d < child_taxes_fields.length; tax_d++){
 			$("input[data-fieldname = "+child_taxes_fields[tax_d].fieldname+"]").prop('checked', true);
+			if (child_taxes_fields[tax_d].fieldname == "rate"){
+				$("input[data-fieldname = tax_rate]").prop('checked', true);
+			}else{
+		  		$("input[data-fieldname = "+child_taxes_fields[tax_d].fieldname+"]").prop('checked', true);
+			}
 		}
 		}else if(ckb_status == false){
 			for(var doc_d =0; doc_d < doc_details.length; doc_d++){
@@ -348,14 +553,35 @@ frappe.ui.form.on('Document Review Templates', {
 				  if (doc_details[doc_d].label != "" && doc_details[doc_d].label != undefined) {
                 if (dialog_fieldtype != "Column Break"  && dialog_fieldtype != "Section Break" && dialog_fieldtype != "Button" && dialog_fieldtype != "Code" && dialog_fieldtype != "Table"  && dialog_fieldtype != "Text") {
 				   var fieldname = doc_details[doc_d].fieldname;
-				   $("input[data-fieldname = "+fieldname+"]").prop('checked', false);
+				  if(fieldname == "delivery_date"){
+				  	 $("input[data-fieldname = parent_delivery_date]").prop('checked', false);
+				   }
+				   else if(fieldname == "schedule_date"){
+					$("input[data-fieldname = parent_schedule_date]").prop('checked', false);
+				   }
+				  else{
+					 $("input[data-fieldname = "+fieldname+"]").prop('checked', false);
+				}
 				}
 			}
 		}for(var child_d = 0; child_d < child_doc_fields.length; child_d++){
-		  $("input[data-fieldname = "+child_doc_fields[child_d].fieldname+"]").prop('checked', false);
+		  if (child_doc_fields[child_d].fieldname == "delivery_date"){
+				$("input[data-fieldname = item_delivery_date]").prop('checked', false);
+			}else if (child_doc_fields[child_d].fieldname == "schedule_date"){
+				$("input[data-fieldname = item_schedule_date]").prop('checked', false);
+			}else if (child_doc_fields[child_d].fieldname == "rate"){
+				$("input[data-fieldname = item_rate]").prop('checked', false);
+			}
+			else{
+		  		$("input[data-fieldname = "+child_doc_fields[child_d].fieldname+"]").prop('checked', false);
+			}
 		}
 		for(var tax_d = 0; tax_d < child_taxes_fields.length; tax_d++){
-			$("input[data-fieldname = "+child_taxes_fields[tax_d].fieldname+"]").prop('checked', false);
+			if (child_taxes_fields[tax_d].fieldname == "rate"){
+				$("input[data-fieldname = tax_rate]").prop('checked', false);
+			}else{
+		  		$("input[data-fieldname = "+child_taxes_fields[tax_d].fieldname+"]").prop('checked', false);
+			}
 		}
 		}
 		
@@ -371,7 +597,7 @@ frappe.ui.form.on('Document Review Templates', {
 });
 function function_doc_details(doctype) {
     var supplier_criticality = "";
-    console.log("doc type----------" + doctype);
+    //console.log("doc type----------" + doctype);
 
     frappe.call({
         method: 'nhance.nhance.doctype.document_review_templates.document_review_templates.get_doc_details',
@@ -390,7 +616,7 @@ function function_doc_details(doctype) {
 
 function get_doc_items_details(doctype) {
     var supplier_criticality = "";
-    console.log("doc type----------" + doctype);
+    //console.log("doc type----------" + doctype);
 
     frappe.call({
         method: 'nhance.nhance.doctype.document_review_templates.document_review_templates.get_doc_details_itmes',
