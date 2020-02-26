@@ -502,19 +502,22 @@ frappe.ui.form.on("Purchase Receipt", {
             var HasRevisionNumber = null;
             HasRevisionNumber = fetch_has_revision_number(batch_no);
             console.log("HasRevisionNumber", HasRevisionNumber);
-            if (HasRevisionNumber != null) {
-                items[i]['revision_number'] = HasRevisionNumber;
+            console.log("HasRevisionNumber", HasRevisionNumber);
+            if (HasSerialNumber == 1  ){
+                console.log("entered in if");
+		cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
+		}
+	    else if ((HasRevisionNumber == null ||HasRevisionNumber == undefined ||HasRevisionNumber == "")&&HasBatchNumber==1){
+                                 console.log("entered in if in if");   
+               cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
+             }
+ 	    else if((HasRevisionNumber != null ||HasRevisionNumber != undefined ||HasRevisionNumber != "")&& HasBatchNumber == 1 ){
+             items[i]['revision_number'] = HasRevisionNumber;
 
                 var df = frappe.meta.get_docfield("Purchase Receipt Item", "revision_number", cur_frm.doc.name);
                 df.read_only = 1;
-            } else if (HasSerialNumber == 1 || (HasBatchNumber == 1 && HasRevisionNumber == null)) {
-                console.log("entered in else");
 
-                cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", HasSerialNumber == 1 || (HasBatchNumber == 1 && HasRevisionNumber == null))
-
-
-
-            }
+}
 
         }
 
