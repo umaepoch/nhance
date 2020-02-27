@@ -91,7 +91,7 @@ if(is_return!=1){
 
                             console.log("Serial No", array)
                         }
-
+			owner[i]['serial_no'] = "";
                         owner[i]['serial_no'] = owner[i]['serial_no'].concat(array);
 
 
@@ -118,7 +118,7 @@ else {
 
                             console.log("Serial No", array)
                         }
-
+			owner[i]['serial_no'] = "";
                         owner[i]['serial_no'] = owner[i]['serial_no'].concat(array);
 
                     } else if (isNaN(nor)) {
@@ -131,6 +131,7 @@ else {
                             console.log(owner[i]['item_code'].concat("-").concat(child_pch_supplier_workorder).concat("-").concat(pad(num)));
 
                         }
+			owner[i]['serial_no'] = "";
                         owner[i]['serial_no'] = owner[i]['serial_no'].concat(array);
 
                     } else {
@@ -144,6 +145,7 @@ else {
 
                         }
                         console.log("calling set value");
+			owner[i]['serial_no'] = "";
                         owner[i]['serial_no'] = owner[i]['serial_no'].concat(array);
                         //frappe.model.set_value("Purchase Receipt Item",child_item_code,"serial_no",array);
                     }
