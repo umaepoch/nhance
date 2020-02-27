@@ -21,11 +21,10 @@ def execute(filters=None):
 	columns = []
 	sum_data = []
 	purchase_document_type = ""
-        purchase_document_no=""
-        doctype=""
+	purchase_document_no=""
+	doctype=""
 	document_no=""
-	
-        doctype = filters.get("document_type")
+	doctype = filters.get("document_type")
 	document_no = filters.get("document_no_value")
 	#print "doctype=============",doctype
 	#print "stock_entry=============",document_no
@@ -41,16 +40,12 @@ def execute(filters=None):
 		item_name = serial_data['item_name'],
 		item_code = serial_data['item_code'],
 		serial_no=serial_data['serial_no'],
-                qr_code=serial_data['serial_no']
+		qr_code=serial_data['serial_no']
 		sum_data.append([ serial_data['item_name'] ,serial_data['item_code'],serial_data['serial_no'],serial_data['serial_no']
-					
-                        ])
-			 					     					    	
-	
-			 					     					    	
 			
+			])
+			 		
 	return columns, sum_data
-
 def fetching_details(doctype,document_no):
 	serial_data = frappe.db.sql("""select item_name,item_code,serial_no
 			from 
