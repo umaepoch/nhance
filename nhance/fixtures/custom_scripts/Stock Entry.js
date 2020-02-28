@@ -1,3 +1,338 @@
+/RARB Location (Source Warehouse) and RARB Location (Target Warehouse) start from here.....
+ 
+frappe.ui.form.on("Stock Entry", "refresh", function(frm ,cdt , cdn){
+	frappe.ui.form.on("Stock Entry Detail", {
+		t_warehouse : function(frm, cdt , cdn){
+			cur_frm.refresh_field("items")
+			var d = locals[cdt][cdn];
+			var s_warehouse = d.s_warehouse;
+			var t_warehouse = d.t_warehouse;
+			
+			////console.log("t_warehouse----------------"+t_warehouse);
+			////console.log("s_warehouse----------------"+s_warehouse);
+			if(t_warehouse != undefined){
+				var rarb_warehouse = get_rarb_warehouse(t_warehouse);
+				//console.log("target is not undefined");
+				//console.log("rarb_warehouse------------"+rarb_warehouse);
+				if(t_warehouse == rarb_warehouse){
+					//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_trg", true);
+					// cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", true)
+					 var rarb_warehouse_list = [];
+					 cur_frm.set_query("pch_rarb_location_trg", "items", function(frm, cdt, cdn) {
+						var d = locals[cdt][cdn];
+						var t_warehouse = d.t_warehouse;
+						 rarb_warehouse_list = get_rarb_warehouse_item_name(t_warehouse);
+						//console.log("rarb_warehouse-------trg--------"+rarb_warehouse_list);
+						 return {
+							    "filters": [
+								["RARB ID", "name", "in", rarb_warehouse_list],
+
+							]
+							}
+						cur_frm.refresh_field("items");
+						cur_frm.refresh_field("pch_rarb_location_trg");
+					});
+					// rarb_warehouse = get_rarb_warehouse_item_name(t_warehouse);
+					//frappe.meta.get_docfield("Stock Entry Detail", "pch_rarb_location_trg", frm.docname).options = rarb_warehouse;
+				}else{
+					//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_trg", false);
+					 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", false)
+					
+				}
+			}else{
+				//console.log("targer is undifined---------");
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_trg", false);
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", false)
+			}
+			if(s_warehouse == undefined){
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", false);
+			 	cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", false);
+			}
+			
+			
+		},
+		s_warehouse : function(frm, cdt , cdn){
+			var d = locals[cdt][cdn];
+			var s_warehouse = d.s_warehouse;
+			var t_warehouse = d.t_warehouse;
+			//console.log("t_warehouse----------------"+t_warehouse);
+			//console.log("s_warehouse----------------"+s_warehouse);
+			if(s_warehouse != undefined){
+				//console.log("target is not undefined");
+				var rarb_warehouse = get_rarb_warehouse(s_warehouse);
+				//console.log("rarb_warehouse------------"+rarb_warehouse);
+				//console.log("target is not undefined");
+				if(s_warehouse == rarb_warehouse){
+					//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", true);
+					 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", true);
+					var rarb_warehouse_list = [];
+					//console.log("true");
+					 cur_frm.set_query("pch_rarb_location_src", "items", function(frm, cdt, cdn) {
+						var d = locals[cdt][cdn];
+						var s_warehouse = d.s_warehouse;
+						 rarb_warehouse_list = get_rarb_warehouse_item_name(s_warehouse);
+						
+						//console.log("rarb_warehouse--------src-------"+JSON.stringify(rarb_warehouse_list));
+						
+						 return {
+							    "filters": [
+								["RARB ID", "name", "in", rarb_warehouse_list]
+							    ]
+							}
+						refresh_field("pch_rarb_location_src");
+						refresh_field("items");
+					});
+					//rarb_warehouse = get_rarb_warehouse_item_name(t_warehouse);
+					//frappe.meta.get_docfield("Stock Entry Detail", "pch_rarb_location_src1", frm.docname).options = rarb_warehouse;
+					
+				}else{
+					//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", false);
+			 		cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", false);
+				}
+		
+			}else{
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", false);
+			 	cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", false);
+			}
+			if(t_warehouse == undefined){
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_trg", false);
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", false)
+			}
+			
+			
+			
+		},
+		pch_rarb_location_src : function(frm){
+			var rarb_warehouse_list = []
+			 cur_frm.set_query("pch_rarb_location_src", "items", function(frm, cdt, cdn) {
+				var d = locals[cdt][cdn];
+				var s_warehouse = d.s_warehouse;
+				 rarb_warehouse_list = get_rarb_warehouse_item_name(s_warehouse);
+				//console.log("rarb_warehouse_list------src---------"+rarb_warehouse_list);
+				 return {
+					    "filters": [
+						["RARB ID", "name", "in", rarb_warehouse_list]
+					    ]
+					}
+			});
+		},
+		pch_rarb_location_trg : function(frm){
+			var rarb_warehouse_list = []
+			 cur_frm.set_query("pch_rarb_location_trg", "items", function(frm, cdt, cdn) {
+				var d = locals[cdt][cdn];
+				var t_warehouse = d.t_warehouse;
+				 rarb_warehouse_list = get_rarb_warehouse_item_name(t_warehouse);
+				//console.log("rarb_warehouse----trg-----------"+rarb_warehouse_list);
+				 return {
+					    "filters": [
+						["RARB ID", "name", "in", rarb_warehouse_list]
+					    ]
+					}
+			});
+		}
+		
+	});
+	
+})
+frappe.ui.form.on("Stock Entry","before_save", function(frm,cdt,cdn){
+	
+	 $.each(frm.doc.items, function(i, d) {
+		var item_code = d.item_code;
+		var warehouse = d.s_warehouse;
+		//console.log("on save warehosue------------"+warehouse);
+		var pch_rarb_location_src = d.pch_rarb_location_src;
+		if(pch_rarb_location_src != undefined){
+		var get_items_details = get_rarb_items_detail(warehouse,pch_rarb_location_src);
+		//console.log("get_items_details------------"+get_items_details);
+		if(get_items_details != undefined){
+			if(get_items_details != item_code){
+				frappe.msgprint('"'+pch_rarb_location_src+'"'+" This RARB Location(Source Warehouse) is reserved for specific item "+'"'+get_items_details+'"');
+				frappe.validated = false;
+			}
+		}}
+		
+	})
+})
+frappe.ui.form.on("Stock Entry","before_save", function(frm,cdt,cdn){
+	
+	 $.each(frm.doc.items, function(i, d) {
+		var item_code = d.item_code;
+		var warehouse = d.t_warehouse;
+		//console.log("on save warehosue------------"+warehouse);
+		var pch_rarb_location_src = d.pch_rarb_location_trg;
+		if(pch_rarb_location_src != undefined){
+		var get_items_details = get_rarb_items_detail(warehouse,pch_rarb_location_src);
+		//console.log("get_items_details------------"+get_items_details);
+		if(get_items_details != undefined){
+			if(get_items_details != item_code){
+				frappe.msgprint('"'+pch_rarb_location_src+'"'+" This RARB Location (Target Warehouse) is reserved for specific item "+'"'+get_items_details+'"');
+				frappe.validated = false;
+			}
+		}}
+		
+	})
+})
+frappe.ui.form.on("Stock Entry","before_submit", function(frm,cdt,cdn){
+	//console.log("hello stock entry saved");
+ 	$.each(frm.doc.items, function(i, item) {
+		if(item.s_warhouse != undefined){
+			var rarb_warehouse = get_rarb_warehouse(item.s_warhouse);
+			if(item.s_warehouse == rarb_warehouse){
+				//console.log("source warehouse matched");
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", true);
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", true);
+			}
+			else{
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", false);
+			}
+		}
+		else{
+			 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", false);
+		}
+		if(item.t_warehouse != undefined){
+			var rarb_warehouse = get_rarb_warehouse(item.t_warehouse);
+			if(item.t_warehouse == rarb_warehouse){
+				//console.log("targer warehouuse matched");
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", true);
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", true);
+			}
+			else{
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", false);
+			}
+		}
+		else{
+			 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", false);
+		}
+		
+	})
+
+})
+frappe.ui.form.on("Stock Entry","onload", function(frm,cdt,cdn){
+	//console.log("hello stock entry saved");
+ 	$.each(frm.doc.items, function(i, item) {
+		if(item.s_warehouse != undefined){
+			//console.log("s warehosue ------------"+item.s_warehouse);
+			var rarb_warehouse = get_rarb_warehouse(item.s_warehouse);
+			if(item.s_warehouse == rarb_warehouse){
+				//console.log("source warehouse matched");
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", true);
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", true);
+				cur_frm.set_query("pch_rarb_location_src", "items", function(frm, cdt, cdn) {
+					var d = locals[cdt][cdn];
+					var s_warehouse = d.s_warehouse;
+					var rarb_warehouse_list = get_rarb_warehouse_item_name(s_warehouse);
+					//console.log("rarb_warehouse_list------src---------"+rarb_warehouse_list);
+					 return {
+						    "filters": [
+							["RARB ID", "name", "in", rarb_warehouse_list]
+						    ]
+						}
+					refresh_field("items");
+					refresh_field("pch_rarb_location_src");
+				});
+			}
+			else{
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", false);
+			}
+		}
+		else{
+			 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_src", false);
+		}
+		if(item.t_warehouse != undefined){
+			var rarb_warehouse = get_rarb_warehouse(item.t_warehouse);
+			if(item.t_warehouse == rarb_warehouse){
+				//console.log("targer warehouuse matched");
+				//cur_frm.fields_dict.items.grid.toggle_display("pch_rarb_location_src", true);
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", true);
+				cur_frm.set_query("pch_rarb_location_trg", "items", function(frm, cdt, cdn) {
+					var d = locals[cdt][cdn];
+					var s_warehouse = d.s_warehouse;
+					var rarb_warehouse_list = get_rarb_warehouse_item_name(s_warehouse);
+					//console.log("rarb_warehouse_list------src---------"+rarb_warehouse_list);
+					 return {
+						    "filters": [
+							["RARB ID", "name", "in", rarb_warehouse_list]
+						    ]
+						}
+					refresh_field("items");
+					refresh_field("pch_rarb_location_trg");
+				});
+			}
+			else{
+				 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", false);
+			}
+		}
+		else{
+			 cur_frm.fields_dict.items.grid.toggle_reqd("pch_rarb_location_trg", false);
+		}
+		
+	})
+
+})
+
+function get_rarb_warehouse(warehouse){
+	var supplier_criticality = "";
+	frappe.call({
+		method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.get_rarb_warehouse',
+		args: {
+		   "warehouse":warehouse
+		},
+		async: false,
+		callback: function(r) {
+		    //console.log("supplier criticality..." + JSON.stringify(r.message));
+		   supplier_criticality = r.message[0].warehouse;
+		   //console.log("warehnouse=============="+supplier_criticality);
+		}
+    });
+    return supplier_criticality;
+}
+function get_rarb_warehouse_item_name(warehouse){
+	var supplier_criticality = [];
+	frappe.call({
+		method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.get_rarb_warehouse_item_name',
+		args: {
+		   "warehouse":warehouse
+		},
+		async: false,
+		callback: function(r) {
+		    //console.log("supplier criticality..." + JSON.stringify(r.message));
+			 for (var i = 0; i < r.message.length; i++) {
+				    supplier_criticality.push(r.message[i].rarb_id);
+				    
+				}
+			//console.log("supplier_criticality---11111----" + supplier_criticality);
+		}
+    });
+    return supplier_criticality;
+}
+function get_rarb_items_detail(warehouse,pch_rarb_location_src){
+	var supplier_criticality = ""
+	frappe.call({
+		method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.get_rarb_items_detail',
+		args: {
+		   "warehouse":warehouse,
+		   "pch_rarb_location_src":pch_rarb_location_src
+		},
+		async: false,
+		callback: function(r) {
+		    //console.log("supplier criticality..." + JSON.stringify(r.message));
+			 for (var i = 0; i < r.message.length; i++) {
+				    supplier_criticality = r.message[i].rarb_item;
+				    
+				}
+			//console.log("supplier_criticality---11111----" + supplier_criticality);
+		}
+    });
+    return supplier_criticality
+}
+
+
+
+
+
+
+//rarb location end here
+
 //make pick list button and child table of pick list********************************************************
 
 frappe.ui.form.on("Stock Entry", {
@@ -30,18 +365,18 @@ frappe.ui.form.on("Stock Entry", {
             var stock_uom = d.stock_uom;
             var rarb_location = d.pch_rarb_location_src;
             var s_warehouse = d.s_warehouse;
-            //console.log("rarb_location--------------" + rarb_location);
+            ////console.log("rarb_location--------------" + rarb_location);
 	    var rarb_warehouse_doc =  get_rarb_warehouses(s_warehouse);
             var parent = cur_frm.doc.name;
 	    if (rarb_warehouse_doc.length != 0){
 		    if (rarb_location != undefined) {
 		        var item_qty_available = get_qty_available(item_code, s_warehouse);
-		        //console.log("item_qty_available--------------" + JSON.stringify(item_qty_available));
+		        ////console.log("item_qty_available--------------" + JSON.stringify(item_qty_available));
 		        var available_qty = 0.0;
 		        if (item_qty_available.length != 0) {
 		            available_qty = item_qty_available[0].actual_qty;
 		        }
-		       // console.log("available_qty--------------" + available_qty);
+		       // //console.log("available_qty--------------" + available_qty);
 		        if (d.transfer_qty <= available_qty) {
 		            var child = cur_frm.add_child("pch_pick_list");
 		            frappe.model.set_value(child.doctype, child.name, "item", item_code);
@@ -50,7 +385,7 @@ frappe.ui.form.on("Stock Entry", {
 		            frappe.model.set_value(child.doctype, child.name, "rarb_location", rarb_location);
 		            frappe.model.set_value(child.doctype, child.name, "warehouse", s_warehouse);
 		            var get_batch = get_batch_name(item_code);
-		         //   console.log("get batch --------------" + get_batch);
+		         //   //console.log("get batch --------------" + get_batch);
 		            var get_name = "";
 		            if (get_batch.length != 0) {
 		                get_name = get_batch[0].name;
@@ -63,7 +398,7 @@ frappe.ui.form.on("Stock Entry", {
 		                    serial_no_list = serial_no_list.concat((serial_no[i].name).concat("\n"));
 		                    //serial_no_list.push("\n");
 
-		                   // console.log("serial no---------------" + serial_no_list);
+		                   // //console.log("serial no---------------" + serial_no_list);
 
 
 		                }
@@ -71,7 +406,7 @@ frappe.ui.form.on("Stock Entry", {
 		                	var comma = /,/;
 		                	 serial_no_list[i] = serial_no_list[i].replace(comma, '\n');
 		                	}*/
-		                //console.log("serial_no_list---------2------------" + serial_no_list);
+		                ////console.log("serial_no_list---------2------------" + serial_no_list);
 		                frappe.model.set_value(child.doctype, child.name, "serial_numbers", serial_no_list.toString());
 				 frappe.model.set_value(child.doctype, child.name, "picked_qty", serial_no.length);
 		            }
@@ -96,8 +431,8 @@ frappe.ui.form.on("Stock Entry", {
             $.each(frm.doc.pch_pick_list, function(i, d) {
                 var item = d.item;
                 var name = get_name(stock, item);
-                //console.log("name -------------" + JSON.stringify(name));
-                //console.log("second name------------" + name[0].name);
+                ////console.log("name -------------" + JSON.stringify(name));
+                ////console.log("second name------------" + name[0].name);
                 d.id = name[0].name;
             })
         }
@@ -137,7 +472,7 @@ function get_batch_name(item_code) {
         callback: function(r) {
             if (r.message) {
                 batch_name = r.message;
-               // console.log("bach name-------------------" + JSON.stringify(batch_name));
+               // //console.log("bach name-------------------" + JSON.stringify(batch_name));
             }
 
         }
@@ -158,7 +493,7 @@ function get_qty_available(item_code, warehouse) {
         callback: function(r) {
             if (r.message) {
                 item_available_qty = r.message;
-                //console.log("bach name-------------------"+JSON.stringify(batch_name));
+                ////console.log("bach name-------------------"+JSON.stringify(batch_name));
             }
 
         }
@@ -182,7 +517,7 @@ function get_serial_no(s_warehouse, batch, item_code, qty) {
         callback: function(r) {
             if (r.message) {
                 serial_no = r.message;
-                //console.log("bach name-------------------"+JSON.stringify(batch_name));
+                ////console.log("bach name-------------------"+JSON.stringify(batch_name));
             }
 
         }
@@ -199,9 +534,9 @@ function get_rarb_warehouses(warehouse){
 		async: false,
 		callback: function(r) {
 		   if(r.message != undefined){
-			    //console.log("supplier criticality..." + JSON.stringify(r.message));
+			    ////console.log("supplier criticality..." + JSON.stringify(r.message));
 			   supplier_criticality = r.message[0].warehouse;
-			  // console.log("warehnouse=============="+supplier_criticality);
+			  // //console.log("warehnouse=============="+supplier_criticality);
 			}
 		}
     });
@@ -214,42 +549,42 @@ function get_rarb_warehouses(warehouse){
 frappe.ui.form.on("Stock Entry", {
     refresh: function(frm) {
         var items = frm.doc.items;
-        console.log("items....." + JSON.stringify(items));
+        //console.log("items....." + JSON.stringify(items));
         var purchase_document_no = frm.doc.name;
-        console.log("purchase_document_no", purchase_document_no);
+        //console.log("purchase_document_no", purchase_document_no);
 	var purpose = frm.doc.purpose;
-        console.log("purpose...." + purpose);
+        //console.log("purpose...." + purpose);
         for (var i = 0; i < items.length; i++) {
             var item_code = items[i]['item_code'];
-            console.log("item_code", item_code);
+            //console.log("item_code", item_code);
 	    var batch_no = items[i]['batch_no'];
-            console.log("batch_no", batch_no);
+            //console.log("batch_no", batch_no);
 	    var target_warehouse = items[i]['t_warehouse'];
-            console.log("target_warehouse.." + target_warehouse);
+            //console.log("target_warehouse.." + target_warehouse);
             var serial_no = items[i]['serial_no'];
-            console.log("serial_no", serial_no);
+            //console.log("serial_no", serial_no);
             var HasSerialNumber = null;
             HasSerialNumber = fetch_item_has_serial_no(item_code);
-            console.log("HasSerialNumber", HasSerialNumber);
+            //console.log("HasSerialNumber", HasSerialNumber);
             var HasBatchNumber = null;
             HasBatchNumber = fetch_has_batch_no(item_code);
-            console.log("HasBatchNumber", HasBatchNumber);
+            //console.log("HasBatchNumber", HasBatchNumber);
 	    var HasRevisionNumberBatch = null;
             HasRevisionNumberBatch = fetch_has_revision_number(batch_no);
-            console.log("HasRevisionNumberBatch", HasRevisionNumberBatch);
+            //console.log("HasRevisionNumberBatch", HasRevisionNumberBatch);
            var HasRevisionNumberSerial = null;
             HasRevisionNumberSerial = fetch_has_revision_number_serial(serial_no) ;
-            console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
+            //console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
 
       if(purpose=="Material Issue" || purpose=="Material Transfer"){
-           console.log(".....................");
+           //console.log(".....................");
              if (HasRevisionNumberBatch != null && HasBatchNumber == 1) {
                 items[i]['revision_number'] = HasRevisionNumberBatch;
 
                 var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
                 df.read_only = 1;
             } else if ((HasRevisionNumberSerial != null ||HasRevisionNumberSerial=="" ||HasRevisionNumberSerial==undefined)&& HasSerialNumber == 1 ) {
-                console.log("entered in else");
+                //console.log("entered in else");
 
                 items[i]['revision_number'] = HasRevisionNumberSerial;
 
@@ -263,7 +598,7 @@ frappe.ui.form.on("Stock Entry", {
 }else if(purpose=="Manufacture"){
 
             if (HasSerialNumber == 1 || HasBatchNumber == 1 ) {
-                console.log("entered in manufacture");
+                //console.log("entered in manufacture");
 	    cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true);
               //  cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", items[i]['t_warehouse'] != undefined &&(HasSerialNumber == 1 || HasBatchNumber == 1))
 
@@ -277,7 +612,7 @@ frappe.ui.form.on("Stock Entry", {
 });
 
 function fetch_item_has_serial_no(item_code) {
-    console.log("entered into function");
+    //console.log("entered into function");
     var has_serial_no = "";
     frappe.call({
         method: 'frappe.client.get_value',
@@ -293,8 +628,8 @@ function fetch_item_has_serial_no(item_code) {
         callback: function(r) {
             if (r.message) {
                 has_serial_no = r.message.has_serial_no;
-                console.log(has_serial_no);
-                console.log("readings-----------" + JSON.stringify(r.message));
+                //console.log(has_serial_no);
+                //console.log("readings-----------" + JSON.stringify(r.message));
 
             }
         }
@@ -304,7 +639,7 @@ function fetch_item_has_serial_no(item_code) {
 
 
 function fetch_has_batch_no(item_code) {
-    console.log("entered into has_batch_no function");
+    //console.log("entered into has_batch_no function");
     var has_batch_no = "";
     frappe.call({
         method: 'frappe.client.get_value',
@@ -320,8 +655,8 @@ function fetch_has_batch_no(item_code) {
         callback: function(r) {
             if (r.message) {
                 has_batch_no = r.message.has_batch_no;
-                console.log(has_batch_no);
-                console.log("readings-----------" + JSON.stringify(r.message));
+                //console.log(has_batch_no);
+                //console.log("readings-----------" + JSON.stringify(r.message));
 
             }
         }
@@ -330,7 +665,7 @@ function fetch_has_batch_no(item_code) {
 }
 
 function fetch_has_revision_number(batch_no) {
-    console.log("entered into fetch_has_revision_number function");
+    //console.log("entered into fetch_has_revision_number function");
     var has_revision_number = "";
     frappe.call({
         method: 'frappe.client.get_value',
@@ -346,8 +681,8 @@ function fetch_has_revision_number(batch_no) {
         callback: function(r) {
             if (r.message) {
                 has_revision_number = r.message.revision_number;
-                console.log(has_revision_number);
-                console.log("readings-----------" + JSON.stringify(r.message));
+                //console.log(has_revision_number);
+                //console.log("readings-----------" + JSON.stringify(r.message));
 
             }
         }
@@ -356,7 +691,7 @@ function fetch_has_revision_number(batch_no) {
 }
 
 function fetch_has_revision_number_serial(serial_no) {
-    console.log("entered into fetch_has_revision_number_serial function");
+    //console.log("entered into fetch_has_revision_number_serial function");
     var has_revision_number_serial = "";
     frappe.call({
            method: 'frappe.client.get_value',
@@ -372,8 +707,8 @@ function fetch_has_revision_number_serial(serial_no) {
         callback: function(r) {
             if (r.message) {
                 has_revision_number_serial = r.message.revision_number;
-                console.log(has_revision_number_serial);
-                console.log("readings-----------" + JSON.stringify(r.message));
+                //console.log(has_revision_number_serial);
+                //console.log("readings-----------" + JSON.stringify(r.message));
 
             }
         }
@@ -384,36 +719,36 @@ function fetch_has_revision_number_serial(serial_no) {
 //Serial_no
 frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
     var d = locals[cdt][cdn];
-    console.log("Entered------" + d);
-    //console.log(".........."+JSON.stringify(d));
+    //console.log("Entered------" + d);
+    ////console.log(".........."+JSON.stringify(d));
     var work_order = frm.doc.work_order;
-    console.log("work_order...." + work_order);
+    //console.log("work_order...." + work_order);
     var docstatus = frm.doc.docstatus;
-    console.log("docstatus...." + docstatus);
+    //console.log("docstatus...." + docstatus);
     var purpose = frm.doc.purpose;
-    console.log("purpose...." + purpose);
+    //console.log("purpose...." + purpose);
     var items = frm.doc.items;
-    // console.log("items....."+JSON.stringify(items));
+    // //console.log("items....."+JSON.stringify(items));
     for (var i = 0; i < items.length; i++) {
         var item_code = items[i]['item_code'];
         var source_warehouse = items[i]['s_warehouse'];
-        console.log("source_warehouse.." + source_warehouse);
+        //console.log("source_warehouse.." + source_warehouse);
         var target_warehouse = items[i]['t_warehouse'];
-        console.log("target_warehouse.." + target_warehouse);
+        //console.log("target_warehouse.." + target_warehouse);
         var serial_no = items[i]['serial_no'];
-        console.log("serial_no.." + serial_no);
+        //console.log("serial_no.." + serial_no);
         var child_received_qty = items[i]['qty'];
-        console.log("child_received_qty", child_received_qty);
+        //console.log("child_received_qty", child_received_qty);
         var Hs = null;
         Hs = fetch_has_serial_no(item_code);
-        console.log("Hs", Hs);
+        //console.log("Hs", Hs);
         var work_order_update = work_order.concat("-");
-        console.log("work_order_update..", work_order_update);
+        //console.log("work_order_update..", work_order_update);
         var duplicate_serial = item_code.concat("-").concat(work_order).concat("-");
-        console.log("duplicate_serial---------", duplicate_serial);
+        //console.log("duplicate_serial---------", duplicate_serial);
 
         var duplicate_serial_no = fetch_duplicate_serial_no(duplicate_serial);
-        console.log("duplicate_serial_no", duplicate_serial_no);
+        //console.log("duplicate_serial_no", duplicate_serial_no);
         var array = "";
         var num = 1;
 
@@ -426,35 +761,35 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
         if (target_warehouse != undefined && Hs == 1 && docstatus != 1 && purpose == "Manufacture") {
 
 
-            console.log("entered in if");
+            //console.log("entered in if");
 
             var test = duplicate_serial_no[0].serial_no;
-            console.log("nor", test);
+            //console.log("nor", test);
 
 
             if (duplicate_serial_no[0].serial_no == null) {
-                console.log("test is null");
+                //console.log("test is null");
 
                
                 for (var num = 1; num <= child_received_qty; num += 1) { //appending loop start
-                    console.log("num", num);
+                    //console.log("num", num);
                     array = array.concat(item_code).concat("-").concat(work_order).concat("-").concat(pad(num)).concat("\n");
 
-                    console.log("Serial No", array);
+                    //console.log("Serial No", array);
                 }
 		 items[i]['serial_no'] = "";
                 items[i]['serial_no'] = items[i]['serial_no'].concat(array);
 
             } else {
-                console.log("entered in if in else");
+                //console.log("entered in if in else");
                 var test = duplicate_serial_no[0].serial_no;
-                console.log("nor", test);
+                //console.log("nor", test);
                 var test1 = test.split('-');
-                console.log(">>>>>>>", test1);
-                console.log(test1.length - 1);
+                //console.log(">>>>>>>", test1);
+                //console.log(test1.length - 1);
                 var nor = test1[2];
                 var nor = test1[test1.length - 1];
-                console.log("...........", nor);
+                //console.log("...........", nor);
 
 
                 
@@ -476,13 +811,13 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
 
         } else {
 
-            console.log("entered in else");
+            //console.log("entered in else");
         }
     }
 });
 
 function fetch_has_serial_no(arg2) {
-    console.log("entered into function");
+    //console.log("entered into function");
     var has_serial_no = "";
     frappe.call({
         method: 'frappe.client.get_value',
@@ -498,8 +833,8 @@ function fetch_has_serial_no(arg2) {
         callback: function(r) {
             if (r.message) {
                 has_serial_no = r.message.has_serial_no;
-                console.log(has_serial_no);
-                console.log("readings-----------" + JSON.stringify(r.message));
+                //console.log(has_serial_no);
+                //console.log("readings-----------" + JSON.stringify(r.message));
 
             }
         }
@@ -508,8 +843,8 @@ function fetch_has_serial_no(arg2) {
 }
 
 function fetch_duplicate_serial_no(duplicate_serial) {
-    console.log("entered into 2nd function");
-    console.log("duplicate_serial", duplicate_serial);
+    //console.log("entered into 2nd function");
+    //console.log("duplicate_serial", duplicate_serial);
     var duplicate_serial_no_list = "";
     frappe.call({
         method: "nhance.api.get_serial_number_details",
@@ -520,13 +855,13 @@ function fetch_duplicate_serial_no(duplicate_serial) {
         callback: function(r) {
             if (r.message) {
                 duplicate_serial_no_list = r.message;
-                console.log("checking--------------" + duplicate_serial_no_list);
-                console.log("readings-----------" + JSON.stringify(r.message));
+                //console.log("checking--------------" + duplicate_serial_no_list);
+                //console.log("readings-----------" + JSON.stringify(r.message));
 
             }
         }
     });
-    console.log("duplicate_serial_no_list", duplicate_serial_no_list);
+    //console.log("duplicate_serial_no_list", duplicate_serial_no_list);
     return duplicate_serial_no_list
 }
 
