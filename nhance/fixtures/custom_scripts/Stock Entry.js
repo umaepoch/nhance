@@ -546,70 +546,111 @@ function get_rarb_warehouses(warehouse){
 
 
 //revision number
-frappe.ui.form.on("Stock Entry", {
-    refresh: function(frm) {
-        var items = frm.doc.items;
-        //console.log("items....." + JSON.stringify(items));
+frappe.ui.form.on("Stock Entry", "refresh", function(frm ,cdt , cdn){
+
+       var items = frm.doc.items;
+        console.log("items....." + JSON.stringify(items));
         var purchase_document_no = frm.doc.name;
-        //console.log("purchase_document_no", purchase_document_no);
+        console.log("purchase_document_no", purchase_document_no);
 	var purpose = frm.doc.purpose;
-        //console.log("purpose...." + purpose);
-        for (var i = 0; i < items.length; i++) {
-            var item_code = items[i]['item_code'];
-            //console.log("item_code", item_code);
-	    var batch_no = items[i]['batch_no'];
-            //console.log("batch_no", batch_no);
-	    var target_warehouse = items[i]['t_warehouse'];
-            //console.log("target_warehouse.." + target_warehouse);
-            var serial_no = items[i]['serial_no'];
-            //console.log("serial_no", serial_no);
-            var HasSerialNumber = null;
+        console.log("purpose...." + purpose);
+	frappe.ui.form.on("Stock Entry Detail", {
+		
+		serial_no : function(frm, cdt , cdn){
+			console.log("-----------");
+			cur_frm.refresh_field("items")
+			var d = locals[cdt][cdn];
+			var item_code=d.item_code;
+			var s_warehouse = d.s_warehouse;
+			var t_warehouse = d.t_warehouse;
+			var serial_no=d.serial_no;
+                        var batch_no=d.batch_no;
+			var revision_no=d.revision_number;
+			console.log("serial_no----------------"+serial_no);
+			console.log("revision_no----------------"+revision_no);
+			if(purpose=="Material Issue" || purpose=="Material Transfer"){
+
+				 var HasSerialNumber = null;
             HasSerialNumber = fetch_item_has_serial_no(item_code);
-            //console.log("HasSerialNumber", HasSerialNumber);
+            console.log("HasSerialNumber", HasSerialNumber);
             var HasBatchNumber = null;
             HasBatchNumber = fetch_has_batch_no(item_code);
-            //console.log("HasBatchNumber", HasBatchNumber);
+            console.log("HasBatchNumber", HasBatchNumber);
 	    var HasRevisionNumberBatch = null;
             HasRevisionNumberBatch = fetch_has_revision_number(batch_no);
-            //console.log("HasRevisionNumberBatch", HasRevisionNumberBatch);
+            console.log("HasRevisionNumberBatch", HasRevisionNumberBatch);
            var HasRevisionNumberSerial = null;
             HasRevisionNumberSerial = fetch_has_revision_number_serial(serial_no) ;
-            //console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
+            console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
+		 if ((HasRevisionNumberSerial != null ||HasRevisionNumberSerial=="" ||HasRevisionNumberSerial==undefined)&& HasSerialNumber == 1 ) {
+                console.log("entered in else");
 
-      if(purpose=="Material Issue" || purpose=="Material Transfer"){
-           //console.log(".....................");
-             if (HasRevisionNumberBatch != null && HasBatchNumber == 1) {
-                items[i]['revision_number'] = HasRevisionNumberBatch;
+                d.revision_number = HasRevisionNumberSerial;
+	 	
+               
 
-                var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
+
+
+            }	
+var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
+		
                 df.read_only = 1;
-            } else if ((HasRevisionNumberSerial != null ||HasRevisionNumberSerial=="" ||HasRevisionNumberSerial==undefined)&& HasSerialNumber == 1 ) {
-                //console.log("entered in else");
+		cur_frm.refresh_field("items")	
 
-                items[i]['revision_number'] = HasRevisionNumberSerial;
+			}
+			
+			
+			
+		},
+              batch_no : function(frm, cdt , cdn){
+			console.log("-----------");
+			cur_frm.refresh_field("items")
+			var d = locals[cdt][cdn];
+			var item_code=d.item_code;
+			var s_warehouse = d.s_warehouse;
+			var t_warehouse = d.t_warehouse;
+			var serial_no=d.serial_no;
+                        var batch_no=d.batch_no;
+			var revision_no=d.revision_number;
+			console.log("serial_no----------------"+serial_no);
+			console.log("revision_no----------------"+revision_no);
+			if(purpose=="Material Issue" || purpose=="Material Transfer"){
 
-                var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
+				 var HasSerialNumber = null;
+            HasSerialNumber = fetch_item_has_serial_no(item_code);
+            console.log("HasSerialNumber", HasSerialNumber);
+            var HasBatchNumber = null;
+            HasBatchNumber = fetch_has_batch_no(item_code);
+            console.log("HasBatchNumber", HasBatchNumber);
+	    var HasRevisionNumberBatch = null;
+            HasRevisionNumberBatch = fetch_has_revision_number(batch_no);
+            console.log("HasRevisionNumberBatch", HasRevisionNumberBatch);
+           var HasRevisionNumberSerial = null;
+            HasRevisionNumberSerial = fetch_has_revision_number_serial(serial_no) ;
+            console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
+		 if ((HasRevisionNumberBatch != null || HasRevisionNumberBatch=="" || HasRevisionNumberBatch==undefined) && HasBatchNumber == 1) {
+                d.revision_number = HasRevisionNumberBatch;
+
+            } 
+var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
+		
                 df.read_only = 1;
+		cur_frm.refresh_field("items")	
 
+			}
+			
+			
+			
+		}
+		
+		
+		
+		
+	});
+     
+	
+})
 
-
-            }
-
-}else if(purpose=="Manufacture"){
-
-            if (HasSerialNumber == 1 || HasBatchNumber == 1 ) {
-                //console.log("entered in manufacture");
-	    cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true);
-              //  cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", items[i]['t_warehouse'] != undefined &&(HasSerialNumber == 1 || HasBatchNumber == 1))
-
-
-
-            }
-}
-        }
-
-    }
-});
 
 function fetch_item_has_serial_no(item_code) {
     //console.log("entered into function");

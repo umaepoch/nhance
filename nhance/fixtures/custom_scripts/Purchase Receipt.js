@@ -482,49 +482,43 @@ function get_rarb_items_detail(warehouse,pch_rarb_location_src){
 
 //for revision number
 
-frappe.ui.form.on("Purchase Receipt", {
-    refresh: function(frm) {
-        var items = frm.doc.items;
-        console.log("items....." + JSON.stringify(items));
-        var purchase_document_no = frm.doc.name;
-        console.log("purchase_document_no", purchase_document_no);
+frappe.ui.form.on("Purchase Receipt Item", {
+		
+		
+              batch_no : function(frm, cdt , cdn){
+			console.log("-----------");
+			//cur_frm.refresh_field("items")
+			var d = locals[cdt][cdn];
+			var item_code=d.item_code;
+			
+                        var batch_no=d.batch_no;
+			var revision_no=d.revision_number;
+			
+			console.log("revision_no----------------"+revision_no);
+			
 
-        for (var i = 0; i < items.length; i++) {
-            var item_code = items[i]['item_code'];
-            console.log("item_code", item_code);
-
-            var batch_no = items[i]['batch_no'];
-            console.log("batch_no", batch_no);
+				
             var HasSerialNumber = null;
             HasSerialNumber = fetch_has_serial_no(item_code);
             console.log("HasSerialNumber", HasSerialNumber);
             var HasBatchNumber = null;
             HasBatchNumber = fetch_has_batch_no(item_code);
             console.log("HasBatchNumber", HasBatchNumber);
-            var HasRevisionNumber = null;
+           var HasRevisionNumber = null;
             HasRevisionNumber = fetch_has_revision_number(batch_no);
-            console.log("HasRevisionNumber", HasRevisionNumber);
-            console.log("HasRevisionNumber", HasRevisionNumber);
-            if (HasSerialNumber == 1  ){
-                console.log("entered in if");
-		cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
-		}
-	    else if ((HasRevisionNumber == null ||HasRevisionNumber == undefined ||HasRevisionNumber == "")&&HasBatchNumber==1){
-                                 console.log("entered in if in if");   
-               cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
-             }
- 	    else if((HasRevisionNumber != null ||HasRevisionNumber != undefined ||HasRevisionNumber != "")&& HasBatchNumber == 1 ){
-             items[i]['revision_number'] = HasRevisionNumber;
-
-                var df = frappe.meta.get_docfield("Purchase Receipt Item", "revision_number", cur_frm.doc.name);
+           console.log("HasRevisionNumber", HasRevisionNumber);
+         
+		if((HasRevisionNumber != null ||HasRevisionNumber != undefined ||HasRevisionNumber != "")&& HasBatchNumber == 1 ) {
+                d.revision_number = HasRevisionNumber;
+}	
+var df = frappe.meta.get_docfield("Purchase Receipt Item", "revision_number", cur_frm.doc.name);
+		
                 df.read_only = 1;
+		cur_frm.refresh_field("items")
+		}
 
-}
-
-        }
-
-    }
-});
+		
+	})
 
 function fetch_has_serial_no(item_code) {
     console.log("entered into function");
