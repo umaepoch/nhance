@@ -30,7 +30,7 @@ def execute(filters=None):
 	if filters.get("project"):
 		project = filters.get("project")
 		project_warehouse =  frappe.db.get_value('Project', project, 'project_warehouse')
-    		reserve_warehouse =  frappe.db.get_value('Project', project, 'reserve_warehouse')
+		reserve_warehouse =  frappe.db.get_value('Project', project, 'reserve_warehouse')
 		#print "project_warehouse----------------",project_warehouse
 		#print "reserve_warehouse----------------",reserve_warehouse
 		items_map = fetch_pending_sreqnos(project,swh)
@@ -46,7 +46,7 @@ def execute(filters=None):
 					mt_qty = float(sreq_qty_in_stock_uom) - float(excess_to_be_ordered)
 					qty_available_in_swh = sreq_dict['qty_available_in_swh']
 					sreq_qty = sreq_dict['sreq_qty']
-					
+
 					item_code = sreq_dict['item_code']
 
 					#jyoti
@@ -54,7 +54,7 @@ def execute(filters=None):
 					print "fulfilled_qty---",fulfilled_qty#
 
 
-					
+
 					warehouse_qty = get_warehouse_qty(project_warehouse,item_code)
 					reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,item_code)
 					qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,item_code)
@@ -76,11 +76,11 @@ def execute(filters=None):
 						report_qty_due_to_transfer = qty_due_to_transfer
 					else:
 						report_qty_due_to_transfer = 0
-					
+
 					purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project,item_code)
 					purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project,item_code)
-					
-					
+
+
 					if purchase_order_with_one_docstatus[0].submitted is not None:
 						submitted_poi_qty = purchase_order_with_one_docstatus[0].submitted
 						submitted_poi_qty=round(float(submitted_poi_qty),2)
@@ -99,7 +99,7 @@ def execute(filters=None):
 						report_qty_that_can_be_transfer = 0
 
 					to_be_order = float(sreq_qty_in_stock_uom) -float(quantities_are_covered) -  float(report_qty_that_can_be_transfer)
-					
+
 					need_to_be_order = 0.0
 					if to_be_order > 0:
 						need_to_be_order = to_be_order
@@ -775,18 +775,18 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 		doc = frappe.new_doc("Purchase Order")
 		doc.update(outerJson_Transfer)
 		doc.save()
-		
+
 		print "doc.name 1------------",doc.name
 		doc_name_created.append(doc.name)
 		#msgDisplayAfterCreatePurchaseOrder(doc.name)
-		
+
 		#frappe.msgprint("Purchase Order is Created: "+doc.name)
 		if doc.name:
 			flag = doc.name
 		ret = doc.doctype
 		'''
 		if ret:
-			
+
 			frappe.msgprint("Purchase Order is Created: "+doc.name)
 		'''
 	return flag
@@ -849,13 +849,13 @@ def get_report_data(project_filter,swh_filter):
 			qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
 
 			rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
-			
+
 
 			purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project_filter,rows[2])
 			purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project_filter,rows[2])
-			
+
 			submitted_poi_qty = 0
-			draft_poi_qty = 0	
+			draft_poi_qty = 0
 			if purchase_order_with_one_docstatus[0].submitted is not None:
 				submitted_poi_qty = purchase_order_with_one_docstatus[0].submitted
 			if purchase_order_with_zero_docstatus[0].draft is not None:
@@ -874,11 +874,11 @@ def get_report_data(project_filter,swh_filter):
 				mt_qty = qty_can_be_transfered
 			elif qty_can_be_transfered >= rows[7]:
 				mt_qty = rows[7]
-		
+
 
 			if mt_qty < 0:
 				mt_qty = 0
-			
+
 			to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
 			need_to_be_order = 0
 			if to_be_order > 0:
@@ -888,7 +888,7 @@ def get_report_data(project_filter,swh_filter):
 			qty_in_poum = need_to_be_order / rows[10]
 			qty_in_poum = round(qty_in_poum , 4)
 			print "qty_in_poum-------------------",qty_in_poum
-			
+
 		#print "row-----", rows
 		sreq_no = rows[0]
 		project = rows[1]
@@ -998,7 +998,7 @@ def get_stock_entry_quantities(warehouse,item_code):
     return total_qty
 def get_purchase_order_with_zero_docstatus(project,item_code):
 	number_of_purchase_with_zero_docstatus = frappe.db.sql("""select sum(stock_qty) as draft from `tabPurchase Order Item` where project = %s and item_code = %s and docstatus =0""",(project,item_code), as_dict =1)
-	
+
 	return number_of_purchase_with_zero_docstatus
 
 def get_purchase_order_with_one_docstatus(project,item_code):
@@ -1007,7 +1007,7 @@ def get_purchase_order_with_one_docstatus(project,item_code):
 
 @frappe.whitelist()
 def check_and_update(data,sreq_no):
-	
+
 	print "sreq_no------------------",sreq_no
 	#print "supplier_items-----------------",supplier_items
 	print "data---------------",data
@@ -1016,7 +1016,7 @@ def check_and_update(data,sreq_no):
 		item_code = items['item_code']
 		round_qty = items['round_qty']
 		frappe.db.sql("""update `tabStock Requisition Item`  set qty_allowed_to_be_order = %s  where item_code = %s and parent = %s""", (round_qty, item_code, sreq_no))
-		
+
 	return 1
 
 @frappe.whitelist()
