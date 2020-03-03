@@ -136,7 +136,7 @@ def get_sreq_sub_not_approved(item_code,project_name):
                                         sri.item_code=%s  and sri.parent=sr.name
                                         and sr.docstatus= 0 and sri.project=%s
                                         and sr.workflow_state = 'Pending Approval' """,(item_code,project_name), as_dict=1)
-    print "PMRT new total_not_appr_qtysreq_datas ",sreq_datas
+    #print "PMRT new total_not_appr_qtysreq_datas ",sreq_datas
 
     for sreq_data in sreq_datas:
         if sreq_data['qty']:
@@ -147,13 +147,13 @@ def get_sreq_sub_not_approved(item_code,project_name):
 
 def get_sreq_sub_not_ordered(item_code,project_name):
     sreq_datas = frappe.db.sql("""select sri.project, sri.item_code,sri.qty,sri.stock_qty,sri.fulfilled_quantity,sri.quantity_to_be_ordered,sri.parent,sri.uom,sri.warehouse,sri.schedule_date,sri.stock_uom,sri.description,sr.docstatus,sr.transaction_date,sr.schedule_date from `tabStock Requisition Item` sri,`tabStock Requisition` sr where sri.item_code=%s  and sri.parent=sr.name and sr.docstatus=1 and sri.project=%s""",(item_code,project_name), as_dict=1)
-    print "sreq_datas---------------",sreq_datas
+    #print "sreq_datas---------------",sreq_datas
     po_draft_qty = frappe.db.sql("""select qty,parent,stock_qty from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 0""",(item_code,project_name), as_dict=1)
     po_submitted_qty = frappe.db.sql("""select qty,parent,stock_qty from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 1""",(item_code,project_name), as_dict=1) 
     
     sreq_total_qty = 0
     quantity_to_be_ordered = 0
-    print "total db data",sreq_datas
+    #print "total db data",sreq_datas
     '''
     for sreq_data in sreq_datas:
         if sreq_data['quantity_to_be_ordered']:
@@ -304,10 +304,10 @@ def	 get_workflowStatus(master_bom,col_data):
 def	make_stock_requisition(project,company,col_data,required_date,master_bom):
 
 
-    print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PMRT cache Bug sum_data :",sum_data
+    #print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PMRT cache Bug sum_data :",sum_data
 
     col_data = eval(col_data)
-    print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PMRT cache Bug  col_data ",col_data
+    #print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PMRT cache Bug  col_data ",col_data
     reserve_warehouse =  frappe.db.get_value('Project',project , 'reserve_warehouse')
 
     innerJson_requisition = " "
@@ -344,11 +344,11 @@ def	make_stock_requisition(project,company,col_data,required_date,master_bom):
         "project":project,
                 "pch_bom_reference": master_bom
         }
-        print "pch_bom_reference checking innerJson_transfer**********",innerJson_transfer
+        #print "pch_bom_reference checking innerJson_transfer**********",innerJson_transfer
         if short_qty > 0:
             newJson_requisition["items"].append(innerJson_transfer) #end of for
 
-    print "pch_bom_reference checking newJson_requisition**********",newJson_requisition
+    #print "pch_bom_reference checking newJson_requisition**********",newJson_requisition
 
     if newJson_requisition["items"]:
         doc = frappe.new_doc("Stock Requisition")
@@ -365,26 +365,26 @@ def	make_stock_requisition(project,company,col_data,required_date,master_bom):
 
 def get_submitted_po(item_code,project_name):
 	submitted = frappe.db.sql("""select qty,stock_qty, parent, item_code, project from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 1""",(item_code, project_name),as_dict=1)
-	print "submitted------------------",submitted
+	#print "submitted------------------",submitted
 	total_submitted_qty = 0
 	for purchase in submitted:
 		if purchase:
 			total_submitted_qty += purchase.stock_qty
 		else:
 			total_submitted_qty += 0
-	print "total_submitted_qty---------------",total_submitted_qty
+	#print "total_submitted_qty---------------",total_submitted_qty
 	return total_submitted_qty
 
 def get_draft_po(item_code,project_name):
 	draft = frappe.db.sql("""select qty,stock_qty, parent, item_code, project from `tabPurchase Order Item` where item_code = %s and project = %s and docstatus = 0""",(item_code, project_name),as_dict=1)
-	print "draft------------------",draft
+	#print "draft------------------",draft
 	total_draft_qty = 0
 	for purchase in draft:
 		if purchase:
 			total_draft_qty += purchase.stock_qty
 		else:
 			total_draft_qty += 0
-	print "total_draft_qty---------------",total_draft_qty
+	#print "total_draft_qty---------------",total_draft_qty
 	return total_draft_qty
 
 

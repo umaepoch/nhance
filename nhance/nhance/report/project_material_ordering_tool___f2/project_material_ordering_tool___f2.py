@@ -37,7 +37,7 @@ def execute(filters=None):
 		if items_map:
 			for (sreq_no) in sorted(items_map):
 				data = items_map[sreq_no]
-				print "data-------",data
+				#print "data-------",data
 				for sreq_dict in data:
 					#print "sreq_dict-----", sreq_dict['sreq_no']
 					#print "bom-----", sreq_dict['bom']
@@ -51,7 +51,7 @@ def execute(filters=None):
 
 					#jyoti
 					fulfilled_qty = sreq_dict['fulFilledQty']
-					print "fulfilled_qty---",fulfilled_qty#
+					#print "fulfilled_qty---",fulfilled_qty#
 
 
 
@@ -63,7 +63,7 @@ def execute(filters=None):
 
 					#jyoti added
 					rw_pb_cons_qty = fulfilled_qty
-					print "rw_pb_cons_qty--",rw_pb_cons_qty#
+					#print "rw_pb_cons_qty--",rw_pb_cons_qty#
 
 					sreq_qty_in_stock_uom = sreq_dict['sreq_qty_in_stock_uom']
 					qty_due_to_transfer = sreq_qty_in_stock_uom - rw_pb_cons_qty
@@ -351,7 +351,7 @@ def fetch_conversion_factor(parent,uom):
 		return 0
 
 def fetch_po_items_details(item_code,po_list):
-	print "po_list-------", po_list
+	#print "po_list-------", po_list
 	qty = 0
 	stock_qty = 0
 	po_items = {}
@@ -363,7 +363,7 @@ def fetch_po_items_details(item_code,po_list):
 			stock_qty = stock_qty + float(po_data['stock_qty'])
 	po_items['qty'] = qty
 	po_items['stock_qty'] = stock_qty
-	print "po_items-------", po_items
+	#print "po_items-------", po_items
 	return po_items
 
 def fetch_item_purchase_uom(item_code):
@@ -776,7 +776,7 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 		doc.update(outerJson_Transfer)
 		doc.save()
 
-		print "doc.name 1------------",doc.name
+		#print "doc.name 1------------",doc.name
 		doc_name_created.append(doc.name)
 		#msgDisplayAfterCreatePurchaseOrder(doc.name)
 
@@ -887,7 +887,7 @@ def get_report_data(project_filter,swh_filter):
 				need_to_be_order = 0
 			qty_in_poum = need_to_be_order / rows[10]
 			qty_in_poum = round(qty_in_poum , 4)
-			print "qty_in_poum-------------------",qty_in_poum
+			#print "qty_in_poum-------------------",qty_in_poum
 
 		#print "row-----", rows
 		sreq_no = rows[0]
@@ -1008,9 +1008,9 @@ def get_purchase_order_with_one_docstatus(project,item_code):
 @frappe.whitelist()
 def check_and_update(data,sreq_no):
 
-	print "sreq_no------------------",sreq_no
+	#print "sreq_no------------------",sreq_no
 	#print "supplier_items-----------------",supplier_items
-	print "data---------------",data
+	#print "data---------------",data
 	items_List = json.loads(data)
 	for items in items_List:
 		item_code = items['item_code']
