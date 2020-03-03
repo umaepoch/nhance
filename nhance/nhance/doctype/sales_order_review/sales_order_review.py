@@ -820,7 +820,9 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				
 			else:
 				target.taxes_and_charges = source.taxes_and_charges
-			target.naming_series = "SAL-ORD-.YYYY.-.REV.-"
+			nhance_settings = frappe.db.get_single_value("Nhance Settings","pch_post_review_so_series")
+			if nhance_settings is not None:
+				target.naming_series = nhance_settings
 			target.transaction_date = source.transaction_date
 			target.ignore_pricing_rule = source.ignore_pricing_rule
 			target.flags.ignore_permissions = True
@@ -830,7 +832,6 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 
 			if source.loyalty_points and source.order_type == "Shopping Cart":
 				target.redeem_loyalty_points = 1
-
 		def postprocess(source, target):
 			set_missing_values(source, target)
 
@@ -1104,7 +1105,7 @@ def remove_submit_permission(user,name):
 				frappe.throw("Please Submit first Purchase Order Review "+frappe.bold(check_for_review[0].name))
 		else:
 			validations = False
-			frappe.throw("This document cannot be submitted till a review is complete.")
+			frappe.throw("This document cannot be submitted until a review is completed.  Please assign to a reviewer.")
 	
 	return validations
 
