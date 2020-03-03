@@ -1,4 +1,7 @@
 frappe.ui.form.on("Sales Order", "refresh", function(frm) {
+    if(cur_frm.doc.__islocal){
+		cur_frm.set_value("so_reviewed","");
+	}
     var role = "SO Reviewer";
     var role_creator = "SO Creator";
     var check_role = get_roles(frappe.session.user, role);
