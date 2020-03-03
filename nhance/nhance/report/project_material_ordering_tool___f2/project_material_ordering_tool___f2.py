@@ -11,9 +11,9 @@ import time
 import math
 import json
 import ast
-#import sys
-#reload(sys)
-#ys.setdefaultencoding('utf-8')
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 sum_data=[]
 doc_name_created = []
@@ -351,7 +351,7 @@ def fetch_conversion_factor(parent,uom):
 		return 0
 
 def fetch_po_items_details(item_code,po_list):
-	#print "po_list-------", po_list
+	##print "po_list-------", po_list
 	qty = 0
 	stock_qty = 0
 	po_items = {}
@@ -1023,3 +1023,4 @@ def check_and_update(data,sreq_no):
 def getQtyAllowed(stockRequisitionID):
 	allowed_qty = frappe.db.sql("""select item_code,qty_allowed_to_be_order from `tabStock Requisition Item` where parent = %s """,stockRequisitionID, as_dict =1)
 	return allowed_qty
+
