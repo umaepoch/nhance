@@ -9,9 +9,9 @@ from erpnext.stock.stock_balance import get_balance_qty_from_sle
 from datetime import datetime
 import time
 import math
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
+#import sys
+#reload(sys)
+#sys.setdefaultencoding('utf-8')
 
 company = []
 sum_data = []
