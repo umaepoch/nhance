@@ -23,14 +23,15 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 	    "fieldname": "status",
             "label": __("Status"),
             "fieldtype": "Link",
-            "options": "Workflow State"
+            "options": "Workflow State",
+						"reqd":1
 	}
 	],
 	onload: function(report) {
         //console.log("Make PO and Transfer Existing/Required Quantity..........");
         report.page.add_inner_button(__("Workflow Action"),
             function() {
-		
+
                 var reporter = frappe.query_reports["Purchase Order Workflow Actions"];
                 reporter.make_PO_and_transfer_qty(report);
             });
@@ -64,12 +65,12 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
                         }
 		 fields.push(data1);
 		var data2=	{
-			    
+
                             "fieldtype": "Column Break",
                             "fieldname": "column_breaks"
 			}
 		 fields.push(data2);
-		var data3	= {   
+		var data3	= {
 			    "fieldtype":"Read Only",
                             "label": "Status",
                             "fieldname": "status"
@@ -89,13 +90,13 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 		var data6=	{
 			   "fieldtype": "Section Break",
                             "fieldname": "section_breaks"
-			}		
-			
+			}
+
                 fields.push(data6);
 		//console.log("fields-----------------"+fields);
 		 for(var i =0; i < purchase_order.length;i++){
 		//console.log("hello");
-		
+
 		var data = {
                             "fieldtype": "Check",
                             "label": purchase_order[i].name,
@@ -103,35 +104,35 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 
                         }
 			fields.push(data);
-		
+
 		var data11 =	{
                             "fieldtype": "Column Break",
                             "fieldname": "column_break" + i + ""
 			}
 			fields.push(data11);
-			
+
 		var data12 =	{
 			    "fieldtype":"Read Only",
                             "label": purchase_order[i].workflow_state,
                             "fieldname": purchase_order[i].workflow_state
 			}
 		fields.push(data12);
-		
+
 		var data13 ={
                             "fieldtype": "Column Break",
                             "fieldname": "column_break2" + i + ""
 			}
 		fields.push(data13);
-		
+
 		var data14 ={
 			   "fieldtype":"Read Only",
                             "label": purchase_order[i].creation,
                             "fieldname": purchase_order[i].creation
 			}
 			fields.push(data14);
-		
+
 		var data15 ={
-			     
+
 			   "fieldtype": "Section Break",
                             "fieldname": "section_break"+i+""
 			}
@@ -153,19 +154,19 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 							"status":purchase_order[pur].workflow_state
 						}
 					purchase_name.push(purchase_details)
-					
-				
+
+
 				}
-			
+
 			}
 				}
 			});
 			//console.log("purchase name -------------"+purchase_name);
 			//var actions = frappe.workflow.get_all_transition_actions("Purchase Order");
-			
-			if (!frappe.model.has_workflow("Purchase Order")) 
+
+			if (!frappe.model.has_workflow("Purchase Order"))
 				return frappe.msgprint("worklow is not active");
-			
+
 			if (purchase_name.length > 0){
 			var next_state = [];
 			var role = "";
@@ -178,7 +179,7 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 				//console.log("status--------------"+status);
 			}
 			var check_role = get_roles(frappe.session.user, role);
-			console.log("next stage-----------"+next_state);
+
 			console.log("check_role-----------"+check_role);
 			if(check_role == role){
 			//if(frappe.user_roles.indexOf(role) == 1){
@@ -189,7 +190,7 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 					"fieldtype": "Select",
                            		 "fieldname": "actions",
 					 "label":"Actions",
-				         "options": next_state	
+				         "options": next_state
 					}],
 				  primary_action: function(){
 					s_dialog.hide();
@@ -200,7 +201,7 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 					var success = set_workflow_purchase_order(action,purchase_name);
 					console.log("success------------",success);
 					if(success == 1){
-						frappe.msgprint("workflow has updated ");
+						frappe.msgprint("Purchase Order status has updated ");
 					}
 				}
 			 });
@@ -212,21 +213,21 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 		else{
 			frappe.msgprint("Please select atleast one purchase order");
 		}
-		
+
 	    }
 	});
 	//dialog.fields_dict.ht.$wrapper.html('Hello World');
 	/*for(var j = 0; j < purchase_order.length; j++){
 	 var name = purchase_order[j].name;
 	console.log("name---------"+name);
-	
+
 	  dialog.fields_dict.name.input.onclick = function() {
 		console.log("checked");
 		}
 	}*/
 	dialog.show();
 	//console.log("fields-----------------------"+JSON.stringify(fields));
-}	
+}
 }
 function get_purchase_order(start_date,end_date){
 	 var purchase = "";
@@ -256,7 +257,7 @@ function get_workflow_details(purchase_name){
         },
         async: false,
         callback: function(r) {
-         
+
             worflow = r.message;
 
         } //end of call-back function..
@@ -266,7 +267,7 @@ function get_workflow_details(purchase_name){
 }
 
 function purchase_order_with_status(purchase_data){
-	
+
 	 var purchase = "";
     frappe.call({
         method: "nhance.nhance.report.purchase_order_workflow_actions.purchase_order_workflow_actions.purchase_order_with_status",
@@ -275,11 +276,11 @@ function purchase_order_with_status(purchase_data){
         },
         async: false,
         callback: function(r) {
-      
+
             purchase = r.message;
 
-        } 
-    }); 
+        }
+    });
     return purchase;
 
 
@@ -296,11 +297,11 @@ function get_roles(user, role){
         async: false,
         callback: function(r) {
 	if (r.message.length > 0){
-      
+
             purchase = r.message[0].role;
 	}
-        } 
-    }); 
+        }
+    });
     return purchase;
 
 
@@ -317,11 +318,11 @@ function set_workflow_purchase_order(action,purchase_name){
         async: false,
         callback: function(r) {
 	if (r.message){
-      
+
             purchase = r.message;
 	}
-        } 
-    }); 
+        }
+    });
 	console.log("purchase-------------flag"+purchase);
     return purchase;
 
