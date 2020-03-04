@@ -752,7 +752,6 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				target.order_type = order_type
 			else:
 				target.order_type = source.order_type
-
 			#if source != "" and source != None:
 				#target.source = source
 			#else:
@@ -901,7 +900,8 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				})
 				doc.append("taxes",rows)
 			doc.save()
-		frappe.msgprint(doclist.name+" has been created")
+		doc_refres = frappe.get_doc("Sales Order Review",source_name)
+		frappe.msgprint("Sales Order "+frappe.bold(doclist.name)+" has been created to replace "+frappe.bold(doc_refres.sales_order)+" as a result of the Sales order Review Process.")
 		return doclist.name
 	else:
 		frappe.msgprint(validate_sales_order[0].name+" Already accepted for this review")
