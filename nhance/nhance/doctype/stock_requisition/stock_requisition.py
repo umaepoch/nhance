@@ -781,4 +781,7 @@ def get_po_default_values():
 
 	#print "po_default_values",po_default_values
 	return po_default_values
-
+@frappe.whitelist()
+def get_workflow():
+	workflow = frappe.get_all("Workflow",filters={"Document_type": "Stock Requisition" , "is_active":1}, fields=["is_active","name"])
+	return workflow
