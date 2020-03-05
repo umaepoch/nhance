@@ -225,7 +225,7 @@ def get_col_data(onclick_project):
     if  master_bom and project_warehouse and reserve_warehouse:
         items_data = get__bom_items(master_bom)  #exploded items
 
-        for item_data in sorted(items_data):
+        for item_data in items_data:
             item_code = item_data.item_code
             bom_item_qty = item_data.bi_qty
             warehouse_qty = 0
