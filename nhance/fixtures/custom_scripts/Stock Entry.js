@@ -574,10 +574,14 @@ frappe.ui.form.on("Stock Entry Detail", {
 
         if ((HasRevisionNumber != null || HasRevisionNumber != undefined || HasRevisionNumber != "") && HasBatchNumber == 1) {
             d.revision_number = HasRevisionNumber;
-        }
-        var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
+           // if( d.revision_number!=""){
+          //frappe.msgprint("The Revision number for "+'"'+batch_no+'"'+" numbers is set in the Batch Number document. "+'"'+batch_no+'"'+" number has been set with Revision Number "+'"'+HasRevisionNumber+'"'+".You cannot change it in this transaction.");
+            
+           //}//end of revision test
+        }//end of if
+        //var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
 
-        df.read_only = 1;
+        //df.read_only = 1;
         cur_frm.refresh_field("items")
     }
 
@@ -616,15 +620,22 @@ frappe.ui.form.on("Stock Entry Detail", {
 
         if ((HasRevisionNumberSerial != null || HasRevisionNumberSerial != undefined || HasRevisionNumberSerial != "") && HasSerialNumber == 1) {
             d.revision_number = HasRevisionNumberSerial;
+        //if( d.revision_number!=""){
+         
+         //frappe.msgprint("The Revision number for "+'"'+serial_no+'"'+" numbers is set in the Serial Number document. "+'"'+serial_no+'"'+" number has been set with Revision Number "+'"'+HasRevisionNumberSerial+'"'+".You cannot change it in this transaction.");
+            
+         //  }//end of if revision test
         }
-        var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
+        //var df = frappe.meta.get_docfield("Stock Entry Detail", "revision_number", cur_frm.doc.name);
 
-        df.read_only = 1;
+        //df.read_only = 1;
         cur_frm.refresh_field("items")
     }
 
 
 })
+
+ 
 function fetch_has_serial_no(item_code) {
     console.log("entered into function");
     var has_serial_no = "";
@@ -898,10 +909,55 @@ function fetch_duplicate_serial_no(duplicate_serial) {
 
 
 
+frappe.ui.form.on("Stock Entry Detail", {
 
 
+    revision_number: function(frm, cdt, cdn) {
+        console.log("-----------");
+        cur_frm.refresh_field("items")
+        var d = locals[cdt][cdn];
+        var item_code = d.item_code;
+	var serial_no = d.serial_no;
+        var batch_no = d.batch_no;
+        var revision_no = d.revision_number;
+	var source_warehouse=d.s_warehouse;
+        console.log("revision_no----------------" + revision_no);
+
+       console.log("source_warehouse----------------" + source_warehouse);
+
+        var HasSerialNumber = null;
+        HasSerialNumber = fetch_has_serial_no(item_code);
+        console.log("HasSerialNumber", HasSerialNumber);
+        var HasBatchNumber = null;
+        HasBatchNumber = fetch_has_batch_no(item_code);
+        console.log("HasBatchNumber", HasBatchNumber);
+        var HasRevisionNumber = null;
+        HasRevisionNumber = fetch_has_revision_number(batch_no);
+        console.log("HasRevisionNumber", HasRevisionNumber);
+         var HasRevisionNumberSerial = null;
+        HasRevisionNumberSerial = fetch_has_revision_number_serial(serial_no) ;
+        console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
+        
+            if(d.s_warehouse!=""&& d.revision_number!="" && HasRevisionNumberSerial!=""){
+      
+         frappe.msgprint("The Revision number for "+'"'+serial_no+'"'+" numbers is set in the Serial Number document. "+'"'+serial_no+'"'+" number has been set with Revision Number "+'"'+HasRevisionNumberSerial+'"'+".You cannot change it in this transaction.");
+          frm.refresh_field("items")
+	   
+            d.revision_number = HasRevisionNumberSerial;
+  
+           }//end of revision test
+        else  if(d.s_warehouse!=""&& d.revision_number!="" && HasRevisionNumber!=""){
+      
+         frappe.msgprint("The Revision number for "+'"'+batch_no+'"'+" numbers is set in the Batch Number document. "+'"'+batch_no+'"'+" number has been set with Revision Number "+'"'+HasRevisionNumber+'"'+".You cannot change it in this transaction.");
+          frm.refresh_field("items")
+	   
+            d.revision_number = HasRevisionNumber;
+  
+           }//end of revision test
+        
+       
+    }
 
 
-
-
+})
 
