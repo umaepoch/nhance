@@ -190,56 +190,87 @@ function get_rarb_warehouses(warehouse){
 
 
 //revision_number
-frappe.ui.form.on("Delivery Note", {
-    refresh: function(frm) {
-        var items = frm.doc.items;
-        console.log("items....." + JSON.stringify(items));
-        var purchase_document_no = frm.doc.name;
-        console.log("purchase_document_no", purchase_document_no);
-        for (var i = 0; i < items.length; i++) {
-            var item_code = items[i]['item_code'];
-            console.log("item_code", item_code);
-            var batch_no = items[i]['batch_no'];
-            console.log("batch_no", batch_no);
-            var serial_no = items[i]['serial_no'];
-            console.log("serial_no", serial_no);
-            var HasSerialNumber = null;
-            HasSerialNumber = fetch_item_has_serial_no(item_code);
-            console.log("HasSerialNumber", HasSerialNumber);
-            var HasBatchNumber = null;
-            HasBatchNumber = fetch_has_batch_no(item_code);
-            console.log("HasBatchNumber", HasBatchNumber);
-            var HasRevisionNumberBatch = null;
-            HasRevisionNumberBatch = fetch_has_revision_number(batch_no);
-            console.log("HasRevisionNumberBatch", HasRevisionNumberBatch);
-            var HasRevisionNumberSerial = null;
-            HasRevisionNumberSerial = fetch_has_revision_number_serial(serial_no);
-            console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
+
+frappe.ui.form.on("Delivery Note Item", {
 
 
-            if (HasRevisionNumberBatch != null && HasBatchNumber == 1) {
-                items[i]['revision_number'] = HasRevisionNumberBatch;
+    batch_no: function(frm, cdt, cdn) {
+        console.log("-----------");
+        //cur_frm.refresh_field("items")
+        var d = locals[cdt][cdn];
+        var item_code = d.item_code;
 
-                var df = frappe.meta.get_docfield("Delivery Note Item", "revision_number", cur_frm.doc.name);
-                df.read_only = 1;
-            } else if ((HasRevisionNumberSerial != null || HasRevisionNumberSerial == "" || HasRevisionNumberSerial == undefined) && HasSerialNumber == 1) {
-                console.log("entered in else");
+        var batch_no = d.batch_no;
+        var revision_no = d.revision_number;
 
-                items[i]['revision_number'] = HasRevisionNumberSerial;
-
-                var df = frappe.meta.get_docfield("Delivery Note Item", "revision_number", cur_frm.doc.name);
-                df.read_only = 1;
+        console.log("revision_no----------------" + revision_no);
 
 
 
-            }
+        var HasSerialNumber = null;
+        HasSerialNumber = fetch_has_serial_no(item_code);
+        console.log("HasSerialNumber", HasSerialNumber);
+        var HasBatchNumber = null;
+        HasBatchNumber = fetch_has_batch_no(item_code);
+        console.log("HasBatchNumber", HasBatchNumber);
+        var HasRevisionNumber = null;
+        HasRevisionNumber = fetch_has_revision_number(batch_no);
+        console.log("HasRevisionNumber", HasRevisionNumber);
 
+        if ((HasRevisionNumber != null || HasRevisionNumber != undefined || HasRevisionNumber != "") && HasBatchNumber == 1) {
+            d.revision_number = HasRevisionNumber;
         }
+        var df = frappe.meta.get_docfield("Delivery Note Item", "revision_number", cur_frm.doc.name);
 
+        df.read_only = 1;
+        cur_frm.refresh_field("items")
     }
-});
 
-function fetch_item_has_serial_no(item_code) {
+
+})
+
+
+frappe.ui.form.on("Delivery Note Item", {
+
+
+   serial_no: function(frm, cdt, cdn) {
+        console.log("-----------");
+        //cur_frm.refresh_field("items")
+        var d = locals[cdt][cdn];
+        var item_code = d.item_code;
+
+        var batch_no = d.batch_no;
+        var revision_no = d.revision_number;
+
+        console.log("revision_no----------------" + revision_no);
+
+	var serial_no = d.serial_no;
+
+        console.log("revision_no----------------" + revision_no);
+
+
+        var HasSerialNumber = null;
+        HasSerialNumber = fetch_has_serial_no(item_code);
+        console.log("HasSerialNumber", HasSerialNumber);
+        var HasBatchNumber = null;
+        HasBatchNumber = fetch_has_batch_no(item_code);
+        console.log("HasBatchNumber", HasBatchNumber);
+        var HasRevisionNumberSerial = null;
+        HasRevisionNumberSerial = fetch_has_revision_number_serial(serial_no) ;
+        console.log("HasRevisionNumberSerial", HasRevisionNumberSerial);
+
+        if ((HasRevisionNumberSerial != null || HasRevisionNumberSerial != undefined || HasRevisionNumberSerial != "") && HasSerialNumber == 1) {
+            d.revision_number = HasRevisionNumberSerial;
+        }
+        var df = frappe.meta.get_docfield("Delivery Note Item", "revision_number", cur_frm.doc.name);
+
+        df.read_only = 1;
+        cur_frm.refresh_field("items")
+}
+
+})
+
+ function fetch_has_serial_no(item_code) {
     console.log("entered into function");
     var has_serial_no = "";
     frappe.call({
@@ -318,12 +349,13 @@ function fetch_has_revision_number(batch_no) {
     return has_revision_number
 }
 
+
 function fetch_has_revision_number_serial(serial_no) {
-    console.log("entered into fetch_has_revision_number_serial function");
+    //console.log("entered into fetch_has_revision_number_serial function");
     var has_revision_number_serial = "";
     frappe.call({
-        method: 'frappe.client.get_value',
-        args: {
+           method: 'frappe.client.get_value',
+         args: {
             'doctype': 'Serial No',
             'fieldname': ["revision_number", "serial_no"],
 
@@ -335,11 +367,25 @@ function fetch_has_revision_number_serial(serial_no) {
         callback: function(r) {
             if (r.message) {
                 has_revision_number_serial = r.message.revision_number;
-                console.log(has_revision_number_serial);
-                console.log("readings-----------" + JSON.stringify(r.message));
+                //console.log(has_revision_number_serial);
+                //console.log("readings-----------" + JSON.stringify(r.message));
 
             }
         }
     });
     return has_revision_number_serial
 }
+frappe.ui.form.on("Delivery Note", "after_save", function(frm, cdt, cdn) {
+
+    $.each(frm.doc.items, function(i, d) {
+        var item_code = d.item_code;
+        var revision_number = d.revision_number;
+        console.log("revision_number", revision_number);
+        if (revision_number != "") {
+            var df = frappe.meta.get_docfield("Delivery Note Item", "revision_number", cur_frm.doc.name);
+
+            df.read_only = 1;
+        }
+    })
+});
+
