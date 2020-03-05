@@ -152,3 +152,7 @@ def get_tax_detials(name):
 def get_payment_details(name):
 	payment = frappe.db.sql("""select * from `tabPayment Schedule` where parent = %s""",name,as_dict=1)
 	return payment
+@frappe.whitelist()
+def get_workflow_state():
+	state = frappe.db.sql(""" select st.state from `tabWorkflow Document State` st , `tabWorkflow` s where s.document_type = "Purchase Order" and s.name = st.parent and s.is_active =1 """,as_dict=1)
+	return state

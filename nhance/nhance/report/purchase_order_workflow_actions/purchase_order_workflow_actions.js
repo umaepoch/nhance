@@ -1,7 +1,8 @@
 // Copyright (c) 2016, Epoch and contributors
 // For license information, please see license.txt
 /* eslint-disable */
-
+var state = get_workflow_state();
+var outputArray = Array.from(new Set(state))
 frappe.query_reports["Purchase Order Workflow Actions"] = {
 	"filters": [
 		{
@@ -22,9 +23,10 @@ frappe.query_reports["Purchase Order Workflow Actions"] = {
 	{
 	    "fieldname": "status",
             "label": __("Status"),
-            "fieldtype": "Link",
-            "options": "Workflow State",
-						"reqd":1
+            "fieldtype": "Select",
+            "options": outputArray,
+	    "reqd":1,
+	    
 	}
 	],
 	onload: function(report) {
@@ -327,4 +329,23 @@ function set_workflow_purchase_order(action,purchase_name){
     return purchase;
 
 
+}
+function get_workflow_state(){
+	var state = [];
+	frappe.call({
+        method: "nhance.nhance.report.purchase_order_workflow_actions.purchase_order_workflow_actions.get_workflow_state",
+        args: {
+           
+        },
+        async: false,
+        callback: function(r) {
+	if (r.message){
+	    for (var i =0; i < r.message.length; i++){
+            	state.push(r.message[i].state);
+	   }
+	}
+        }
+    });
+	
+    return state;
 }
