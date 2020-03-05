@@ -120,7 +120,7 @@ function make_PO_and_transfer_qty(report) {
             bom = "";
         }
         if (mt_qty > 0) {
-            if (dont_transfer_order == 1 && mt_qty > 1) {
+            if (dont_transfer_order == 1 && mt_qty >= 1) {
                 var min_max_item = getitems_minmax(item_code)
                 if (min_max_item == 0) {
                     materialItems['item_code'] = item_code;
@@ -174,7 +174,7 @@ function make_PO_and_transfer_qty(report) {
         }
 
         if (po_qty > 0) {
-            if (dont_transfer_order == 1 && po_qty > 1) {
+            if (dont_transfer_order == 1 && po_qty >= 1) {
                 var min_max_item = getitems_minmax(item_code)
                 if (min_max_item == 0) {
                     var rate = 0;
