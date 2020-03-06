@@ -560,7 +560,7 @@ def update_po_list(srID, po_list):
 
 @frappe.whitelist()
 def get_stock_requisition_items(parent):
-	records = frappe.db.sql("""select item_code as hidden_item_code,stock_qty as hidden_qty from `tabStock Requisition Item` where
+	records = frappe.db.sql("""select item_code as hidden_item_code,stock_qty as hidden_qty,qty_allowed_to_be_order from `tabStock Requisition Item` where
 				parent=%s""", (parent), as_dict=1)
 	return records
 
@@ -661,6 +661,7 @@ def po_list_value(srID,po_list):
 					data = {"item_code":po_item_code, "qty":sreq_qty}
 					items_list.append(data)
 					break;
+	#print "items_list---------",items_list
 	#print "sreq_qty11",items_list
 	return items_list
 
@@ -780,4 +781,7 @@ def get_po_default_values():
 
 	#print "po_default_values",po_default_values
 	return po_default_values
-
+@frappe.whitelist()
+def get_workflow():
+	workflow = frappe.get_all("Workflow",filters={"Document_type": "Stock Requisition" , "is_active":1}, fields=["is_active","name"])
+	return workflow

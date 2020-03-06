@@ -31,50 +31,98 @@ frappe.ui.form.on('Stock Requisition', {
 frappe.ui.form.on('Stock Requisition', {
 
 	refresh: function(frm, cdt, cdn) {
-		console.log("sreq refreshed");
-		if(cur_frm.doc.workflow_state == "Approved"){
-		console.log("SREQ approved **************");
-		var d = frappe.get_doc(cdt, cdn);
-		console.log("d  :::" + d );
-		var stockRequisitionID = d.name;
-		console.log("stockRequisitionID  :::" + stockRequisitionID );
+		//console.log("sreq refreshed");
+		var check_workflow = get_workflow();
+		//console.log("check_workflow----------",check_workflow)
+		if(check_workflow.length != 0){
+			if(cur_frm.doc.workflow_state == "Approved"){
+			//console.log("SREQ approved **************");
+			var d = frappe.get_doc(cdt, cdn);
+			//console.log("d  :::" + d );
+			var stockRequisitionID = d.name;
+			//console.log("stockRequisitionID  :::" + stockRequisitionID );
 
-		if (stockRequisitionID != null && stockRequisitionID != "") {
-			if (cur_frm.doc.pch_is_submitted_sreq_updated == "No") {
-				var updated_sreq_items_data = [];
+			if (stockRequisitionID != null && stockRequisitionID != "") {
+				if (cur_frm.doc.pch_is_submitted_sreq_updated == "No") {
+					var updated_sreq_items_data = [];
 
-				var sreq_items_data = get_sreq_items_data(stockRequisitionID);  //sreq_items_data[{"item_code":"Test Item1","qty":1}]
-				console.log("from submit,before update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
+					var sreq_items_data = get_sreq_items_data(stockRequisitionID);  //sreq_items_data[{"item_code":"Test Item1","qty":1}]
+					//console.log("from submit,before update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
 
-				for (var i = 0; i < sreq_items_data.length; i++) {
-					var sreq_item_code = sreq_items_data[i]['item_code'];
-					var sreq_qty = sreq_items_data[i]['qty'];
-					var sreq_fulfilled_qty = sreq_items_data[i]['fulfilled_quantity'];//jyoti added this
-					//var quantity_to_be_order = sreq_qty ;
-					var quantity_to_be_order = sreq_qty - sreq_fulfilled_qty;//jyoti changed the formula
+					for (var i = 0; i < sreq_items_data.length; i++) {
+						var sreq_item_code = sreq_items_data[i]['item_code'];
+						var sreq_qty = sreq_items_data[i]['qty'];
+						var sreq_fulfilled_qty = sreq_items_data[i]['fulfilled_quantity'];//jyoti added this
+						//var quantity_to_be_order = sreq_qty ;
+						var quantity_to_be_order = sreq_qty - sreq_fulfilled_qty;//jyoti changed the formula
 
-					updated_sreq_items_data.push(
-						{
-							"sreq_item_code":sreq_item_code,
-							"quantity_to_be_order":quantity_to_be_order
-						}
-					);
-					} //end of for
+						updated_sreq_items_data.push(
+							{
+								"sreq_item_code":sreq_item_code,
+								"quantity_to_be_order":quantity_to_be_order
+							}
+						);
+						} //end of for
 
-				console.log("from approvel,calculated for updation, sreq_items_data ",JSON.stringify(updated_sreq_items_data));
-				update_sreq_items_data_on_sreq_approvel(updated_sreq_items_data,stockRequisitionID);
-				update_submitted_sreq( stockRequisitionID);
-				refresh_field("quantity_to_be_order");
-				refresh_field(frm.doc.items);
+					//console.log("from approvel,calculated for updation, sreq_items_data ",JSON.stringify(updated_sreq_items_data));
+					update_sreq_items_data_on_sreq_approvel(updated_sreq_items_data,stockRequisitionID);
+					update_submitted_sreq( stockRequisitionID);
+					refresh_field("quantity_to_be_order");
+					refresh_field(frm.doc.items);
 
-				sreq_items_data = get_sreq_items_data(stockRequisitionID);
-				console.log("from submit,after update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
+					sreq_items_data = get_sreq_items_data(stockRequisitionID);
+					//console.log("from submit,after update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
 
-			}// end if pch_is_cancelled_po_updated checking
+				}// end if pch_is_cancelled_po_updated checking
 
-		} //if stockRequisitionID check
+			} //if stockRequisitionID check
 
-	} // end of if check approved
+		} // end of if check approved
+	}
+	else{
+		if(cur_frm.doc.docstatus == 1){
+			
+			var d = frappe.get_doc(cdt, cdn);
+				//console.log("d  :::" + d );
+				var stockRequisitionID = d.name;
+				//console.log("stockRequisitionID  :::" + stockRequisitionID );
+
+				if (stockRequisitionID != null && stockRequisitionID != "") {
+					if (cur_frm.doc.pch_is_submitted_sreq_updated == "No") {
+						var updated_sreq_items_data = [];
+
+						var sreq_items_data = get_sreq_items_data(stockRequisitionID);  //sreq_items_data[{"item_code":"Test Item1","qty":1}]
+						//console.log("from submit,before update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
+
+						for (var i = 0; i < sreq_items_data.length; i++) {
+							var sreq_item_code = sreq_items_data[i]['item_code'];
+							var sreq_qty = sreq_items_data[i]['qty'];
+							var sreq_fulfilled_qty = sreq_items_data[i]['fulfilled_quantity'];//jyoti added this
+							//var quantity_to_be_order = sreq_qty ;
+							var quantity_to_be_order = sreq_qty - sreq_fulfilled_qty;//jyoti changed the formula
+
+							updated_sreq_items_data.push(
+								{
+									"sreq_item_code":sreq_item_code,
+									"quantity_to_be_order":quantity_to_be_order
+								}
+							);
+							} //end of for
+
+						//console.log("from approvel,calculated for updation, sreq_items_data ",JSON.stringify(updated_sreq_items_data));
+						update_sreq_items_data_on_sreq_approvel(updated_sreq_items_data,stockRequisitionID);
+						update_submitted_sreq( stockRequisitionID);
+						refresh_field("quantity_to_be_order");
+						refresh_field(frm.doc.items);
+
+						sreq_items_data = get_sreq_items_data(stockRequisitionID);
+						//console.log("from submit,after update :::: sreq_items_data ::::::: ",JSON.stringify(sreq_items_data));
+
+					}// end if pch_is_cancelled_po_updated checking
+
+				} //if stockRequisitionID check
+		}
+	}
 	} //end of refresh
 });
 //End update qty to be order on submit of sreq
@@ -87,7 +135,7 @@ frappe.ui.form.on('Stock Requisition', {
          var item_list = [];
          var d = locals[cdt][cdn];
          var item_group = d.item_group;
-         console.log("Stock Requisition refresh****inside**********");
+         //console.log("Stock Requisition refresh****inside**********");
          if (item_group != undefined && item_group != null) {
             item_list = fetch_items(item_group);
             return {
@@ -279,17 +327,17 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 		var itemsArray = new Array();
 		var whole_number_in_stock_transactions_flag = false;
 		var check_args = "";
-		console.log("make_purchase_order --------------SREQ ID::"+cur_frm.doc.name);
+		//console.log("make_purchase_order --------------SREQ ID::"+cur_frm.doc.name);
 
 		//validating purchase uom and  conversion_factor
         	var sreq_items_data = cur_frm.doc.items;
         	for(var i = 0; i < sreq_items_data.length; i++){
             		var item_code = sreq_items_data[i].item_code ;
             		var purchase_uom = getPurchaseUom(item_code);
-            		//console.log("purchase_uom--------------::"+purchase_uom);
+            		////console.log("purchase_uom--------------::"+purchase_uom);
             		if(purchase_uom!=null){
                 		var conversion_factor = getConversionFactor(purchase_uom,item_code);
-                		//console.log("conversion_factor--------------::"+conversion_factor);
+                		////console.log("conversion_factor--------------::"+conversion_factor);
                 		if (conversion_factor == 0 || conversion_factor == undefined){
                     			frappe.throw(__("The Conversion Factor for UOM: "+ purchase_uom.toString()  +" for Item: "+ item_code.toString() +" is not defined. Please define the Conversion Factor or remove the Purchase UOM and try again."));
                 		}
@@ -326,7 +374,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 					var index = 0;
 					var no_Supplier_Items = new Array();
 					company = r.message.company;
-					console.log("###################cur_frm.doc.name::"+cur_frm.doc.name);
+					//console.log("###################cur_frm.doc.name::"+cur_frm.doc.name);
 					for(var arrayLength = 0; arrayLength < itemsList.length; arrayLength++){
 						var arr = {};
     						var arrList = [];
@@ -351,18 +399,18 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						if( itemsList[arrayLength].project != null && itemsList[arrayLength].project != undefined){
 							project= itemsList[arrayLength].project;
 						}
-						console.log("purchase_uom::"+purchase_uom);
+						//console.log("purchase_uom::"+purchase_uom);
 
 						/**
-						console.log("purchase_uom::"+purchase_uom);
-						console.log("qty::"+qty);
-						console.log("cost_center::"+cost_center1);
-						console.log("expense_account-------------::"+expense_account1);
-						console.log("check_flag::"+check_flag);
+						//console.log("purchase_uom::"+purchase_uom);
+						//console.log("qty::"+qty);
+						//console.log("cost_center::"+cost_center1);
+						//console.log("expense_account-------------::"+expense_account1);
+						//console.log("check_flag::"+check_flag);
 						**/
         					if(check_flag){
 							var processedQty = processQuantity(check_args,stock_qty);
-							//console.log("processedQty is::"+processedQty);
+							////console.log("processedQty is::"+processedQty);
 							qty = processedQty;
 							itemsList[arrayLength].qty = qty;
 							itemsList[arrayLength].stock_qty = qty;
@@ -374,7 +422,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}
 						if(purchase_uom!=null){
 						var conversion_factor = getConversionFactor(purchase_uom,item_code);
-						//console.log("conversion_factor::"+conversion_factor);
+						////console.log("conversion_factor::"+conversion_factor);
 						qty = qty/conversion_factor;
 						itemsList[arrayLength].qty = qty;
 						itemsList[arrayLength].uom = purchase_uom;
@@ -382,7 +430,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 						}else{
 						purchase_uom = uom;
 						}
-						//console.log("stock_qty is::"+stock_qty);
+						////console.log("stock_qty is::"+stock_qty);
    						var stock_uom = itemsList[arrayLength].stock_uom;
     						var warehouse = itemsList[arrayLength].warehouse;
 
@@ -458,7 +506,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
     							 }
 						}//end of else...
 					}//end of for..
-					console.log("no_Supplier_Items::"+no_Supplier_Items);
+					//console.log("no_Supplier_Items::"+no_Supplier_Items);
 					r.message.items = no_Supplier_Items;
 					var msg = r.message;
 					making_PurchaseOrder_For_SupplierItems(supplierList,defaultSupplierItemsMap,company,no_Supplier_Items,msg,cur_frm);
@@ -489,10 +537,10 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 	},
 
 	make_stock_entry: function() {
-		console.log("--------material_request_type--------"+cur_frm.doc.material_request_type);
+		//console.log("--------material_request_type--------"+cur_frm.doc.material_request_type);
 		var me = this;
 		var stock_requisition_id = cur_frm.doc.name;
-		console.log("stock_requisition_id--------"+stock_requisition_id);
+		//console.log("stock_requisition_id--------"+stock_requisition_id);
 		if (cur_frm.doc.material_request_type == "Material Issue"){
 		var issueFlag = getStockRequisitionIssueFlag(stock_requisition_id);
 		if (issueFlag == "true"){
@@ -508,9 +556,9 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 			async: false,
 			callback: function(r) {
 				/**
-				console.log("se--------"+JSON.stringify(r.message));
-				console.log("se--------"+r.message.items);
-				console.log("se--------"+r.message.name);
+				//console.log("se--------"+JSON.stringify(r.message));
+				//console.log("se--------"+r.message.items);
+				//console.log("se--------"+r.message.name);
 				**/
 				var items = r.message.items;
 				var stockEntryList = r.message;
@@ -531,7 +579,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 
 	raise_work_orders: function() {
 		var me = this;
-		console.log("Docname--------"+cur_frm.doc.name);
+		//console.log("Docname--------"+cur_frm.doc.name);
 		frappe.call({
 			method:"nhance.nhance.doctype.stock_requisition.stock_requisition.raise_work_orders",
 			args: {
@@ -573,7 +621,7 @@ $.extend(cur_frm.cscript, new erpnext.buying.MaterialRequestController({frm: cur
 
 cur_frm.cscript['Stop Material Request'] = function() {
     var doc = cur_frm.doc;
-    console.log("from cancel:" + doc.name);
+    //console.log("from cancel:" + doc.name);
     var stock_requisition_id=doc.name
     frappe.call({
         method: "nhance.nhance.doctype.stock_requisition.stock_requisition.cancel_stock_requisition",
@@ -655,7 +703,7 @@ if (check_args.round_up_fractions == 1) {
 if (quantity == 0) {
     quantity = qty;
 }
-console.log("quantity::"+quantity);
+//console.log("quantity::"+quantity);
 return quantity;
 }
 
@@ -670,7 +718,7 @@ frappe.call({
 	   async: false,
            callback: function(r) {
            if (r.message) {
-		console.log("ItemDetails::"+ JSON.stringify(r.message));
+		//console.log("ItemDetails::"+ JSON.stringify(r.message));
 		details = r.message;
             }
             }//end of callback fun..
@@ -711,7 +759,7 @@ frappe.call({
 	   async: false,
            callback: function(r) {
            if (r.message) {
-		console.log("conversion_factor::"+r.message);
+		//console.log("conversion_factor::"+r.message);
 		conversion_factor = r.message;
             }
             }//end of callback fun..
@@ -790,7 +838,7 @@ dialogArray.push(JSON.parse(dialog_fields[i]));
 ** End of Preparing JsonArray Data..
 **/
 
-console.log("message-----------------");
+//console.log("message-----------------");
 if(supplierList.length!=0){
 cur_frm.save("Update");
 var dialog = new frappe.ui.Dialog({
@@ -809,8 +857,8 @@ fields: dialogArray,
 	var tax_template = "tax_template_"+i;
 	var supplier_val = check_args[supplier];
 	var tax_template_val = check_args[tax_template];
-	/**console.log("supplier_val::" + supplier_val);
-	console.log("tax_template_val::" + tax_template_val);**/
+	/**//console.log("supplier_val::" + supplier_val);
+	//console.log("tax_template_val::" + tax_template_val);**/
 	var supplier_and_tax_json={
 		"supplier": supplier_val,
 		"tax_template": tax_template_val
@@ -835,8 +883,8 @@ fields: dialogArray,
 				tax_template = tax_template_for_supplier;
 			}
 		}//end of inner for-loop..
-    		console.log("###list", list.length);
-    		console.log("###list", list);
+    		//console.log("###list", list.length);
+    		//console.log("###list", list);
     		frappe.call({
        			 method: "nhance.nhance.doctype.stock_requisition.stock_requisition.making_PurchaseOrder_For_SupplierItems",
         		 args: {
@@ -847,7 +895,7 @@ fields: dialogArray,
        				},
 			async: false,
         		callback: function(r) {
-				console.log("########-PO::"+r.message);
+				//console.log("########-PO::"+r.message);
         		}
    		 }); //end of frappe call.
 	}//end of outer for-loop..
@@ -859,7 +907,7 @@ fields: dialogArray,
 	dialog.show();
 }else{
 	if(items.length!=0){
-	console.log("-----------------items::"+items.length);
+	//console.log("-----------------items::"+items.length);
 	makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID);
 
 	}
@@ -878,7 +926,7 @@ function makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID){
 	"payment_terms_template","party_account_currency","select_print_heading",
 	"auto_repeat"]
 	var po_default_values=get_po_default_values();
-	console.log("from no supplier default values"+JSON.stringify(po_default_values));
+	//console.log("from no supplier default values"+JSON.stringify(po_default_values));
 
 
 	for (var i = 0; i < defualt_list.length; i++) {
@@ -889,7 +937,7 @@ function makePUrchaseOrderForNoSupplierItems(message,items,cur_frm,srID){
 	 {
 		 var append_default_val = po_default_values[key_default_value] ;
 		 message.default_field  = append_default_val ;
-		 console.log("appended_default_field ---"+ default_field+  ":" + append_default_val);
+		 //console.log("appended_default_field ---"+ default_field+  ":" + append_default_val);
 	 }
 
 	}
@@ -913,14 +961,14 @@ frappe.call({
 	async: false,
 	callback: function(r)
       	{
-	//console.log("");
+	////console.log("");
 	}
 	});//end of frappe call..
 }//end of updatePOList..
 
 function getStockRequisitionIssueFlag(stock_requisition_id){
 var checkFlag = false;
-console.log("SreqID-----"+stock_requisition_id);
+//console.log("SreqID-----"+stock_requisition_id);
 frappe.call({
 	method: "nhance.nhance.doctype.stock_requisition.stock_requisition.check_stock_entry_for_stock_requisition",
         args: {
@@ -928,8 +976,8 @@ frappe.call({
        		},
 	async: false,
         callback: function(r) {
-		console.log("Result-----callback----");
-		console.log("Result---------"+r.message);
+		//console.log("Result-----callback----");
+		//console.log("Result---------"+r.message);
 		checkFlag = r.message;
         }//end of call-back fun..
     }); //end of frappe call.
@@ -964,7 +1012,7 @@ frappe.ui.form.on("Stock Requisition", "refresh", function(frm) {
       var d = locals[cdt][cdn];
       var item_group = d.item_group;
       var item_list = fetch_items(item_group);
-      console.log("checking----------------");
+      //console.log("checking----------------");
       if (item_list != null) {
          return {
             "filters": [
@@ -987,7 +1035,7 @@ function fetch_items(item_group) {
       async: false,
       callback: function(r) {
          if (r.message) {
-		console.log("Result-----fetch_items----"+ JSON.stringify(r.message));
+		//console.log("Result-----fetch_items----"+ JSON.stringify(r.message));
 		for(var i=0;i<r.message.length;i++){
 			var item = r.message[i].name;
 			itemList.push(item);
@@ -1002,7 +1050,7 @@ return itemList;
 
 //qty to be order start SREQ refresh functions //PMRT start (Update "qty to be order" field on approving sreq )
 function update_sreq_items_data_on_sreq_approvel( updated_sreq_items_data,stockRequisitionID ) {
-	console.log(" This data is going to be updated" + JSON.stringify(updated_sreq_items_data));
+	//console.log(" This data is going to be updated" + JSON.stringify(updated_sreq_items_data));
 	frappe.call({
         method: "nhance.api.update_sreq_items_data_on_sreq_approvel",
         args: {
@@ -1012,9 +1060,9 @@ function update_sreq_items_data_on_sreq_approvel( updated_sreq_items_data,stockR
         async: false,
         callback: function(r) {
 					if (r.message) {
-						console.log("updatd sreq item succesfully");
+						//console.log("updatd sreq item succesfully");
 					} else {
-						console.log("failed to update sreq data");
+						//console.log("failed to update sreq data");
 					}
 				}  //end of call back
     }); // end of frappe call
@@ -1034,7 +1082,7 @@ function get_sreq_items_data( stockRequisitionID ) {
 					if (r.message) {
 						sreq_items_data = r.message;
             } else {
-							console.log("no get_sreq_items_data data");
+							//console.log("no get_sreq_items_data data");
             }
 
 				}  //end of call back
@@ -1076,3 +1124,19 @@ function get_po_default_values(){
 
 }
 //making po from sreq get_po_default_values
+function get_workflow(){
+	var workflow = "";
+	frappe.call({
+				method: "nhance.nhance.doctype.stock_requisition.stock_requisition.get_workflow",
+				args: {
+				},
+				async: false,
+				callback: function(r) {
+					if (r.message) {
+						workflow = r.message;
+						}
+
+				}  //end of call back
+		}); // end of frappe call
+		return workflow
+}
