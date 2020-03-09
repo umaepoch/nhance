@@ -615,3 +615,50 @@ frappe.ui.form.on("Purchase Receipt", "after_save", function(frm, cdt, cdn) {
         }
     })
 });
+
+
+//autofill revision in serialNo doctype
+frappe.ui.form.on("Purchase Receipt", "on_submit", function(frm, cdt, cdn) {
+	var parent = frm.doc.name;
+    console.log("parent", parent);
+    $.each(frm.doc.items, function(i, d) {
+        var item_code = d.item_code;
+        var revision_number = d.revision_number;
+        console.log("revision_number", revision_number);
+        var serial_no= d.serial_no;
+        console.log("serial_no", serial_no);
+        //var revision_number = d.revision_number;
+        //console.log("revision_number", revision_number);
+          var serial=fetch_revision_number(item_code,parent)
+           console.log("-----------------",serial);
+        
+    })
+});
+
+function fetch_revision_number(item_code,parent){
+    console.log("entered into fetch_revision_number function");
+    var revision_list = "";
+    frappe.call({
+        method: "nhance.api.get_purchase_revision_no",
+        args: {
+            
+            "item_code":item_code,
+            "parent":parent
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                revision_list = r.message;
+                console.log("checking--------------" + revision_list);
+                console.log("readings-----------" + JSON.stringify(r.message));
+               
+
+            }
+        }
+
+   });
+    console.log("revision_list", revision_list);
+    return revision_list
+}
+
+

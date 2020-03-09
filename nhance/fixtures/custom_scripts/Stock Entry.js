@@ -961,3 +961,61 @@ frappe.ui.form.on("Stock Entry Detail", {
 
 })
 
+
+//autofill revision in serial no doctype
+frappe.ui.form.on("Stock Entry", "on_submit", function(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    
+    var work_order = frm.doc.work_order;
+   
+    var docstatus = frm.doc.docstatus;
+   
+    var purpose = frm.doc.purpose;
+    console.log("purpose",purpose);
+    var parent=frm.doc.name;
+    var items = frm.doc.items;
+    
+    for (var i = 0; i < items.length; i++) {
+        var item_code = items[i]['item_code'];
+        var source_warehouse = items[i]['s_warehouse'];
+        console.log("source_warehouse.." + source_warehouse);
+        var target_warehouse = items[i]['t_warehouse'];
+    
+        if (purpose=="Manufacture" && source_warehouse==undefined ){
+        console.log("entered in source_warehouse ");
+        var serial_no= items[i]['serial_no'];
+        console.log("serial_no", serial_no);
+        
+          var serial=fetch_revision_number_stock_entry(item_code,parent)
+           console.log("-----------------",serial);
+        }
+   }
+});
+
+function fetch_revision_number_stock_entry(item_code,parent){
+    console.log("entered into fetch_revision_number function");
+    var revision_list = "";
+    frappe.call({
+        method: "nhance.api.get_revision_no_stock",
+        args: {
+            
+            "item_code":item_code,
+            "parent":parent
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                revision_list = r.message;
+                console.log("checking--------------" + revision_list);
+                console.log("readings-----------" + JSON.stringify(r.message));
+               
+
+            }
+        }
+
+   });
+    console.log("revision_list", revision_list);
+    return revision_list
+}
+
+
