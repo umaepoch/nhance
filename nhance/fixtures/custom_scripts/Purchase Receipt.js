@@ -601,7 +601,7 @@ function fetch_has_revision_number(batch_no) {
     return has_revision_number
 }
 
-
+/*
 frappe.ui.form.on("Purchase Receipt", "after_save", function(frm, cdt, cdn) {
 
     $.each(frm.doc.items, function(i, d) {
@@ -616,7 +616,7 @@ frappe.ui.form.on("Purchase Receipt", "after_save", function(frm, cdt, cdn) {
     })
 });
 
-
+*/
 //autofill revision in serialNo doctype
 frappe.ui.form.on("Purchase Receipt", "on_submit", function(frm, cdt, cdn) {
 	var parent = frm.doc.name;

@@ -742,7 +742,7 @@ function fetch_has_revision_number_serial(serial_no) {
     return has_revision_number_serial
 }
 
-
+/*
 frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
 
     $.each(frm.doc.items, function(i, d) {
@@ -755,7 +755,7 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
             df.read_only = 1;
         }
     })
-});
+});*/
 
 //Serial_no
 frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
