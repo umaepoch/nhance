@@ -7,8 +7,8 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "letter_head": "", 
- "modified": "2019-09-16 12:25:40.666068", 
+ "letter_head": "Common", 
+ "modified": "2020-03-11 10:19:41.307815", 
  "modified_by": "Administrator", 
  "module": "Nhance", 
  "name": "Purchase Order Workflow Actions", 
@@ -17,5 +17,12 @@
  "ref_doctype": "Purchase Order", 
  "report_name": "Purchase Order Workflow Actions", 
  "report_type": "Script Report", 
- "roles": []
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "Accounts Manager"
+  }
+ ]
 }
