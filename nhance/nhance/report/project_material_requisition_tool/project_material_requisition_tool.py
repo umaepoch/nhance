@@ -172,8 +172,8 @@ def get_sreq_sub_not_ordered(item_code,project_name):
       sreq_stock_qty += srq.stock_qty
       sreq_fulfilled_qty += srq.fulfilled_quantity#jyoti added
     for drft in po_draft_qty:
-	 if drft:
-	 	draft_qty += drft.stock_qty
+      if drft:
+        draft_qty += drft.stock_qty
     for submit in po_submitted_qty:
       if submit:
         submitted_qty += submit.stock_qty
@@ -399,4 +399,3 @@ def get_draft_po(item_code,project_name):
 			total_draft_qty += 0
 	#print "total_draft_qty---------------",total_draft_qty
 	return total_draft_qty
-

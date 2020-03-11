@@ -1840,7 +1840,7 @@ def get_merge_file_url(name,attached_to_name):
 	frappe.db.sql("""update `tabSerial No` set created_combined_pdf=1 where name=%s""",name)
 	frappe.db.commit()
 	frappe.msgprint(_("combined_pdf created-"))
-	return get_merge_file_url_list	
+	return get_merge_file_url_list
 #jyoti
 @frappe.whitelist()
 def get_combined_pdf(attached_to_name,attached_to_doctype):
@@ -1878,14 +1878,14 @@ def get_purchase_revision_no(item_code,parent):
     test=get_serial_no[0]['serial_no'].split('\n');
     #print "test----",test
     for serial_list in test:
-    	#print serial_list
-	revision=frappe.db.sql("""select revision_number from  `tabPurchase Receipt Item` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
-	#print "revision----",revision
-        revision_number=revision[0]['revision_number']
-        #print "revision_number----",revision_number				
-        frappe.set_value("Serial No",serial_list,"revision_number",revision_number);
-	
-	
+		#revision=frappe.db.sql("""select revision_number from  `tabPurchase Receipt Item` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+	    revision=frappe.db.sql("""select revision_number from  `tabPurchase Receipt Item` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+		#print "revision----",revision
+	    revision_number=revision[0]['revision_number']
+		#print "revision_number----",revision_number
+	    frappe.set_value("Serial No",serial_list,"revision_number",revision_number);
+
+
 
     return get_serial_no
 
@@ -1899,18 +1899,13 @@ def get_revision_no_stock(item_code,parent):
     test=get_stock_serial_no[0]['serial_no'].split('\n');
     #print "test----",test
     for serial_list in test:
-    	#print serial_list
-	revision=frappe.db.sql("""select revision_number from  `tabStock Entry Detail` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
-	#print "revision----",revision
-        revision_number=revision[0]['revision_number']
-        #print "revision_number----",revision_number				
-        frappe.set_value("Serial No",serial_list,"revision_number",revision_number);
-	
-	
+	    #print serial_list
+	    revision=frappe.db.sql("""select revision_number from  `tabStock Entry Detail` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+	    #print "revision----",revision
+	    revision_number=revision[0]['revision_number']
+	    #print "revision_number----",revision_number
+	    frappe.set_value("Serial No",serial_list,"revision_number",revision_number);
+
+
 
     return get_stock_serial_no
-
-
-
-
-
