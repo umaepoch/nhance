@@ -981,7 +981,7 @@ frappe.ui.form.on("Stock Entry", "on_submit", function(frm, cdt, cdn) {
         console.log("source_warehouse.." + source_warehouse);
         var target_warehouse = items[i]['t_warehouse'];
     
-        if (purpose=="Manufacture" && source_warehouse==undefined ){
+        if ((purpose=="Manufacture" ||purpose=="Material Receipt") && source_warehouse==undefined ){
         console.log("entered in source_warehouse ");
         var serial_no= items[i]['serial_no'];
         console.log("serial_no", serial_no);
