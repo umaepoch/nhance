@@ -1849,3 +1849,63 @@ def get_combined_pdf(attached_to_name,attached_to_doctype):
     #print "serial_no_list----",serial_no_list
     return get_combined_file_url
 
+
+#jyoti
+@frappe.whitelist()
+def get_purchse_receipt_revision_no(item_code,purchase_document_no):
+    get_revision = frappe.db.sql("""select revision_number from  `tabPurchase Receipt Item` where  item_code='"""+item_code+"""' and parent='"""+purchase_document_no+"""' """, as_dict=1)
+    #print "sales_record----",sales_record
+    #print "get_revision-----",get_revision
+    return get_revision
+
+
+#jyoti
+@frappe.whitelist()
+def get_stock_entry_revision_no(item_code,purchase_document_no):
+    get_stock_revision_no = frappe.db.sql("""select revision_number from  `tabStock Entry Detail` where  item_code='"""+item_code+"""' and parent='"""+purchase_document_no+"""' """, as_dict=1)
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    return get_stock_revision_no
+
+
+
+#jyoti
+@frappe.whitelist()
+def get_purchase_revision_no(item_code,parent):
+    get_serial_no=frappe.db.sql("""select serial_no from  `tabPurchase Receipt Item` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+    #print "get_serial_no----",get_serial_no
+    test=get_serial_no[0]['serial_no'].split('\n');
+    #print "test----",test
+    for serial_list in test:
+		#revision=frappe.db.sql("""select revision_number from  `tabPurchase Receipt Item` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+	    revision=frappe.db.sql("""select revision_number from  `tabPurchase Receipt Item` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+		#print "revision----",revision
+	    revision_number=revision[0]['revision_number']
+		#print "revision_number----",revision_number
+	    frappe.set_value("Serial No",serial_list,"revision_number",revision_number);
+
+
+
+    return get_serial_no
+
+
+
+#jyoti
+@frappe.whitelist()
+def get_revision_no_stock(item_code,parent):
+    get_stock_serial_no=frappe.db.sql("""select serial_no from  `tabStock Entry Detail` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+    #print "get_stock_serial_no----",get_stock_serial_no
+    test=get_stock_serial_no[0]['serial_no'].split('\n');
+    #print "test----",test
+    for serial_list in test:
+	    #print serial_list
+	    revision=frappe.db.sql("""select revision_number from  `tabStock Entry Detail` where  item_code='"""+item_code+"""' and parent='"""+parent+"""' """, as_dict=1)
+	    #print "revision----",revision
+	    revision_number=revision[0]['revision_number']
+	    #print "revision_number----",revision_number
+	    frappe.set_value("Serial No",serial_list,"revision_number",revision_number);
+
+
+
+    return get_stock_serial_no
+
