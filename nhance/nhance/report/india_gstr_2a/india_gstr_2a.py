@@ -834,11 +834,11 @@ def sales_account_tax(invoice_id):
 	account_tax = ""
 	if invoice_id:
 		account_tax = frappe.db.sql("""select
-							account_head,rate,item_wise_tax_detail
+							*
 						from
 							`tabPurchase Taxes and Charges`
 						where
-							parent = %s """
+							parent = %s order by idx"""
 						,(invoice_id),as_dict =1)
 	return account_tax
 def company_details(company_name):
@@ -919,9 +919,10 @@ def get_business_type_details(sales):
 		posting_date = posting_date.strftime('%d-%m-%Y')
 		sales_item = sales_item_details(invoice_id)
 		sales_account_head = ""
+		item_net_amount = 0.0
 		for item in sales_item:
 			item_code = item.item_code
-			item_net_amount = item.net_amount
+			item_net_amounts = item.net_amount
 			#print "item_code---------",item_code
 			tax_data = sales_tax(item_code,invoice_id)
 			igst_tax_rate = 0
@@ -952,13 +953,13 @@ def get_business_type_details(sales):
 					mapped_items_list = item_entry["mapped_items"]
 					new_list = []
 					for mapped_items in mapped_items_list:
-					  tax_rate_list.append(mapped_items["tax_rate"])
-					  data_rate = list(set(tax_rate_list))
+				    		tax_rate_list.append(mapped_items["tax_rate"])
+						data_rate = list(set(tax_rate_list))
 					if tax_rate in data_rate:
 					    	for items in mapped_items_list:
-							    if float(tax_rate) == float(items["tax_rate"]):
-							      qty_temp = items["net_amount"]
-							      items["net_amount"] = (qty_temp) + (net_amount)
+					   		 if float(tax_rate) == float(items["tax_rate"]):
+					    			qty_temp = items["net_amount"]
+								items["net_amount"] = (qty_temp) + (net_amount)
 					else :
 						new_list.append({
 									"tax_rate": tax_rate,
@@ -1044,6 +1045,13 @@ def get_business_type_details(sales):
 							elif "IGST" in account_head:
 								sales_tax_rate = details[0]
 								igst_tax_rate = details[0]
+						if invoice_tax_data.charge_type == "On Net Total":
+							item_net_amount = item_net_amounts
+						elif invoice_tax_data.charge_type == "On Previous Row Total":
+							row_id = invoice_tax_data.row_id
+							get_amount_tax = sales_tax_amount(row_id,invoice_id)
+							for amount in get_amount_tax:
+								item_net_amount = amount.total
 					if invoice_id in invoice_map:
 						item_entry = invoice_map[invoice_id]
 						#print "item_entry sales---------",item_entry
@@ -1312,17 +1320,17 @@ def get_hsn_uqc_list(sales):
 						item_tax_rate = data.tax_rate
 						integrated_tax_amount = net_amount * data.tax_rate/100
 				if key in invoice_map:
-				  item_entry = invoice_map[key]
-				  qty_temp = item_entry["net_amount"]
-				  qty_count = item_entry["qty"]
-				  integrated_tmp = item_entry["integrated_tax_amount_total"]
-				  central_tmp = item_entry["central_tax_amount_total"]
-				  state_tmp = item_entry["state_tax_amount_total"]
-				  item_entry["net_amount"] = (qty_temp) + (net_amount)
-				  item_entry["qty"] = (qty_count) + (qty)
-				  item_entry["integrated_tax_amount_total"] = (integrated_tmp) + (integrated_tax_amount)
-				  item_entry["central_tax_amount_total"] = (central_tmp) + (central_tax_amount)
-				  item_entry["state_tax_amount_total"] = (state_tmp) + (state_tax_amount)
+				    	item_entry = invoice_map[key]
+					qty_temp = item_entry["net_amount"]
+					qty_count = item_entry["qty"]
+					integrated_tmp = item_entry["integrated_tax_amount_total"]
+					central_tmp = item_entry["central_tax_amount_total"]
+					state_tmp = item_entry["state_tax_amount_total"]
+					item_entry["net_amount"] = (qty_temp) + (net_amount)
+					item_entry["qty"] = (qty_count) + (qty)
+					item_entry["integrated_tax_amount_total"] = (integrated_tmp) + (integrated_tax_amount)
+					item_entry["central_tax_amount_total"] = (central_tmp) + (central_tax_amount)
+					item_entry["state_tax_amount_total"] = (state_tmp) + (state_tax_amount)
 				else :
 
 					invoice_map[key] = frappe._dict({
@@ -1382,3 +1390,9 @@ def get_hsn_uqc_list(sales):
 							"item_code":item_code
 							})
 	return invoice_map
+def sales_tax_amount(row_id,invoice_id):
+	tax_amount = frappe.db.sql("""select total 
+				from `tabPurchase Taxes and Charges` 
+				where parent = %s AND idx = %s
+				""",(invoice_id,row_id), as_dict =1)
+	return tax_amount
