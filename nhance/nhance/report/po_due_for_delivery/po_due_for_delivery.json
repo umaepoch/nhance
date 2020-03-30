@@ -1,30 +1,29 @@
 {
- "add_total_row": 0, 
- "creation": "2020-02-28 14:28:09.086082", 
- "disable_prepared_report": 0, 
- "disabled": 0, 
- "docstatus": 0, 
- "doctype": "Report", 
- "idx": 0, 
- "is_standard": "Yes", 
- "letter_head": "Standard", 
- "modified": "2020-03-05 16:58:53.981608", 
- "modified_by": "Administrator", 
- "module": "Buying", 
- "name": "PO Due for Delivery", 
- "owner": "Administrator", 
- "prepared_report": 0, 
- "query": "select po.name, po.docstatus, po.status, po.supplier, po.supplier_name, po.per_received, po.transaction_date,sp.name \nfrom `tabPurchase Order` po,`tabSupplier` sp where po.supplier_name=sp.name and sp.supplier_group not in ('Transport','Services') and po.status NOT IN ('Draft', 'Cancelled') and po.per_received=0;", 
- "ref_doctype": "Purchase Order", 
- "report_name": "PO Due for Delivery", 
- "report_type": "Query Report", 
+ "add_total_row": 0,
+ "creation": "2020-03-17 17:30:31.007435",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2020-03-19 10:23:36.957769",
+ "modified_by": "Administrator",
+ "module": "Nhance",
+ "name": "Po due for delivery",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select\n    po.transaction_date Date,po.name Id, po.schedule_date Reqd_By_Date, po.status, po.supplier, poi.item_code,poi.qty,poi.received_qty,po.supplier_name, po.per_received,poi.project,sp.pch_notification_mail_id\nfrom \n`tabPurchase Order` po,`tabSupplier` sp,`tabPurchase Order Item` poi \nwhere po.supplier_name=sp.name and sp.supplier_group not in ('Transport','Services') and po.status =%(Status)s and po.per_received=%(Percent)s and \nsp.supplier_name=%(supplier)s and po.name=poi.parent",
+ "ref_doctype": "Purchase Order",
+ "report_name": "Po due for delivery",
+ "report_type": "Query Report",
  "roles": [
   {
    "role": "Stock User"
-  }, 
+  },
   {
    "role": "Purchase Manager"
-  }, 
+  },
   {
    "role": "Purchase User"
   }
