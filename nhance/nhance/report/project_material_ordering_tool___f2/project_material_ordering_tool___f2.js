@@ -605,7 +605,7 @@ function processQuantity(check_args, qty) {
 function fetch_conversion_factor(item_code, purchase_uom) {
     var cf = 0.0;
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fetch_conversion_factor",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.fetch_conversion_factor",
         args: {
             "parent": item_code,
             "uom": purchase_uom
@@ -624,7 +624,7 @@ function makePO(sreq_no, supplier, po_items) {
 
     //console.log("supplier----" + supplier);
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.make_purchase_orders",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.make_purchase_orders",
         args: {
             "sreq_no": sreq_no,
             "supplier": supplier,
@@ -641,7 +641,7 @@ function makePO(sreq_no, supplier, po_items) {
 
 function makeMaterialTransfer(sreq_no, mt_list) {
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.make_stock_entry",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.make_stock_entry",
         args: {
             "sreq_no": sreq_no,
             "mt_list": mt_list
@@ -680,7 +680,7 @@ function getItemValuationRate(item_code) {
 function getItemLastPurchasePrice(item_code, po_uom) {
     var lastPurchasePrice = 0.0;
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fetch_last_purchase_price",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.fetch_last_purchase_price",
         args: {
             "item_code": item_code,
             "uom": po_uom
@@ -698,7 +698,7 @@ function getItemLastPurchasePrice(item_code, po_uom) {
 function getItemValuationRateFromStockBalance(item_code) {
     var rate = 0.0;
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fetch_stock_balance_valuation_rate",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.fetch_stock_balance_valuation_rate",
         args: {
             "item_code": item_code
         },
@@ -716,7 +716,7 @@ function getItemValuationRateFromStockBalance(item_code) {
 function getItemValuationRateFromPriceList(item_code, price_list_by) {
     var rate = 0.0;
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fetch_valuation_rate_from_item_price",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.fetch_valuation_rate_from_item_price",
         args: {
             "item_code": item_code,
             "price_list": price_list_by
@@ -734,7 +734,7 @@ function getItemValuationRateFromPriceList(item_code, price_list_by) {
 function getItemPriceBasedOn() {
     var price_details = {};
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fetch_item_price_settings_details",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.fetch_item_price_settings_details",
         async: false,
         callback: function(r) {
             //console.log("fetch_item_price_settings_details::" + JSON.stringify(r.message));
@@ -772,7 +772,7 @@ function getReserveWarehouse(project) {
 function getReportData(project_filter, swh_filter) {
     var reportData = [];
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.get_report_data",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.get_report_data",
         args: {
             "project_filter": project_filter,
             "swh_filter": swh_filter
@@ -839,7 +839,7 @@ function getPurchaseUom(item_code) {
 function get_supplier_field(doc_name) {
     var reportData = 0;
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.fields",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.fields",
         args: {
             "doc_name": doc_name
         },
@@ -874,7 +874,7 @@ function validate_qty(sreq_no, supplier_items, check_args) {
     console.log("data-----------------" + JSON.stringify(data));
     //data.push({"sreq_no":sreq_no,"check_args":check_args});
     frappe.call({
-        method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.check_and_update",
+        method: "nhance.nhance.report.project_material_ordering_tool___f2.project_material_ordering_tool___f2.check_and_update",
         args: {
             "data": data,
             "sreq_no": sreq_no

@@ -556,7 +556,9 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 	flag = ""
 	tax_template = ""
 	items_List = json.loads(po_items)
-	#print "items_List-----------------", items_List
+	supplier_address_details = frappe.db.sql("""select * from `tabAddress` a , `tabDynamic Link` dl where dl.link_name = %s and dl.parent = a.name""",supplier,as_dict=1)
+
+	#print "supplier_address_details------------",supplier_address_details
 	creation_Date = datetime.datetime.now()
 	company = frappe.db.get_single_value("Global Defaults", "default_company")
 	details = frappe.get_meta("Purchase Order").get("fields")
@@ -585,8 +587,16 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				if defaults.default:
 					supplier = defaults.default
 					default_address = fetch_supplier_address(supplier)
+					#print "supplier_address_details-----------",supplier_address_details
+					if supplier_address_details:
+						for add in supplier_address_details:
+								if add.address_type == "Billing":
+									add_ress_data = str(add.address_line1)+'<br>'+str(add.address_line2)+'<br>'+str(add.city)+'<br>'+str(add.state)+'<br>'+str(add.pincode)+'<br>'+str(add.country)
+									outerJson_Transfer["supplier_address"] = add.parent
+									outerJson_Transfer['supplier_gstin'] = add.gstin
+									outerJson_Transfer['address_display'] = add_ress_data
 					supplier_tax = frappe.get_all("Supplier", {"supplier_name":supplier}, "pch_tax_template")
-					#print "supplier_tax------------",supplier_tax
+
 					outerJson_Transfer['supplier'] = defaults.default
 					for suppliers in supplier_tax:
 						if suppliers.pch_tax_template:
@@ -594,10 +604,10 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 							outerJson_Transfer['taxes_and_charges'] = tax_template
 
 					if default_address:
-						outerJson_Transfer["supplier_address"] = default_address[0]['name']
 						outerJson_Transfer["tc_name"] = default_address[0]['pch_terms']
 						if default_address[0]['pch_terms']:
 							terms_and_conditios = frappe.get_doc("Terms and Conditions", default_address[0]['pch_terms'])
+							#print "terms and conditinos-------------",terms_and_conditios
 							if terms_and_conditios.terms:
 								outerJson_Transfer["terms"] = terms_and_conditios.terms
 					else:
@@ -632,8 +642,16 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 					#supplier_data = frappe.get_doc("Supplier", {"supplier_name":supplier}, "pch_tax_template")
 					supplier_data = frappe.get_all("Supplier", {"supplier_name":supplier}, "pch_tax_template")
 					#print "supplier_data-----------",supplier_data
+					#print "supplier_address_details-----------",supplier_address_details
+					if supplier_address_details:
+						for add in supplier_address_details:
+								if add.address_type == "Billing":
+									add_ress_data = str(add.address_line1)+'<br>'+str(add.address_line2)+'<br>'+str(add.city)+'<br>'+str(add.state)+'<br>'+str(add.pincode)+'<br>'+str(add.country)
+									outerJson_Transfer["supplier_address"] = add.parent
+									outerJson_Transfer['supplier_gstin'] = add.gstin
+									outerJson_Transfer['address_display'] = add_ress_data
 					if address:
-						outerJson_Transfer["supplier_address"] = address[0]['name']
+
 						outerJson_Transfer["tc_name"] = address[0]['pch_terms']
 						terms_and_conditios = ""
 						if address[0]['pch_terms'] is not None:
@@ -743,6 +761,9 @@ def make_purchase_orders(sreq_no,supplier,po_items):
 				#print "supplier_address Default---", defaults.default
 				if defaults.default:
 					outerJson_Transfer['supplier_address'] = defaults.default
+					supplier_address_details = frappe.get_list("Address",filters={"name":defaults.default},fields=["*"])
+					#outerJson_Transfer['supplier_gstin'] = supplier_address_details[0]["gstin"]
+					#outerJson_Transfer['address_display'] = supplier_address_details[0]["address_line1"]+'<br>'+supplier_address_details[0]["address_line2"]+'<br>'+supplier_address_details[0]["city"]+'<br>'+supplier_address_details[0]["state"]+'<br>'+supplier_address_details[0]["pincode"]+'<br>'+supplier_address_details[0]["country"]
 
 			if defaults.fieldname == "customer_contact_person":
 				#print "customer_contact_person Default---", defaults.default
@@ -843,7 +864,7 @@ def get_report_data(project_filter,swh_filter):
 	for rows in sum_datas:
 		if project_filter:
 			project_warehouse =  frappe.db.get_value('Project', project_filter, 'project_warehouse')
-			reserve_warehouse =  frappe.db.get_value('Project', project_filter, 'reserve_warehouse')
+	    		reserve_warehouse =  frappe.db.get_value('Project', project_filter, 'reserve_warehouse')
 			warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
 			reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
 			qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
