@@ -1044,4 +1044,3 @@ def check_and_update(data,sreq_no):
 def getQtyAllowed(stockRequisitionID):
 	allowed_qty = frappe.db.sql("""select item_code,qty_allowed_to_be_order from `tabStock Requisition Item` where parent = %s """,stockRequisitionID, as_dict =1)
 	return allowed_qty
-
