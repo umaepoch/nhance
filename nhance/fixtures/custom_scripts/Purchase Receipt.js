@@ -660,5 +660,98 @@ function fetch_revision_number(item_code,parent){
     console.log("revision_list", revision_list);
     return revision_list
 }
+//To check Item has has serial or batch number
+frappe.ui.form.on("Purchase Receipt Item", "item_code", function(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    
+    var items = frm.doc.items;
+    // //console.log("items....."+JSON.stringify(items));
+    var flag=0;
+    for (var i = 0; i < items.length; i++) {
+        var item_code = items[i]['item_code'];
+        
+        var HasSerialNumber = null;
+        HasSerialNumber = fetch_has_serial_no(item_code);
+        console.log("HasSerialNumber", HasSerialNumber);
+        var HasBatchNumber = null;
+        HasBatchNumber = fetch_has_batch_no(item_code);
+        console.log("HasBatchNumber", HasBatchNumber);
+       
+
+        if(HasBatchNumber==0 && HasSerialNumber==0) {
+         console.log("no batch no");
+	flag+=1;
+	console.log(flag);
+	if(flag>1){
+	    console.log("falg is greater than 1")
+       cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", false)
+	}
+       // cur_frm.refresh_field("items")
+    }
+    else if(HasBatchNumber==1 || HasSerialNumber==1) {
+        console.log("has batch no");
+	flag=0;
+	console.log("flag",flag);
+	if(flag===0){
+         cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
+	}
+    }
+
+ 
+       
+    }
+});
+function fetch_has_serial_no(item_code) {
+    console.log("entered into function");
+    var has_serial_no = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Item',
+            'fieldname': ["has_serial_no", "item_code"],
+
+            'filters': {
+                item_code: item_code,
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                has_serial_no = r.message.has_serial_no;
+                console.log(has_serial_no);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+        }
+    });
+    return has_serial_no
+}
+
+
+function fetch_has_batch_no(item_code) {
+    console.log("entered into has_batch_no function");
+    var has_batch_no = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Item',
+            'fieldname': ["has_batch_no", "item_code"],
+
+            'filters': {
+                item_code: item_code,
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                has_batch_no = r.message.has_batch_no;
+                console.log(has_batch_no);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+        }
+    });
+    return has_batch_no
+}
 
 
