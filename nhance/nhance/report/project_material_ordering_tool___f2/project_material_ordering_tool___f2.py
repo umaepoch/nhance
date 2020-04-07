@@ -863,11 +863,11 @@ def get_report_data(project_filter,swh_filter):
 						])
 	for rows in sum_datas:
 		if project_filter:
-			project_warehouse =  frappe.db.get_value('Project', project_filter, 'project_warehouse')
-	    		reserve_warehouse =  frappe.db.get_value('Project', project_filter, 'reserve_warehouse')
-			warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
-			reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
-			qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
+		    project_warehouse =  frappe.db.get_value('Project', project_filter, 'project_warehouse')
+		    reserve_warehouse =  frappe.db.get_value('Project', project_filter, 'reserve_warehouse')
+		    warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
+		    reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
+		    qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
 
 			rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
 
@@ -1044,3 +1044,4 @@ def check_and_update(data,sreq_no):
 def getQtyAllowed(stockRequisitionID):
 	allowed_qty = frappe.db.sql("""select item_code,qty_allowed_to_be_order from `tabStock Requisition Item` where parent = %s """,stockRequisitionID, as_dict =1)
 	return allowed_qty
+
