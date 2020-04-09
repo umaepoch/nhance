@@ -986,7 +986,7 @@ frappe.ui.form.on("Stock Entry", "on_submit", function(frm, cdt, cdn) {
         var HasBatchNumber = null;
         HasBatchNumber = fetch_has_batch_no(item_code);
         console.log("HasBatchNumber", HasBatchNumber);
-        if ((purpose=="Manufacture" ||purpose=="Material Receipt") && source_warehouse==undefined && HasBatchNumber!=0 && HasSerialNumber!=0){
+        if ((purpose=="Manufacture" ||purpose=="Material Receipt") && source_warehouse==undefined && HasSerialNumber==1)){
         console.log("entered in if block after submit source_warehouse ");
         var serial_no= items[i]['serial_no'];
         console.log("serial_no", serial_no);

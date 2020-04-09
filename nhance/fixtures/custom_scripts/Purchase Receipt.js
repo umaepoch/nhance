@@ -635,7 +635,7 @@ frappe.ui.form.on("Purchase Receipt", "on_submit", function(frm, cdt, cdn) {
         var HasBatchNumber = null;
         HasBatchNumber = fetch_has_batch_no(item_code);
         console.log("HasBatchNumber", HasBatchNumber);
-       if(HasBatchNumber!=0 && HasSerialNumber!=0){
+       if(HasSerialNumber==1 ){
            console.log("entered in if error block");
           var serial=fetch_revision_number(item_code,parent)
            console.log("-----------------",serial);
