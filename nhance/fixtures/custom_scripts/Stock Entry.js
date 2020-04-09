@@ -783,6 +783,8 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
         var Hs = null;
         Hs = fetch_has_serial_no(item_code);
         //console.log("Hs", Hs);
+	if(purpose == "Manufacture"){
+        console.log("work order is given");
         var work_order_update = work_order.concat("-");
         //console.log("work_order_update..", work_order_update);
         var duplicate_serial = item_code.concat("-").concat(work_order).concat("-");
@@ -853,8 +855,13 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
         } else {
 
             //console.log("entered in else");
-        }
-    }
+        	}
+	}//end of manufacture block
+	else{
+	console.log("type is other than manufacture");
+
+}//end of else manufacture block
+    }//end of for loop
 });
 
 function fetch_has_serial_no(arg2) {
@@ -986,7 +993,7 @@ frappe.ui.form.on("Stock Entry", "on_submit", function(frm, cdt, cdn) {
         var HasBatchNumber = null;
         HasBatchNumber = fetch_has_batch_no(item_code);
         console.log("HasBatchNumber", HasBatchNumber);
-        if ((purpose=="Manufacture" ||purpose=="Material Receipt") && source_warehouse==undefined && HasSerialNumber==1)){
+        if ((purpose=="Manufacture" ||purpose=="Material Receipt") && source_warehouse==undefined && HasSerialNumber==1){
         console.log("entered in if block after submit source_warehouse ");
         var serial_no= items[i]['serial_no'];
         console.log("serial_no", serial_no);
