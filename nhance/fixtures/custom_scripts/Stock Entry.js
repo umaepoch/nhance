@@ -334,7 +334,7 @@ function get_rarb_items_detail(warehouse,pch_rarb_location_src){
 //rarb location end here
 
 //make pick list button and child table of pick list********************************************************
-/*
+
 frappe.ui.form.on("Stock Entry", {
     refresh: function(frm, cdt, cdn) {
         if (cur_frm.doc.__islocal) {
@@ -402,8 +402,11 @@ frappe.ui.form.on("Stock Entry", {
 
 
 		                }
-		                
-		                //console.log("serial_no_list---------2------------" + serial_no_list);
+		                /*for(var i=0; i < serial_no_list.length; i++) {
+		                	var comma = /,/;
+		                	 serial_no_list[i] = serial_no_list[i].replace(comma, '\n');
+		                	}*/
+		                ////console.log("serial_no_list---------2------------" + serial_no_list);
 		                frappe.model.set_value(child.doctype, child.name, "serial_numbers", serial_no_list.toString());
 				 frappe.model.set_value(child.doctype, child.name, "picked_qty", serial_no.length);
 		            }
@@ -540,8 +543,6 @@ function get_rarb_warehouses(warehouse){
     return supplier_criticality;
 }
 //end of make pick list button and child table of pick list
-
-*/
 
 
 //revision number
@@ -782,6 +783,8 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
         var Hs = null;
         Hs = fetch_has_serial_no(item_code);
         //console.log("Hs", Hs);
+	if(purpose == "Manufacture"){
+        console.log("work order is given");
         var work_order_update = work_order.concat("-");
         //console.log("work_order_update..", work_order_update);
         var duplicate_serial = item_code.concat("-").concat(work_order).concat("-");
@@ -800,7 +803,7 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
         }
         if (target_warehouse != undefined && Hs == 1 && docstatus != 1 && purpose == "Manufacture") {
 
-
+	    cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
             //console.log("entered in if");
 
             var test = duplicate_serial_no[0].serial_no;
@@ -852,8 +855,13 @@ frappe.ui.form.on("Stock Entry", "after_save", function(frm, cdt, cdn) {
         } else {
 
             //console.log("entered in else");
-        }
-    }
+        	}
+	}//end of manufacture block
+	else{
+	console.log("type is other than manufacture");
+
+}//end of else manufacture block
+    }//end of for loop
 });
 
 function fetch_has_serial_no(arg2) {
@@ -979,9 +987,14 @@ frappe.ui.form.on("Stock Entry", "on_submit", function(frm, cdt, cdn) {
         var source_warehouse = items[i]['s_warehouse'];
         console.log("source_warehouse.." + source_warehouse);
         var target_warehouse = items[i]['t_warehouse'];
-    
-        if ((purpose=="Manufacture" ||purpose=="Material Receipt") && source_warehouse==undefined ){
-        console.log("entered in source_warehouse ");
+    	var HasSerialNumber = null;
+        HasSerialNumber = fetch_has_serial_no(item_code);
+        console.log("HasSerialNumber", HasSerialNumber);
+        var HasBatchNumber = null;
+        HasBatchNumber = fetch_has_batch_no(item_code);
+        console.log("HasBatchNumber", HasBatchNumber);
+        if ((purpose=="Manufacture" ||purpose=="Material Receipt") && source_warehouse==undefined && HasSerialNumber==1){
+        console.log("entered in if block after submit source_warehouse ");
         var serial_no= items[i]['serial_no'];
         console.log("serial_no", serial_no);
         
@@ -991,74 +1004,6 @@ frappe.ui.form.on("Stock Entry", "on_submit", function(frm, cdt, cdn) {
    }
 });
 
-function fetch_revision_number_stock_entry(item_code,parent){
-    console.log("entered into fetch_revision_number function");
-    var revision_list = "";
-    frappe.call({
-        method: "nhance.api.get_revision_no_stock",
-        args: {
-            
-            "item_code":item_code,
-            "parent":parent
-        },
-        async: false,
-        callback: function(r) {
-            if (r.message) {
-                revision_list = r.message;
-                console.log("checking--------------" + revision_list);
-                console.log("readings-----------" + JSON.stringify(r.message));
-               
-
-            }
-        }
-
-   });
-    console.log("revision_list", revision_list);
-    return revision_list
-}
-
-
-//To check item has serial or batch number
-frappe.ui.form.on("Stock Entry Detail", "item_code", function(frm, cdt, cdn) {
-    var d = locals[cdt][cdn];
-    
-    var items = frm.doc.items;
-    // //console.log("items....."+JSON.stringify(items));
-    var flag=0;
-    for (var i = 0; i < items.length; i++) {
-        var item_code = items[i]['item_code'];
-        
-        var HasSerialNumber = null;
-        HasSerialNumber = fetch_has_serial_no(item_code);
-        console.log("HasSerialNumber", HasSerialNumber);
-        var HasBatchNumber = null;
-        HasBatchNumber = fetch_has_batch_no(item_code);
-        console.log("HasBatchNumber", HasBatchNumber);
-       
-
-        if(HasBatchNumber==0 && HasSerialNumber==0) {
-         console.log("no batch no");
-	flag+=1;
-	console.log(flag);
-	if(flag>1){
-	    console.log("falg is greater than 1")
-       cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", false)
-	}
-       // cur_frm.refresh_field("items")
-    }
-    else if(HasBatchNumber==1 || HasSerialNumber==1) {
-        console.log("has batch no");
-	flag=0;
-	console.log("flag",flag);
-	if(flag===0){
-         cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
-	}
-    }
-
- 
-       
-    }
-});
 function fetch_has_serial_no(item_code) {
     console.log("entered into function");
     var has_serial_no = "";
@@ -1112,4 +1057,121 @@ function fetch_has_batch_no(item_code) {
     return has_batch_no
 }
 
+function fetch_revision_number_stock_entry(item_code,parent){
+    console.log("entered into fetch_revision_number function");
+    var revision_list = "";
+    frappe.call({
+        method: "nhance.api.get_revision_no_stock",
+        args: {
+            
+            "item_code":item_code,
+            "parent":parent
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                revision_list = r.message;
+                console.log("checking--------------" + revision_list);
+                console.log("readings-----------" + JSON.stringify(r.message));
+               
 
+            }
+        }
+
+   });
+    console.log("revision_list", revision_list);
+    return revision_list
+}
+
+//To check item has serial or batch number
+frappe.ui.form.on("Stock Entry", "before_save", function(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    //console.log("Entered------" + d);
+    ////console.log(".........."+JSON.stringify(d));
+    var work_order = frm.doc.work_order;
+    //console.log("work_order...." + work_order);
+    var docstatus = frm.doc.docstatus;
+    //console.log("docstatus...." + docstatus);
+    var purpose = frm.doc.purpose;
+    //console.log("purpose...." + purpose);
+    var items = frm.doc.items;
+    // //console.log("items....."+JSON.stringify(items));
+    for (var i = 0; i < items.length; i++) {
+        var item_code = items[i]['item_code'];
+        var source_warehouse = items[i]['s_warehouse'];
+        //console.log("source_warehouse.." + source_warehouse);
+        var target_warehouse = items[i]['t_warehouse'];
+        //console.log("target_warehouse.." + target_warehouse);
+        var serial_no = items[i]['serial_no'];
+        //console.log("serial_no.." + serial_no);
+        var child_received_qty = items[i]['qty'];
+        //console.log("child_received_qty", child_received_qty);
+        var HasSerialNumber = null;
+        HasSerialNumber = fetch_has_serial_no(item_code);
+        console.log("HasSerialNumber", HasSerialNumber);
+	var HasBatchNumber = null;
+        HasBatchNumber = fetch_has_batch_no(item_code);
+        console.log("HasBatchNumber", HasBatchNumber);
+	if(HasSerialNumber == 1 ||HasBatchNumber==1){
+        console.log("item has batch or serial number make feild mandondatory");
+   	cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
+        }
+	else{
+	console.log("item has no  batch or no serial number don't make feild mandondatory");
+
+}//end of else manufacture block
+    }//end of for loop
+});
+
+function fetch_has_serial_no(item_code) {
+    console.log("entered into function");
+    var has_serial_no = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Item',
+            'fieldname': ["has_serial_no", "item_code"],
+
+            'filters': {
+                item_code: item_code,
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                has_serial_no = r.message.has_serial_no;
+                console.log(has_serial_no);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+        }
+    });
+    return has_serial_no
+}
+
+
+function fetch_has_batch_no(item_code) {
+    console.log("entered into has_batch_no function");
+    var has_batch_no = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Item',
+            'fieldname': ["has_batch_no", "item_code"],
+
+            'filters': {
+                item_code: item_code,
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                has_batch_no = r.message.has_batch_no;
+                console.log(has_batch_no);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+        }
+    });
+    return has_batch_no
+}

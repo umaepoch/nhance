@@ -629,79 +629,22 @@ frappe.ui.form.on("Purchase Receipt", "on_submit", function(frm, cdt, cdn) {
         console.log("serial_no", serial_no);
         //var revision_number = d.revision_number;
         //console.log("revision_number", revision_number);
-          var serial=fetch_revision_number(item_code,parent)
-           console.log("-----------------",serial);
-        
-    })
-});
-
-function fetch_revision_number(item_code,parent){
-    console.log("entered into fetch_revision_number function");
-    var revision_list = "";
-    frappe.call({
-        method: "nhance.api.get_purchase_revision_no",
-        args: {
-            
-            "item_code":item_code,
-            "parent":parent
-        },
-        async: false,
-        callback: function(r) {
-            if (r.message) {
-                revision_list = r.message;
-                console.log("checking--------------" + revision_list);
-                console.log("readings-----------" + JSON.stringify(r.message));
-               
-
-            }
-        }
-
-   });
-    console.log("revision_list", revision_list);
-    return revision_list
-}
-
-//To check Item has has serial or batch number
-frappe.ui.form.on("Purchase Receipt Item", "item_code", function(frm, cdt, cdn) {
-    var d = locals[cdt][cdn];
-    
-    var items = frm.doc.items;
-    // //console.log("items....."+JSON.stringify(items));
-    var flag=0;
-    for (var i = 0; i < items.length; i++) {
-        var item_code = items[i]['item_code'];
-        
-        var HasSerialNumber = null;
+	var HasSerialNumber = null;
         HasSerialNumber = fetch_has_serial_no(item_code);
         console.log("HasSerialNumber", HasSerialNumber);
         var HasBatchNumber = null;
         HasBatchNumber = fetch_has_batch_no(item_code);
         console.log("HasBatchNumber", HasBatchNumber);
-       
-
-        if(HasBatchNumber==0 && HasSerialNumber==0) {
-         console.log("no batch no");
-	flag+=1;
-	console.log(flag);
-	if(flag>1){
-	    console.log("falg is greater than 1")
-       cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", false)
-	}
-       // cur_frm.refresh_field("items")
-    }
-    else if(HasBatchNumber==1 || HasSerialNumber==1) {
-        console.log("has batch no");
-	flag=0;
-	console.log("flag",flag);
-	if(flag===0){
-         cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
-	}
-    }
-
- 
-       
-    }
+       if(HasSerialNumber==1 ){
+           console.log("entered in if error block");
+          var serial=fetch_revision_number(item_code,parent)
+           console.log("-----------------",serial);
+        }
+    })
 });
+
+
+
 function fetch_has_serial_no(item_code) {
     console.log("entered into function");
     var has_serial_no = "";
@@ -754,5 +697,121 @@ function fetch_has_batch_no(item_code) {
     });
     return has_batch_no
 }
+function fetch_revision_number(item_code,parent){
+    console.log("entered into fetch_revision_number function");
+    var revision_list = "";
+    frappe.call({
+        method: "nhance.api.get_purchase_revision_no",
+        args: {
+            
+            "item_code":item_code,
+            "parent":parent
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                revision_list = r.message;
+                console.log("checking--------------" + revision_list);
+                console.log("readings-----------" + JSON.stringify(r.message));
+               
+
+            }
+        }
+
+   });
+    console.log("revision_list", revision_list);
+    return revision_list
+}
+
+//To check Item has has serial or batch number
+frappe.ui.form.on("Purchase Receipt", "before_save", function(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    //console.log("Entered------" + d);
+    ////console.log(".........."+JSON.stringify(d));
+    var work_order = frm.doc.work_order;
+    //console.log("work_order...." + work_order);
+    var docstatus = frm.doc.docstatus;
+    //console.log("docstatus...." + docstatus);
+    var purpose = frm.doc.purpose;
+    //console.log("purpose...." + purpose);
+    var items = frm.doc.items;
+    // //console.log("items....."+JSON.stringify(items));
+    for (var i = 0; i < items.length; i++) {
+        var item_code = items[i]['item_code'];
+        var source_warehouse = items[i]['s_warehouse'];
+        //console.log("source_warehouse.." + source_warehouse);
+        var target_warehouse = items[i]['t_warehouse'];
+        //console.log("target_warehouse.." + target_warehouse);
+        var serial_no = items[i]['serial_no'];
+        //console.log("serial_no.." + serial_no);
+        var child_received_qty = items[i]['qty'];
+        //console.log("child_received_qty", child_received_qty);
+        var HasSerialNumber = null;
+        HasSerialNumber = fetch_has_serial_no(item_code);
+        console.log("HasSerialNumber", HasSerialNumber);
+	var HasBatchNumber = null;
+        HasBatchNumber = fetch_has_batch_no(item_code);
+        console.log("HasBatchNumber", HasBatchNumber);
+	if(HasSerialNumber == 1 ||HasBatchNumber==1){
+        console.log("item has batch or serial number make feild mandondatory");
+   	cur_frm.fields_dict.items.grid.toggle_reqd("revision_number", true)
+        }
+	else{
+	console.log("item has no batch or no serial number not  make feild mandondatory");
+
+}//end of else manufacture block
+    }//end of for loop
+});
+
+function fetch_has_serial_no(item_code) {
+    console.log("entered into function");
+    var has_serial_no = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Item',
+            'fieldname': ["has_serial_no", "item_code"],
+
+            'filters': {
+                item_code: item_code,
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                has_serial_no = r.message.has_serial_no;
+                console.log(has_serial_no);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+        }
+    });
+    return has_serial_no
+}
 
 
+function fetch_has_batch_no(item_code) {
+    console.log("entered into has_batch_no function");
+    var has_batch_no = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Item',
+            'fieldname': ["has_batch_no", "item_code"],
+
+            'filters': {
+                item_code: item_code,
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                has_batch_no = r.message.has_batch_no;
+                console.log(has_batch_no);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+        }
+    });
+    return has_batch_no
+}
