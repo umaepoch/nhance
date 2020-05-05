@@ -20,11 +20,10 @@ def make_packing_item_doc(packing_items_data,si_name):
 	detailed_packing_info_doc_name = packing_items_data[0]["parent"]
 
 	for packing_item_data in packing_items_data:
-		packing_id_list = get_packing_id_list(packing_item_data["parent_item"],packing_item_data["packing_item"],packing_item_data["qty"])
+		packing_id_list = []
 		packing_item_qty = packing_item_data["qty"]
-		for packing_id in packing_id_list: #change it to range of packing_id list
+		for i in range(packing_item_qty): #change it to range of packing_id list
 			pit = frappe.new_doc("Packed Item Custom")
-			pit.packing_id = packing_id
 			pit.parent_item = packing_item_data["parent_item"]
 			pit.voucher_type = "Sales Invoice"
 			pit.voucher_no = si_name
@@ -32,6 +31,7 @@ def make_packing_item_doc(packing_items_data,si_name):
 			pit.qty = 1 #one one each as of now later it will change ac to packing item config
 			pit.packing_item_group = packing_item_data["item_group"]
 			pit.save(ignore_permissions=True)
+			packing_id_list.append(pit.name)
 		packed_item_id_json[packing_item_data["packing_item"]] = packing_id_list
 	update_packingId_in_detailedPackingInfo(detailed_packing_info_doc_name,packed_item_id_json)
 	return "packing item transactions have been created"
@@ -87,9 +87,6 @@ def make_packed_box_doc(packing_boxes_data,packing_items_data,si_name):
 
 		pbc.save(ignore_permissions=True)
 
-
-
-
 def get_packing_id_list(parent_item,packing_item,packing_item_qty):
 	packing_id_list=[]
 	parent_child_item_name = parent_item + ID_CHARECTER + packing_item + ID_CHARECTER
@@ -137,27 +134,3 @@ def update_packingId_in_detailedPackingInfo(doc_name,packed_item_id_json):
 					item_row.packing_id = "\n".join(packing_item_id_list)
 	detailed_packing_info_doc.save()
 
-def update_rfid_tag_details_child_doc( doc_type,doc_no,matched_rfid_tag_details_name,rfid_tag_position ):
-	is_child_doc_updation_complete = 0
-	rfid_tag_details_doc = frappe.get_doc( RFID_DOC_DETAILS_LABEL,matched_rfid_tag_details_name )
-	is_last_row_ed_updated = False
-	last_row_idx = 0 	# lastrow
-	for roww in getattr(rfid_tag_details_doc,RFID_DOC_DETAILS_CHILD_NAME):
-		last_row_idx = last_row_idx +1
-
-	for roww in getattr(rfid_tag_details_doc,RFID_DOC_DETAILS_CHILD_NAME):
-		if roww.idx == last_row_idx:
-			roww.pch_rfid_association_end_date = utils.now()
-			rfid_tag_details_doc.save()
-			is_last_row_ed_updated = True
-
-	if is_last_row_ed_updated == True:
-		row = rfid_tag_details_doc.append(RFID_DOC_DETAILS_CHILD_NAME,{})
-		row.pch_rfid_association_start_date = utils.now()
-		row.tag_association = rfid_tag_position
-		row.pch_rfid_docid_associated_with = doc_no
-		row.pch_rfid_doctype_associated_with = doc_type
-		row.idx = last_row_idx+1  #new rows
-		rfid_tag_details_doc.save()
-		is_child_doc_updation_complete = 1
-	return is_child_doc_updation_complete
