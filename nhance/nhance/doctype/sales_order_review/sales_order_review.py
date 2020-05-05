@@ -233,19 +233,19 @@ def get_check_before_submit(doctype,name):
 	role_creator = get_roles(frappe.session.user,creator)
 	role_reviewer = get_roles(frappe.session.user,reviewer)
 	role_overrider = get_roles(frappe.session.user,overrider)
-
-	if role_reviewer is None:
-		if role_overrider is None:
-			if role_creator:
-				check_for_sales_review = sales_order_review_values(name,sales_order)
-				if check_for_sales_review == True:
-					frappe.throw("Something changed in Sales Order Review, Please visit sales order review...")
+	if len(review_details) != 0:
+		if role_reviewer is None:
+			if role_overrider is None:
+				if role_creator:
+					check_for_sales_review = sales_order_review_values(name,sales_order)
+					if check_for_sales_review == True:
+						frappe.throw("Something changed in Sales Order Review, Please visit sales order review...")
+				else:
+					frappe.throw(" Access Rights Error! You do not have permission to perform this operation!")
 			else:
-				frappe.throw(" Access Rights Error! You do not have permission to perform this operation!")
+				pass
 		else:
-			pass
-	else:
-		frappe.throw(" Access Rights Error! You do not have permission to perform this operation!")
+			frappe.throw(" Access Rights Error! You do not have permission to perform this operation!")
 
 @frappe.whitelist()
 def create_sales_order(sales_review,name,sales_order):
@@ -752,7 +752,6 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				target.order_type = order_type
 			else:
 				target.order_type = source.order_type
-
 			#if source != "" and source != None:
 				#target.source = source
 			#else:
@@ -901,7 +900,8 @@ def mapped_sales_order(source_name, target_doc=None, ignore_permissions=False):
 				})
 				doc.append("taxes",rows)
 			doc.save()
-		frappe.msgprint(doclist.name+" has been created")
+		doc_refres = frappe.get_doc("Sales Order Review",source_name)
+		frappe.msgprint("Sales Order "+frappe.bold(doclist.name)+" has been created to replace "+frappe.bold(doc_refres.sales_order)+" as a result of the Sales order Review Process.")
 		return doclist.name
 	else:
 		frappe.msgprint(validate_sales_order[0].name+" Already accepted for this review")

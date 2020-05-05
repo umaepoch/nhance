@@ -1,11 +1,12 @@
 frappe.ui.form.on("Sales Order", "refresh", function(frm) {
-    if(cur_frm.doc.__islocal){
-	 cur_frm.set_value("so_reviewed","");
-	}
     var role = "SO Reviewer";
     var role_creator = "SO Creator";
     var check_role = get_roles(frappe.session.user, role);
     var check_role_creator = get_roles(frappe.session.user, role_creator);
+    var so_doctype = cur_frm.doc.doctype;
+    var so_document_review = get_review_templates(so_doctype);
+    
+   if(so_document_review.length != 0){
     if (cur_frm.doc.docstatus == 0) {
         frm.add_custom_button(__("Make Sales Order Review"), function() {
             if (check_role_creator != "" && check_role_creator != undefined) {
@@ -24,6 +25,7 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm) {
             }
         });
     }
+	}
     if (cur_frm.doc.under_review == 1) {
         var fields_name = get_fields(cur_frm.doc.doctype);
         var item_fields = "";
@@ -131,6 +133,10 @@ frappe.ui.form.on("Sales Order", "before_submit", function(cdt, cdn, frm) {
         var check_role_creator = get_roles(frappe.session.user, role_creator);
         var check_role_overriter = get_roles(frappe.session.user, role_overriter);
 	//console.log("check_role_overriter==============="+check_role_overriter.length);
+	 var so_doctype = cur_frm.doc.doctype;
+         var so_document_review = get_review_templates(so_doctype);
+    
+        if(so_document_review.length != 0){
 	if (check_role_overriter.length == 0){
 	  if(check_role_creator){
 	    if (cur_frm.doc.so_reviewed){
@@ -156,7 +162,7 @@ frappe.ui.form.on("Sales Order", "before_submit", function(cdt, cdn, frm) {
 		frappe.validated = false;
 		}
 	}	
- 
+ }
 
 })
 
