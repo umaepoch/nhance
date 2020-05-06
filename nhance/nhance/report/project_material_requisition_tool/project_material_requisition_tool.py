@@ -53,13 +53,15 @@ def execute(filters=None):
           po_total_qty = get_po_total_qty(item_code,project_name) # have to create project custom field and add to query condition
 
           submitted_po = get_submitted_po(item_code,project_name)
-
+	  
           draft_po = get_draft_po(item_code,project_name)
           draft_po = round(float(draft_po),2)
           submitted_po = round(float(submitted_po),2)
           #print "submitted_po----------------",submitted_po
-
-
+	  project_being = get_project_being_order(item_code,project_name)
+	  required_qty = project_being[0]['required_qty']
+	  recommended_qty = project_being[0]['recommended_qty']
+	  approved_qty = project_being[0]['approved_qty']
           # qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty         ####### old requirment
           qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + draft_po + submitted_po    ####### new Requirement
           if qty_planned_nrec < 0:
@@ -70,7 +72,7 @@ def execute(filters=None):
             short_qty = 0
           sum_data.append([str(item_code),str(bom_item_qty),str(warehouse_qty),str(delta_qty),
           str(reserve_warehouse_qty),str(qty_consumed_in_manufacture),str(rw_pb_cons_qty),str(sreq_sub_not_approved),str(sreq_sub_not_ordered),draft_po,submitted_po,str(po_total_qty),str(qty_planned_nrec),
-          str(tot_qty_covered),str(short_qty)])
+          str(tot_qty_covered),str(short_qty),required_qty,recommended_qty,approved_qty])
 
     return columns, sum_data
 
@@ -91,7 +93,10 @@ def get_columns():
       _("POs Quantities Ordered but not Delivered")+"::150",
       _("Sum Quantity Planned but Not Received Material")+"::150",
       _("Total Quantity Covered")+"::150",
-      _("Short Qty (Excess Quantity is reported as 0)")+"::150"
+      _("Short Qty (Excess Quantity is reported as 0)")+"::150",
+      _("Required Qty")+"::100",
+      _("Recommended Qty")+"::100",
+      _("Approved Qty")+"::100",
        ]
     return columns
 
@@ -172,8 +177,8 @@ def get_sreq_sub_not_ordered(item_code,project_name):
       sreq_stock_qty += srq.stock_qty
       sreq_fulfilled_qty += srq.fulfilled_quantity#jyoti added
     for drft in po_draft_qty:
-      if drft:
-        draft_qty += drft.stock_qty
+	 if drft:
+	 	draft_qty += drft.stock_qty
     for submit in po_submitted_qty:
       if submit:
         submitted_qty += submit.stock_qty
@@ -183,7 +188,7 @@ def get_sreq_sub_not_ordered(item_code,project_name):
 	#sreq_total_qty = sreq_stock_qty -total_po_qty
     	sreq_total_qty = sreq_stock_qty -(total_po_qty+sreq_fulfilled_qty)#jyoti changed formula
     if sreq_total_qty < 0:
-      sreq_total_qty =0
+	   sreq_total_qty =0
     sreq_total_qty = round(float(sreq_total_qty),2)
     return sreq_total_qty
 
@@ -326,15 +331,15 @@ def make_stock_requisition(project,company,col_data,required_date,master_bom):
 	    "items": []
 	    }
     else:
-      newJson_requisition = {
-          "company": company ,
-          "doctype": "Stock Requisition",
-          "title": "Purchase",
-          "material_request_type": "Purchase",
-          "docstatus": 1,
-          "requested_by":project,
-          "items": []
-          }
+	newJson_requisition = {
+	    "company": company ,
+	    "doctype": "Stock Requisition",
+	    "title": "Purchase",
+	    "material_request_type": "Purchase",
+	    "docstatus": 1,
+	    "requested_by":project,
+	    "items": []
+	    }
     for c in col_data:
 
         item_code = c[0]
@@ -343,7 +348,7 @@ def make_stock_requisition(project,company,col_data,required_date,master_bom):
 
         item_data_key = get_item_data(item_code)
         item_data = item_data_key[0]
-
+	
         innerJson_transfer ={
         "doctype": "Stock Requisition Item",
         "item_code": item_code,
@@ -399,3 +404,36 @@ def get_draft_po(item_code,project_name):
 			total_draft_qty += 0
 	#print "total_draft_qty---------------",total_draft_qty
 	return total_draft_qty
+def get_project_being_order(item_code,project_name):
+	data = []
+	required_qty = 0.0
+	recommended_qty = 0.0
+	approved_qty = 0.0
+	being_project = frappe.db.sql("""select parent,project from `tabProject Childs` where project = %s""",project_name,as_dict=1)
+	for being in being_project:
+		name = being.parent
+		pre_purchase = frappe.db.sql(""" select pr.name,pri.item,pri.total_stock_qty ,pri.parent, pri.recommended_qty from `tabPre Purchase Orders` pr, `tabPre Purchase Item` pri where pr.project_being_ordered = %s and pri.item = 
+%s and pri.parent = pr.name and pri.recommended_qty = 0.0""",(name,item_code), as_dict=1)
+		
+		if pre_purchase:
+			for pre in pre_purchase:
+				pre_name = pre.name
+				app_purchase = frappe.db.sql("""select api.item_code,api.total_stock_qty,api.recommended_qty, api.approved_qty from `tabApproved Pre Purchase Order` ap , `tabApproved Pre Purchase Item` api where ap.pre_purchase_orders = %s and api.item_code =%s and ap.name = api.parent """,(pre_name,item_code),as_dict = 1)
+				
+				if app_purchase:
+					for ap in app_purchase:
+						if ap.approved_qty != 0.0:
+							approved_qty += float(ap.approved_qty)
+						elif ap.recommended_qty != 0.0:
+							recommended_qty += float(ap.recommended_qty)
+						else:
+							required_qty += float(pre.total_stock_qty)
+				else:
+					
+					if pre.recommended_qty == 0.0:
+						required_qty += float(pre.total_stock_qty)
+					else:
+						recommended_qty += float(pre.recommended_qty)
+	data.append({"required_qty":required_qty, "recommended_qty":recommended_qty, "approved_qty":approved_qty})
+	return data
+
