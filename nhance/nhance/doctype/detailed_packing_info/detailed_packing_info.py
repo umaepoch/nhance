@@ -16,7 +16,7 @@ ID_CHARECTER="/"
 def make_packing_item_doc(packing_items_data,si_name):
 	packing_items_data = json.loads(packing_items_data)
 	packed_item_id_json ={}
-	print "came inside make_packing_item_doc",packing_items_data
+	#print "came inside make_packing_item_doc",packing_items_data
 	detailed_packing_info_doc_name = packing_items_data[0]["parent"]
 
 	for packing_item_data in packing_items_data:
@@ -40,7 +40,7 @@ def make_packing_item_doc(packing_items_data,si_name):
 def make_packed_box_doc(packing_boxes_data,packing_items_data,si_name):
 	packing_boxes_data = json.loads(packing_boxes_data)
 	packing_items_data = json.loads(packing_items_data)
-	print "came inside make_packed_box_doc",packing_items_data
+	#print "came inside make_packed_box_doc",packing_items_data
 	detailed_packing_info_doc_name = packing_boxes_data[0]["parent"]
 	#packing_box_wise_data = {pb1:[{},{}],pb2:[{}]}
 	packing_box_wise_data = {}
@@ -77,7 +77,7 @@ def make_packed_box_doc(packing_boxes_data,packing_items_data,si_name):
 			#include for loop later
 			packing_id_str = packing_box_data["packing_id"]
 			packing_id_list = list(packing_id_str.split("\n"))
-			print "packed_box_breif_details_child**********",packing_id_list
+			#print "packed_box_breif_details_child**********",packing_id_list
 			for packing_id in packing_id_list:
 				pbc_child_row2 = pbc.append('packed_box_breif_details_child', {})
 				pbc_child_row2.parent_item = packing_box_data["parent_item"]
@@ -128,9 +128,10 @@ def update_packingId_in_detailedPackingInfo(doc_name,packed_item_id_json):
 	for packing_item, packing_item_id_list in packed_item_id_json.items():
 		for item_row in getattr(detailed_packing_info_doc,"packing_details_review"): #loop over doc's item table
 			if item_row.packing_item == packing_item:
-				if item_row.packing_id: #already having packing id
-					print "already having packing id as of now packing_id list will update for the first time only"
+				if item_row.packing_id:
+					 #already having packing id
+					 pass
+					#print "already having packing id as of now packing_id list will update for the first time only"
 				else: #new packing id
 					item_row.packing_id = "\n".join(packing_item_id_list)
 	detailed_packing_info_doc.save()
-
