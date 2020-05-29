@@ -581,7 +581,7 @@ def updat_sreq_items_fulfilled_qty(mt_items_map,sreq_no):
 def make_purchase_orders(po_items,project_filter):
 	flag = ""
 	tax_template = ""
-	
+
 	#supplier_address_details = frappe.db.sql("""select * from `tabAddress` a , `tabDynamic Link` dl where dl.link_name = %s and dl.parent = a.name""",supplier,as_dict=1)
 
 	creation_Date = datetime.datetime.now()
@@ -603,7 +603,7 @@ def make_purchase_orders(po_items,project_filter):
 
 
 		for items in po_items:
-			
+
 			items_supplier = frappe.get_list("Item Default", filters= {"parent": items['item_code']}, fields=["default_supplier"])
 			supplier = ""
 			if items_supplier:
@@ -641,11 +641,11 @@ def make_purchase_orders(po_items,project_filter):
 		if doc.name:
 			flag = doc.name
 		ret = doc.doctype
-		
+
 		if ret:
 
 			frappe.msgprint("Pre Purchase Order has been succcefully Created: "+doc.name)
-		
+
 	return flag
 
 def fetch_supplier_address(supplier):
@@ -699,56 +699,56 @@ def get_report_data(project_filter,swh_filter):
 							sreq_dict['bom'],
 							sreq_dict['fulFilledQty']
 							])
-	
-	
-		
+
+
+
 			for rows in sum_datas:
-				project_warehouse =  frappe.db.get_value('Project', project['project'], 'project_warehouse')
-		    		reserve_warehouse =  frappe.db.get_value('Project', project['project'], 'reserve_warehouse')
-				warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
-				reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
-				qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
+			  project_warehouse =  frappe.db.get_value('Project', project['project'], 'project_warehouse')
+			  reserve_warehouse =  frappe.db.get_value('Project', project['project'], 'reserve_warehouse')
+			  warehouse_qty = get_warehouse_qty(project_warehouse,rows[2])
+			  reserve_warehouse_qty = get_warehouse_qty(reserve_warehouse,rows[2])
+			  qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
 
-				rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
-
-
-				purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project['project'],rows[2])
-				purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project['project'],rows[2])
-
-				submitted_poi_qty = 0
-				draft_poi_qty = 0
-				if purchase_order_with_one_docstatus[0].submitted is not None:
-					submitted_poi_qty = purchase_order_with_one_docstatus[0].submitted
-				if purchase_order_with_zero_docstatus[0].draft is not None:
-					draft_poi_qty = purchase_order_with_zero_docstatus[0].draft
-				quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
-
-				#print "quantities_are_covered ------------",quantities_are_covered
-
-				qty_due_to_transfer = rows[6] - rw_pb_cons_qty
-				#print "qty_due_to_transfer------------",qty_due_to_transfer
-				qty_can_be_transfered = qty_due_to_transfer - quantities_are_covered
-
-				#print "qty_can_be_transfered------------------",qty_can_be_transfered
-				mt_qty = 0
-				if qty_can_be_transfered < rows[7]:
-					mt_qty = qty_can_be_transfered
-				elif qty_can_be_transfered >= rows[7]:
-					mt_qty = rows[7]
+			  rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
 
 
-				if mt_qty < 0:
-					mt_qty = 0
+			  purchase_order_with_zero_docstatus = get_purchase_order_with_zero_docstatus(project['project'],rows[2])
+			  purchase_order_with_one_docstatus = get_purchase_order_with_one_docstatus(project['project'],rows[2])
 
-				to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
-				need_to_be_order = 0
-				if to_be_order > 0:
-					need_to_be_order = to_be_order
-				else:
-					need_to_be_order = 0
-				qty_in_poum = need_to_be_order / rows[10]
-				qty_in_poum = round(qty_in_poum , 4)
-				#print "qty_in_poum-------------------",qty_in_poum
+			  submitted_poi_qty = 0
+			  draft_poi_qty = 0
+			  if purchase_order_with_one_docstatus[0].submitted is not None:
+			    submitted_poi_qty = purchase_order_with_one_docstatus[0].submitted
+			  if purchase_order_with_zero_docstatus[0].draft is not None:
+			    draft_poi_qty = purchase_order_with_zero_docstatus[0].draft
+			  quantities_are_covered = submitted_poi_qty + draft_poi_qty + rw_pb_cons_qty
+
+			  #print "quantities_are_covered ------------",quantities_are_covered
+
+			  qty_due_to_transfer = rows[6] - rw_pb_cons_qty
+			  #print "qty_due_to_transfer------------",qty_due_to_transfer
+			  qty_can_be_transfered = qty_due_to_transfer - quantities_are_covered
+
+			  #print "qty_can_be_transfered------------------",qty_can_be_transfered
+			  mt_qty = 0
+			  if qty_can_be_transfered < rows[7]:
+			    mt_qty = qty_can_be_transfered
+			  elif qty_can_be_transfered >= rows[7]:
+			    mt_qty = rows[7]
+
+
+			  if mt_qty < 0:
+			    mt_qty = 0
+
+			  to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
+			  need_to_be_order = 0
+			  if to_be_order > 0:
+			    need_to_be_order = to_be_order
+			  else:
+			    need_to_be_order = 0
+			  qty_in_poum = need_to_be_order / rows[10]
+			  qty_in_poum = round(qty_in_poum , 4)
+			  #print "qty_in_poum-------------------",qty_in_poum
 
 			#print "row-----", rows
 			sreq_no = rows[0]
@@ -914,22 +914,22 @@ def get_approved_pre_purchase_order(project,item_code):
 		approved_qty.append(approved_pre_purchase)
 	return approved_qty
 def get_project_being_order(item_code,project_name):
-	
+
 	data = []
 	required_qty = 0.0
 	recommended_qty = 0.0
 	approved_qty = 0.0
 	#being_project = frappe.db.sql("""select parent,project from `tabProject Childs` where project = %s""",project_name,as_dict=1)
-	
-	pre_purchase = frappe.db.sql(""" select pr.name,pri.item,pri.total_stock_qty ,pri.parent, pri.recommended_qty from `tabPre Purchase Orders` pr, `tabPre Purchase Item` pri where pr.project_being_ordered = %s and pri.item = 
+
+	pre_purchase = frappe.db.sql(""" select pr.name,pri.item,pri.total_stock_qty ,pri.parent, pri.recommended_qty from `tabPre Purchase Orders` pr, `tabPre Purchase Item` pri where pr.project_being_ordered = %s and pri.item =
 %s and pri.parent = pr.name """,(project_name,item_code), as_dict=1)
-	
+
 	if pre_purchase:
 		for pre in pre_purchase:
 			pre_name = pre.name
-			
+
 			app_purchase = frappe.db.sql("""select api.item_code,api.total_stock_qty,api.recommended_qty, api.approved_qty from `tabApproved Pre Purchase Order` ap , `tabApproved Pre Purchase Item` api where ap.pre_purchase_orders = %s and ap.name = api.parent and  api.item_code =%s  """,(pre_name,item_code),as_dict = 1)
-			
+
 			if app_purchase:
 				for ap in app_purchase:
 					if ap.approved_qty != 0.0:
@@ -939,10 +939,11 @@ def get_project_being_order(item_code,project_name):
 					else:
 						required_qty += float(pre.total_stock_qty)
 			else:
-				
+
 				if pre.recommended_qty == 0.0:
 					required_qty += float(pre.total_stock_qty)
 				else:
 					recommended_qty += float(pre.recommended_qty)
 	data.append({"required_qty":required_qty, "recommended_qty":recommended_qty, "approved_qty":approved_qty})
 	return data
+
