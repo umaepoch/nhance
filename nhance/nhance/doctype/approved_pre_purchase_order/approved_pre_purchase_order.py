@@ -93,19 +93,20 @@ def make_purchase_order(source_name):
 				
 			   	}
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-		for tax in tax_details:
-			inner_json_for_taxes = {
-				"doctype": "Purchase Taxes and Charges",
-				"parenttype": "Purchase Order",
-				"parentfield": "taxes",
-				"creation": creation_Date,
-				"charge_type" : tax['charge_type'],
-				"account_head":tax['account_head'],
-				"rate":tax['rate'],
-				"description" :tax['description'],
-				"row_id" : tax['row_id'],
-			}
-			outerJson_Transfer["taxes"].append(inner_json_for_taxes)
+		if len(tax_details) != 0:
+			for tax in tax_details:
+				inner_json_for_taxes = {
+					"doctype": "Purchase Taxes and Charges",
+					"parenttype": "Purchase Order",
+					"parentfield": "taxes",
+					"creation": creation_Date,
+					"charge_type" : tax['charge_type'],
+					"account_head":tax['account_head'],
+					"rate":tax['rate'],
+					"description" :tax['description'],
+					"row_id" : tax['row_id'],
+				}
+				outerJson_Transfer["taxes"].append(inner_json_for_taxes)
 			
 			
 		doc = frappe.new_doc("Purchase Order")
