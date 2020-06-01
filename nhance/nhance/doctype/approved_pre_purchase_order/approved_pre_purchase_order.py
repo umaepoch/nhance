@@ -43,8 +43,8 @@ def make_purchase_order(source_name):
 		tax_template_details = frappe.get_list("Supplier", filters={"name": sup}, fields=['pch_tax_template', 'pch_terms'])
 		if len(tax_template_details) != 0:
 			tax_template = tax_template_details[0]['pch_tax_template']
-			
-			tax_details = frappe.get_list("Purchase Taxes and Charges", filters={"parent": tax_template}, fields=["*"], order_by ="idx")
+			if tax_template is not None:
+				tax_details = frappe.get_list("Purchase Taxes and Charges", filters={"parent": tax_template}, fields=["*"], order_by ="idx")
 		#print "supplier_address_details-----------",supplier_address_details
 		if supplier_address_details:
 			for add in supplier_address_details:
