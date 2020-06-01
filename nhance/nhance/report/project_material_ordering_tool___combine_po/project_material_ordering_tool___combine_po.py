@@ -130,7 +130,7 @@ def execute(filters=None):
 							need_to_be_order = round(need_to_be_order , 2)
 						else:
 							need_to_be_order = 0
-						qty_in_poum = need_to_be_order / sreq_dict['conversion_factor']
+						qty_in_poum = need_to_be_order / float(sreq_dict['conversion_factor'])
 						qty_in_poum = round(qty_in_poum , 4)
 						poum_qty = sreq_dict['qty_in_po_uom']
 						poum_qty = round(poum_qty , 4)
