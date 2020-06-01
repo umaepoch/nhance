@@ -118,7 +118,7 @@ def execute(filters=None):
 						else:
 							need_to_be_order = 0
 						conversion_fact = 0.0
-						if sreq_dict['conversion_factor'] != 0.0:
+						if sreq_dict['conversion_factor'] != '':
 							conversion_fact = sreq_dict['conversion_factor']
 						qty_in_poum = 0.0
 						if conversion_fact != 0.0:
