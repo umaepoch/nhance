@@ -35,7 +35,7 @@ def make_purchase_order(source_name):
 		supplier_address = ""
 		supplier_gstin = ""
 		tax_template = ""
-		print "sup-------------",sup
+		#print "sup-------------",sup
 		details = according_supplier[sup]
 		prepared_details = get_prepared_details(details,items_maps)
 		tax_details = ""
