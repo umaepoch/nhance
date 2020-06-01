@@ -35,12 +35,13 @@ def make_purchase_order(source_name):
 		supplier_address = ""
 		supplier_gstin = ""
 		tax_template = ""
+		print "sup-------------",sup
 		details = according_supplier[sup]
 		prepared_details = get_prepared_details(details,items_maps)
 		tax_details = ""
 		supplier_address_details = frappe.db.sql("""select * from `tabAddress` a , `tabDynamic Link` dl where dl.link_name = %s and dl.parent = a.name""",sup,as_dict=1)
 		tax_template_details = frappe.get_list("Supplier", filters={"name": sup}, fields=['pch_tax_template', 'pch_terms'])
-		if tax_template_details:
+		if len(tax_template_details) != 0:
 			tax_template = tax_template_details[0]['pch_tax_template']
 			
 			tax_details = frappe.get_list("Purchase Taxes and Charges", filters={"parent": tax_template}, fields=["*"], order_by ="idx")
