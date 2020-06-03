@@ -23,7 +23,7 @@ frappe.query_reports["Certification"] = {
         "label": __("Item Serial No"),
         "fieldtype": "Link",
         "options": "Serial No",
-        "reqd": 1
+        "reqd": 0
 	},
 	{
         "fieldname": "delivery_note",
