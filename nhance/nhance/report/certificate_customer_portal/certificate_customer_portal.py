@@ -34,12 +34,13 @@ def execute(filters=None):
 		combined_pdf=serial_data['pch1_combined_pdf']
 		supplier=serial_data[''],
 		company=serial_data[''],
+		customer=serial_data['customer'],
 		purchase_document_no=serial_data['po_no'],
 		purchase_date=serial_data['po_date'],
 		delivery_document_no=serial_data['delivery_document_no'],
 		delivery_date=serial_data['delivery_date'],
 		
-		data.append([serial_data['item_code'],serial_data['item_name'],serial_data['serial_no'],serial_data['pch1_coc'], serial_data['pch1_pressure_test'],serial_data['pch1_build_sheet'],serial_data['pch1_combined_pdf'],serial_data[''],serial_data[''],serial_data['po_no'],serial_data['po_date'],serial_data['delivery_document_no'],serial_data['delivery_date']
+		data.append([serial_data['item_code'],serial_data['item_name'],serial_data['serial_no'],serial_data['pch1_coc'], serial_data['pch1_pressure_test'],serial_data['pch1_build_sheet'],serial_data['pch1_combined_pdf'],serial_data[''],serial_data[''],serial_data['customer'],serial_data['po_no'],serial_data['po_date'],serial_data['delivery_document_no'],serial_data['delivery_date']
 					])
 			 					     					    	
 	
@@ -56,7 +57,7 @@ def fetching_serial_no_details(filters):
                 condition = "where dn.po_no=%s"
                 value = (filters["customer_po"],)
 		print "condition",condition
-		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1) 
 
@@ -64,7 +65,7 @@ def fetching_serial_no_details(filters):
                 condition = "where sn.item_code=%s"
                 value = (filters["item_code"],)
 		print "condition",condition
-		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
 
@@ -73,7 +74,7 @@ def fetching_serial_no_details(filters):
                 condition = "where sn.serial_no=%s"
                 value = (filters["item_serial_no"],)
 		print "condition",condition
-		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
 	
@@ -82,7 +83,7 @@ def fetching_serial_no_details(filters):
                 condition = "where delivery_document_no=%s"
                 value = (filters["delivery_note"],)
 		print "condition",condition
-		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name  """.format(condition=condition),value, as_dict=1)
 
@@ -91,13 +92,13 @@ def fetching_serial_no_details(filters):
                 value = (filters["sales_order_acknowleggement"],)
 		print "condition",condition
 		print "value",value
-		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn ,`tabDelivery Note Item` dni  {condition} and dni.parent=dn.name and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name  """.format(condition=condition),value, as_dict=1)
 
 	else:
 		
-        	serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+        	serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn where sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name """, as_dict=1)
 
@@ -123,6 +124,7 @@ def get_columns():
 		_("Combined Pdf")+"::100",
 		_("DNV-GL Product Certification")+"::100",
 		_("CE Approval")+"::100",
+		_("Customer Name")+"::100",
 		_("Customer PO")+"::100",
 		_("Date (customer PO)")+"::100",
 		_("Delivery Note ")+":Link/Delivery Note:100",
