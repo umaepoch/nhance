@@ -192,7 +192,7 @@ def get_columns():
 		_("BOM Qty")+"::100",
 		_("BOM Item Qty")+"::100",
 		_("Required Qty")+"::100",
-		_("Quantity Available In Warehouse")+"::140",
+		_("Qty issued for Production")+"::140",
 		_("Delta Qty")+"::100",
 		_("Reserved Warehouse Qty")+"::150",
 		_("Sum Qty")+":Link/UOM:90",
