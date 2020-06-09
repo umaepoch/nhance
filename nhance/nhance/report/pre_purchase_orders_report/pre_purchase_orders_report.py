@@ -117,14 +117,7 @@ def execute(filters=None):
 							need_to_be_order = round(need_to_be_order , 2)
 						else:
 							need_to_be_order = 0
-						conversion_fact = 0.0
-						if sreq_dict['conversion_factor'] != '':
-							conversion_fact = sreq_dict['conversion_factor']
-						qty_in_poum = 0.0
-						if conversion_fact != 0.0:
-							qty_in_poum = need_to_be_order / conversion_fact
-						else:
-							qty_in_poum = need_to_be_order
+						qty_in_poum = need_to_be_order / sreq_dict['conversion_factor']
 						qty_in_poum = round(qty_in_poum , 4)
 						poum_qty = sreq_dict['qty_in_po_uom']
 						poum_qty = round(poum_qty , 4)
@@ -170,18 +163,21 @@ def execute(filters=None):
 	project = filters.get("project")
 	for dt in prepare_datas:
 		total_qtys = 0.0
+		draft_qty = 0.0
 		recommended_qty = 0.0
 		approved_qty = 0.0
 		sums_data = []
 		item_code = dt['item_code']
 		sums_data.append(dt['item_code'])
-		recommended_qty = frappe.get_list("Pre Purchase Orders", filters = {"project_being_ordered":project , "docstatus":1}, fields=["name"])
-		if recommended_qty:
-			for rec in recommended_qty:
+		recommended = frappe.get_list("Pre Purchase Orders", filters = {"project_being_ordered":project , "docstatus":1}, fields=["name"])
+		#print "recommended-----------",recommended
+		if recommended:
+			for rec in recommended:
 				rec_name = rec['name']
 				rec_qty = frappe.get_list("Pre Purchase Item", filters = {"parent":rec_name, "item":dt['item_code']}, fields=["recommended_qty"])
 				#print "rec_qty---------------",rec_qty
-				recommended_qty = rec_qty[0]['recommended_qty']
+				if rec_qty:
+					recommended_qty += rec_qty[0]['recommended_qty']
 				app_name = frappe.get_list("Approved Pre Purchase Order", filters = {"pre_purchase_orders": rec_name, "docstatus": 1}, fields=["name"])
 				if app_name:
 					#print "app_name----------------",app_name
@@ -189,7 +185,7 @@ def execute(filters=None):
 						apr_name = app['name']
 						app_qty = frappe.get_list("Approved Pre Purchase Item", filters={"parent": apr_name, "item_code":dt['item_code']}, fields=["approved_qty"])
 						if app_qty:
-							approved_qty = app_qty[0]['approved_qty']
+							approved_qty += app_qty[0]['approved_qty']
 			
 		for pro in doc_project_list:
 			
@@ -199,22 +195,41 @@ def execute(filters=None):
 				projects = pro['project']
 				total_qtys += float(dt[str(projects)])
 				sums_data.append(dt[projects])
-		qty_with_poum = float(total_qtys) / float(dt['conversion_factor'])
+		
 		pre_purchase_details_draft = get_pre_purchase_details_draft(project,item_code)
+		#print "pre_purchase_details_draft----------------",pre_purchase_details_draft
 		pre_purchase_details_submit = get_pre_purchase_details_submit(project,item_code)
 		for draft in pre_purchase_details_draft:
 			if draft.recommended_qty != 0.0:
 				draft_qty += float(draft.recommended_qty)
 			else:
 				draft_qty += float(draft.total_stock_qty)
+		order_total = 0.0
+		
+		if approved_qty != 0.0:
+			order_total = total_qtys - approved_qty
+		else:
+			order_total = total_qtys - recommended_qty
+		grand_total = 0.0
+		if draft_qty != 0.0:
+			grand_total = order_total - draft_qty
+		else:
+			grand_total = order_total
+		qty_with_poum = float(grand_total) / float(dt['conversion_factor'])
+		qty_with_poum_non_nigative = 0.0
 		qty_with_poum = round(qty_with_poum,4)
+		if qty_with_poum > 0:
+			qty_with_poum_non_nigative = qty_with_poum
+		else:
+			qty_with_poum_non_nigative = 0.0
+		qty_with_poum_non_nigative = round(qty_with_poum_non_nigative,4)
 		sums_data.append(draft_qty)
 		sums_data.append(total_qtys)
 		sums_data.append(recommended_qty)
 		sums_data.append(approved_qty)
 		sums_data.append(dt['po_uom'])
 		sums_data.append(dt['conversion_factor'])
-		sums_data.append(qty_with_poum)
+		sums_data.append(qty_with_poum_non_nigative)
 		sums_data.append(dt['default_supplier'])
 		#print "sums_data---------------",sums_data
 		final_data.append(sums_data)
@@ -672,11 +687,12 @@ def make_purchase_orders(po_items,project_filter,doc_project_list):
 					for app in approved_pre_purchase:
 						name = app['name']
 						approved_item = frappe.get_list("Approved Pre Purchase Item", filters={"parent":name,'item_code':items['item_code']}, fields=["*"])
-						qty = approved_item[0]['approved_qty']
-						approved_qty += float(qty)
-				
-				rec_qty = pre_purchase_items[0]['recommended_qty']
-				recommended_qty +=  float(rec_qty)
+						if approved_item:
+							qty = approved_item[0]['approved_qty']
+							approved_qty += float(qty)
+				if pre_purchase_items:
+					rec_qty = pre_purchase_items[0]['recommended_qty']
+					recommended_qty +=  float(rec_qty)
 			
 			need_to_be_qty = 0.0
 			pre_purchase_details_draft = get_pre_purchase_details_draft(project_filter,items['item_code'])
@@ -705,15 +721,12 @@ def make_purchase_orders(po_items,project_filter,doc_project_list):
 				if approved_qty == recommended_qty:
 					need_to_be_qty = float(available_qty) - float(approved_qty)
 				elif approved_qty > recommended_qty:
-					qty_re = float(recommended_qty) - float(approved_qty) 
-					total_approved = float(recommended_qty) + float(qty_re)
-					need_to_be_qty = float(available_qty) - float(total_approved)
-			elif approved_qty < recommended_qty:
-				qty_re = float(approved_qty) - float(recommended_qty)
-				total_approved = float(approved_qty) + float(qty_re)
-				need_to_be_qty = float(available_qty) - float(total_approved)
+					need_to_be_qty = float(available_qty) - float(float(approved_qty))
+				elif approved_qty < recommended_qty:
+					need_to_be_qty = float(available_qty) - float(recommended_qty)
+
 			qty_in_puom = float(need_to_be_qty)/float(conversion_factor)
-			if need_to_be_qty > 0.0:
+			if qty_in_puom > 0.0:
 				innerJson_Transfer ={
 					"creation": creation_Date,
 					"total_stock_qty": need_to_be_qty,
@@ -748,7 +761,7 @@ def make_purchase_orders(po_items,project_filter,doc_project_list):
 
 				return ret 
 		else:
-			frappe.msgprint("There is no Item to create Pre Purchase Order ")
+			frappe.msgprint("There are nothing Item to create Pre Purchase Order ")
 
 def fetch_supplier_address(supplier):
 	address = frappe.db.sql("""select name,pch_terms from `tabSupplier` where name=%s""", supplier, as_dict=1)
@@ -811,8 +824,7 @@ def get_report_data(project_filter):
 	prepare_datas = unique_prepare_data(prepared_data,doc_project_list)
 	doctype = make_purchase_orders(prepare_datas,project_filter,doc_project_list)
 	return doctype
-	data.append(["00","00"])
-	return columns, data
+	
 def get_columns(doc_project_list):
 	
 	columns = [
@@ -907,77 +919,84 @@ def getQtyAllowed(stockRequisitionID):
 	return allowed_qty
 def unique_prepare_data(sum_data,doc_project_list):
 	#print "sum_data-----------",sum_data
-	sum_datas = sum_data[0]
+	if sum_data:
+		sum_datas = sum_data[0]
 	
-	if len(sum_datas)!=0:
-		i = 0
-		composite_tax = []
-		for data in sum_data:
-			#print "data-------------------------",data
-			for d in data:
-				i += 1
-				item_name = d['item_code']
-				#print "project------------",d['project']
-				#print "item--------------",item_name
-				tax_amount = d['project']
-				#print "project -------------",tax_amount
-				key = item_name
-				#print "composite_tax-------------",composite_tax
-				if len(composite_tax) != 0:
-					if key in [ds['item_code'] for ds in composite_tax]:
-						for dp in composite_tax:
-							if key == dp['item_code']:
+		if len(sum_datas)!=0:
+			i = 0
+			composite_tax = []
+			for data in sum_data:
+				#print "data-------------------------",data
+				for d in data:
+					i += 1
+					item_name = d['item_code']
+					#print "project------------",d['project']
+					#print "item--------------",item_name
+					tax_amount = d['project']
+					#print "project -------------",tax_amount
+					key = item_name
+					#print "composite_tax-------------",composite_tax
+					if len(composite_tax) != 0:
+						if key in [ds['item_code'] for ds in composite_tax]:
+							for dp in composite_tax:
+								if key == dp['item_code']:
 								
-								projects = 'item-'+str(d['project'])
+									projects = 'item-'+str(d['project'])
 									
-								dp.update({d['project']:d['sreq_qty'], projects:d['project']})
+									dp.update({d['project']:d['sreq_qty'], projects:d['project']})
 
+						else:
+							i = 1
+							projects = 'item-'+str(d['project'])
+							composite_tax.append({"item_code":d['item_code'],d['project']:d['sreq_qty'],projects:d['project'],"po_uom":d['po_uom'],"conversion_factor":d['conversion_factor'],"default_supplier":d['default_supplier'],"stock_uom":d['stock_uom'],"last_n_highest":d['max_price_of_last_10_purchase_transactions'],"last_n_lowest":d['min_price_of_last_10_purchase_transactions'],"last_n_average":d['avg_price_of_last_10_purchase_transactions'],"no_of_transaction":d['no_of_purchase_transactions']})
+					
 					else:
 						i = 1
 						projects = 'item-'+str(d['project'])
-						composite_tax.append({"item_code":d['item_code'],d['project']:d['sreq_qty'],projects:d['project'],"po_uom":d['po_uom'],"conversion_factor":d['conversion_factor'],"default_supplier":d['default_supplier'],"stock_uom":d['stock_uom'],"last_n_highest":d['max_price_of_last_10_purchase_transactions'],"last_n_lowest":d['min_price_of_last_10_purchase_transactions'],"last_n_average":d['avg_price_of_last_10_purchase_transactions'],"no_of_transaction":d['no_of_purchase_transactions']})
-					
-				else:
-					i = 1
-					projects = 'item-'+str(d['project'])
-					composite_tax.append({"item_code":d['item_code'], d['project']:d['sreq_qty'],projects:d['project'],"po_uom":d['po_uom'],"conversion_factor":d['conversion_factor'],"default_supplier":d['default_supplier'],"stock_uom":d['stock_uom'],"last_n_highest":d['max_price_of_last_10_purchase_transactions'],"last_n_lowest":d['min_price_of_last_10_purchase_transactions'],"last_n_average":d['avg_price_of_last_10_purchase_transactions'],"no_of_transaction":d['no_of_purchase_transactions']})
-		#print "composite_tax-------------",composite_tax
-		#print "doc_project_list-------------",doc_project_list
-		projects_details = []
-		j =0
-		'''
-		for db in composite_tax:
+						composite_tax.append({"item_code":d['item_code'], d['project']:d['sreq_qty'],projects:d['project'],"po_uom":d['po_uom'],"conversion_factor":d['conversion_factor'],"default_supplier":d['default_supplier'],"stock_uom":d['stock_uom'],"last_n_highest":d['max_price_of_last_10_purchase_transactions'],"last_n_lowest":d['min_price_of_last_10_purchase_transactions'],"last_n_average":d['avg_price_of_last_10_purchase_transactions'],"no_of_transaction":d['no_of_purchase_transactions']})
+			#print "composite_tax-------------",composite_tax
+			#print "doc_project_list-------------",doc_project_list
+			projects_details = []
+			j =0
+			'''
+			for db in composite_tax:
+				for pro in doc_project_list:
+					j += 1
+					projects = "project_"+str(j)
+					if projects in db:
+						#pass
+						#print "db--------------------------",db
+						#print "helo-----------------------",projects
+					else:
+						dp.update({pro['project']:"", projects:pro['project']})
+				j = 0
+			'''
+		
 			for pro in doc_project_list:
 				j += 1
+				projectss = pro['project']
 				projects = "project_"+str(j)
-				if projects in db:
-					#pass
-					#print "db--------------------------",db
-					#print "helo-----------------------",projects
-				else:
-					dp.update({pro['project']:"", projects:pro['project']})
-			j = 0
-		'''
-		
-		for pro in doc_project_list:
-			j += 1
-			projectss = pro['project']
-			projects = "project_"+str(j)
 			
-			for db in composite_tax:
-				#print "project ------------",projectss
-				project_item = 'item-'+str(pro['project'])
-				if project_item not in db:
-					#pass
-					#print "db--------------------------",db
-					#print "helo-----------------------",projects
-					db.update({pro['project']:0.0, project_item:pro['project']})
+				for db in composite_tax:
+					#print "project ------------",projectss
+					project_item = 'item-'+str(pro['project'])
+					if project_item not in db:
+						#pass
+						#print "db--------------------------",db
+						#print "helo-----------------------",projects
+						db.update({pro['project']:0.0, project_item:pro['project']})
 				
 					
-		return composite_tax
+			return composite_tax
 	
 def get_pre_purchase_details_draft(project,item_code):
-	purchase = frappe.db.sql("""select pri.recommended_qty, pri.total_stock_qty,pri.item,pr.project_being_ordered from `tabPre Purchase Orders` pr, `tabPre Purchase Item` pri where pr.project_being_ordered = %s and pr.docstatus= 0 and pri.item = %s""",(project,item_code), as_dict=1)
+	purchase = frappe.db.sql("""select 
+						pri.recommended_qty, pri.total_stock_qty,pri.item,pr.project_being_ordered, pr.name
+				from 
+						`tabPre Purchase Orders` pr, `tabPre Purchase Item` pri 
+				where 
+						pr.project_being_ordered = %s and pr.docstatus= 0 and pri.item = %s and pr.name = pri.parent""",
+				(project,item_code), as_dict=1)
 	return purchase
 def get_pre_purchase_details_submit(project,item_code):
 	purchase = frappe.db.sql("""select pri.recommended_qty, pri.total_stock_qty,pri.item,pr.project_being_ordered from `tabPre Purchase Orders` pr, `tabPre Purchase Item` pri where pr.project_being_ordered = %s and pri.docstatus= 1 and pri.item = %s""",(project,item_code), as_dict=1)

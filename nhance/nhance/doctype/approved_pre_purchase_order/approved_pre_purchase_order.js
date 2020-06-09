@@ -3,6 +3,16 @@
 
 frappe.ui.form.on('Approved Pre Purchase Order', {
 	refresh: function(frm) {
+		if(cur_frm.doc.docstatus == 0){
+			 frm.add_custom_button(__("Accept All Recommends Fields"), function() {
+				$.each(cur_frm.doc.items || [], function(i, item) {
+					item.approved_qty = item.recommended_qty;
+					item.approved_rate = item.recommended_rate;
+					item.approved_supplier = item.recommended_supplier;
+				})
+				cur_frm.refresh_field("items");
+			});
+		}
 		if(cur_frm.doc.docstatus == 1){
 			 frm.add_custom_button(__("Make Purchase Order"), function() {
 				/*
@@ -11,10 +21,46 @@ frappe.ui.form.on('Approved Pre Purchase Order', {
 				    frm: cur_frm
 				})*/
 				var verification = get_verification(cur_frm.doc.name);
+				
 				if(verification == undefined){
-					make_purchase_order(cur_frm.doc.name);
+					 var dialog = new frappe.ui.Dialog({
+					title: __("Select Round Type"),
+					fields: [
+					    {
+					      'fieldname': 'round_up_fractions',
+					      'fieldtype': 'Check',
+					      "label": __("Round Up Fractions")
+					    },
+					    {
+						'fieldname': 'round_fractions',
+						'fieldtype': 'Check',
+						"label": __("Round Fractions")
+					    },
+
+					    {
+						'fieldname': 'round_down_fractions',
+						'fieldtype': 'Check',
+						"label": __("Round Down Fractions")
+					    },
+					    {
+						'fieldname': 'do_nothing',
+						'fieldtype': 'Check',
+						"label": __("Do Nothing")
+					    }
+					],
+					primary_action: function() {
+					    dialog.hide();
+					    var check_args = dialog.get_values();
+					    console.log("--------------------"+check_args);
+					    make_purchase_order(cur_frm.doc.name,check_args);
+					}
+					})
+					dialog.show()
+								
 				}else{
-					frappe.msgprint("Purchase Order already created "+JSON.stringify(verification));
+					
+						frappe.msgprint("Purchase Order already created "+verification[0]['name']);
+					
 				}
 			});
 			
@@ -30,6 +76,7 @@ frappe.ui.form.on('Approved Pre Purchase Order', {
 			}
 			
 		}
+	
 	}
 });
 function function_doc_details(doctype) {
@@ -47,12 +94,13 @@ function function_doc_details(doctype) {
     });
     return doc_details;
 }
-function make_purchase_order(name){
+function make_purchase_order(name,check_args){
   var doc_details = "";
     frappe.call({
         method: 'nhance.nhance.doctype.approved_pre_purchase_order.approved_pre_purchase_order.make_purchase_order',
         args: {
-            "source_name": name
+            "source_name": name,
+	    "check_args":check_args
 
         },
         async: false,
@@ -82,3 +130,4 @@ function get_verification(name){
     });
     return doc_details;
 }
+

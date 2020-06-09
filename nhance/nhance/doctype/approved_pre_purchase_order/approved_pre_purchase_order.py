@@ -7,6 +7,9 @@ import frappe
 from frappe.model.document import Document
 import datetime
 import time
+import math
+import json
+
 class ApprovedPrePurchaseOrder(Document):
 	pass
 @frappe.whitelist()
@@ -15,7 +18,8 @@ def get_doc_details(doctype):
 	return doc_details
 
 @frappe.whitelist()
-def make_purchase_order(source_name):
+def make_purchase_order(source_name, check_args):
+	
 	approved_pre_purcase = frappe.get_list("Approved Pre Purchase Item",filters={"parent":source_name, "docstatus":1}, fields=["*"])
 	pre_purchase = frappe.get_list("Approved Pre Purchase Order", filters= {"name": source_name}, fields=["pre_purchase_orders"])
 	project_being = frappe.get_list("Pre Purchase Orders", filters = {"name": pre_purchase[0]['pre_purchase_orders']}, fields=['project_being_ordered'])
@@ -35,10 +39,10 @@ def make_purchase_order(source_name):
 		supplier_address = ""
 		supplier_gstin = ""
 		tax_template = ""
-		#print "sup-------------",sup
 		details = according_supplier[sup]
 		prepared_details = get_prepared_details(details,items_maps)
 		tax_details = ""
+		#print "sup---------------",sup
 		supplier_address_details = frappe.db.sql("""select * from `tabAddress` a , `tabDynamic Link` dl where dl.link_name = %s and dl.parent = a.name""",sup,as_dict=1)
 		tax_template_details = frappe.get_list("Supplier", filters={"name": sup}, fields=['pch_tax_template', 'pch_terms'])
 		if len(tax_template_details) != 0:
@@ -75,9 +79,10 @@ def make_purchase_order(source_name):
 			project = items['project']
 			#warehose_list = frappe.get_list("Project", filters = {"name": project}, fields=['reserve_warehouse'])
 			#print "warehouse--------------",items['warehouse']
+			round_function = get_round_function(check_args , items['qty'])
 			innerJson_Transfer ={
 				"creation": creation_Date,
-				"qty": items['qty'],
+				"qty": round_function,
 				"item_code": items['item_code'],
 				"doctype": "Purchase Order Item",
 				"parenttype": "Purchase Order",
@@ -93,20 +98,19 @@ def make_purchase_order(source_name):
 				
 			   	}
 			outerJson_Transfer["items"].append(innerJson_Transfer)
-		if len(tax_details) != 0:
-			for tax in tax_details:
-				inner_json_for_taxes = {
-					"doctype": "Purchase Taxes and Charges",
-					"parenttype": "Purchase Order",
-					"parentfield": "taxes",
-					"creation": creation_Date,
-					"charge_type" : tax['charge_type'],
-					"account_head":tax['account_head'],
-					"rate":tax['rate'],
-					"description" :tax['description'],
-					"row_id" : tax['row_id'],
-				}
-				outerJson_Transfer["taxes"].append(inner_json_for_taxes)
+		for tax in tax_details:
+			inner_json_for_taxes = {
+				"doctype": "Purchase Taxes and Charges",
+				"parenttype": "Purchase Order",
+				"parentfield": "taxes",
+				"creation": creation_Date,
+				"charge_type" : tax['charge_type'],
+				"account_head":tax['account_head'],
+				"rate":tax['rate'],
+				"description" :tax['description'],
+				"row_id" : tax['row_id'],
+			}
+			outerJson_Transfer["taxes"].append(inner_json_for_taxes)
 			
 			
 		doc = frappe.new_doc("Purchase Order")
@@ -124,15 +128,15 @@ def unified_supplier(approved_pre_purcase):
 			if key in details:
 				approved_qty = app['approved_qty']
 				if approved_qty != 0.0:
-					details[key].append({"item_code":app['item_code'],"stock_uom":app['stock_uom'], "puom":app['puom'], "conversion_factor":app['conversion_factor'], "qty":approved_qty,"rate":app['approved_rate'],"total_stock_qty": app['total_stock_qty']})
+					details[key].append({"item_code":app['item_code'],"stock_uom":app['stock_uom'], "puom":app['puom'], "conversion_factor":app['conversion_factor'], "qty":approved_qty,"rate":app['approved_rate'],"total_stock_qty": app['total_stock_qty'],"qty_in_puom":app["qty_in_puom"]})
 			else:
 				approved_qty =app['approved_qty']
 				if app['approved_qty'] != 0.0:
-					details.update({key:[{"item_code":app['item_code'],"stock_uom":app['stock_uom'], "puom":app['puom'], "conversion_factor":app['conversion_factor'], "qty":approved_qty,"rate":app['approved_rate'],"total_stock_qty": app['total_stock_qty']}]})
+					details.update({key:[{"item_code":app['item_code'],"stock_uom":app['stock_uom'], "puom":app['puom'], "conversion_factor":app['conversion_factor'], "qty":approved_qty,"rate":app['approved_rate'],"total_stock_qty": app['total_stock_qty'],"qty_in_puom":app["qty_in_puom"]}]})
 		else:
 			approved_qty = app['approved_qty']
 			if app['approved_qty'] != 0.0:
-				details[key]= [{"item_code":app['item_code'],"stock_uom":app['stock_uom'], "puom":app['puom'], "conversion_factor":app['conversion_factor'], "qty":approved_qty,"rate":app['approved_rate'],"total_stock_qty": app['total_stock_qty']}]
+				details[key]= [{"item_code":app['item_code'],"stock_uom":app['stock_uom'], "puom":app['puom'], "conversion_factor":app['conversion_factor'], "qty":approved_qty,"rate":app['approved_rate'],"total_stock_qty": app['total_stock_qty'],"qty_in_puom":app["qty_in_puom"]}]
 
 	return details
 			
@@ -478,6 +482,7 @@ def fetch_item_price_settings_details():
 def get_prepared_details(details,items_maps):
 	items = []
 	for d in details:
+		#print "qty_in_puom---------------------",d["qty_in_puom"]
 		key = d['item_code']
 		total_qty = 0.0
 		approved_qty = d['qty']
@@ -487,17 +492,32 @@ def get_prepared_details(details,items_maps):
 				data = items_map[sreq_no]
 				#print "data-----------",data
 				for sreq_dict in data:
+					
 					if key == sreq_dict['item_code']:
-						if approved_qty <= d['total_stock_qty']:
+						if approved_qty <= d['qty_in_puom']:
 							if approved_qty > total_qty:
-								total_qty += sreq_dict['sreq_qty']
+								if sreq_dict['po_uom']:
+									total_qty += sreq_dict['sreq_qty'] / float(sreq_dict['conversion_factor'])
+								else:
+									total_qty += sreq_dict['sreq_qty']
 								if total_qty <= approved_qty:
 									warehose_list = frappe.get_list("Project", filters = {"name": sreq_dict['project']}, fields=['reserve_warehouse'])
-									items.append({"item_code": sreq_dict['item_code'], "project": sreq_dict['project'], "qty":sreq_dict['sreq_qty'], "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'],"warehouse":warehose_list[0]['reserve_warehouse']  })
+									
+									order_qty = 0.0
+									if sreq_dict['po_uom']:
+										order_qty = sreq_dict['sreq_qty'] / float(sreq_dict['conversion_factor'])
+									else:
+										order_qty = sreq_dict['sreq_qty']
+									items.append({"item_code": sreq_dict['item_code'], "project": sreq_dict['project'], "qty":order_qty, "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'],"warehouse":warehose_list[0]['reserve_warehouse']  })
 								else:
 									warehose_list = frappe.get_list("Project", filters = {"name": sreq_dict['project']}, fields=['reserve_warehouse'])
 									deff_qty = total_qty - approved_qty
-									need_qty = sreq_dict['sreq_qty'] - deff_qty
+									request_qty = 0.0
+									if sreq_dict['po_uom']:
+										request_qty = sreq_dict['sreq_qty'] / float(sreq_dict['conversion_factor'])
+									else:
+										request_qty = sreq_dict['sreq_qty']
+									need_qty = request_qty - deff_qty
 									total_qty += need_qty
 									items.append({"item_code": sreq_dict['item_code'], "project": sreq_dict['project'], "qty":need_qty, "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'],"warehouse":warehose_list[0]['reserve_warehouse']  })
 									break
@@ -505,21 +525,39 @@ def get_prepared_details(details,items_maps):
 								break
 						else:
 							warehose_list = frappe.get_list("Project", filters = {"name": sreq_dict['project']}, fields=['reserve_warehouse'])
-							initial_qty = approved_qty - float(d['total_stock_qty'])
-							approved_qty = float(d['total_stock_qty'])
-							total_qty += sreq_dict['sreq_qty']
+							initial_qty = approved_qty - float(d['qty_in_puom'])
+							approved_qty = float(d['qty_in_puom'])
+							extra_qty =0.0
+							
+							request_qty = 0.0
+							if sreq_dict['po_uom']:
+								extra_qty = initial_qty / float(sreq_dict['conversion_factor'])
+								request_qty = sreq_dict['sreq_qty'] / float(sreq_dict['conversion_factor'])
+							else:
+								request_qty = sreq_dict['sreq_qty']
+								extra_qty = initial_qty
+							total_qty += request_qty
 
 							#single_doc = frappe.get_single("Nhance Settings")
 							single_doc = frappe.db.get_single_value("Nhance Settings", "default_warehouse")
 							#print "single_doc----------",single_doc
-							items.append({"item_code": sreq_dict['item_code'], "project": "", "qty":initial_qty, "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'], "warehouse":single_doc})
+							items.append({"item_code": sreq_dict['item_code'], "project": "", "qty":extra_qty, "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'], "warehouse":single_doc})
 
 							if total_qty <= approved_qty:
-								
-								items.append({"item_code": sreq_dict['item_code'], "project": sreq_dict['project'], "qty":sreq_dict['sreq_qty'], "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'], "warehouse":warehose_list[0]['reserve_warehouse'] })
+								request_qty = 0.0
+								if sreq_dict['po_uom']:
+									request_qty = sreq_dict['sreq_qty'] / float(sreq_dict['conversion_factor'])
+								else:
+									request_qty = sreq_dict['sreq_qty']
+								items.append({"item_code": sreq_dict['item_code'], "project": sreq_dict['project'], "qty":request_qty, "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'], "warehouse":warehose_list[0]['reserve_warehouse'] })
 							else:
 								deff_qty = total_qty - approved_qty
-								need_qty = sreq_dict['sreq_qty'] - deff_qty
+								request_qty = 0.0
+								if sreq_dict['po_uom']:
+									request_qty = sreq_dict['sreq_qty'] / float(sreq_dict['conversion_factor'])
+								else:
+									request_qty = sreq_dict['sreq_qty']
+								need_qty = request_qty - deff_qty
 								total_qty += need_qty
 								
 								items.append({"item_code": sreq_dict['item_code'], "project": sreq_dict['project'], "qty":need_qty, "stock_uom":sreq_dict['stock_uom'], "conversion_factor":sreq_dict['conversion_factor'],"puom":sreq_dict['po_uom'],"rate":d['rate'],"sreq_no":sreq_dict['sreq_no'], "warehouse":warehose_list[0]['reserve_warehouse'] })
@@ -528,8 +566,24 @@ def get_prepared_details(details,items_maps):
 							
 @frappe.whitelist()
 def get_verification(source_name):
-	get_verified = frappe.get_list("Purchase Order", filters={"approved_pre_purchase_order": source_name, 'docstatus':0}, fields=["name"])
+	#get_verified = frappe.db.sql("Purchase Order", filters={"approved_pre_purchase_order": source_name, 'docstatus':0}, fields=["name"])
+	get_verified = frappe.db.sql("""select name from `tabPurchase Order` where approved_pre_purchase_order = %s and docstatus < 2""",(source_name),as_dict=1)
 	if get_verified:
 		return get_verified
 	else:
-		return None				
+		return None
+def get_round_function(check_args , qty):
+	
+	check_args =json.loads(check_args)
+	#print "check_args------------",check_args
+	quantity = 0.0
+	if check_args['round_up_fractions'] == 1:
+		quantity = math.ceil(qty)
+		quantity = int(quantity)
+	elif check_args['round_fractions'] == 1:
+		quantity = round(qty)
+	elif check_args['round_down_fractions'] == 1:
+		quantity = math.floor(qty)
+	if quantity == 0.0:
+		quantity = qty
+	return quantity

@@ -10,12 +10,10 @@ frappe.ui.form.on('Pre Purchase Orders', {
 				    method: "nhance.nhance.doctype.pre_purchase_orders.pre_purchase_orders.make_approved_pre_purchase_order",
 				    frm: cur_frm
 				})*/
-				var verification = get_verification(cur_frm.doc.name);
-				if (verification == undefined){
-					make_approved_pre_purchase_order(cur_frm.doc.name);
-				}else{
-					frappe.msgprint("Approved Pre Purchase Order already created "+verification[0]['name']);
-				}
+				//var verification = get_verification(cur_frm.doc.name);
+				
+				make_approved_pre_purchase_order(cur_frm.doc.name);
+				
 			});
 			
 		}
@@ -58,8 +56,9 @@ function make_approved_pre_purchase_order(name){
         async: false,
         callback: function(r) {
             doc_details = r.message;
-	    console.log("doc_details----------------"+doc_details)
-	    frappe.set_route("List", doc_details);
+	    if(doc_details){
+	    	frappe.set_route("List", doc_details);
+	   }
         }
     });
     return doc_details;
