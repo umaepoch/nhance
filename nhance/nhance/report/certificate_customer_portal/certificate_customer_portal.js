@@ -17,10 +17,13 @@ frappe.query_reports["Certificate-Customer Portal"] = {
         "options": "Item",
         "reqd": 0,
 	"get_query": function() {
+		var item_code=[];
+		var item_code=get_item_code_list();
+		console.log("item_code",item_code);
 	           return {
-                    "doctype": "Item",
+                    
 		     "filters" : [
-			['Item', 'has_serial_no', '=', 1] 
+		 	['Item', 'name', 'in', item_code]
 			]
               }
          }
@@ -33,10 +36,12 @@ frappe.query_reports["Certificate-Customer Portal"] = {
         "options": "Serial No",
         "reqd": 0,
 	"get_query": function() {
+		var item_serial=[];
+		var item_serial=get_item_serial_list();
+		console.log("item_serial",item_serial);
 	           return {
-                    "doctype": "Serial No",
 		     "filters" : [
-			['Serial No', 'delivery_document_no', '!=', ''] 
+			['Serial No', 'name', 'in', item_serial] 
 			]
               }
          }
@@ -70,6 +75,51 @@ frappe.query_reports["Certificate-Customer Portal"] = {
 
 	]
 }
+
+
+function get_item_code_list(){
+	var item_code_list = [];
+	frappe.call({
+	method: 'nhance.nhance.report.certificate_customer_portal.certificate_customer_portal.get_item_code',
+	async: false,
+	callback: function(r) {
+	
+		for (var i = 0; i < r.message.length; i++) {
+				    
+				    item_code_list.push(r.message[i].item_code);
+				   
+				    console.log("item_code_list",item_code_list);
+				    
+				}
+		
+	}
+	
+	});
+	
+	return item_code_list
+	}
+
+function get_item_serial_list(){
+	var item_serial_list = [];
+	frappe.call({
+	method: 'nhance.nhance.report.certificate_customer_portal.certificate_customer_portal.get_item_serial_no',
+	async: false,
+	callback: function(r) {
+	
+		for (var i = 0; i < r.message.length; i++) {
+				    
+				    item_serial_list.push(r.message[i].name);
+				   
+				    console.log("item_serial_list",item_serial_list);
+				    
+				}
+		
+	}
+	
+	});
+	
+	return item_serial_list
+	}
 
 function get_delivery_document_no_name(){
 	var delivery_document_list = [];
