@@ -142,11 +142,11 @@ def fetching_serial_no_details(filters):
 				condition ="""where dni.against_sales_order=%s and sn.customer='"""+for_value_user+"""' """
 				serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
-				`tabSerial No` sn ,`tabDelivery Note` dn {condition}  and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note"  and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
+				`tabSerial No` sn ,`tabDelivery Note` dn,`tabDelivery Note Item` dni  {condition}  and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note"  and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
 		else:
 			serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
-				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
+				`tabSerial No` sn ,`tabDelivery Note` dn ,`tabDelivery Note Item` dni {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
 
 	else:
 		user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
