@@ -12,10 +12,10 @@ class PackingBoxInspection(Document):
 	pass
 
 def update_si(pbi_child1_doc,voucher_name):
-	print "came inside update_si "
+	#print "came inside update_si "
 	pbc_doc_status_temp = 1
 	for row in pbi_child1_doc:
-		print " packing_box_link ",row["packing_box_link"]
+		#print " packing_box_link ",row["packing_box_link"]
 		pbc_doc_status = frappe.db.get_value("Packed Box Custom", {"name":row["packing_box_link"]},"status")
 		if(pbc_doc_status != "Completed"):
 			pbc_doc_status_temp = 0
@@ -26,7 +26,7 @@ def update_si(pbi_child1_doc,voucher_name):
 
 @frappe.whitelist()
 def update_packed_box_custom(pbi_child1_doc,voucher_name):
-	print "came inside update_packed_box_custom "
+	#print "came inside update_packed_box_custom "
 	pbi_child1_doc = json.loads(pbi_child1_doc)
 	for row in pbi_child1_doc:
 		pbc_doc = frappe.get_doc( "Packed Box Custom",row["packing_box_link"] )
