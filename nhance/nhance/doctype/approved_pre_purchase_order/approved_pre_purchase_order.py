@@ -80,6 +80,7 @@ def make_purchase_order(source_name, check_args):
 			#warehose_list = frappe.get_list("Project", filters = {"name": project}, fields=['reserve_warehouse'])
 			#print "warehouse--------------",items['warehouse']
 			round_function = get_round_function(check_args , items['qty'])
+			round_function = float(round_function)
 			innerJson_Transfer ={
 				"creation": creation_Date,
 				"qty": round_function,
