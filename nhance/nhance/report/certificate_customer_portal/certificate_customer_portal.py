@@ -51,32 +51,32 @@ def execute(filters=None):
 		
 
 def fetching_serial_no_details(filters):
-  condition = ''
-  value = ()
-  if filters.get("customer_po"):
-    condition = "where dn.po_no=%s"
-    value = (filters["customer_po"],)
-    #print "condition",condition
-    user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
-    #print "user",user
-    for_value = frappe.db.sql("""select for_value from `tabUser Permission` where for_value='"""+user+"""' """)
-    #print "for_value",for_value
-    if for_value!=():
-      for_value_user=for_value[0][0]
-      if for_value_user==user:
-        #print "for_value_user",for_value_user
-        condition ="""where dn.po_no=%s and sn.customer='"""+for_value_user+"""' """
-	      serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
-from 
-	`tabSerial No` sn ,`tabDelivery Note` dn {condition}  and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note"  and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
-    else:
-      serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
-from 
-	`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
+        condition = ''
+        value = ()
+	if filters.get("customer_po"):
+                condition = "where dn.po_no=%s"
+                value = (filters["customer_po"],)
+		#print "condition",condition
+		user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
+		#print "user",user
+		for_value = frappe.db.sql("""select for_value from `tabUser Permission` where for_value='"""+user+"""' """)
+		#print "for_value",for_value
+		if for_value!=():
+			for_value_user=for_value[0][0]
+			if for_value_user==user:
+				#print "for_value_user",for_value_user
+				condition ="""where dn.po_no=%s and sn.customer='"""+for_value_user+"""' """
+				serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+			from 
+				`tabSerial No` sn ,`tabDelivery Note` dn {condition}  and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note"  and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
+		else:
+			serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
+			from 
+				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
 
-  elif filters.get("item_code"):
-    condition = "where sn.item_code=%s"
-    value = (filters["item_code"],)
+        elif filters.get("item_code"):
+                condition = "where sn.item_code=%s"
+                value = (filters["item_code"],)
 		#print "condition",condition
 		user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
 		#print "user",user
@@ -94,9 +94,10 @@ from
 			serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name   """.format(condition=condition),value, as_dict=1)
-  elif filters.get("item_serial_no"):
-    condition = "where sn.serial_no=%s"
-    value = (filters["item_serial_no"],)
+
+	elif filters.get("item_serial_no"):
+                condition = "where sn.serial_no=%s"
+                value = (filters["item_serial_no"],)
 		#print "condition",condition
 		user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
 		#print "user",user
@@ -118,16 +119,16 @@ from
 	elif filters.get("delivery_note"):
 		user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
 		#print "user",user
-    condition = "where delivery_document_no=%s"
-    value = (filters["delivery_note"],)
+                condition = "where delivery_document_no=%s"
+                value = (filters["delivery_note"],)
 		#print "condition",condition
 		serial_details = frappe.db.sql("""select sn.pch1_coc,sn.pch1_pressure_test,sn.pch1_build_sheet,sn.pch1_combined_pdf,"","",sn.customer,dn.po_no,dn.po_date,sn.delivery_document_no,sn.delivery_date,sn.item_code,sn.item_name,sn.serial_no
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn {condition} and sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and   sn.delivery_document_no=dn.name  """.format(condition=condition),value, as_dict=1)
 
 	elif filters.get("sales_order_acknowleggement"):
-    condition = "where dni.against_sales_order=%s"
-    value = (filters["sales_order_acknowleggement"],)
+                condition = "where dni.against_sales_order=%s"
+                value = (filters["sales_order_acknowleggement"],)
 		#print "condition",condition
 		#print "value",value
 		user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
@@ -163,15 +164,15 @@ from
 			from 
 				`tabSerial No` sn ,`tabDelivery Note` dn  where sn.delivery_document_type!="Null" and sn.delivery_document_type="Delivery Note" and sn.delivery_document_no=dn.name  """, as_dict=1)
 		
-  return serial_details
+        return serial_details
 
 
 @frappe.whitelist()
 def get_delivery_document_no():
 	user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
-	#print "user",user
+	print "user",user
 	for_value = frappe.db.sql("""select for_value from `tabUser Permission` where for_value='"""+user+"""' """)
-	#print "for_value",for_value
+	print "for_value",for_value
 	if for_value!=():
 		for_value_user=for_value[0][0]
 		if for_value_user==user:
@@ -185,9 +186,9 @@ def get_delivery_document_no():
 @frappe.whitelist()
 def get_item_code():
 	user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
-	#print "user",user
+	print "user",user
 	for_value = frappe.db.sql("""select for_value from `tabUser Permission` where for_value='"""+user+"""' """)
-	#print "for_value",for_value
+	print "for_value",for_value
 	if for_value!=():
 		for_value_user=for_value[0][0]
 		if for_value_user==user:
@@ -201,9 +202,9 @@ def get_item_code():
 @frappe.whitelist()
 def get_item_serial_no():
 	user=frappe.db.get_value("User",{"name":frappe.session.user},"full_name")
-	#print "user",user
+	print "user",user
 	for_value = frappe.db.sql("""select for_value from `tabUser Permission` where for_value='"""+user+"""' """)
-	#print "for_value",for_value
+	print "for_value",for_value
 	if for_value!=():
 		for_value_user=for_value[0][0]
 		if for_value_user==user:
@@ -230,7 +231,6 @@ def get_sales_order_no():
 		#print "sales_order_no",sales_order_no
 	
 	return sales_order_no
-
 
 def get_columns():
 	"""return columns"""

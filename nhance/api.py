@@ -1801,9 +1801,9 @@ def get_merge_file_url(attached_to_name):
         	#print "files",str(files)
         	n=8
         	res = files[7:]
-          #print "res",res
-          test3.append(str(res))
-          #print "test3",test3 
+          	#print "res",res
+          	test3.append(str(res))
+          	#print "test3",test3 
     
     	path = '/home/frappe/frappe-bench/sites/site1.local/public/files/'
 
@@ -1814,11 +1814,11 @@ def get_merge_file_url(attached_to_name):
     	merger = PdfFileMerger()
     	#print "-----------------------"
     	for files in pdf_files:
-          #print "entered in for loop"
-		      #print "files",files
-          #print "file path",path + files
-          merger.append(PdfFileReader(file(path + files, 'rb')), import_bookmarks=False)
-    		  #merger.append(path + files)
+        	#print "entered in for loop"
+		#print "files",files
+          	#print "file path",path + files
+        	merger.append(PdfFileReader(file(path + files, 'rb')), import_bookmarks=False)
+    		#merger.append(path + files)
         	#print "+++++++++++",path+name1
     	fname = attached_to_name
     	combined='combined'+attached_to_name
