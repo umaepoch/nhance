@@ -1740,20 +1740,27 @@ def get_serial_number_details(duplicate_serial):
     #print "serial_no_list----",serial_no_list
     return serial_no_list
 
+
 #jyoti
 @frappe.whitelist()
 def get_file_url_pressure(attached_to_name):
     #print "coming inside get_file_url---"
     pressure = 'P'
     get_file_url_pressure = frappe.db.sql("""select File_url from `tabFile` where  attached_to_name='"""+attached_to_name+"""' and file_name LIKE '"""+pressure+"%""'""" , as_dict=1)
-    #print "serial_no_list----",serial_no_list
+    #url=get_file_url_pressure[0]['File_url']
+    #print "get_file_url_pressure----",get_file_url_pressure[0]['File_url']
+    #link="<a href= " + get_file_url_pressure[0]['File_url'] + " target = _blank>" + get_file_url_pressure[0]['File_url'] + "<br/>" + "</a>"
+    #serial=frappe.db.sql("""select name from `tabSerial No test` where name='"""+attached_to_name+"""'  """ , as_dict=1)
+    #serial_number=serial[0]['name']
+    #print "serial----",serial[0]['name']
+    #frappe.set_value("Serial No test",serial_number,"pch1_pressure_test",get_file_url_pressure);
     return get_file_url_pressure
 
 #jyoti
 @frappe.whitelist()
 def get_file_url_coc(attached_to_name):
     #print "coming inside get_file_url---"
-    coc = 'COC'
+    coc = 'C'
     get_file_url_coc1= frappe.db.sql("""select File_url from `tabFile` where  attached_to_name='"""+attached_to_name+"""' and file_name LIKE '"""+coc+"%""'""" , as_dict=1)
     #print "serial_no_list----",serial_no_list
     return get_file_url_coc1
@@ -1767,89 +1774,86 @@ def get_file_url_build_sheet(attached_to_name):
     #print "serial_no_list----",serial_no_list
     return get_file_url_build
 
-@frappe.whitelist()
-def get_file_url_user_manual(attached_to_name):
-    #print "coming inside get_file_url---"
-    user_manual_pdf = 'User'
-    get_user_manual_pdf = frappe.db.sql("""select File_url from `tabFile` where  attached_to_name='"""+attached_to_name+"""' and file_name LIKE '"""+user_manual_pdf+"%""'""" , as_dict=1)
-    #print "serial_no_list----",serial_no_list
-    return get_user_manual_pdf
 
 #jyoti
 @frappe.whitelist()
-def get_merge_file_url(name,attached_to_name):
-	#print "coming inside get_merge_file_url_list---"
-	get_merge_file_url_list = frappe.db.sql("""select File_url from `tabFile` where attached_to_name=%s""",attached_to_name)
-	#print get_merge_file_url_list
-	#print "name",name
-	name1=name+".pdf"
-	#print "namepdf",name1
-	test2=[]
-	test3=[]
-	for test in get_merge_file_url_list:
+def get_merge_file_url(attached_to_name):
+    #print "coming inside get_merge_file_url_list---"
+    get_merge_file_url_list = frappe.db.sql("""select File_url from `tabFile` where attached_to_name=%s""",attached_to_name)
+    #print get_merge_file_url_list
+    combined = 'combined'+attached_to_name
+    get_combined_file_url = frappe.db.sql("""select File_url from `tabFile` where   attached_to_name LIKE '"""+combined+"%""'""" , as_dict=1)
+    #print "get_combined_file_url",get_combined_file_url
+    if get_combined_file_url==[]:
+    	#print("entered in if") 
+    	name1=attached_to_name+".pdf"
+    	#print "namepdf",name1
+    	test2=[]
+    	test3=[]
+    	for test in get_merge_file_url_list:
 		#print "test",str(test)
-		for test1 in test:
-			#print "test1",str(test1)
-			test2.append(str(test1))
-			#print "_____",test2
-		#print "test2",test2
-	for files in test2:
-		#print "files",str(files)
-		n=8
-		res = files[7:]
+        	for test1 in test:
+	    		#print "test1",str(test1)
+            		test2.append(str(test1))
+            		#print "_____",test2
+        	#print "test2",test2 
+    	for files in test2:
+        	#print "files",str(files)
+        	n=8
+        	res = files[7:]
 		#print "res",res
 		test3.append(str(res))
-		#print "test3",test3
+	#print "test3",test3 
+    
+    	path = '/home/frappe/frappe-bench/sites/site1.local/public/files/'
 
-	path = '/home/frappe/frappe-bench/sites/site1.local/public/files/'
+    	#pdf_files = ['today.pdf','today1.pdf','cocpf96ad96.pdf']
+    	pdf_files = test3 
+    	#print "pdf_files",pdf_files
 
-	#pdf_files = ['today.pdf','today1.pdf','cocpf96ad96.pdf']
-	pdf_files = test3
-	#print "pdf_files",pdf_files
-
-	merger = PdfFileMerger()
-	#print "-----------------------"
-	for files in pdf_files:
+    	merger = PdfFileMerger()
+    	#print "-----------------------"
+    	for files in pdf_files:
 		#print "entered in for loop"
 		#print "files",files
 		#print "file path",path + files
 		merger.append(PdfFileReader(file(path + files, 'rb')), import_bookmarks=False)
-		#merger.append(path + files)
-		#print "+++++++++++",path+name1
-	fname = name
-	combined='combined'+name
-	save_path = 'site1.local/public/files'
-	file_name = os.path.join(save_path, fname)
-	ferp = frappe.new_doc("File")
-	ferp.file_name = fname+".pdf"
-	ferp.folder = "Home/Attachments"
-	ferp.is_private =0
-	ferp.file_url = "/files/"+fname+".pdf"
-	ferp.attached_to_doctype="Serial No"
-	ferp.attached_to_name=combined
-	#if not os.path.exists(path+name1):
-	merger.write(path+name1)
-	#print ".............."
-	merger.close()
-	source=path+name1
-	target=os.path.join(save_path, fname)
-	copyfile(source,target);
-	#print "successufully copied"
-	ferp.save()
-	frappe.msgprint(_("File created - Please check File List to download the file"))
-	frappe.db.sql("""update `tabSerial No` set created_combined_pdf=1 where name=%s""",name)
-	frappe.db.commit()
-	frappe.msgprint(_("combined_pdf created-"))
-	return get_merge_file_url_list
+    		#merger.append(path + files)
+        	#print "+++++++++++",path+name1
+    	fname = attached_to_name
+    	combined='combined'+attached_to_name
+    	save_path = 'site1.local/public/files'
+    	file_name = os.path.join(save_path, fname)
+    	ferp = frappe.new_doc("File")
+    	ferp.file_name = fname+".pdf"
+    	ferp.folder = "Home/Attachments"
+    	ferp.is_private =0
+    	ferp.file_url = "/files/"+fname+".pdf"
+    	ferp.attached_to_doctype="Serial No"
+    	ferp.attached_to_name=combined
+    	#if not os.path.exists(path+name1):
+    	merger.write(path+name1)
+    	#print ".............."
+    	merger.close()
+    	source=path+name1
+    	target=os.path.join(save_path, fname)
+    	copyfile(source,target);
+    	#print "successufully copied"
+    	ferp.save()
+    	frappe.msgprint(_("File created - Please check File List to download the file"))
+    	#frappe.db.sql("""update `tabSerial No` set created_combined_pdf=1 where name=%s""",name)
+    	#frappe.db.commit()
+    	#frappe.msgprint(_("combined_pdf created-"))
+    return get_merge_file_url_list
+
 #jyoti
 @frappe.whitelist()
-def get_combined_pdf(attached_to_name,attached_to_doctype):
+def get_combined_pdf(attached_to_name):
     #print "coming inside get_file_url---"
     combined = 'combined'+attached_to_name
-    get_combined_file_url = frappe.db.sql("""select File_url from `tabFile` where  attached_to_doctype='"""+attached_to_doctype+"""' and attached_to_name LIKE '"""+combined+"%""'""" , as_dict=1)
+    get_combined_file_url = frappe.db.sql("""select File_url from `tabFile` where   attached_to_name LIKE '"""+combined+"%""'""" , as_dict=1)
     #print "serial_no_list----",serial_no_list
     return get_combined_file_url
-
 
 #jyoti
 @frappe.whitelist()
