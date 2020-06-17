@@ -70,7 +70,19 @@ frappe.query_reports["Certificate-Customer Portal"] = {
         "label": __("Sales Order Acknowledgement"),
         "fieldtype": "Link",
         "options": "Sales Order",
-	"reqd": 0
+	"reqd": 0,
+	"get_query": function() {
+            var sales_order_no = [];
+            var sales_order_no = get_sales_order_no();
+	    console.log("sales_order_no",sales_order_no);
+		return{
+		"filters": [
+		["Sales Order", "name", "in", sales_order_no]
+			]
+
+		}
+	}
+	
 	}
 
 	]
@@ -141,4 +153,28 @@ function get_delivery_document_no_name(){
 	});
 	
 	return delivery_document_list
+	}
+
+
+
+function get_sales_order_no(){
+	var sales_order_list = [];
+	frappe.call({
+	method: 'nhance.nhance.report.certificate_customer_portal.certificate_customer_portal.get_sales_order_no',
+	async: false,
+	callback: function(r) {
+	
+		for (var i = 0; i < r.message.length; i++) {
+				    
+				    sales_order_list.push(r.message[i].against_sales_order);
+				   
+				    console.log("sales_order_list",sales_order_list);
+				    
+				}
+		
+	}
+	
+	});
+	
+	return sales_order_list
 	}
