@@ -14,8 +14,7 @@ ID_CHARECTER="/"
 #create a json {packing_item :[id1,id2]}
 #packing_items_data (detailed packing info first child table)
 @frappe.whitelist()
-def create_packing_item_custom_doc(packing_items_data,si_name):
-	voucher_type = "Sales Invoice"
+def create_packing_item_custom_doc(packing_items_data,voucher_type,voucher_no):
 	packing_items_data = json.loads(packing_items_data)
 	packed_item_id_json ={}
 	#print "came inside make_packing_item_doc",packing_items_data
@@ -28,23 +27,23 @@ def create_packing_item_custom_doc(packing_items_data,si_name):
 			pit = frappe.new_doc("Packed Item Custom")
 			pit.parent_item = packing_item_data["parent_item"]
 			pit.voucher_type = voucher_type
-			pit.voucher_no = si_name
+			pit.voucher_no = voucher_no
 			pit.packing_item = packing_item_data["packing_item"]
 			pit.qty = 1 #one one each as of now later it will change ac to packing item config
 			pit.packing_item_group = packing_item_data["item_group"]
 			pit.save(ignore_permissions=True)
-			print ("Packed Item Custom name ",pit.name)
+			#print ("Packed Item Custom name ",pit.name)
 			packing_id_list.append(pit.name)
 		packed_item_id_json[packing_item_data["packing_item"]] = packing_id_list
-	dpi_details = {"voucher_type":voucher_type,"voucher_name":si_name,"dpi_name":dpi_name,"packed_item_id_json":packed_item_id_json,"dpi_packing_items_data":packing_items_data}
+	dpi_details = {"voucher_type":voucher_type,"voucher_name":voucher_no,"dpi_name":dpi_name,"packed_item_id_json":packed_item_id_json,"dpi_packing_items_data":packing_items_data}
 	update_packingId_in_detailedPackingInfo(dpi_name,packed_item_id_json)
-	print ("create pi inpection called**",dpi_details["packed_item_id_json"])
+	#print ("create pi inpection called**",dpi_details["packed_item_id_json"])
 	create_pi_inspection(dpi_details)
 	return "packing item transactions have been created"
 
+
 @frappe.whitelist()
-def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,si_name):
-	voucher_type = "Sales Invoice"
+def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_type,voucher_no):
 	packing_boxes_data = json.loads(packing_boxes_data)
 	packing_items_data = json.loads(packing_items_data)
 	#print "came inside create_packing_box_custom_doc",packing_items_data
@@ -65,7 +64,7 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,si_name)
 		packing_box_status = "Completed"
 		pbc.packing_box =  packing_box_name
 		pbc.voucher_type = voucher_type
-		pbc.voucher_no = si_name
+		pbc.voucher_no = voucher_no
 
 		pbc.set('packed_box_details_child', [])
 		for packing_box_data in packing_box_datas:
@@ -97,7 +96,7 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,si_name)
 		pbc.save(ignore_permissions=True)
 		packing_box_id_json[packing_box_name] = pbc.name
 	update_packingBoxId_in_detailedPackingInfo(dpi_name,packing_box_id_json)
-	dpi_details = {"voucher_type":voucher_type,"voucher_name":si_name,"dpi_name":dpi_name,"packing_box_id_json":packing_box_id_json,"packing_boxes_data":packing_boxes_data}
+	dpi_details = {"voucher_type":voucher_type,"voucher_name":voucher_no,"dpi_name":dpi_name,"packing_box_id_json":packing_box_id_json,"packing_boxes_data":packing_boxes_data}
 	create_pbi_inspection(dpi_details)
 	return "packing box transactions have been created"
 
@@ -113,7 +112,7 @@ def update_packingId_in_detailedPackingInfo(doc_name,packed_item_id_json):
 				else: #new packing id
 					item_row.packing_id = "\n".join(packing_item_id_list)
 	detailed_packing_info_doc.save()
-	print("from update_packingId_in_detailedPackingInfo saved ",getattr(detailed_packing_info_doc,"packing_details_review"))
+	#print("from update_packingId_in_detailedPackingInfo saved ",getattr(detailed_packing_info_doc,"packing_details_review"))
 	for item_row in getattr(detailed_packing_info_doc,"packing_details_review"):
 		print("from update_packingId_in_detailedPackingInfo saved row",item_row.packing_id)
 
@@ -135,8 +134,8 @@ def create_pi_inspection(dpi_details):
 	pii.dpi_name = dpi_details["dpi_name"]
 	dpi_packing_items_data = dpi_details["dpi_packing_items_data"] #(detailed packing info first child table)
 	packed_item_id_json = dpi_details["packed_item_id_json"]
-	print("packed_item_id_json",packed_item_id_json)
-	print("dpi_packing_items_data",dpi_packing_items_data)
+	#print("packed_item_id_json",packed_item_id_json)
+	#print("dpi_packing_items_data",dpi_packing_items_data)
 
 	pii.set('packing_item_inspection_child', [])
 	for dpi_packing_item in dpi_packing_items_data:
@@ -156,7 +155,7 @@ def create_pi_inspection(dpi_details):
 	for dpi_packing_item in dpi_packing_items_data:
 		packing_item_id_list = packed_item_id_json[dpi_packing_item["packing_item"]]
 		for packing_item_id in packing_item_id_list:
-			print("packing_item_id",packing_item_id)
+			#print("packing_item_id",packing_item_id)
 			pii_tb2_row = pii.append('packing_item_inspection_progress_wh', {})
 			pii_tb2_row.parent_item = dpi_packing_item["parent_item"]
 			pii_tb2_row.packing_item = dpi_packing_item["packing_item"]

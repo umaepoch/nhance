@@ -21,7 +21,8 @@ def execute(filters=None):
 		pb_custom_data = get_pb_custom_data(dpi_pb_child_row["packing_box_id"])
 		for pb_custom_child1_row in pb_custom_data :
 			data.append([
-			dpi_pb_child_row["si_name"],
+			dpi_pb_child_row["voucher_type"],
+			dpi_pb_child_row["voucher_no"],
 			dpi_pb_child_row["name"],
 			dpi_pb_child_row["packing_box"],
 			dpi_pb_child_row["packing_box_id"],
@@ -34,7 +35,8 @@ def execute(filters=None):
 
 def get_columns():
     columns = [
-      _("SI Name")+":Link/Sales Invoice:150",
+	  _("Voucher type")+"::150",
+	  _("Voucher no")+"::150",
 	  _("DPI")+":Link/Detailed Packing Info:150",
       _("Packing Box")+":Link/Packed Box Custom:150",
 	  _("Packing Box ID")+":Link/Packed Box Custom:150",
@@ -46,8 +48,8 @@ def get_columns():
     return columns
 
 def get_dpi_pb_child_details(filters):
-	dpi_name = frappe.db.get_value("Detailed Packing Info", {"si_name":filters.si_name},"name")
-	dpi_pb_child_details = frappe.db.sql("""select dpi.name,dpi.si_name,dpipb.packing_box,dpipb.packing_box_id from `tabDetailed Packing Info` dpi,`tabDetailed Packing Box Child` dpipb where  dpi.name = dpipb.parent and dpi.name = %s""",dpi_name, as_dict=1)
+	dpi_name = frappe.db.get_value("Detailed Packing Info", {"voucher_no":filters.voucher_no},"name")
+	dpi_pb_child_details = frappe.db.sql("""select dpi.name,dpi.voucher_type,dpi.voucher_no,dpipb.packing_box,dpipb.packing_box_id from `tabDetailed Packing Info` dpi,`tabDetailed Packing Box Child` dpipb where  dpi.name = dpipb.parent and dpi.name = %s""",dpi_name, as_dict=1)
 	return dpi_pb_child_details
 
 def get_pb_custom_data(packing_box_id):
@@ -55,44 +57,45 @@ def get_pb_custom_data(packing_box_id):
 	return pb_custom_data
 
 @frappe.whitelist()
-def make_shipment(si_name_filter):
-	si_items = frappe.db.sql("""
+def make_shipment(voucher_type,voucher_no):
+	tableName = "`tab{} Item`".format(voucher_type)
+	items = frappe.db.sql("""
 	select
 	parent,item_code,item_name,description,qty,uom,conversion_factor,stock_qty,rate,amount
 	from
-	`tabSales Invoice Item`
+	"""+tableName+"""
 	where
-	parent = %s""", si_name_filter, as_dict=1)
-	ispackingboxescompleted =  frappe.db.get_value("Sales Invoice", {"name":si_name_filter},"pch_ispackingboxescompleted")
+	parent = %s""",( voucher_no), as_dict=1)
+
+	ispackingboxescompleted =  frappe.db.get_value(voucher_type, {"name":voucher_no},"pch_ispackingboxescompleted")
 	if ispackingboxescompleted:
-		dn_name = create_delivery_note(si_items)
+		dn_name = create_delivery_note(items,voucher_type,voucher_no)
 	else:
 		frappe.msgprint("Cannot make shipment .Packing boxes are not fully completed", raise_exception=True)
 	return dn_name
 
-def create_delivery_note(si_items):
-	si_name = ""
+def create_delivery_note(items,voucher_type,voucher_no):
 	dn = frappe.new_doc("Delivery Note")
-	dn.customer = "siva"
+	dn.customer = frappe.db.get_value(voucher_type, {"name":voucher_no},"customer")
 	dn.set('items', [])
-	for si_item in si_items :
+	for item in items :
 		dn_items = dn.append('items', {})
-		si_name = si_item["parent"]
-		dn_items.item_code =  si_item["item_code"]
-		dn_items.item_name =   si_item["item_name"]
-		dn_items.description =   si_item["description"]
-		dn_items.uom = si_item["uom"]
-		dn_items.qty = si_item["qty"]
+		dn_items.item_code =  item["item_code"]
+		dn_items.item_name =   item["item_name"]
+		dn_items.description =   item["description"]
+		dn_items.uom = item["uom"]
+		dn_items.qty = item["qty"]
 		dn_items.warehouse =  "Stores - EPCH"
 		dn_items.target_warehouse =  "Yard - EPCH"
 	dn.save(ignore_permissions=True)
-	craete_pboxes_and_items(si_name,dn.name)
+	create_pboxes_and_items(voucher_type,voucher_no,dn.name)
 	return dn.name
 
-def craete_pboxes_and_items(si_name,dn_name):
-	dpi_name = frappe.db.get_value("Detailed Packing Info", {"si_name":si_name},"name")
+def create_pboxes_and_items(voucher_type,voucher_no,dn_name):
+	dpi_name = frappe.db.get_value("Detailed Packing Info", {"voucher_no":voucher_no},"name")
 	pboxes_and_items_doc = frappe.new_doc("Packing Boxes and Items")
-	pboxes_and_items_doc.si_name = si_name
+	pboxes_and_items_doc.voucher_type = voucher_type
+	pboxes_and_items_doc.voucher_no = voucher_no
 	pboxes_and_items_doc.dn_name = dn_name
 	detailed_packing_info_doc = frappe.get_doc( "Detailed Packing Info",dpi_name )
 	pboxes_and_items_doc.set('detailed_packing_box', detailed_packing_info_doc.detailed_packing_box)

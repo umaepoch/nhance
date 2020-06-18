@@ -11,22 +11,22 @@ import json
 class PackingBoxInspection(Document):
 	pass
 
-def update_si(pbi_child1_doc,voucher_name):
-	#print "came inside update_si "
+def update_si(pbi_child1_doc,voucher_type,voucher_name):
+	print "came inside update_si "
 	pbc_doc_status_temp = 1
 	for row in pbi_child1_doc:
-		#print " packing_box_link ",row["packing_box_link"]
+		print " packing_box_link ",row["packing_box_link"]
 		pbc_doc_status = frappe.db.get_value("Packed Box Custom", {"name":row["packing_box_link"]},"status")
 		if(pbc_doc_status != "Completed"):
 			pbc_doc_status_temp = 0
 	if pbc_doc_status_temp == 1:
-		frappe.db.set_value("Sales Invoice", voucher_name, "pch_ispackingboxescompleted", "True")
+		frappe.db.set_value(voucher_type, voucher_name, "pch_ispackingboxescompleted", "True")
 	else:
-		frappe.db.set_value("Sales Invoice", voucher_name, "pch_ispackingboxescompleted", "False")
+		frappe.db.set_value(voucher_type, voucher_name, "pch_ispackingboxescompleted", "False")
 
 @frappe.whitelist()
-def update_packed_box_custom(pbi_child1_doc,voucher_name):
-	#print "came inside update_packed_box_custom "
+def update_packed_box_custom(pbi_child1_doc,voucher_type,voucher_name):
+	print "came inside update_packed_box_custom "
 	pbi_child1_doc = json.loads(pbi_child1_doc)
 	for row in pbi_child1_doc:
 		pbc_doc = frappe.get_doc( "Packed Box Custom",row["packing_box_link"] )
@@ -34,4 +34,4 @@ def update_packed_box_custom(pbi_child1_doc,voucher_name):
 		pbc_doc.current_warehouse =  row["current_warehouse"]
 		pbc_doc.packing_box_inspection_link = row["parent"]
 		pbc_doc.save()
-	update_si(pbi_child1_doc,voucher_name)
+	update_si(pbi_child1_doc,voucher_type,voucher_name)
