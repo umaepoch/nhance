@@ -16,7 +16,7 @@ def hellosub(loggedInUser):
 @frappe.whitelist()
 def create_biometric_attendance():
 	reqData = json.loads(frappe.request.data)
-	print "reqData json",reqData
+	#print "reqData json",reqData
 	bio_aten = frappe.new_doc("Biometric Attendance Nhance")
 	bio_aten.timestamp = reqData.get("time_stamp")
 	bio_aten.employee_id = reqData.get("employee_id")
@@ -40,5 +40,5 @@ def create_biometric_attendance():
 @frappe.whitelist()
 def testing():
 	reqData = json.loads(frappe.request.data)
-	print "reqData json",reqData
+	#print "reqData json",reqData
 	return "hello"
