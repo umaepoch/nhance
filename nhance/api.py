@@ -1915,3 +1915,62 @@ def get_merge_file_url(attached_to_name):
     	#frappe.db.commit()
     	#frappe.msgprint(_("combined_pdf created-"))
     return get_merge_file_url_list
+
+
+#jyoti
+@frappe.whitelist()
+def get_income_account_from_item(item_code,company):
+    income_account_item = frappe.db.sql("""select income_account,expense_account from `tabItem Default` where parent='"""+item_code+"""' and company='"""+company+"""' """, as_dict=1)
+    income_account=income_account_item[0]['income_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return income_account
+
+@frappe.whitelist()
+def get_expense_account_from_item(item_code,company):
+    expense_account_item = frappe.db.sql("""select income_account,expense_account from `tabItem Default` where parent='"""+item_code+"""' and company='"""+company+"""' """, as_dict=1)
+    print("expense_account_item",expense_account_item);
+    expense_account=expense_account_item[0]['expense_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return expense_account
+
+@frappe.whitelist()
+def get_income_account(customer):
+    income_account = frappe.db.sql("""select pch_overriding_income_account from  `tabCustomer` where  customer_name='"""+customer+"""'  """, as_dict=1)
+    #overriding_income_account=income_account[0]['pch_overriding_income_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return income_account
+
+
+@frappe.whitelist()
+def get_expense_account(customer):
+    expense_account = frappe.db.sql("""select pch_overriding_expense_account from  `tabCustomer` where  customer_name='"""+customer+"""'  """, as_dict=1)
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    return expense_account
+
+@frappe.whitelist()
+def get_expense_account_company(company):
+    expense_account_company = frappe.db.sql("""select default_expense_account from  `tabCompany` where  name='"""+company+"""'  """, as_dict=1)
+    expense_account_company_detail=expense_account_company[0]['default_expense_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return expense_account_company_detail
+
+
+@frappe.whitelist()
+def get_income_account_company(company):
+    income_account_company = frappe.db.sql("""select default_income_account from  `tabCompany` where  name='"""+company+"""'  """, as_dict=1)
+    income_account_company_detail=income_account_company[0]['default_income_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return income_account_company_detail
+
+
