@@ -483,4 +483,183 @@ function fetch_has_batch_no(item_code) {
     return has_batch_no
 }
 
+//available qty from stock ledger entry
 
+frappe.ui.form.on("Delivery Note Item", "item_code", function(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    var customer = frm.doc.customer;
+    console.log("customer", customer);
+    var company = frm.doc.company;
+    console.log("company", company);
+    var items = frm.doc.items;
+
+    for (var j = 0; j < items.length; j++) {
+        var item_code = items[j]['item_code'];
+        console.log("item_code", item_code);
+        var status = frm.doc.docstatus;
+        console.log("status", status);
+        var name = frm.doc.name;
+        console.log("name", name);
+        var warehouse = items[j]['warehouse'];
+        console.log("warehouse", warehouse);
+        var posting_date = frm.doc.posting_date;
+        console.log("posting_date", posting_date);
+        var posting_time = frm.doc.posting_time;
+        console.log("posting_time", posting_time);
+
+	
+       var available_qty_warehouse_date = fetch_qty_at_from_warehouse(item_code, warehouse);
+        console.log("available_qty_warehouse_date", available_qty_warehouse_date);
+
+	var converted_posting_date=new Date(posting_date).getTime();
+            console.log("converted_posting_date", converted_posting_date);
+
+var available_qty_warehouse_date_beforePostingDate =[];
+
+        for (var z = 0; z < available_qty_warehouse_date.length; z++) {
+            //var dates=available_qty_warehouse_date[z];
+            available_qty_warehouse_date[z] = new Date(available_qty_warehouse_date[z]).getTime();
+            console.log("date", available_qty_warehouse_date[z], z);
+            
+if(available_qty_warehouse_date[z] < converted_posting_date){
+available_qty_warehouse_date_beforePostingDate.push(available_qty_warehouse_date[z]);
+console.log("available_qty_warehouse_date_beforePostingDate",available_qty_warehouse_date_beforePostingDate);
+}
+		
+
+        }
+
+        var sorted_date = available_qty_warehouse_date_beforePostingDate.sort();
+        console.log("sorted_date", sorted_date);
+        for (var i = 0; i < sorted_date.length; i++) {
+            var todate = new Date(sorted_date[i]).getDate();
+            if (todate < 10) {
+                todate = "0" + todate;
+            }
+            var tomonth = new Date(sorted_date[i]).getMonth() + 1;
+            if (tomonth < 10) {
+                tomonth = "0" + tomonth;
+            }
+            var toyear = new Date(sorted_date[i]).getFullYear();
+            sorted_date[i] = toyear + '-' + tomonth + '-' + todate;
+
+            console.log("original_date", sorted_date[i]);
+
+        }
+        var heighest_date;
+        var heighest_date = sorted_date[sorted_date.length - 1];
+        console.log("heighest_date", heighest_date);
+       var available_qty_warehouse_time;
+       
+        available_qty_warehouse_time = fetch_qty_at_from_warehouse_time(item_code, warehouse, heighest_date);
+        console.log("available_qty_warehouse_time", available_qty_warehouse_time);
+        
+        var newarray = [];
+        for (var p = 0; p < available_qty_warehouse_time.length; p++) {
+            console.log("entered in loop");
+
+
+            newarray.push(available_qty_warehouse_time[p]);
+
+        }
+        var newest_array = newarray.sort();
+        console.log("newest_array", newest_array);
+        var lenght_array = newest_array.length - 1;
+        var time = newest_array[lenght_array];
+        console.log("time", time);
+        if (time != undefined ) {
+          var available_qty_warehouse = fetch_qty_at_from_warehouse_qty(item_code, warehouse, heighest_date,time);
+            console.log("available_qty_warehouse", available_qty_warehouse);
+           
+
+            items[j]['pch_available_qty_of_transcation_at_posting_date_and_time'] = available_qty_warehouse;
+        } 
+else {
+            items[j]['pch_available_qty_of_transcation_at_posting_date_and_time'] = 0;
+        }
+       frm.refresh_field("items") 
+    }
+
+  
+
+});
+
+
+function fetch_qty_at_from_warehouse(item_code, warehouse){
+	var qty_after_transaction_posting_date = [];
+	frappe.call({
+		method: 'nhance.api.get_stock_qty',
+		args: {
+		   "item_code": item_code,
+                    "warehouse": warehouse
+		},
+		async: false,
+		callback: function(r) {
+		     for (var i = 0; i < r.message.length; i++) {
+                qty_after_transaction_posting_date.push(r.message[i].posting_date);
+
+            }
+		}
+    });
+    return qty_after_transaction_posting_date
+}
+
+
+function fetch_qty_at_from_warehouse_time(item_code, warehouse, heighest_date) {
+    console.log("entered into function");
+    var qty_after_transaction_posting_time = [];
+    frappe.call({
+        method: 'frappe.client.get_list',
+        args: {
+            'doctype': 'Stock Ledger Entry',
+            'fields': ['qty_after_transaction', 'posting_date', 'posting_time'],
+
+            'filters': {
+                item_code: item_code,
+                warehouse: warehouse,
+                posting_date: heighest_date
+            }
+        },
+        async: false,
+        callback: function(r) {
+            //console.log("qty_after_transaction_posting_time" + JSON.stringify(r.message));
+            for (var i = 0; i < r.message.length; i++) {
+                qty_after_transaction_posting_time.push(r.message[i].posting_time);
+
+            }
+
+
+        }
+    });
+    return qty_after_transaction_posting_time
+}
+
+function fetch_qty_at_from_warehouse_qty(item_code, warehouse,heighest_date, time) {
+    console.log("entered into function");
+    var qty_after_transaction_qty = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Stock Ledger Entry',
+            'fieldname': 'qty_after_transaction',
+
+            'filters': {
+                item_code: item_code,
+                warehouse: warehouse,
+		posting_date:heighest_date,
+                posting_time: time
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                qty_after_transaction_qty = r.message.qty_after_transaction;
+                //console.log(qty_after_transaction_qty);
+                //console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+
+        }
+    });
+    return qty_after_transaction_qty
+}
