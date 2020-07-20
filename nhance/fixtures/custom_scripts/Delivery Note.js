@@ -588,7 +588,7 @@ console.log("entered in else block of no date found");
        console.log("entered in if block");
 	var available_qty_warehouse = fetch_qty_at_from_warehouse_qty1(item_code, warehouse, posting_date,time);
             console.log("available_qty_warehouse", available_qty_warehouse);
-            items[j]['pch_available_qty_of_transcation_at_posting_date_and_time'] = available_qty;
+            items[j]['pch_available_qty_of_transcation_at_posting_date_and_time'] = available_qty_warehouse;
         } 
 
 if(time==undefined) {
