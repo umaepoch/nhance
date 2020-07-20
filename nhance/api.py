@@ -1976,7 +1976,17 @@ def get_income_account_company(company):
 #jyoti
 @frappe.whitelist()
 def get_stock_qty(item_code,warehouse):
-    qty = frappe.db.sql("""select posting_date from  `tabStock Ledger Entry` where  item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""'  """, as_dict=1)
+    
+    qty = frappe.db.sql("""select concat_ws(" ", posting_date, posting_time) as date from `tabStock Ledger Entry` where item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""' """, as_dict=1)
+    #print("qty",qty)
     return qty
+
+
+@frappe.whitelist()
+def get_balance_qty(item_code,warehouse,posting_date):
+    
+    balance_qty = frappe.db.sql("""select posting_time from `tabStock Ledger Entry` where item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""' and posting_date='"""+posting_date+"""' """, as_dict=1)
+    #print("balance_qty",balance_qty)
+    return balance_qty
 
 
