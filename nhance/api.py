@@ -1921,7 +1921,8 @@ def get_revision_no_stock(item_code,parent):
 
 @frappe.whitelist()
 def get_stock_qty(item_code,warehouse):
+    print("entered in get_stock_qty function")
     qty = frappe.db.sql("""select concat_ws(" ", posting_date, posting_time) as date,qty_after_transaction from `tabStock Ledger Entry` where item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""' order by posting_date,posting_time """, as_dict=1)
-    #print("qty",qty)
+    print("qty",qty)
     return qty
 
