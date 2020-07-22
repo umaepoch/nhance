@@ -33,7 +33,7 @@ def execute(filters=None):
 	summ_data = []
 	for (item_code) in sorted(iwb_map):
 		qty_dict = iwb_map[item_code]
-		data.append([				
+		data.append([
 			        qty_dict.item_code,
 				qty_dict.item_name,
 				qty_dict.required_qty,
@@ -57,9 +57,9 @@ def execute(filters=None):
 		rows[3], rows[4], rows[5], rows[6], rows[7], rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16],])
 	return columns, summ_data
 
-def get_columns():           
+def get_columns():
 		"""return columns"""
-		columns = [	
+		columns = [
 		_("Item Code")+"::100",
 		_("Item Name")+"::100",
 		_("MR Recd.")+"::100",
@@ -89,8 +89,8 @@ def get_conditions(filters):
 def validate_filters(filters):
 		#print "##validating filters..."
 		if not (filters.get("item_code") or filters.get("warehouse")):
-				sle_count = flt(frappe.db.sql("""select count(name) from          
-				`tabStock Ledger Entry`""")[0][0])	
+				sle_count = flt(frappe.db.sql("""select count(name) from
+				`tabStock Ledger Entry`""")[0][0])
 def get_item_details(filters):
 		condition = ''
 		value = ()
@@ -119,7 +119,7 @@ def get_Uom_Data(item_code):
 	must_be_whole_number = frappe.db.sql("""select must_be_whole_number  from `tabUOM` where uom_name = %s """, (purchase_uom), as_dict=1)
 	uom_Data.extend(must_be_whole_number)
 	return uom_Data
-	
+
 
 def get_item_warehouse_map(filters):
 		iwb_map = {}
@@ -156,13 +156,13 @@ def get_item_warehouse_map(filters):
 			item_names_list = get_ItemName(d.item_code)
 			item_name = ""
 			#print "##-item_names_list::", item_names_list
-			if len(item_names_list) != 0:	
+			if len(item_names_list) != 0:
 				item_name = item_names_list[0]['item_name']
 
 			reOrder_Level_List = get_Reorder_Level(d.item_code)
 			item_Reord_Level = 0
 			#print "##-reOrder_Level_List::", reOrder_Level_List
-			if len(reOrder_Level_List) != 0:	
+			if len(reOrder_Level_List) != 0:
 				warehouse = reOrder_Level_List[0]['warehouse']
 				if planning_warehouse == warehouse:
 					item_Reord_Level = reOrder_Level_List[0]['warehouse_reorder_level']
@@ -180,7 +180,7 @@ def get_item_warehouse_map(filters):
 					if convert_factor:
 						conversion_factor = convert_factor[0][0]
 					else:
-						conversion_factor = 1	
+						conversion_factor = 1
 			qty = 0
 			rec_qty = 0
 			excess_ord = 0
@@ -197,7 +197,7 @@ def get_item_warehouse_map(filters):
 					excess_prev = excess_prev + excess_Ordered
 			pending_Qty = qty - rec_qty
 			if pending_Qty > 0:
-				
+
 				if excess_prev > pending_Qty:
 					excess_from_planning_cycle = excess_prev - pending_Qty
 				else:
@@ -215,13 +215,13 @@ def get_item_warehouse_map(filters):
 				delta = item_entry["required_qty"] - wh_stock - excess_from_planning_cycle
 				min_order_quantity = map(operator.itemgetter(0), min_Order_Quantity)
 				min_order_quantity = min_order_quantity[0]
-				if delta > 0:			
+				if delta > 0:
 					if delta >= float(moq1[0]):
 						wso = delta
 					else:
-						wso = float(moq1[0])
-						#print "#######-wso::", wso
- 						excess_ord = wso - delta
+					    wso = float(moq1[0])
+					    #print "#######-wso::", wso
+					    excess_ord = wso - delta
 				else:
 					excess_ord = 0
 				wso_puom = wso/conversion_factor
@@ -231,30 +231,30 @@ def get_item_warehouse_map(filters):
 				item_entry["wso"] = wso
 				item_entry["excess_Ordered"] = excess_ord
 				item_entry["min_order_qty"] = min_order_quantity
-				item_entry["reorder_Level"] = item_Reord_Level	
+				item_entry["reorder_Level"] = item_Reord_Level
 				item_entry["wso_puom"] = wso_puom
-				item_entry["excess_ord_puom"] = excess_ord_puom	
+				item_entry["excess_ord_puom"] = excess_ord_puom
 			else:
 				delta = d.req_qty - wh_stock - excess_from_planning_cycle
-				if delta > 0:			
+				if delta > 0:
 					if delta >= float(moq1[0]):
 						wso = delta
 					else:
-						wso = float(moq1[0])
- 						excess_ord = wso - delta
+					    wso = float(moq1[0])
+					    excess_ord = wso - delta
 
 				wso_puom = wso/conversion_factor
 				excess_ord_puom = excess_ord/conversion_factor
 
 				iwb_map[key] = frappe._dict({
-								 "item_code": d.item_code, 
-								 "item_name": item_name, 
+								 "item_code": d.item_code,
+								 "item_name": item_name,
 							         "required_qty": d.req_qty,
 							         "qty_in_Stock": wh_stock,
 								 "ef_planning_cycle": 								         excess_from_planning_cycle,
 								 "delta": delta,
 							         "reorder_Level": item_Reord_Level,
-								 "min_order_qty": min_order_quantity, 
+								 "min_order_qty": min_order_quantity,
 								 "wso": wso,
 								 "excess_Ordered": excess_ord,
 								 "stock_uom": stock_uom,
@@ -265,9 +265,9 @@ def get_item_warehouse_map(filters):
 								 "supplier": "",
 								 "rate": "",
 							})
-			
+
 		return iwb_map
-									
+
 def get_total_stock(item_code):
 	item_stock = flt(frappe.db.sql("""select sum(actual_qty)
 			from `tabStock Ledger Entry`
@@ -280,7 +280,7 @@ def get_total_stock(item_code):
 	tot_stock = item_stock + stock_recon
 	return tot_stock
 
-def get_stock(item_code, warehouse):		
+def get_stock(item_code, warehouse):
 	item_stock = get_balance_qty_from_sle(item_code, warehouse)
 	return item_stock
 
@@ -290,7 +290,7 @@ def getPurchase_OrderItem_Details(item_code):
 def get_MOQ(item_code):
 	moq_List = frappe.db.sql("""select min_order_qty from `tabItem` where item_code = %s""", item_code)
 	return moq_List
-	
+
 def get_warehouses():
 		whse = frappe.db.sql("""select name from `tabWarehouse`""")
 		whse_list = [row[0] for row in whse]
@@ -309,7 +309,7 @@ def get_whs_branch(temp_whs, filters):
 		return whse, whs_flag
 
 def get_sales_order_entries():
-	return frappe.db.sql("""select item_name, item_group, parent, item_code, qty-ordered_qty as req_qty, min_order_qty from  `tabStock Requisition Item` where docstatus = "1"  and qty > ordered_qty order by item_code """, as_dict=1)	
+	return frappe.db.sql("""select item_name, item_group, parent, item_code, qty-ordered_qty as req_qty, min_order_qty from  `tabStock Requisition Item` where docstatus = "1"  and qty > ordered_qty order by item_code """, as_dict=1)
 
 def get_SupplierList():
 	return frappe.db.sql("""select supplier_name  from `tabSupplier`""", as_dict=1)
@@ -333,7 +333,7 @@ def make_Purchase_Items(args):
 	creation_Date = datetime.datetime.now()
 	ret = ""
 	innerJson_Transfer = " "
-        outerJson_Transfer = {"item": [
+	outerJson_Transfer = {"item": [
 	]}
 	for reportData in summ_data:
 		if args == "as final":
@@ -345,7 +345,7 @@ def make_Purchase_Items(args):
 			if reportData[16] is None or reportData[16] is "":
 				frappe.msgprint("Set Price For Item...")
 		break
-	for rows in summ_data:	
+	for rows in summ_data:
 		item_code = rows[0]
 		item_price_details = get_item_price_details(item_code)
 		if item_price_details is not None and len(item_price_details)!=0:
@@ -373,20 +373,20 @@ def make_Purchase_Items(args):
 		if len(uom_details)!=0:
 			must_be_whole_number = uom_details[1]['must_be_whole_number']
 			if must_be_whole_number == 1:
-				item_qty = float(rows[13])
- 				check_qty = math.floor(item_qty) 
-				check_qty = item_qty - check_qty
-				if check_qty != 0.0:
-					if round_off == "up":
-						quantity = math.ceil(item_qty)
-						quantity = int(quantity)
-					else:
-						quantity = int(item_qty)
-				else:
-					quantity = int(item_qty)
-				#print "#################-quantity::", quantity
+			    item_qty = float(rows[13])
+			    check_qty = math.floor(item_qty)
+			    check_qty = item_qty - check_qty
+			    if check_qty != 0.0:
+			        if round_off == "up":
+			            quantity = math.ceil(item_qty)
+			            quantity = int(quantity)
+			        else:
+			            quantity = int(item_qty)
+			    else:
+			        quantity = int(item_qty)
+			        #print "#################-quantity::", quantity
 			else:
-				quantity = rows[13]
+			    quantity = rows[13]
 		if quantity > 0:
 			innerJson_Transfer = {
 			"item_code": rows[0],
@@ -418,7 +418,7 @@ def get_Purchase_Taxes_and_Charges(account_head, tax_name):
 @frappe.whitelist()
 def make_PurchaseOrder(args,tax_template):
 	ret = ""
-	global tax_Rate_List 
+	global tax_Rate_List
 	tax_Rate_List = {}
 	order_List = json.loads(args)
 	items_List = json.dumps(order_List)
@@ -436,7 +436,7 @@ def make_PurchaseOrder(args,tax_template):
 					"supplier":"",
 					"items": [
 					],
-					"taxes": [			 
+					"taxes": [
         				],
 					}
 
@@ -484,4 +484,3 @@ def make_PurchaseOrder(args,tax_template):
 	ret = doc.doctype
 	if ret:
 		frappe.msgprint("Purchase Order is Created:"+doc.name)
-		

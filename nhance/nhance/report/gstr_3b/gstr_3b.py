@@ -296,7 +296,7 @@ def execute(filters=None):
 			net_total = isd.net_total
 			isd_net_total = isd_net_total + net_total
 			tax_isd_details = isd_itc_taxs(invoice_id)
-			print "tax_isd_details----------",tax_isd_details
+			#print "tax_isd_details----------",tax_isd_details
 			for tax_isd in tax_isd_details:
 				account_head = tax_isd.account_head
 				if "CGST" in account_head:

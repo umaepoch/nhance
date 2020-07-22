@@ -1085,13 +1085,13 @@ def get_unique_state(at_purchase):
 				mapped_items_list = item_entry["mapped_items"]
 				new_list = []
 				for mapped_items in mapped_items_list:
-			    		tax_rate_list.append(mapped_items["tax_rate"])
-					data_rate = list(set(tax_rate_list))
+				  tax_rate_list.append(mapped_items["tax_rate"])
+				  data_rate = list(set(tax_rate_list))
 				if tax_rate in data_rate:
 				    	for items in mapped_items_list:
-				   		if float(tax_rate) == float(items["tax_rate"]):
-							amount_temp = items["allocated_amount"]
-							items["allocated_amount"] = (amount_temp) + (allocated_amount)
+						    if float(tax_rate) == float(items["tax_rate"]):
+						        amount_temp = items["allocated_amount"]
+						        items["allocated_amount"] = (amount_temp) + (allocated_amount)
 				else :
 					new_list.append({
 							"tax_rate": tax_rate,
@@ -1149,13 +1149,13 @@ def get_unique_atadj_state(atadj_purchase):
 					mapped_items_list = item_entry["mapped_items"]
 					new_list = []
 					for mapped_items in mapped_items_list:
-				    		tax_rate_list.append(mapped_items["tax_rate"])
-						data_rate = list(set(tax_rate_list))
+					  tax_rate_list.append(mapped_items["tax_rate"])
+					  data_rate = list(set(tax_rate_list))
 					if tax_rate in data_rate:
 					    	for items in mapped_items_list:
-					   		if float(tax_rate) == float(items["tax_rate"]):
-								amount_temp = items["allocated_amount"]
-								items["allocated_amount"] = (amount_temp) + (allocated_amount)
+							    if float(tax_rate) == float(items["tax_rate"]):
+							        amount_temp = items["allocated_amount"]
+							        items["allocated_amount"] = (amount_temp) + (allocated_amount)
 					else :
 						new_list.append({
 								"tax_rate": tax_rate,
@@ -1372,18 +1372,18 @@ def get_hsn_uqc_list(sales):
 						item_tax_rate = tax_data.rate
 						integrated_tax_amount = net_amount * tax_data.rate/100
 				if key in invoice_map:
-				    	item_entry = invoice_map[key]
-					qty_temp = item_entry["net_amount"]
-					integrated_tmp = item_entry["integrated_tax_amount_total"]
-					central_tmp = item_entry["central_tax_amount_total"]
-					state_tmp = item_entry["state_tax_amount_total"]
-					integrated_tmp = item_entry["integrated_tax_amount_total"]
-					qty_count = item_entry["qty"]
-					item_entry["net_amount"] = (qty_temp) + (net_amount)
-					item_entry["qty"] = (qty_count) + (qty)
-					item_entry["integrated_tax_amount_total"] = (integrated_tmp) + (integrated_tax_amount)
-					item_entry["central_tax_amount_total"] = (central_tmp) + (central_tax_amount)
-					item_entry["state_tax_amount_total"] = (state_tmp) + (state_tax_amount)
+				  item_entry = invoice_map[key]
+				  qty_temp = item_entry["net_amount"]
+				  integrated_tmp = item_entry["integrated_tax_amount_total"]
+				  central_tmp = item_entry["central_tax_amount_total"]
+				  state_tmp = item_entry["state_tax_amount_total"]
+				  integrated_tmp = item_entry["integrated_tax_amount_total"]
+				  qty_count = item_entry["qty"]
+				  item_entry["net_amount"] = (qty_temp) + (net_amount)
+				  item_entry["qty"] = (qty_count) + (qty)
+				  item_entry["integrated_tax_amount_total"] = (integrated_tmp) + (integrated_tax_amount)
+				  item_entry["central_tax_amount_total"] = (central_tmp) + (central_tax_amount)
+				  item_entry["state_tax_amount_total"] = (state_tmp) + (state_tax_amount)
 				else :
 
 					invoice_map[key] = frappe._dict({
