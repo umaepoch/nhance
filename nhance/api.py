@@ -1802,11 +1802,11 @@ def get_merge_file_url(attached_to_name):
             		#print "_____",test2
         	#print "test2",test2
     	for files in test2:
-        	#print "files",str(files)
-        	n=8
-        	res = files[7:]
-		#print "res",res
-		test3.append(str(res))
+		    #print "files",str(files)
+		    n=8
+		    res = files[7:]
+		    #print "res",res
+		    test3.append(str(res))
 	#print "test3",test3
 
     	path = '/home/frappe/frappe-bench/sites/site1.local/public/files/'
@@ -1818,36 +1818,36 @@ def get_merge_file_url(attached_to_name):
     	merger = PdfFileMerger()
     	#print "-----------------------"
     	for files in pdf_files:
-		#print "entered in for loop"
-		#print "files",files
-		#print "file path",path + files
-		merger.append(PdfFileReader(file(path + files, 'rb')), import_bookmarks=False)
-    		#merger.append(path + files)
-        	#print "+++++++++++",path+name1
-    	fname = attached_to_name
-    	combined='combined'+attached_to_name
-    	save_path = 'site1.local/public/files'
-    	file_name = os.path.join(save_path, fname)
-    	ferp = frappe.new_doc("File")
-    	ferp.file_name = fname+".pdf"
-    	ferp.folder = "Home/Attachments"
-    	ferp.is_private =0
-    	ferp.file_url = "/files/"+fname+".pdf"
-    	ferp.attached_to_doctype="Serial No"
-    	ferp.attached_to_name=combined
-    	#if not os.path.exists(path+name1):
-    	merger.write(path+name1)
-    	#print ".............."
-    	merger.close()
-    	source=path+name1
-    	target=os.path.join(save_path, fname)
-    	copyfile(source,target);
-    	#print "successufully copied"
-    	ferp.save()
-    	frappe.msgprint(_("File created - Please check File List to download the file"))
-    	#frappe.db.sql("""update `tabSerial No` set created_combined_pdf=1 where name=%s""",name)
-    	#frappe.db.commit()
-    	#frappe.msgprint(_("combined_pdf created-"))
+		    #print "entered in for loop"
+		    #print "files",files
+		    #print "file path",path + files
+		    merger.append(PdfFileReader(file(path + files, 'rb')), import_bookmarks=False)
+		    #merger.append(path + files)
+		    #print "+++++++++++",path+name1
+		    fname = attached_to_name
+		    combined='combined'+attached_to_name
+		    save_path = 'site1.local/public/files'
+		    file_name = os.path.join(save_path, fname)
+		    ferp = frappe.new_doc("File")
+		    ferp.file_name = fname+".pdf"
+		    ferp.folder = "Home/Attachments"
+		    ferp.is_private =0
+		    ferp.file_url = "/files/"+fname+".pdf"
+		    ferp.attached_to_doctype="Serial No"
+		    ferp.attached_to_name=combined
+		    #if not os.path.exists(path+name1):
+		    merger.write(path+name1)
+		    #print ".............."
+		    merger.close()
+		    source=path+name1
+		    target=os.path.join(save_path, fname)
+		    copyfile(source,target);
+		    #print "successufully copied"
+		    ferp.save()
+		    frappe.msgprint(_("File created - Please check File List to download the file"))
+		    #frappe.db.sql("""update `tabSerial No` set created_combined_pdf=1 where name=%s""",name)
+		    #frappe.db.commit()
+		    #frappe.msgprint(_("combined_pdf created-"))
     return get_merge_file_url_list
 
 #jyoti
@@ -1919,13 +1919,14 @@ def get_revision_no_stock(item_code,parent):
 
 
     return get_stock_serial_no
-<<<<<<< HEAD
-=======
 
 @frappe.whitelist()
 def get_stock_qty(item_code,warehouse):
+    print("entered in get_stock_qty function")
     qty = frappe.db.sql("""select concat_ws(" ", posting_date, posting_time) as date,qty_after_transaction from `tabStock Ledger Entry` where item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""' order by posting_date,posting_time """, as_dict=1)
-    #print("qty",qty)
+    print("qty",qty)
     return qty
 
->>>>>>> 2e75f9626f1e0a0bc982822289cd2a7ba61481df
+@frappe.whitelist()
+def testing_api():
+    return "success"
