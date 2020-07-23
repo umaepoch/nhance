@@ -1926,3 +1926,7 @@ def get_stock_qty(item_code,warehouse):
     print("qty",qty)
     return qty
 
+@frappe.whitelist()
+def testing_api():
+    return "success"
+

@@ -386,3 +386,36 @@ function fetch_qty_at_from_warehouse(item_code, warehouse) {
     return qty_after_transaction_posting_date
 }
 
+
+//for testing
+frappe.ui.form.on("Delivery Note", "refresh", function(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    var customer = frm.doc.customer;
+    console.log("customer", customer);
+    var company = frm.doc.company;
+    console.log("company", company);
+    var items = frm.doc.items;
+    var test = fetch_from_api();
+    console.log("test", test);
+});
+
+
+function fetch_from_api() {
+    var qty_after_transaction_posting_date = "";
+    frappe.call({
+        method: 'nhance.api.testing_api',
+        async: false,
+        callback: function(r) {
+            
+       if (r.message) {
+                qty_after_transaction_posting_date = r.message;
+                console.log(qty_after_transaction_posting_date);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+
+        }
+    });
+    return qty_after_transaction_posting_date
+}
+
