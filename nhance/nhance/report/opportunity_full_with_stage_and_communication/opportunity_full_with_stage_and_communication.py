@@ -37,56 +37,56 @@ def execute(filters=None):
 
           ])
     for rows in data:
-       		if opp_count == 0:
-       			opp_prev = rows[0]
- 			item_prev = rows[2]
-			tot_qty = tot_qty + rows[4]
-			tot_val = tot_val + rows[7]
+        if opp_count == 0:
+            opp_prev = rows[0]
+            item_prev = rows[2]
+            tot_qty = tot_qty + rows[4]
+            tot_val = tot_val + rows[7]
 
 
-			summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[7],
-				rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
- 				])
-                else:
-			opp_work = rows[0]
-                        item_work = rows[2]
+            summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[7],
+            rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
+            ])
+        else:
+            opp_work = rows[0]
+            item_work = rows[2]
 
 
-			if opp_prev == opp_work:
-				tot_qty = tot_qty + rows[4]
-				tot_val = tot_val + rows[7]
+            if opp_prev == opp_work:
+                tot_qty = tot_qty + rows[4]
+                tot_val = tot_val + rows[7]
 
-                                summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[7], rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
- 				])
-			else:
-				summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", tot_val, " ", " ", " ", " "
-					" ", " ", " ", " ", " ", " ", " "
+                summ_data.append([opp_prev, rows[1], rows[2], rows[3], rows[4], rows[5], rows[7], rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
+                ])
+            else:
+                summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", tot_val, " ", " ", " ", " "
+                " ", " ", " ", " ", " ", " ", " "
 
- 				])
+                ])
 
 
-				summ_data.append([opp_work,  rows[1], rows[2], rows[3], rows[4], rows[5], rows[7],
-				rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
- 				])
+                summ_data.append([opp_work,  rows[1], rows[2], rows[3], rows[4], rows[5], rows[7],
+                rows[8], rows[9], rows[10], rows[11], rows[12], rows[13], rows[14], rows[15], rows[16], rows[17], rows[18]
+                ])
 
-				tot_qty = 0
-				tot_val = 0
+                tot_qty = 0
+                tot_val = 0
 
-				tot_qty = tot_qty + rows[4]
-				tot_val = tot_val + rows[7]
+                tot_qty = tot_qty + rows[4]
+                tot_val = tot_val + rows[7]
 
-				opp_prev = opp_work
-                                item_prev = item_work
+                opp_prev = opp_work
+                item_prev = item_work
 
-		opp_count = opp_count + 1
-	summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", tot_val, " ", " ",
+        opp_count = opp_count + 1
+    summ_data.append([opp_prev, " ", " ", " ", tot_qty, " ", tot_val, " ", " ",
 					" ", " ", " ", " ", " ", " ", " ", " ", " "
  				])
 
 
 
 
-	return columns, summ_data
+    return columns, summ_data
 
 
 def get_columns():
@@ -193,170 +193,168 @@ and sc.stage_date not in (select co1.communication_date from `tabCommunication` 
 
 
 def get_item_map(filters):
-        iwb_map = {}
-        from_date = getdate(filters["from_date"])
-        to_date = getdate(filters["to_date"])
+    iwb_map = {}
+    from_date = getdate(filters["from_date"])
+    to_date = getdate(filters["to_date"])
 
-        sle = get_opp_details(filters)
+    sle = get_opp_details(filters)
 
-	dle = get_opp_details_1(filters)
-	kle = get_opp_details_2(filters)
-	mle = []
-	mle = get_opp_details_3(filters)
-	ple = []
-	ple = get_opp_details_4(filters)
+    dle = get_opp_details_1(filters)
+    kle = get_opp_details_2(filters)
+    mle = []
+    mle = get_opp_details_3(filters)
+    ple = []
+    ple = get_opp_details_4(filters)
 
+    for d in sle:
+        key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+        if key not in iwb_map:
+            iwb_map[key] = frappe._dict({
+                    "qty": 0.0, "value": 0.0,
 
-        for d in sle:
+            })
 
-                key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
-                if key not in iwb_map:
-                        iwb_map[key] = frappe._dict({
-                                "qty": 0.0, "value": 0.0,
-
-                        })
-
-                qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+        qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
 
 
-                qty_dict.qty = d.qty
-                qty_dict.value = d.value
-                qty_dict.customer = d.customer
-		qty_dict.stage_date = d.stage_date
-		qty_dict.stage = d.stage
-		qty_dict.item_group = d.item_group
-		qty_dict.closing_date = d.closing_date
-		qty_dict.opportunity_purpose = d.opportunity_purpose
-		qty_dict.buying_status = d.buying_status
-		qty_dict.support_needed = d.support_needed
-		qty_dict.subject = d.subject
-	        qty_dict.communication_date = d.communication_date
-		qty_dict.reference_name = d.reference_name
-		qty_dict.recipients = d.recipients
-		qty_dict.phone_no = d.phone
-		qty_dict.content = d.content
+        qty_dict.qty = d.qty
+        qty_dict.value = d.value
+        qty_dict.customer = d.customer
+        qty_dict.stage_date = d.stage_date
+        qty_dict.stage = d.stage
+        qty_dict.item_group = d.item_group
+        qty_dict.closing_date = d.closing_date
+        qty_dict.opportunity_purpose = d.opportunity_purpose
+        qty_dict.buying_status = d.buying_status
+        qty_dict.support_needed = d.support_needed
+        qty_dict.subject = d.subject
+        qty_dict.communication_date = d.communication_date
+        qty_dict.reference_name = d.reference_name
+        qty_dict.recipients = d.recipients
+        qty_dict.phone_no = d.phone
+        qty_dict.content = d.content
 
-        if dle:
-		for d in dle:
+    if dle:
+        for d in dle:
 
- 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
-	                if key not in iwb_map:
-        	                iwb_map[key] = frappe._dict({
-        	                        "qty": 0.0, "value": 0.0,
+            key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+            if key not in iwb_map:
+                iwb_map[key] = frappe._dict({
+                "qty": 0.0, "value": 0.0,
 
-        	                })
+                })
 
-                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
-
-
-	                qty_dict.qty = d.qty
-        	        qty_dict.value = d.value
-        	        qty_dict.customer = d.customer
-			qty_dict.stage_date = d.stage_date
-			qty_dict.stage = d.stage
-			qty_dict.item_group = d.item_group
-			qty_dict.closing_date = d.closing_date
-			qty_dict.opportunity_purpose = d.opportunity_purpose
-			qty_dict.buying_status = d.buying_status
-			qty_dict.support_needed = d.support_needed
-			qty_dict.subject = d.subject
-		        qty_dict.communication_date = d.communication_date
-			qty_dict.reference_name = d.reference_name
-			qty_dict.recipients = d.recipients
-			qty_dict.phone_no = d.phone
-			qty_dict.content = d.content
-
- 	if kle:
-		for d in kle:
-
-			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
-	                if key not in iwb_map:
-	      	                iwb_map[key] = frappe._dict({
-        	                        "qty": 0.0, "value": 0.0,
-
-        	                })
-
-                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+            qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
 
 
-	                qty_dict.qty = d.qty
-        	        qty_dict.value = d.value
-        	        qty_dict.customer = d.customer
-			qty_dict.stage_date = d.stage_date
-			qty_dict.stage = d.stage
-			qty_dict.item_group = d.item_group
-			qty_dict.closing_date = d.closing_date
-			qty_dict.opportunity_purpose = d.opportunity_purpose
-			qty_dict.buying_status = d.buying_status
-			qty_dict.support_needed = d.support_needed
-			qty_dict.subject = d.subject
-		        qty_dict.communication_date = d.communication_date
-			qty_dict.reference_name = d.reference_name
-			qty_dict.recipients = d.recipients
-			qty_dict.phone_no = d.phone
-			qty_dict.content = d.content
+            qty_dict.qty = d.qty
+            qty_dict.value = d.value
+            qty_dict.customer = d.customer
+            qty_dict.stage_date = d.stage_date
+            qty_dict.stage = d.stage
+            qty_dict.item_group = d.item_group
+            qty_dict.closing_date = d.closing_date
+            qty_dict.opportunity_purpose = d.opportunity_purpose
+            qty_dict.buying_status = d.buying_status
+            qty_dict.support_needed = d.support_needed
+            qty_dict.subject = d.subject
+            qty_dict.communication_date = d.communication_date
+            qty_dict.reference_name = d.reference_name
+            qty_dict.recipients = d.recipients
+            qty_dict.phone_no = d.phone
+            qty_dict.content = d.content
 
-	if mle:
-		for d in mle:
+    if kle:
+        for d in kle:
 
- 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
-	                if key not in iwb_map:
-        	                iwb_map[key] = frappe._dict({
-        	                        "qty": 0.0, "value": 0.0,
+            key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+            if key not in iwb_map:
+                iwb_map[key] = frappe._dict({
+                "qty": 0.0, "value": 0.0,
 
-        	                })
+                })
 
-                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
-
-
-	                qty_dict.qty = d.qty
-        	        qty_dict.value = d.value
-        	        qty_dict.customer = d.customer
-			qty_dict.stage_date = d.stage_date
-			qty_dict.stage = d.stage
-			qty_dict.item_group = d.item_group
-			qty_dict.closing_date = d.closing_date
-			qty_dict.opportunity_purpose = d.opportunity_purpose
-			qty_dict.buying_status = d.buying_status
-			qty_dict.support_needed = d.support_needed
-			qty_dict.subject = d.subject
-		        qty_dict.communication_date = d.communication_date
-			qty_dict.reference_name = d.reference_name
-			qty_dict.recipients = d.recipients
-			qty_dict.phone_no = d.phone
-			qty_dict.content = d.content
-
-	if ple:
-		for d in ple:
-
- 			key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
-	                if key not in iwb_map:
-        	                iwb_map[key] = frappe._dict({
-        	                        "qty": 0.0, "value": 0.0,
-
-        	                })
-
-                	qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+            qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
 
 
-	                qty_dict.qty = d.qty
-        	        qty_dict.value = d.value
-        	        qty_dict.customer = d.customer
-			qty_dict.stage_date = d.stage_date
-			qty_dict.stage = d.stage
-			qty_dict.item_group = d.item_group
-			qty_dict.closing_date = d.closing_date
-			qty_dict.opportunity_purpose = d.opportunity_purpose
-			qty_dict.buying_status = d.buying_status
-			qty_dict.support_needed = d.support_needed
-			qty_dict.subject = d.subject
-		        qty_dict.communication_date = d.communication_date
-			qty_dict.reference_name = d.reference_name
-			qty_dict.recipients = d.recipients
-			qty_dict.phone_no = d.phone
-			qty_dict.content = d.content
+            qty_dict.qty = d.qty
+            qty_dict.value = d.value
+            qty_dict.customer = d.customer
+            qty_dict.stage_date = d.stage_date
+            qty_dict.stage = d.stage
+            qty_dict.item_group = d.item_group
+            qty_dict.closing_date = d.closing_date
+            qty_dict.opportunity_purpose = d.opportunity_purpose
+            qty_dict.buying_status = d.buying_status
+            qty_dict.support_needed = d.support_needed
+            qty_dict.subject = d.subject
+            qty_dict.communication_date = d.communication_date
+            qty_dict.reference_name = d.reference_name
+            qty_dict.recipients = d.recipients
+            qty_dict.phone_no = d.phone
+            qty_dict.content = d.content
 
-        return iwb_map
+    if mle:
+        for d in mle:
+
+            key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+            if key not in iwb_map:
+                iwb_map[key] = frappe._dict({
+                "qty": 0.0, "value": 0.0,
+
+                })
+
+            qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+
+
+            qty_dict.qty = d.qty
+            qty_dict.value = d.value
+            qty_dict.customer = d.customer
+            qty_dict.stage_date = d.stage_date
+            qty_dict.stage = d.stage
+            qty_dict.item_group = d.item_group
+            qty_dict.closing_date = d.closing_date
+            qty_dict.opportunity_purpose = d.opportunity_purpose
+            qty_dict.buying_status = d.buying_status
+            qty_dict.support_needed = d.support_needed
+            qty_dict.subject = d.subject
+            qty_dict.communication_date = d.communication_date
+            qty_dict.reference_name = d.reference_name
+            qty_dict.recipients = d.recipients
+            qty_dict.phone_no = d.phone
+            qty_dict.content = d.content
+
+    if ple:
+        for d in ple:
+
+            key = (d.opportunity, d.item_code, d.sales_cycle, d.communication_date)
+            if key not in iwb_map:
+                iwb_map[key] = frappe._dict({
+                "qty": 0.0, "value": 0.0,
+
+                })
+
+            qty_dict = iwb_map[(d.opportunity, d.item_code, d.sales_cycle, d.communication_date)]
+
+
+            qty_dict.qty = d.qty
+            qty_dict.value = d.value
+            qty_dict.customer = d.customer
+            qty_dict.stage_date = d.stage_date
+            qty_dict.stage = d.stage
+            qty_dict.item_group = d.item_group
+            qty_dict.closing_date = d.closing_date
+            qty_dict.opportunity_purpose = d.opportunity_purpose
+            qty_dict.buying_status = d.buying_status
+            qty_dict.support_needed = d.support_needed
+            qty_dict.subject = d.subject
+            qty_dict.communication_date = d.communication_date
+            qty_dict.reference_name = d.reference_name
+            qty_dict.recipients = d.recipients
+            qty_dict.phone_no = d.phone
+            qty_dict.content = d.content
+
+    return iwb_map
 
 def get_item_details(filters):
         condition = ''

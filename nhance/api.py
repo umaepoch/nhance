@@ -1919,3 +1919,13 @@ def get_revision_no_stock(item_code,parent):
 
 
     return get_stock_serial_no
+<<<<<<< HEAD
+=======
+
+@frappe.whitelist()
+def get_stock_qty(item_code,warehouse):
+    qty = frappe.db.sql("""select concat_ws(" ", posting_date, posting_time) as date,qty_after_transaction from `tabStock Ledger Entry` where item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""' order by posting_date,posting_time """, as_dict=1)
+    #print("qty",qty)
+    return qty
+
+>>>>>>> 2e75f9626f1e0a0bc982822289cd2a7ba61481df
