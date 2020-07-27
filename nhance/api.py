@@ -17,6 +17,9 @@ import time
 import math
 import base64
 import ast
+import urllib.request
+import urllib.parse
+
 parent_list = []
 @frappe.whitelist()
 def make_proposal_stage(source_name, target_doc=None):
