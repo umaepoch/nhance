@@ -286,5 +286,93 @@ function remove_submit_permission_with_so(user,so_reviewed,name){
 }
 
 
+//SMS sending
+frappe.ui.form.on("Sales Order", "refresh", function(frm, cdt, cdn) {
+    console.log("Entered------");
+    var d = locals[cdt][cdn];
+    var customer = d.customer;
+    console.log("customer", customer);
+    var name=frm.doc.name;
+    console.log("name",name);
+    var so_status=frm.doc.so_status;
+    console.log("so_status",so_status);
+    
+    var salutation_of_customer = fetch_salutation_id(customer);
+    console.log("salutation_of_customer", salutation_of_customer);
+    
+    
+    
+   var message1;
+   if(so_status==="Dispatched" || so_status==="Production Complete" || so_status==="Production - Coloring" || so_status==="Production - Pre-Assembly" || so_status==="Production - Welding" || so_status==="Production - Bending" || so_status==="Production - Cutting" || so_status==="Production Drawing"){
+     console.log("entered in if");
+     message1 ='Hi '+salutation_of_customer+' '+frm.doc.customer+'%nFollowing is the status of order %nOrder number:'+frm.doc.name+'%nProject Status:'+frm.doc.so_status+'%nThank you';
+     console.log("message1",message1);
+     var apikey='+kEqIhqpZYo-dOuC4UVnZgSMbGLJNlFX4lWiNA67iJ';
+     var sender='CRMTCA';
+     var numbers='918431105028';
+      var message_sent=send_sms(apikey,numbers,sender,message1);
+     console.log("message_sent",message_sent);
+     
+}else if(so_status==="Installation in Process"){
+     console.log("entered in else if");
+    
+     message1 ='Hi '+salutation_of_customer+' '+frm.doc.customer+'%nAs scheduled our team will be present at you site for first phase of installation.Your presence at the site is kindly requested. For further information, feel free to contact us at +91 76187 78067.';
+     console.log("message1",message1);
+     var apikey='+kEqIhqpZYo-dOuC4UVnZgSMbGLJNlFX4lWiNA67iJ';
+     var sender='CRMTCA';
+     var numbers='918431105028';
+      var message_sent=send_sms(apikey,numbers,sender,message1);
+     console.log("message_sent",message_sent);
+   }
+     
+   
+    
+    
+});
+function fetch_salutation_id(customer) {
+    console.log("entered into function");
+    var salutation = "";
+    frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            'doctype': 'Customer',
+            'fieldname': 'salutation',
 
+            'filters': {
+                customer_name: customer,
+            }
+        },
+        async: false,
+        callback: function(r) {
+            if (r.message) {
+                salutation = r.message.salutation;
+                console.log(mail_id);
+                console.log("readings-----------" + JSON.stringify(r.message));
+
+            }
+        }
+    });
+    return salutation
+}
+
+function send_sms(apikey,numbers,sender,message1) {
+    console.log("entered into function");
+     frappe.call({
+    method: "nhance.api.sendSMS",
+    args: {
+      "apikey": apikey,
+      "numbers":numbers,
+       "sender":sender,
+       "message":message1
+    },
+    callback: function(r) {
+      if(r.exc) {
+       msgprint(r.exc);
+     
+      console.log("message");
+       return;
+      }
+    }
+  });
+}  
 
