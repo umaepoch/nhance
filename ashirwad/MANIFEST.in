@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include ashirwad *.css
+recursive-include ashirwad *.csv
+recursive-include ashirwad *.html
+recursive-include ashirwad *.ico
+recursive-include ashirwad *.js
+recursive-include ashirwad *.json
+recursive-include ashirwad *.md
+recursive-include ashirwad *.png
+recursive-include ashirwad *.py
+recursive-include ashirwad *.svg
+recursive-include ashirwad *.txt
+recursive-exclude ashirwad *.pyc
