@@ -285,7 +285,8 @@ function remove_submit_permission_with_so(user,so_reviewed,name){
 	    return remove_perm;
 }
 
-//sms sending
+
+//SMS sending
 frappe.ui.form.on("Sales Order", "refresh", function(frm, cdt, cdn) {
     console.log("Entered------");
     var d = locals[cdt][cdn];
@@ -299,11 +300,7 @@ frappe.ui.form.on("Sales Order", "refresh", function(frm, cdt, cdn) {
     var salutation_of_customer = fetch_salutation_id(customer);
     console.log("salutation_of_customer", salutation_of_customer);
     
-    var send_sms_to_customer = fetch_do_not_sms(customer);
-    console.log("send_sms_to_customer", send_sms_to_customer);
     
-    if(send_sms_to_customer===0){
-console.log("message will send to this customer");
     
    var message1;
    if(so_status==="Dispatched" || so_status==="Production Complete" || so_status==="Production - Coloring" || so_status==="Production - Pre-Assembly" || so_status==="Production - Welding" || so_status==="Production - Bending" || so_status==="Production - Cutting" || so_status==="Production Drawing"){
@@ -312,8 +309,7 @@ console.log("message will send to this customer");
      console.log("message1",message1);
      var apikey='+kEqIhqpZYo-dOuC4UVnZgSMbGLJNlFX4lWiNA67iJ';
      var sender='CRMTCA';
-     var numbers=fetch_mobile_no(customer);
-    console.log("numbers",numbers);
+     var numbers='918431105028';
       var message_sent=send_sms(apikey,numbers,sender,message1);
      console.log("message_sent",message_sent);
      
@@ -324,28 +320,13 @@ console.log("message will send to this customer");
      console.log("message1",message1);
      var apikey='+kEqIhqpZYo-dOuC4UVnZgSMbGLJNlFX4lWiNA67iJ';
      var sender='CRMTCA';
-     var numbers=fetch_mobile_no(customer);
-    console.log("numbers",numbers);
-     var message_sent=send_sms(apikey,numbers,sender,message1);
-     console.log("message_sent",message_sent);
-   }
-   else if(so_status==="Financial Clearance Obtained"){
-     console.log("entered in Financial Clearance Obtained");
-    
-     message1 ='Hi '+salutation_of_customer+' '+frm.doc.customer+'%nWe are delighted to inform you that your project has been cleared for manufacturing. Order number:'+frm.doc.name+'%nProject Status :'+frm.doc.so_status+'%nThank you';
-     console.log("message1",message1);
-     var apikey='+kEqIhqpZYo-dOuC4UVnZgSMbGLJNlFX4lWiNA67iJ';
-     var sender='CRMTCA';
-     var numbers=fetch_mobile_no(customer);
-    console.log("numbers",numbers);
+     var numbers='918431105028';
       var message_sent=send_sms(apikey,numbers,sender,message1);
      console.log("message_sent",message_sent);
-   }  
+   }
+     
    
-    }//end of sent to sms if block
-   else{
-console.log("message will not send to this customer");
-}
+    
     
 });
 function fetch_salutation_id(customer) {
@@ -365,6 +346,7 @@ function fetch_salutation_id(customer) {
         callback: function(r) {
             if (r.message) {
                 salutation = r.message.salutation;
+                console.log(mail_id);
                 console.log("readings-----------" + JSON.stringify(r.message));
 
             }
@@ -372,57 +354,6 @@ function fetch_salutation_id(customer) {
     });
     return salutation
 }
-
-function fetch_do_not_sms(customer) {
-    console.log("entered into function");
-    var do_not_sms = "";
-    frappe.call({
-        method: 'frappe.client.get_value',
-        args: {
-            'doctype': 'Customer',
-            'fieldname': 'do_not_sms',
-
-            'filters': {
-                customer_name: customer,
-            }
-        },
-        async: false,
-        callback: function(r) {
-            if (r.message) {
-                do_not_sms = r.message.do_not_sms;
-                console.log("readings-----------" + JSON.stringify(r.message));
-
-            }
-        }
-    });
-    return do_not_sms
-}
-
-function fetch_mobile_no(customer) {
-    console.log("entered into fetch_mobile_no function");
-    var mobile_no = "";
-    frappe.call({
-        method: 'frappe.client.get_value',
-        args: {
-            'doctype': 'Customer',
-            'fieldname': 'mobile_no',
-
-            'filters': {
-                customer_name: customer,
-            }
-        },
-        async: false,
-        callback: function(r) {
-            if (r.message) {
-                mobile_no = r.message.mobile_no;
-                console.log("readings-----------" + JSON.stringify(r.message));
-
-            }
-        }
-    });
-    return mobile_no
-}
-
 
 function send_sms(apikey,numbers,sender,message1) {
     console.log("entered into function");
@@ -444,5 +375,4 @@ function send_sms(apikey,numbers,sender,message1) {
     }
   });
 }  
-
 
