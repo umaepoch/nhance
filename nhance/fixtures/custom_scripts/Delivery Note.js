@@ -483,4 +483,99 @@ function fetch_has_batch_no(item_code) {
     return has_batch_no
 }
 
+//available qty from stock ledger entry
 
+frappe.ui.form.on("Delivery Note", "before_save", function(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    var customer = frm.doc.customer;
+    console.log("customer", customer);
+    var company = frm.doc.company;
+    console.log("company", company);
+    var items = frm.doc.items;
+
+    for (var j = 0; j < items.length; j++) {
+        var item_code = items[j]['item_code'];
+        console.log("item_code", item_code);
+        var status = frm.doc.docstatus;
+        console.log("status", status);
+        var name = frm.doc.name;
+        console.log("name", name);
+        var warehouse = items[j]['warehouse'];
+        console.log("warehouse", warehouse);
+        var posting_date1 = frm.doc.posting_date;
+        console.log("posting_date1", posting_date1);
+        var posting_time1 = frm.doc.posting_time;
+        console.log("posting_time1", posting_time1);
+
+        var combined_datetime = posting_date1 + " " + posting_time1;
+        console.log("combined_datetime", combined_datetime);
+        var converted_posting_date = new Date(combined_datetime).getTime();
+        console.log("converted_posting_date", converted_posting_date);
+        var available_qty_warehouse_date = fetch_qty_at_from_warehouse(item_code, warehouse);
+        console.log("available_qty_warehouse_date", available_qty_warehouse_date);
+        var available_qty_warehouse_date_beforePostingDate = [];
+        var available_qty_warehouse_date_beforePostingTime = [];
+        var heighest_date;
+        for (var z = 0; z < available_qty_warehouse_date.length; z++) {
+            //var dates=available_qty_warehouse_date[z];
+            available_qty_warehouse_date[z] = new Date(available_qty_warehouse_date[z]).getTime();
+            console.log("date", available_qty_warehouse_date[z], z);
+            if (available_qty_warehouse_date[z] <= converted_posting_date) {
+                available_qty_warehouse_date_beforePostingDate.push(available_qty_warehouse_date[z]);
+                console.log("available_qty_warehouse_date_beforePostingDate", available_qty_warehouse_date_beforePostingDate);
+
+            }
+            z = z + 1;
+        }
+        var sorted_date = available_qty_warehouse_date_beforePostingDate.sort();
+        console.log("sorted_date", sorted_date);
+
+        var heighest_date = sorted_date[sorted_date.length - 1];
+        console.log("heighest_date", heighest_date);
+        var qty;
+        for (var i = 0; i <= available_qty_warehouse_date.length; i++) {
+            if (heighest_date == available_qty_warehouse_date[i]) {
+                qty = available_qty_warehouse_date[i + 1];
+                console.log("qty", qty);
+            }
+        }
+
+
+        if (heighest_date != undefined) {
+            console.log("entered in if block");
+
+            items[j]['pch_available_qty_of_transcation_at_posting_date_and_time'] = qty;
+        } else {
+            console.log("entered in else block");
+            items[j]['pch_available_qty_of_transcation_at_posting_date_and_time'] = 0;
+        }
+        frm.refresh_field("items")
+    }
+
+
+
+});
+
+
+function fetch_qty_at_from_warehouse(item_code, warehouse) {
+    var qty_after_transaction_posting_date = [];
+    frappe.call({
+        method: 'nhance.api.get_stock_qty',
+        args: {
+            "item_code": item_code,
+            "warehouse": warehouse
+
+        },
+        async: false,
+        callback: function(r) {
+            for (var i = 0; i < r.message.length; i++) {
+                qty_after_transaction_posting_date.push(r.message[i].date);
+                qty_after_transaction_posting_date.push(r.message[i].qty_after_transaction);
+
+            }
+
+
+        }
+    });
+    return qty_after_transaction_posting_date
+}

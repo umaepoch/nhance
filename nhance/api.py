@@ -17,6 +17,9 @@ import time
 import math
 import base64
 import ast
+import urllib.request
+import urllib.parse
+
 parent_list = []
 @frappe.whitelist()
 def make_proposal_stage(source_name, target_doc=None):
@@ -1915,3 +1918,90 @@ def get_merge_file_url(attached_to_name):
     	#frappe.db.commit()
     	#frappe.msgprint(_("combined_pdf created-"))
     return get_merge_file_url_list
+
+
+#jyoti
+@frappe.whitelist()
+def get_income_account_from_item(item_code,company):
+    income_account_item = frappe.db.sql("""select income_account,expense_account from `tabItem Default` where parent='"""+item_code+"""' and company='"""+company+"""' """, as_dict=1)
+    income_account=income_account_item[0]['income_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return income_account
+
+@frappe.whitelist()
+def get_expense_account_from_item(item_code,company):
+    expense_account_item = frappe.db.sql("""select income_account,expense_account from `tabItem Default` where parent='"""+item_code+"""' and company='"""+company+"""' """, as_dict=1)
+    print("expense_account_item",expense_account_item);
+    expense_account=expense_account_item[0]['expense_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return expense_account
+
+@frappe.whitelist()
+def get_income_account(customer):
+    income_account = frappe.db.sql("""select pch_overriding_income_account from  `tabCustomer` where  customer_name='"""+customer+"""'  """, as_dict=1)
+    #overriding_income_account=income_account[0]['pch_overriding_income_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return income_account
+
+
+@frappe.whitelist()
+def get_expense_account(customer):
+    expense_account = frappe.db.sql("""select pch_overriding_expense_account from  `tabCustomer` where  customer_name='"""+customer+"""'  """, as_dict=1)
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    return expense_account
+
+@frappe.whitelist()
+def get_expense_account_company(company):
+    expense_account_company = frappe.db.sql("""select default_expense_account from  `tabCompany` where  name='"""+company+"""'  """, as_dict=1)
+    expense_account_company_detail=expense_account_company[0]['default_expense_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return expense_account_company_detail
+
+
+@frappe.whitelist()
+def get_income_account_company(company):
+    income_account_company = frappe.db.sql("""select default_income_account from  `tabCompany` where  name='"""+company+"""'  """, as_dict=1)
+    income_account_company_detail=income_account_company[0]['default_income_account']
+    #print "sales_record----",sales_record
+    #print "get_stock_revision_no-----",get_stock_revision_no
+    
+    return income_account_company_detail
+
+@frappe.whitelist()
+def get_stock_qty(item_code,warehouse):
+    
+    qty = frappe.db.sql("""select concat_ws(" ", posting_date, posting_time) as date,qty_after_transaction from `tabStock Ledger Entry` where item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""' order by posting_date,posting_time """, as_dict=1)
+    #print("qty",qty)
+    return qty
+
+
+@frappe.whitelist()
+def get_balance_qty(item_code,warehouse,posting_date):
+    
+    balance_qty = frappe.db.sql("""select posting_time from `tabStock Ledger Entry` where item_code='"""+item_code+"""' and warehouse='"""+warehouse+"""' and posting_date='"""+posting_date+"""' """, as_dict=1)
+    #print("balance_qty",balance_qty)
+    return balance_qty
+
+@frappe.whitelist()
+def sendSMS(apikey, numbers, sender, message):
+    data =  urllib.parse.urlencode({'apikey': apikey, 'numbers': numbers,'message' : message, 'sender': sender})
+    #print("firstdata",data)
+    data = data.encode('utf-8')
+    #print("data",data)
+    request = urllib.request.Request("https://api.textlocal.in/send/?")
+    f = urllib.request.urlopen(request, data)
+    fr = f.read()
+    #print("fr",fr)
+    frappe.msgprint(_("Message sent"))
+    return(fr)
+
+
