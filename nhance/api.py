@@ -2004,4 +2004,36 @@ def sendSMS(apikey, numbers, sender, message):
     frappe.msgprint(_("Message sent"))
     return(fr)
 
+#la debug
+@frappe.whitelist()
+def get_leave_allocation_records(date, employee=None):
+	conditions = (" and employee='%s'" % employee) if employee else ""
+
+	leave_allocation_records = frappe.db.sql("""
+		select employee, leave_type, total_leaves_allocated, total_leaves_encashed, from_date, to_date
+		from `tabLeave Allocation`
+		where %s between from_date and to_date and docstatus=1 {0}""".format(conditions), (date), as_dict=1)
+
+	allocated_leaves = frappe._dict()
+	for d in leave_allocation_records:
+		allocated_leaves.setdefault(d.employee, frappe._dict()).setdefault(d.leave_type, frappe._dict({
+			"from_date": d.from_date,
+			"to_date": d.to_date,
+			"total_leaves_allocated": d.total_leaves_allocated,
+			"total_leaves_encashed":d.total_leaves_encashed
+		}))
+	return allocated_leaves
+
+@frappe.whitelist()
+def get_leave_details(employee, date):
+	allocation_records = get_leave_allocation_records(date, employee).get(employee, frappe._dict())
+	leave_allocation = {}
+	list_temp= []
+	for d in allocation_records:
+		allocation = allocation_records.get(d, frappe._dict())
+		list_temp.append(allocation)
+		date = allocation.to_date
+	return list_temp
+
+
 
