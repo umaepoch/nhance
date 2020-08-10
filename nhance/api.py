@@ -1991,20 +1991,7 @@ def get_balance_qty(item_code,warehouse,posting_date):
     #print("balance_qty",balance_qty)
     return balance_qty
 
-@frappe.whitelist()
-def sendSMS(apikey, numbers, sender, message):
-    data =  urllib.parse.urlencode({'apikey': apikey, 'numbers': numbers,'message' : message, 'sender': sender})
-    #print("firstdata",data)
-    data = data.encode('utf-8')
-    #print("data",data)
-    request = urllib.request.Request("https://api.textlocal.in/send/?")
-    f = urllib.request.urlopen(request, data)
-    fr = f.read()
-    #print("fr",fr)
-    frappe.msgprint(_("Message sent"))
-    return(fr)
 
-#la debug
 @frappe.whitelist()
 def get_leave_allocation_records(date, employee=None):
 	conditions = (" and employee='%s'" % employee) if employee else ""
@@ -2034,6 +2021,27 @@ def get_leave_details(employee, date):
 		list_temp.append(allocation)
 		date = allocation.to_date
 	return list_temp
+
+@frappe.whitelist()
+def test_lb():
+	return "working"
+
+#la debug_end
+
+@frappe.whitelist()
+def sendSMS(apikey, numbers, sender, message):
+    data =  urllib.parse.urlencode({'apikey': apikey, 'numbers': numbers,'message' : message, 'sender': sender})
+    #print("firstdata",data)
+    data = data.encode('utf-8')
+    #print("data",data)
+    request = urllib.request.Request("https://api.textlocal.in/send/?")
+    f = urllib.request.urlopen(request, data)
+    fr = f.read()
+    #print("fr",fr)
+    frappe.msgprint(_("Message sent"))
+    return(fr)
+
+
 
 
 
