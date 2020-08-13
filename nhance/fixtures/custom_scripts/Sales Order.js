@@ -446,4 +446,14 @@ function send_sms(apikey,numbers,sender,message1) {
   });
 }  
 
-
+//Interaction
+frappe.ui.form.on("Sales Order", "refresh", function(frm) {
+        cur_frm.add_custom_button(__('Make Interactions'), cur_frm.cscript['Make Interactions'], __("Make"));
+	             
+});
+cur_frm.cscript['Make Interactions'] = function() {
+    frappe.model.open_mapped_doc({
+        method: "nhance.api.make_interactions_sales_order",
+        frm: cur_frm
+    })
+}

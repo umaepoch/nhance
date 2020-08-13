@@ -2042,6 +2042,167 @@ def sendSMS(apikey, numbers, sender, message):
     return(fr)
 
 
+#Interaction
+#jyoti added
+@frappe.whitelist()
+def make_interactions_lead(source_name, target_doc=None):
+	lead_record = frappe.get_doc("Lead", source_name)
+	#print("lead_record",lead_record)
+	#print("source_name-----------------",lead_record)
+	name = lead_record.name
+	#print("name",name)
+	lead_name = lead_record.lead_name
+	#print("lead_name",lead_name)
+	status = lead_record.status
+	#print("status",status)
+	
+	target_doc = get_mapped_doc("Lead", source_name, {
+		"Lead": {
+			"doctype": "Interactions",
+			"field_map": {
+				"name": "document_id",
+				"doctype": "document_type",
+				"lead_name":"customer_or_lead",
+				"lead_name":"customer",
+				}
+		},
+		
+	}, target_doc, set_missing_values)
+	return target_doc
+
+
+@frappe.whitelist()
+def make_interactions_customer(source_name, target_doc=None):
+
+	target_doc = get_mapped_doc("Customer", source_name, {
+		"Customer": {
+			"doctype": "Interactions",
+			"field_map": {
+				"name": "document_id",
+				"doctype": "document_type",
+				"customer_name":"customer_or_lead",
+				#"customer_primary_address":"address",
+				#"customer_primary_contact":"contact",
+				}
+		}
+
+	}, target_doc, set_missing_values)
+
+	return target_doc
+
+@frappe.whitelist()
+def make_interactions_opportunity(source_name, target_doc=None):
+	lead_or_customer_record = frappe.get_doc("Opportunity", source_name)
+	#print("lead_or_customer_record",lead_or_customer_record)
+	#print("source_name-----------------",lead_or_customer_record)
+	customer_name = lead_or_customer_record.customer_name
+	#print("customer_name",customer_name)
+	opportunity_form = lead_or_customer_record.opportunity_from
+	#print("opportunity_form",opportunity_form)
+	target_doc = get_mapped_doc("Opportunity", source_name, {
+		"Opportunity": {
+			"doctype": "Interactions",
+			"field_map": {
+				"name": "document_id",
+				"doctype": "document_type",
+				"customer_name":"customer_or_lead",
+				"customer_name":"customer",
+				
+				
+				}
+		}
+
+	}, target_doc, set_missing_values)
+	
+
+	return target_doc
+
+@frappe.whitelist()
+def make_interactions_quotation(source_name, target_doc=None):
+	lead_or_customer_record = frappe.get_doc("Quotation", source_name)
+	#print("lead_or_customer_record",lead_or_customer_record)
+	#print("source_name-----------------",lead_or_customer_record)
+	customer_name = lead_or_customer_record.customer_name
+	#print("customer_name",customer_name)
+	quotation_form = lead_or_customer_record.quotation_to
+	#print("quotation_form",quotation_form)
+	target_doc = get_mapped_doc("Quotation", source_name, {
+		"Quotation": {
+			"doctype": "Interactions",
+			"field_map": {
+				"name": "document_id",
+				"doctype": "document_type",
+				"customer_name":"customer_or_lead",
+				"customer_name":"customer",
+				
+				}
+		}
+
+	}, target_doc, set_missing_values)
+
+	
+
+	return target_doc
+
+
+@frappe.whitelist()
+def make_interactions_sales_order(source_name, target_doc=None):
+	src_name = "Sales Order"
+	customer_record = frappe.get_doc("Sales Order", source_name)
+	#print("customer_record",customer_record)
+	#print("source_name-----------------",customer_record)
+	customer_name = customer_record.customer
+	#print("customer_name",customer_name)
+	target_doc = get_mapped_doc("Sales Order", source_name, {
+		"Sales Order": {
+			"doctype": "Interactions",
+			"field_map": {
+				"name": "document_id",
+				"doctype": "document_type",
+
+				}
+		}
+
+	}, target_doc, set_missing_values)
+	return target_doc
+
+
+@frappe.whitelist()
+def make_interactions_sales_invoice(source_name, target_doc=None):
+	src_name = "Sales Invoice"
+	customer_record = frappe.get_doc("Sales Invoice", source_name)
+	#print("customer_record",customer_record)
+	#print("source_name-----------------",customer_record)
+	customer_name = customer_record.customer
+	#print("customer_name",customer_name)
+	target_doc = get_mapped_doc("Sales Invoice", source_name, {
+		"Sales Invoice": {
+			"doctype": "Interactions",
+			"field_map": {
+				"name": "document_id",
+				"doctype": "document_type",
+				"customer":"customer_or_lead",
+				}
+		}
+
+	}, target_doc, set_missing_values)
+	return target_doc
+
+
+
+@frappe.whitelist()
+def get_parent_dynamic_value_contact(link_doctype,link_name):
+    
+    parent_contact = frappe.db.sql("""select parent from `tabDynamic Link` where link_doctype='"""+link_doctype+"""' and link_name='"""+link_name+"""' and parenttype="contact" """, as_dict=1)
+    #print("parent_contact",parent_contact)
+    return parent_contact
+
+@frappe.whitelist()
+def get_parent_dynamic_value_address(link_doctype,link_name):
+    
+    parent_address = frappe.db.sql("""select parent from `tabDynamic Link` where link_doctype='"""+link_doctype+"""' and link_name='"""+link_name+"""' and parenttype="Address" """, as_dict=1)
+    #print("parent_address",parent_address)
+    return parent_address
 
 
 
