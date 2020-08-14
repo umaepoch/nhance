@@ -18,5 +18,6 @@ def update_packed_item_custom(pii_child2_doc):
 		pic_doc = frappe.get_doc( "Packed Item Custom",row["packing_item_link"] )
 		pic_doc.wrapped =  row["wrapped"]
 		pic_doc.current_warehouse =  row["current_warehouse"]
+		pic_doc.current_rarb_id =  row["current_rarb_id"]
 		pic_doc.packing_item_inspection_link = row["parent"]
 		pic_doc.save()

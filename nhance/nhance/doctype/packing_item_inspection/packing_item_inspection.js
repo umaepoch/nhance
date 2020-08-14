@@ -13,6 +13,7 @@ frappe.ui.form.on("Packing Item Inspection", "before_save", function(frm, cdt, c
 	for (var i = 0; i < pii_child2_doc.length; i++) {
 		if(pii_child2_doc[i].wrapped){
 			pii_child2_doc[i].current_warehouse = pii_child2_doc[i].pi_target_warehouse;
+			pii_child2_doc[i].current_rarb_id = pii_child2_doc[i].rarb_location_twh;
 		}
 	}
 	update_packed_item_custom(pii_child2_doc)

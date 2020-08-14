@@ -14,33 +14,52 @@ frappe.ui.form.on('Detailed Packing Info', {
       //console.log("Make Packing Boxes Button clicked");
 			create_packing_box_custom_doc(cur_frm.doc.detailed_packing_box,cur_frm.doc.packing_details_review,cur_frm.doc.voucher_type, cur_frm.doc.voucher_no);
 		});
+		//pi_rarb_start
+
+
+		//pi_rarb_end
 }
 });
+
 //rarb_start
 //pi_rarb_start
 frappe.ui.form.on("Detailed Packing Item Child", {
 pi_progress_warehouse: function (frm, cdt , cdn) {
+	cur_frm.refresh_field("packing_details_review")
+	console.log("from refresh child");
+
 		var row = locals[cdt][cdn];
 		var pi_progress_warehouse = row.pi_progress_warehouse ;
 
 		if(pi_progress_warehouse != undefined){
 			var rarb_warehouse = get_rarb_warehouse(pi_progress_warehouse);
+			console.log("rarb_warehouse "+rarb_warehouse);
+
+
 			if(pi_progress_warehouse == rarb_warehouse){
-				cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_pwh", true);
+				console.log("came inside if");
+				//cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_pwh", true);
 				cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_pwh", true)
+
 				var rarb_warehouse_list = []
-				cur_frm.set_query("rarb_location_pwh", "items", function(frm, cdt, cdn) {
-					var d = locals[cdt][cdn];
-					var pi_progress_warehouse = d.warehouse;
-					rarb_warehouse_list = get_rarb_warehouse_item_name(pi_progress_warehouse);
-					return {
-					"filters": [
-					["RARB ID", "name", "in", rarb_warehouse_list]
-					]
-					}
-					refresh_field("rarb_location_pwh");
-					refresh_field("items")
-					});
+					console.log("old event got trigerred");
+				 cur_frm.set_query("rarb_location_pwh", "packing_details_review", function(frm, cdt, cdn) {
+
+					var row = locals[cdt][cdn];
+					var pi_progress_warehouse = row.pi_progress_warehouse ;
+
+					 rarb_warehouse_list = get_rarb_warehouse_item_name(pi_progress_warehouse);
+					 console.log("rarb_warehouse_list------src---------"+rarb_warehouse_list);
+					 return {
+								"filters": [
+							["RARB ID", "name", "in", rarb_warehouse_list]
+								]
+						}
+						refresh_field("rarb_location_pwh");
+						refresh_field("packing_details_review")
+				});
+				refresh_field("rarb_location_pwh");
+				refresh_field("packing_details_review");
 
 			}else{
 				cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_pwh", false);
@@ -48,42 +67,63 @@ pi_progress_warehouse: function (frm, cdt , cdn) {
 			}
 		}else{
 			cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_pwh", false);
-			 cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_pwh", false)
+			cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_pwh", false)
 		}
 	} ,// end pi_progress_warehouse
 
+	rarb_location_pwh : function(frm){ // onclick of rarb field trigger
+		cur_frm.refresh_field("packing_details_review");
+		var rarb_warehouse_list = []
+	  	console.log("new event got trigerred");
+		 cur_frm.set_query("rarb_location_pwh", "packing_details_review", function(frm, cdt, cdn) {
+
+			var row = locals[cdt][cdn];
+			var pi_progress_warehouse = row.pi_progress_warehouse ;
+
+			 rarb_warehouse_list = get_rarb_warehouse_item_name(pi_progress_warehouse);
+			 console.log("rarb_warehouse_list------src---------"+rarb_warehouse_list);
+			 return {
+						"filters": [
+					["RARB ID", "name", "in", rarb_warehouse_list]
+						]
+				}
+		});
+
+		},
+
 	pi_target_warehouse: function (frm, cdt , cdn) {
-	    var row = locals[cdt][cdn];
-	    var pi_target_warehouse = row.pi_target_warehouse ;
+			var row = locals[cdt][cdn];
+			var pi_target_warehouse = row.pi_target_warehouse ;
 
-	    if(pi_target_warehouse != undefined){
-	      var rarb_warehouse = get_rarb_warehouse(pi_target_warehouse);
-	      if(pi_target_warehouse == rarb_warehouse){
-	        cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_twh", true);
-	        cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_twh", true)
-	        var rarb_warehouse_list = []
-	        cur_frm.set_query("rarb_location_twh", "items", function(frm, cdt, cdn) {
-	          var d = locals[cdt][cdn];
-	          var pi_target_warehouse = d.warehouse;
-	          rarb_warehouse_list = get_rarb_warehouse_item_name(pi_target_warehouse);
-	          return {
-	          "filters": [
-	          ["RARB ID", "name", "in", rarb_warehouse_list]
-	          ]
-	          }
-	          refresh_field("rarb_location_twh");
-	          refresh_field("items")
-	          });
+			if(pi_target_warehouse != undefined){
+				var rarb_warehouse = get_rarb_warehouse(pi_target_warehouse);
+				if(pi_target_warehouse == rarb_warehouse){
+					cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_twh", true);
+					cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_twh", true)
+					var rarb_warehouse_list = []
+					var d = locals[cdt][cdn];
+					var pi_target_warehouse = d.pi_target_warehouse;
+					rarb_warehouse_list = get_rarb_warehouse_item_name(pi_target_warehouse);
+					console.log("before set_query rarb_warehouse_list"+rarb_warehouse_list );
+					cur_frm.set_query("rarb_location_twh", "packing_details_review", function(frm, cdt, cdn) {
+						return {
+						"filters": [
+						["RARB ID", "name", "in", rarb_warehouse_list]
+						]
+						}
+						refresh_field("rarb_location_twh");
+						refresh_field("packing_details_review")
+						});
 
-	      }else{
-	        cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_twh", false);
-	        cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_twh", false)
-	      }
-	    }else{
-	      cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_twh", false);
-	       cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_twh", false)
-	    }
-	  } // end pi_target_warehouse
+				}else{
+					cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_twh", false);
+					cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_twh", false)
+				}
+			}else{
+				cur_frm.fields_dict.packing_details_review.grid.toggle_display("rarb_location_twh", false);
+				 cur_frm.fields_dict.packing_details_review.grid.toggle_reqd("rarb_location_twh", false)
+			}
+		} // end pi_target_warehouse
 });
 
 //pi_rarb_end
@@ -100,9 +140,9 @@ pb_progress_warehouse: function (frm, cdt , cdn) {
 				cur_frm.fields_dict.detailed_packing_box.grid.toggle_display("pb_rarb_location_pwh", true);
 				cur_frm.fields_dict.detailed_packing_box.grid.toggle_reqd("pb_rarb_location_pwh", true)
 				var rarb_warehouse_list = []
-				cur_frm.set_query("pb_rarb_location_pwh", "items", function(frm, cdt, cdn) {
+				cur_frm.set_query("pb_rarb_location_pwh", "detailed_packing_box", function(frm, cdt, cdn) {
 					var d = locals[cdt][cdn];
-					var pb_progress_warehouse = d.warehouse;
+					var pb_progress_warehouse = d.pb_progress_warehouse;
 					rarb_warehouse_list = get_rarb_warehouse_item_name(pb_progress_warehouse);
 					return {
 					"filters": [
@@ -133,9 +173,9 @@ pb_progress_warehouse: function (frm, cdt , cdn) {
 	        cur_frm.fields_dict.detailed_packing_box.grid.toggle_display("pb_rarb_location_twh", true);
 	        cur_frm.fields_dict.detailed_packing_box.grid.toggle_reqd("pb_rarb_location_twh", true)
 	        var rarb_warehouse_list = []
-	        cur_frm.set_query("pb_rarb_location_twh", "items", function(frm, cdt, cdn) {
+	        cur_frm.set_query("pb_rarb_location_twh", "detailed_packing_box", function(frm, cdt, cdn) {
 	          var d = locals[cdt][cdn];
-	          var pb_target_warehouse = d.warehouse;
+	          var pb_target_warehouse = d.pb_target_warehouse;
 	          rarb_warehouse_list = get_rarb_warehouse_item_name(pb_target_warehouse);
 	          return {
 	          "filters": [
@@ -161,7 +201,7 @@ pb_progress_warehouse: function (frm, cdt , cdn) {
 
 frappe.ui.form.on("Detailed Packing Info","before_save", function(frm,cdt,cdn){
 
-	//console.log("before save is workings")
+	 //console.log("before save is workings")
 
 	 $.each(frm.doc.packing_details_review, function(i, d) {
 		var packing_item = d.packing_item;
@@ -171,6 +211,7 @@ frappe.ui.form.on("Detailed Packing Info","before_save", function(frm,cdt,cdn){
 		var rarb_location_twh = d.rarb_location_twh;
 		if(rarb_location_pwh != undefined){
 		var item_details = get_rarb_items_detail(pi_progress_warehouse,rarb_location_pwh);
+
 		if(item_details != undefined){
 			if(item_details != packing_item){
 				frappe.msgprint('"'+rarb_location_pwh+'"'+"(PI) This RARB Location(Progress Warehouse) is reserved for specific item "+'"'+item_details+'"');
@@ -215,12 +256,8 @@ $.each(frm.doc.detailed_packing_box, function(i, d) {
 }//end of target valid
 }) //end of pb item table
 
-
-
 })
 //rarb_end
-
-
 
 function create_packing_item_custom_doc(packing_items_data,voucher_type,voucher_no){
 	frappe.call({
@@ -286,6 +323,7 @@ function get_rarb_warehouse(warehouse){
 
 function get_rarb_warehouse_item_name(warehouse){
 	var supplier_criticality = [];
+	console.log("get_rarb_warehouse_item_name called");
 	frappe.call({
 		method: 'nhance.nhance.doctype.rarb_warehouse.rarb_warehouse.get_rarb_warehouse_item_name',
 		args: {

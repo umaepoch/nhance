@@ -143,10 +143,15 @@ def create_pi_inspection(dpi_details):
 		pii_tb1_row.parent_item = dpi_packing_item["parent_item"]
 		pii_tb1_row.packing_item = dpi_packing_item["packing_item"]
 		pii_tb1_row.qty = dpi_packing_item["qty"]
+
 		if dpi_packing_item["pi_progress_warehouse"]:
 			pii_tb1_row.pi_progress_warehouse = dpi_packing_item["pi_progress_warehouse"]
+			if dpi_packing_item["rarb_location_pwh"]:
+				pii_tb1_row.rarb_location_pwh = dpi_packing_item["rarb_location_pwh"]
 		if dpi_packing_item["pi_target_warehouse"]:
 			pii_tb1_row.pi_target_warehouse = dpi_packing_item["pi_target_warehouse"]
+			if dpi_packing_item["rarb_location_twh"]:
+				pii_tb1_row.rarb_location_twh = dpi_packing_item["rarb_location_twh"]
 
 		#pii_tb1_row.packing_id = dpi_packing_item["packing_id"] #problem in packing id for the first transaction if pacig id is already that time
 		#its getting populating will fix it later
@@ -161,9 +166,16 @@ def create_pi_inspection(dpi_details):
 			pii_tb2_row.packing_item = dpi_packing_item["packing_item"]
 			pii_tb2_row.packing_item_link = packing_item_id
 			pii_tb2_row.test_feield_pi = packing_item_id
-			pii_tb2_row.current_warehouse = dpi_packing_item["pi_progress_warehouse"]
-			pii_tb2_row.pi_progress_warehouse = dpi_packing_item["pi_progress_warehouse"]
-			pii_tb2_row.pi_target_warehouse = dpi_packing_item["pi_target_warehouse"]
+			if dpi_packing_item["pi_progress_warehouse"]:
+				pii_tb2_row.current_warehouse = dpi_packing_item["pi_progress_warehouse"]
+				pii_tb2_row.pi_progress_warehouse = dpi_packing_item["pi_progress_warehouse"]
+				if dpi_packing_item["rarb_location_pwh"]:
+					pii_tb2_row.rarb_location_pwh = dpi_packing_item["rarb_location_pwh"]
+					pii_tb2_row.current_rarb_id = dpi_packing_item["rarb_location_pwh"]
+			if dpi_packing_item["pi_target_warehouse"]:
+				pii_tb2_row.pi_target_warehouse = dpi_packing_item["pi_target_warehouse"]
+				if dpi_packing_item["rarb_location_twh"]:
+					pii_tb2_row.rarb_location_twh = dpi_packing_item["rarb_location_twh"]
 	pii.save(ignore_permissions=True)
 	dpi = frappe.get_doc( "Detailed Packing Info",pii.dpi_name )
 	dpi.packing_item_inspection_link = 	pii.name
@@ -185,9 +197,20 @@ def create_pbi_inspection(dpi_details):
 			pbi_tb1_row = pbi.append('packing_box_inspection_child', {})
 			pbi_tb1_row.packing_box =  packing_box_data["packing_box"]
 			pbi_tb1_row.packing_box_link = packing_box_id_json [packing_box_data["packing_box"]]
-			pbi_tb1_row.current_warehouse = packing_box_data["pb_progress_warehouse"]
-			pbi_tb1_row.pb_progress_warehouse = packing_box_data["pb_progress_warehouse"]
-			pbi_tb1_row.pb_target_warehouse = packing_box_data ["pb_target_warehouse"]
+
+
+			if packing_box_data["pb_progress_warehouse"]:
+				pbi_tb1_row.current_warehouse = packing_box_data["pb_progress_warehouse"]
+				pbi_tb1_row.pb_progress_warehouse = packing_box_data["pb_progress_warehouse"]
+				if packing_box_data["pb_rarb_location_pwh"]:
+					pbi_tb1_row.pb_rarb_location_pwh = packing_box_data["pb_rarb_location_pwh"]
+					pbi_tb1_row.current_rarb_id = packing_box_data["pb_rarb_location_pwh"]
+
+			if packing_box_data["pb_target_warehouse"]:
+				pbi_tb1_row.pb_target_warehouse = packing_box_data["pb_target_warehouse"]
+				if packing_box_data["pb_rarb_location_twh"]:
+					pbi_tb1_row.pb_rarb_location_twh = packing_box_data["pb_rarb_location_twh"]
+
 	pbi.save(ignore_permissions=True)
 	dpi = frappe.get_doc( "Detailed Packing Info",pbi.dpi_name )
 	dpi.packing_box_inspection_link = 	pbi.name
