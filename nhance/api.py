@@ -1931,6 +1931,13 @@ def get_stock_qty(item_code,warehouse):
 def testing_api():
     return "success"
 
+#jyoti
+@frappe.whitelist()
+def item_query_quality_inspection(parent):
+    items= frappe.db.sql("""select item_code from `tabWork Order Item` where parent='"""+parent+"""'  """, as_dict=1)
+    #print("items",items)
+    return items
+
 #la debug
 @frappe.whitelist()
 def get_leave_allocation_records(date, employee=None):
