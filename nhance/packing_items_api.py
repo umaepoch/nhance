@@ -15,7 +15,7 @@ def hellosub(loggedInUser):
 @frappe.whitelist()
 def make_detailed_packing_info_doc(cur_doc_items):
 	cur_doc_items = json.loads(cur_doc_items)
-	#print "came inside make_detailed_packing_info_doc",cur_doc_items
+	print ("came inside make_detailed_packing_info_doc",cur_doc_items)
 	packing_items_json={}
 	packing_boxes_json={}
 	for item in cur_doc_items :
@@ -30,6 +30,7 @@ def make_detailed_packing_info_doc(cur_doc_items):
 	dpi.voucher_type = cur_doc_items[0]["parenttype"]
 	dpi.voucher_no = cur_doc_items[0]["parent"]
 	#dpi.si_name = cur_doc_items[0]["parent"]
+	print ("came next to new doc creation")
 
 	#Detailed Packing Item Child
 	dpi.set('packing_details_review', [])
