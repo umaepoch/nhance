@@ -15,7 +15,7 @@ def hellosub(loggedInUser):
 @frappe.whitelist()
 def make_detailed_packing_info_doc(cur_doc_items):
 	cur_doc_items = json.loads(cur_doc_items)
-	print ("came inside make_detailed_packing_info_doc",cur_doc_items)
+	#print "came inside make_detailed_packing_info_doc",cur_doc_items
 	packing_items_json={}
 	packing_boxes_json={}
 	for item in cur_doc_items :
@@ -30,7 +30,6 @@ def make_detailed_packing_info_doc(cur_doc_items):
 	dpi.voucher_type = cur_doc_items[0]["parenttype"]
 	dpi.voucher_no = cur_doc_items[0]["parent"]
 	#dpi.si_name = cur_doc_items[0]["parent"]
-	print ("came next to new doc creation")
 
 	#Detailed Packing Item Child
 	dpi.set('packing_details_review', [])
@@ -130,17 +129,17 @@ def test_fun_sur():
 	pboxes_and_items_doc.set('detailed_packing_box', detailed_packing_info_doc.detailed_packing_box)
 	pboxes_and_items_doc.set('pb_and_pi_link', [])
 	for dpi_box_row in detailed_packing_info_doc.detailed_packing_box:
-		print "dpi_box_row",dpi_box_row
-		print "dpi_box_row type",type(dpi_box_row)
+		#print "dpi_box_row",dpi_box_row
+		#print "dpi_box_row type",type(dpi_box_row)
 		pbox_id = dpi_box_row.packing_box_id
-		print "pbox_id",pbox_id
+		#print "pbox_id",pbox_id
 		pbox_custom_doc = frappe.get_doc( "Packed Box Custom",pbox_id )
 		packed_box_breif_details_child = pbox_custom_doc.packed_box_breif_details_child
 		for row in packed_box_breif_details_child:
 			child2 = pboxes_and_items_doc.append('pb_and_pi_link', {})
 			child2.packing_box = pbox_id
 			child2.packing_item = row.packed_item_link
-			print "packed_item_link",row.packed_item_link
+			#print "packed_item_link",row.packed_item_link
 	#pboxes_and_items_doc.save(ignore_permissions=True)
 
 
@@ -158,3 +157,4 @@ def make_packing_item_doc_entity(cur_doc_items):
 
 
 #response came :{"GlassTable":[{"packing_item":"TableStand","packing_item_group":"Packing Items","qty":4},{"packing_item":"TableGlass","packing_item_group":"Packing Items","qty":1}]}
+
