@@ -31,6 +31,8 @@ def create_packing_item_custom_doc(packing_items_data,voucher_type,voucher_no):
 			pit.packing_item = packing_item_data["packing_item"]
 			pit.qty = 1 #one one each as of now later it will change ac to packing item config
 			pit.packing_item_group = packing_item_data["item_group"]
+			pit.current_warehouse =  packing_item_data["pi_progress_warehouse"]
+			pit.current_rarb_id =  packing_item_data["rarb_location_pwh"]
 			pit.save(ignore_permissions=True)
 			#print ("Packed Item Custom name ",pit.name)
 			packing_id_list.append(pit.name)
@@ -60,11 +62,14 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 	packing_box_id_json = {}
 
 	for packing_box_name, packing_box_datas in packing_box_wise_data.items():
+		print("pb_location_debug packing_box_datas",packing_box_datas)
 		pbc = frappe.new_doc("Packed Box Custom")
 		packing_box_status = "Completed"
 		pbc.packing_box =  packing_box_name
 		pbc.voucher_type = voucher_type
 		pbc.voucher_no = voucher_no
+		pbc.current_warehouse = packing_box_datas[0]["pb_progress_warehouse"]
+		pbc.current_rarb_id = packing_box_datas[0]["pb_rarb_location_pwh"]
 
 		pbc.set('packed_box_details_child', [])
 		for packing_box_data in packing_box_datas:
@@ -75,6 +80,7 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 			pbc_child_row1.received_qty = packing_box_data["accepted_qty"]
 			pbc_child_row1.actual_qty = packing_box_data["qty"]
 			pbc_child_row1.packing_id = packing_box_data["packing_id"]
+
 			if packing_box_data["qty"] >  packing_box_data["accepted_qty"] :
 				packing_box_status = "Partially Completed"
 
@@ -95,10 +101,26 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 
 		pbc.save(ignore_permissions=True)
 		packing_box_id_json[packing_box_name] = pbc.name
+		if(frappe.get_doc( "Packed Box Custom",pbc.name )) :
+			update_packingBox_in_packed_item_custom(pbc.name,packing_id_list) #one the box is created,box's packing items doc will be updated by there packing box id
+
 	update_packingBoxId_in_detailedPackingInfo(dpi_name,packing_box_id_json)
+	#updating box id on dpi and packed item custom
 	dpi_details = {"voucher_type":voucher_type,"voucher_name":voucher_no,"dpi_name":dpi_name,"packing_box_id_json":packing_box_id_json,"packing_boxes_data":packing_boxes_data}
 	create_pbi_inspection(dpi_details)
 	return "packing box transactions have been created"
+
+def update_packingBox_in_packed_item_custom(pbc_name,packing_id_list):
+	for packing_id in packing_id_list:
+		packig_item_doc = frappe.get_doc( "Packed Item Custom",packing_id )
+		packig_item_doc.packing_box = pbc_name
+		packig_item_doc.current_warehouse = frappe.db.get_value("Packed Box Custom", {"name":pbc_name},"current_warehouse")
+		packig_item_doc.current_rarb_id = frappe.db.get_value("Packed Box Custom", {"name":pbc_name},"current_rarb_id")
+		#current_warehouse,current_rarb_id
+		packig_item_doc.save(ignore_permissions=True)
+
+
+
 
 def update_packingId_in_detailedPackingInfo(doc_name,packed_item_id_json):
 	detailed_packing_info_doc = frappe.get_doc( "Detailed Packing Info",doc_name )
