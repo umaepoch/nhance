@@ -21,7 +21,7 @@ def create_packing_item_custom_doc(packing_items_data,voucher_type,voucher_no):
 	dpi_name = packing_items_data[0]["parent"]
 
 	for packing_item_data in packing_items_data:
-		packing_id_list = []
+		packing_id_list = []  #all packing ids for each row
 		packing_item_qty = packing_item_data["qty"]
 		for i in range(packing_item_qty): #change it to range of packing_id list
 			pit = frappe.new_doc("Packed Item Custom")
@@ -36,6 +36,7 @@ def create_packing_item_custom_doc(packing_items_data,voucher_type,voucher_no):
 			pit.save(ignore_permissions=True)
 			#print ("Packed Item Custom name ",pit.name)
 			packing_id_list.append(pit.name)
+		create_material_rec(packing_item_data["packing_item"],packing_item_qty,packing_id_list,packing_item_data["pi_progress_warehouse"])
 		packed_item_id_json[packing_item_data["packing_item"]] = packing_id_list
 	dpi_details = {"voucher_type":voucher_type,"voucher_name":voucher_no,"dpi_name":dpi_name,"packed_item_id_json":packed_item_id_json,"dpi_packing_items_data":packing_items_data}
 	update_packingId_in_detailedPackingInfo(dpi_name,packed_item_id_json)
@@ -43,15 +44,58 @@ def create_packing_item_custom_doc(packing_items_data,voucher_type,voucher_no):
 	create_pi_inspection(dpi_details)
 	return "packing item transactions have been created"
 
+def create_material_rec(item_code,qty,doc_name_list,warehouse):
+	serial_no_list =  "\n".join(doc_name_list)
+	se = frappe.new_doc("Stock Entry")
+	se.purpose = "Material Receipt"
+	se.company = "Epoch Consulting"
+
+	se.set('items', [])
+	for i in range(1) :
+		se_item = se.append('items', {})
+		se_item.item_code = item_code
+		se_item.t_warehouse =  warehouse
+		se_item.uom = "Nos"
+		se_item.qty =qty
+		se_item.serial_no = serial_no_list
+		se_item.conversion_factor = 1
+		se_item.stock_uom = "Nos"
+	se.save(ignore_permissions=True)
+	frappe.db.commit()
+	se.submit()
+
+def create_material_transfer(material_transfer_item_rows_list):
+	print ("material_transfer_item_rows_list :",material_transfer_item_rows_list)
+	se = frappe.new_doc("Stock Entry")
+	se.purpose = "Material Transfer"
+	se.company = "Epoch Consulting"
+
+	se.set('items', [])
+	for material_transfer_item in material_transfer_item_rows_list :
+		se_item = se.append('items', {})
+		se_item.item_code = material_transfer_item["item_code"]
+		se_item.s_warehouse =  material_transfer_item["s_wh"]
+		se_item.t_warehouse =  material_transfer_item["t_wh"]
+		se_item.uom = "Nos"
+		se_item.qty = material_transfer_item["qty"]
+		se_item.serial_no = material_transfer_item["serial_no_list"]
+		se_item.conversion_factor = 1
+		se_item.stock_uom = "Nos"
+	se.save(ignore_permissions=True)
+	frappe.db.commit()
+	se.submit()
+
 
 @frappe.whitelist()
 def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_type,voucher_no):
+	#need to add box's qty in future
 	packing_boxes_data = json.loads(packing_boxes_data)
 	packing_items_data = json.loads(packing_items_data)
 	#print "came inside create_packing_box_custom_doc",packing_items_data
 	dpi_name = packing_boxes_data[0]["parent"]
 	#packing_box_wise_data = {pb1:[{},{}],pb2:[{}]}
 	packing_box_wise_data = {}
+
 
 	for packing_box_data in packing_boxes_data:
 		if packing_box_wise_data.get(packing_box_data["packing_box"]):
@@ -63,6 +107,7 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 
 	for packing_box_name, packing_box_datas in packing_box_wise_data.items():
 		print("pb_location_debug packing_box_datas",packing_box_datas)
+		material_transfer_item_rows_list = []
 		pbc = frappe.new_doc("Packed Box Custom")
 		packing_box_status = "Completed"
 		pbc.packing_box =  packing_box_name
@@ -72,8 +117,16 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 		pbc.current_rarb_id = packing_box_datas[0]["pb_rarb_location_pwh"]
 
 		pbc.set('packed_box_details_child', [])
-		for packing_box_data in packing_box_datas:
+		for packing_box_data in packing_box_datas:  # each packing item row inside packing box
 			#include for loop later
+			material_transfer_item_row_dic = {}
+			material_transfer_item_row_dic["item_code"] = packing_box_data["packing_item"]
+			material_transfer_item_row_dic["qty"] = packing_box_data["accepted_qty"]
+			material_transfer_item_row_dic["s_wh"] = get_pi_wh(packing_items_data,packing_box_data["packing_item"])
+			material_transfer_item_row_dic["t_wh"] = packing_box_data["pb_progress_warehouse"]
+			material_transfer_item_row_dic["serial_no_list"] = packing_box_data["packing_id"]
+			material_transfer_item_rows_list.append( material_transfer_item_row_dic );
+
 			pbc_child_row1 = pbc.append('packed_box_details_child', {})
 			pbc_child_row1.parent_item = packing_box_data["parent_item"]
 			pbc_child_row1.packing_item = packing_box_data["packing_item"]
@@ -100,6 +153,10 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 				pbc_child_row2.packed_item_link = frappe.db.get_value("Packed Item Custom", {"packing_id":packing_id.strip()},"name")
 
 		pbc.save(ignore_permissions=True)
+		packing_box_id_list = [pbc.name] #need to change this after pbox qty get added
+		pbox_qty = 1  #need to change this after pbox qty get added
+		create_material_rec(packing_box_name,pbox_qty,packing_box_id_list,packing_box_datas[0]["pb_progress_warehouse"])
+		#create_material_transfer(material_transfer_item_rows_list)
 		packing_box_id_json[packing_box_name] = pbc.name
 		if(frappe.get_doc( "Packed Box Custom",pbc.name )) :
 			update_packingBox_in_packed_item_custom(pbc.name,packing_id_list) #one the box is created,box's packing items doc will be updated by there packing box id
@@ -109,6 +166,12 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 	dpi_details = {"voucher_type":voucher_type,"voucher_name":voucher_no,"dpi_name":dpi_name,"packing_box_id_json":packing_box_id_json,"packing_boxes_data":packing_boxes_data}
 	create_pbi_inspection(dpi_details)
 	return "packing box transactions have been created"
+
+def get_pi_wh(packing_items_data,item_code) :
+	for packing_item_data in packing_items_data:
+		if  packing_item_data["packing_item"] == item_code :
+			return packing_item_data["pi_progress_warehouse"]
+
 
 def update_packingBox_in_packed_item_custom(pbc_name,packing_id_list):
 	for packing_id in packing_id_list:
