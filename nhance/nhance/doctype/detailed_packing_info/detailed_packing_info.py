@@ -44,27 +44,6 @@ def create_packing_item_custom_doc(packing_items_data,voucher_type,voucher_no):
 	create_pi_inspection(dpi_details)
 	return "packing item transactions have been created"
 
-def create_material_rec(item_code,qty,doc_name_list,warehouse):
-	serial_no_list =  "\n".join(doc_name_list)
-	se = frappe.new_doc("Stock Entry")
-	se.purpose = "Material Receipt"
-	se.company = "Epoch Consulting"
-
-	se.set('items', [])
-	for i in range(1) :
-		se_item = se.append('items', {})
-		se_item.item_code = item_code
-		se_item.t_warehouse =  warehouse
-		se_item.uom = "Nos"
-		se_item.qty =qty
-		se_item.serial_no = serial_no_list
-		se_item.conversion_factor = 1
-		se_item.stock_uom = "Nos"
-	se.save(ignore_permissions=True)
-	frappe.db.commit()
-	se.submit()
-
-
 
 
 
@@ -306,18 +285,41 @@ def create_material_transfer(material_transfer_item_rows_list):
 def create_material_issue(material_transfer_item_rows_list) :
 	se = frappe.new_doc("Stock Entry")
 	se.purpose = "Material Issue"
-	se.company = "Epoch Consulting"
+	details = frappe.get_doc("Nhance Settings")
+	se.company = details.company_name
 
 	se.set('items', [])
 	for material_transfer_item in material_transfer_item_rows_list :
 		se_item = se.append('items', {})
 		se_item.item_code = material_transfer_item["item_code"]
 		se_item.s_warehouse =  material_transfer_item["s_wh"]
-		se_item.uom = "Nos"
+		se_item.uom = frappe.db.get_value("Item", {"item_code":material_transfer_item["item_code"]},"stock_uom")
 		se_item.qty = material_transfer_item["qty"]
 		se_item.serial_no = material_transfer_item["serial_no_list"]
 		se_item.conversion_factor = 1
-		se_item.stock_uom = "Nos"
+		se_item.stock_uom = frappe.db.get_value("Item", {"item_code":material_transfer_item["item_code"]},"stock_uom")
+	se.save(ignore_permissions=True)
+	frappe.db.commit()
+	se.submit()
+
+def create_material_rec(item_code,qty,doc_name_list,warehouse):
+
+	serial_no_list =  "\n".join(doc_name_list)
+	se = frappe.new_doc("Stock Entry")
+	se.purpose = "Material Receipt"
+	details = frappe.get_doc("Nhance Settings")
+	se.company = details.company_name
+
+	se.set('items', [])
+	for i in range(1) :
+		se_item = se.append('items', {})
+		se_item.item_code = item_code
+		se_item.t_warehouse =  warehouse
+		se_item.uom = frappe.db.get_value("Item", {"item_code":item_code},"stock_uom")
+		se_item.qty =qty
+		se_item.serial_no = serial_no_list
+		se_item.conversion_factor = 1
+		se_item.stock_uom = frappe.db.get_value("Item", {"item_code":item_code},"stock_uom")
 	se.save(ignore_permissions=True)
 	frappe.db.commit()
 	se.submit()
