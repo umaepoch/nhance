@@ -64,26 +64,8 @@ def create_material_rec(item_code,qty,doc_name_list,warehouse):
 	frappe.db.commit()
 	se.submit()
 
-def create_material_transfer(material_transfer_item_rows_list):
-	print ("material_transfer_item_rows_list :",material_transfer_item_rows_list)
-	se = frappe.new_doc("Stock Entry")
-	se.purpose = "Material Transfer"
-	se.company = "Epoch Consulting"
 
-	se.set('items', [])
-	for material_transfer_item in material_transfer_item_rows_list :
-		se_item = se.append('items', {})
-		se_item.item_code = material_transfer_item["item_code"]
-		se_item.s_warehouse =  material_transfer_item["s_wh"]
-		se_item.t_warehouse =  material_transfer_item["t_wh"]
-		se_item.uom = "Nos"
-		se_item.qty = material_transfer_item["qty"]
-		se_item.serial_no = material_transfer_item["serial_no_list"]
-		se_item.conversion_factor = 1
-		se_item.stock_uom = "Nos"
-	se.save(ignore_permissions=True)
-	frappe.db.commit()
-	se.submit()
+
 
 
 @frappe.whitelist()
@@ -157,6 +139,7 @@ def create_packing_box_custom_doc(packing_boxes_data,packing_items_data,voucher_
 		pbox_qty = 1  #need to change this after pbox qty get added
 		create_material_rec(packing_box_name,pbox_qty,packing_box_id_list,packing_box_datas[0]["pb_progress_warehouse"])
 		#create_material_transfer(material_transfer_item_rows_list)
+		create_material_issue(material_transfer_item_rows_list)
 		packing_box_id_json[packing_box_name] = pbc.name
 		if(frappe.get_doc( "Packed Box Custom",pbc.name )) :
 			update_packingBox_in_packed_item_custom(pbc.name,packing_id_list) #one the box is created,box's packing items doc will be updated by there packing box id
@@ -181,9 +164,6 @@ def update_packingBox_in_packed_item_custom(pbc_name,packing_id_list):
 		packig_item_doc.current_rarb_id = frappe.db.get_value("Packed Box Custom", {"name":pbc_name},"current_rarb_id")
 		#current_warehouse,current_rarb_id
 		packig_item_doc.save(ignore_permissions=True)
-
-
-
 
 def update_packingId_in_detailedPackingInfo(doc_name,packed_item_id_json):
 	detailed_packing_info_doc = frappe.get_doc( "Detailed Packing Info",doc_name )
@@ -300,3 +280,44 @@ def create_pbi_inspection(dpi_details):
 	dpi = frappe.get_doc( "Detailed Packing Info",pbi.dpi_name )
 	dpi.packing_box_inspection_link = 	pbi.name
 	dpi.save(ignore_permissions=True)
+
+#this api is not used now
+def create_material_transfer(material_transfer_item_rows_list):
+	print ("material_transfer_item_rows_list :",material_transfer_item_rows_list)
+	se = frappe.new_doc("Stock Entry")
+	se.purpose = "Material Transfer"
+	se.company = "Epoch Consulting"
+
+	se.set('items', [])
+	for material_transfer_item in material_transfer_item_rows_list :
+		se_item = se.append('items', {})
+		se_item.item_code = material_transfer_item["item_code"]
+		se_item.s_warehouse =  material_transfer_item["s_wh"]
+		se_item.t_warehouse =  material_transfer_item["t_wh"]
+		se_item.uom = "Nos"
+		se_item.qty = material_transfer_item["qty"]
+		se_item.serial_no = material_transfer_item["serial_no_list"]
+		se_item.conversion_factor = 1
+		se_item.stock_uom = "Nos"
+	se.save(ignore_permissions=True)
+	frappe.db.commit()
+	se.submit()
+
+def create_material_issue(material_transfer_item_rows_list) :
+	se = frappe.new_doc("Stock Entry")
+	se.purpose = "Material Issue"
+	se.company = "Epoch Consulting"
+
+	se.set('items', [])
+	for material_transfer_item in material_transfer_item_rows_list :
+		se_item = se.append('items', {})
+		se_item.item_code = material_transfer_item["item_code"]
+		se_item.s_warehouse =  material_transfer_item["s_wh"]
+		se_item.uom = "Nos"
+		se_item.qty = material_transfer_item["qty"]
+		se_item.serial_no = material_transfer_item["serial_no_list"]
+		se_item.conversion_factor = 1
+		se_item.stock_uom = "Nos"
+	se.save(ignore_permissions=True)
+	frappe.db.commit()
+	se.submit()
