@@ -7,10 +7,10 @@ frappe.ui.form.on('Daily Site Report', {
 			skill: function(frm, cdt, cdn){
 				var d = locals[cdt][cdn];
 				$.each(frm.doc.items, function(i, item) {
-					console.log("hello-------------skill");
+					
 					if (d.resource_deployed == item.resource_deployed && d.skill == item.skill){
 						var resource_skill_list = get_skill_level_master(cur_frm.doc.project,d.resource_deployed);
-						item.level = resource_skill_list[0];
+						item.level = resource_skill_list[0].trim();
 					}
 					cur_frm.refresh_field("items");
 					cur_frm.refresh_field("level");
