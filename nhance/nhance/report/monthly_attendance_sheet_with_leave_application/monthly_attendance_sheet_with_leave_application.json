@@ -1,0 +1,31 @@
+{
+ "add_total_row": 0, 
+ "creation": "2020-10-01 10:02:30.207426", 
+ "disable_prepared_report": 0, 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "Standard_LH", 
+ "modified": "2020-10-01 13:31:07.482492", 
+ "modified_by": "Administrator", 
+ "module": "Nhance", 
+ "name": "Monthly Attendance Sheet with Leave Application", 
+ "owner": "Administrator", 
+ "prepared_report": 0, 
+ "ref_doctype": "Attendance", 
+ "report_name": "Monthly Attendance Sheet with Leave Application", 
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "HR User"
+  }, 
+  {
+   "role": "HR Manager"
+  }
+ ]
+}
