@@ -188,7 +188,7 @@ def create_leave_application(filters):
 	leave_list = [d[0] for d in leave_types]
 	columns.extend(leave_list)
 	for att in att_map:
-		print "att--------------",att
+		#print "att--------------",att
 		employee_attendace = att_map[att]
 		day =1
 		employee_joining_date = frappe.get_value("Employee", att , "date_of_joining")
@@ -196,14 +196,14 @@ def create_leave_application(filters):
 		roles = get_roles(role)
 	
 		while day <= filters["total_days_in_month"]:
-			print "employee_attendace-----------",employee_attendace
+			#print "employee_attendace-----------",employee_attendace
 			if day in employee_attendace:
 				if employee_attendace[day] == "Absent":
 					date = str(filters['year'])+"-"+str(filters['month'])+"-"+str(day)
 					date_time_obj = datetime.datetime.strptime(date, '%Y-%m-%d')
 					if date_time_obj.date() > employee_joining_date:
 						check_leave_application = get_leave_application(date_time_obj.date(),att)
-						print "check_leave_application------------",check_leave_application
+						#print "check_leave_application------------",check_leave_application
 						if check_leave_application == False:
 							doc = frappe.new_doc("Leave Application")
 							doc.employee = att
