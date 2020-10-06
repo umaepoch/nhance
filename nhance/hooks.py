@@ -28,10 +28,10 @@ doc_events = {
 			"on_submit":"nhance.nhance.doctype.purchase_order_review.purchase_order_review.get_check_box_cheched"
 	}
 }
-doctype_js = {
-	"Sales Order": "fixtures/custom_scripts/Sales Order.js",
-	"Purchase Order":"fixtures/custom_scripts/Purchase Order.js"
-}
+#doctype_js = {
+#	"Sales Order": "fixtures/custom_scripts/Sales Order.js",
+#	"Purchase Order":"fixtures/custom_scripts/Purchase Order.js"
+#}
 # Includes in <head>
 # ------------------
 
