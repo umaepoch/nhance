@@ -1730,7 +1730,9 @@ def update_sreq_items_fulfilled_qty(updated_sreq_items_data,stockRequisitionID):
 
 @frappe.whitelist()
 def cancel_stock_entry_material_receipt(pch_ste_pull_short_rm):
-    frappe.db.sql("""update `tabStock Entry` set docstatus=2 where name=%s""", pch_ste_pull_short_rm)
+    #frappe.db.sql("""update `tabStock Entry` set docstatus=2 where name=%s""", pch_ste_pull_short_rm)
+    doc = frappe.get_doc("Stock Entry", pch_ste_pull_short_rm)
+    doc.cancel()
     frappe.db.commit()
     frappe.msgprint("The Stock Entry is cancelled successfully!!")
     return 1
