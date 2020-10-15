@@ -26,6 +26,11 @@ doc_events = {
 	"Purchase Order Review":{
 			"before_save":"nhance.nhance.doctype.purchase_order_review.purchase_order_review.get_check_box_cheched",
 			"on_submit":"nhance.nhance.doctype.purchase_order_review.purchase_order_review.get_check_box_cheched"
+	},
+	"Percentages Salary Dispensed":{
+		
+		"on_submit": "nhance.nhance.doctype.percentages_salary_dispensed.percentages_salary_dispensed.make_is_default",
+		"on_cancel": "nhance.nhance.doctype.percentages_salary_dispensed.percentages_salary_dispensed.on_cancel_is_default",
 	}
 }
 #doctype_js = {
