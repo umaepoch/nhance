@@ -114,8 +114,10 @@ function make_PO_and_transfer_qty(report) {
         if (bom == null || bom == undefined) {
             bom = "";
         }
-	
+        console.log("mt_qty :"+mt_qty+"po_qty"+po_qty);
+
         if (mt_qty > 0) {
+            console.log("from mt_qty validtion passed");
             materialItems['item_code'] = item_code;
             materialItems['sreq_no'] = sreq_no;
             materialItems['s_warehouse'] = source_warehouse;
@@ -140,6 +142,7 @@ function make_PO_and_transfer_qty(report) {
         }
 
         if (po_qty > 0) {
+            console.log("from po_qty validtion passed");
             var rate = 0;
             var itemPriceSettings = getItemPriceBasedOn();
             var itemRate = itemPriceSettings['item_rate'];
@@ -236,13 +239,14 @@ function make_PO_and_transfer_qty(report) {
             }
         }
     } //end of for loop...
-    
+
    // console.log("PurchaseItemsList-----length---" + checkPurchaseItemsList.length);
    // console.log("MaterialTransferList-----length---" + materialTransferList.length);
     if(checkPurchaseItemsList.length == 0 && materialTransferList.length == 0){
 		frappe.msgprint("All quantities of items related to this project have been ordered and/or transfered, Nothing to do!");
 	}
     if (checkPurchaseItemsList.length != 0) {
+        console.log("second po validation :"+checkPurchaseItemsList);
         if (!flag) {
             var dialog = new frappe.ui.Dialog({
                 title: __("Select Round Type"),
@@ -311,9 +315,6 @@ function make_PO_and_transfer_qty(report) {
                                 if (check_flag) {
                                      processedQty = processQuantity(check_args, qty);
                                       //console.log("no_supplier_items of processedQty is--------------::" + processedQty);
-
-                                     
-
                                       //******************
 				 } //end of if..
 				else{
@@ -339,11 +340,7 @@ function make_PO_and_transfer_qty(report) {
 						no_supplier_items[i].qty = puom_qty;
 					}
                                       }
-
                                       //**********************
-
-
-                               
                             } //end of for loop..
 
                             //console.log("*************Suresh no_supplier_items--------" + JSON.stringify(no_supplier_items));
@@ -366,7 +363,7 @@ function make_PO_and_transfer_qty(report) {
                                           //console.log("item code ------------"+supplier_items[i].item_code.toString());
                                            processedQty = processQuantity(check_args, qty);
                                           //console.log("supplier_items of processedQty is---------------::" + processedQty);
-                                         
+
 				} //end of if..
 				else{
 
@@ -386,20 +383,20 @@ function make_PO_and_transfer_qty(report) {
                                         var puom_qty = check_puom(purchase_uom,supplier_items[i].item_code, processedQty);
 				        //console.log("supplier_items of puom_qty is-------------::" + puom_qty);
 					var purchase_check_flag = get_UOM_Details(purchase_uom);
-					if (purchase_check_flag){ 
+					if (purchase_check_flag){
 						var processedQty1 = processQuantity(check_args, puom_qty);
-                                          
+
                                           	supplier_items[i].qty = processedQty1
 					}
 					else{
 						supplier_items[i].qty = puom_qty
 
-					}					
+					}
                                         }
                                         //********
 
                                           ;
-                                
+
 
                             } //end of for loop..
                             //console.log("supplier_items--------" + JSON.stringify(supplier_items));
@@ -417,6 +414,8 @@ function make_PO_and_transfer_qty(report) {
 
     //Creating Material Transfer of Stock Entry..
     for (const entry of materialTransferMap.entries()) {
+        console.log("second  materialTransferMap validation :"+materialTransferMap);
+
         var sreq_no = entry[0];
         var mt_list = materialTransferMap.get(sreq_no);
         makeMaterialTransfer(sreq_no, mt_list);
@@ -732,7 +731,7 @@ function validate_qty(sreq_no,supplier_items,check_args){
 		console.log("item code-------------"+item_code);
 		data.push({"item_code":item_code,"round_qty":round_qty})
 	 }
-	 
+
 	console.log("data-----------------"+JSON.stringify(data));
 	//data.push({"sreq_no":sreq_no,"check_args":check_args});
     frappe.call({
@@ -753,3 +752,4 @@ function validate_qty(sreq_no,supplier_items,check_args){
 
 return 1;
 }
+
