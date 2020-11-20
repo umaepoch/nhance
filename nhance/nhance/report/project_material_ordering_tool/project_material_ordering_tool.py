@@ -257,10 +257,6 @@ def fetch_pending_sreqnos(project,swh):
 								item_entry["fulFilledQty"] =  fulFilledQty
 								prev_sreq_list.append(item_entry)
 								items_map[key] = prev_sreq_list
-
-
-
-
 			else: #if not po list
 				#print "-----------"
 				sreq_items = fetch_sreq_item_details(sreq_no)
@@ -353,7 +349,6 @@ def fetch_pending_sreqnos(project,swh):
 							prev_sreq_list.append(item_entry)
 							items_map[key] = prev_sreq_list
 		#print "items_map-----", items_map
-
 		return items_map
 	else:
 		return None
@@ -859,6 +854,8 @@ def get_report_data(project_filter,swh_filter):
 					sreq_dict['bom'],
 					sreq_dict['fulFilledQty']
 					])
+	print "su_pm_deb data from sum_datas",sum_datas
+
 	for rows in sum_datas:
 		if project_filter:
 			project_warehouse =  frappe.db.get_value('Project', project_filter, 'project_warehouse')
@@ -905,7 +902,7 @@ def get_report_data(project_filter,swh_filter):
 			if mt_qty < 0:
 				mt_qty = 0
 
-			to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
+			to_be_order = float(rows[6]) -float(quantities_are_covered) -  float(mt_qty)
 			need_to_be_order = 0.0
 			if to_be_order > 0:
 				need_to_be_order = to_be_order
