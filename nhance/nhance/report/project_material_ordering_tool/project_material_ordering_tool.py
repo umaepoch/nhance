@@ -153,6 +153,7 @@ def execute(filters=None):
 					sreq_dict['fulFilledQty']
 					])
 
+	print "su_pm_deb data from execue",sum_data
 	return columns, sum_data
 
 
@@ -260,7 +261,7 @@ def fetch_pending_sreqnos(project,swh):
 
 
 
-			else:
+			else: #if not po list
 				#print "-----------"
 				sreq_items = fetch_sreq_item_details(sreq_no)
 				if sreq_items:
@@ -886,8 +887,14 @@ def get_report_data(project_filter,swh_filter):
 			#print "quantities_are_covered ------------",quantities_are_covered
 			qty_due_to_transfer = rows[6] - rw_pb_cons_qty
 			#print "qty_due_to_transfer------------",qty_due_to_transfer
-			qty_can_be_transfered = qty_due_to_transfer - quantities_are_covered
-
+			#SUR_ADD added reporte qty due to transfer
+			report_qty_due_to_transfer = 0
+			if qty_due_to_transfer > 0:
+				report_qty_due_to_transfer = qty_due_to_transfer
+			else:
+				report_qty_due_to_transfer = 0
+			#SUR_ADD
+			qty_can_be_transfered = report_qty_due_to_transfer - quantities_are_covered
 			#print "qty_can_be_transfered------------------",qty_can_be_transfered
 			mt_qty = 0
 			if qty_can_be_transfered < rows[7]:
@@ -899,9 +906,10 @@ def get_report_data(project_filter,swh_filter):
 				mt_qty = 0
 
 			to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
-			need_to_be_order = 0
+			need_to_be_order = 0.0
 			if to_be_order > 0:
 				need_to_be_order = to_be_order
+				need_to_be_order = round(need_to_be_order , 2)
 			else:
 				need_to_be_order = 0
 			qty_in_poum = need_to_be_order / rows[10]
@@ -938,6 +946,8 @@ def get_report_data(project_filter,swh_filter):
 			   "sreq_qty":sreq_qty
 			}
 		report_data.append(details)
+
+	print "su_pm_deb data from get_report_data",report_data
 	return report_data
 
 def get_columns():
@@ -1045,3 +1055,4 @@ def getQtyAllowed(stockRequisitionID):
 
 def get_error_msg(item_code,po_uom,stock_uom):
 	frappe.throw(_("Conversion factor for Item  <b>"+'"'+item_code+'"'+"</b> is not defined between Purchase UOM <b>"+'"'+po_uom+'"'+"</b> and Stock UOM <b>"+'"'+stock_uom+'"'+"</b>.<br><br>Please fix this in one of these two ways:<br> 1.Remove Purchase UOM <b>"+'"'+po_uom+'"'+"</b> for Item <b>"+'"'+item_code+'"'+"</b> in the Item Master, OR <br> 2.Define the Conversion factor in the Item Master between Purchase UOM <b>"+'"'+po_uom+'"'+"</b> and Stock UOM <b>"+'"'+stock_uom+'"'+"</b> for Item <b>"+'"'+item_code+'"'+"</b>.<br> <br>And try again! "))
+
