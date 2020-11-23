@@ -152,11 +152,8 @@ def execute(filters=None):
 					sreq_dict['bom'],
 					sreq_dict['fulFilledQty']
 					])
-
 	print "su_pm_deb data from execue",sum_data
 	return columns, sum_data
-
-
 
 def fetch_pending_sreqnos(project,swh):
 	items_map = {}
@@ -865,7 +862,7 @@ def get_report_data(project_filter,swh_filter):
 			qty_consumed_in_manufacture= get_stock_entry_quantities(project_warehouse,rows[2])
 			#rw_pb_cons_qty = reserve_warehouse_qty + warehouse_qty + qty_consumed_in_manufacture
 			#jyoti
-			fulfilled_qty = sreq_dict['fulFilledQty']
+			fulfilled_qty = rows[19] # suresh_modified jyoti code
 			#print "fulfilled_qty---",fulfilled_qty
 			#jyoti added
 			rw_pb_cons_qty = fulfilled_qty
