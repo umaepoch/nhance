@@ -74,7 +74,9 @@ function make_PO_and_transfer_qty(report) {
     var filters = report.get_values();
     var source_warehouse = filters.source_warehouse;
     var project = filters.project;
-    var reportData = getReportData();
+    var project_filter = frappe.query_report.get_filter_value("project");
+   var swh_filter = frappe.query_report.get_filter_value("source_warehouse");
+    var reportData = getReportData(project_filter,swh_filter);
     var materialTransferMap = new Map();
     var purchaseOrderMap = new Map();
 
@@ -512,9 +514,6 @@ function makeMaterialTransfer(sreq_no, mt_list) {
     }); //end of frappe call..
 }
 
-
-
-
 function getItemValuationRate(item_code) {
     var valuation_rate = 0.0;
     frappe.call({
@@ -635,14 +634,13 @@ function getReportData(project_filter,swh_filter) {
     frappe.call({
         method: "nhance.nhance.report.project_material_ordering_tool.project_material_ordering_tool.get_report_data",
 	 args: {
-            "project_filter":project_filter,
-	    "swh_filter":swh_filter
+        "project_filter":project_filter,
+        "swh_filter":swh_filter
         },
         async: false,
         callback: function(r) {
             //console.log("reportData::" + JSON.stringify(r.message));
             reportData = r.message;
-
         } //end of call-back function..
     }); //end of frappe call..
     return reportData;
@@ -671,7 +669,6 @@ function get_UOM_Details(stock_uom) {
     return whole_number_in_stock_transactions_flag;
 }
 
-
 function getPurchaseUom(item_code) {
     var purchase_uom = "";
     frappe.call({
@@ -693,7 +690,6 @@ function getPurchaseUom(item_code) {
             }
         }
     });
-
     return purchase_uom;
 }
 function get_supplier_field(doc_name){
@@ -743,7 +739,6 @@ function validate_qty(sreq_no,supplier_items,check_args){
         } //end of call-back function..
     }); //end of frappe call..
     return reportData
-
-
 return 1;
 }
+
