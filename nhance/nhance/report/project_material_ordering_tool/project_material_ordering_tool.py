@@ -885,8 +885,8 @@ def get_report_data(project_filter,swh_filter):
 	    to_be_order =  float(rows[6]) -float(quantities_are_covered) -  float(mt_qty)
 	    need_to_be_order = 0
 	    if to_be_order > 0:
-			need_to_be_order = to_be_order
-			need_to_be_order = round(need_to_be_order , 2)
+    			need_to_be_order = to_be_order
+    			need_to_be_order = round(need_to_be_order , 2)
 	    else:
 	      	need_to_be_order = 0
 	    qty_in_poum = need_to_be_order / rows[10]
