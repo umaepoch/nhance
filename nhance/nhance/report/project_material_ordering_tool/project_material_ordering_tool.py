@@ -860,15 +860,13 @@ def get_report_data(project_filter,swh_filter):
 	    #print "quantities_are_covered ------------",quantities_are_covered
 	    qty_due_to_transfer = rows[6] - rw_pb_cons_qty
 	    #print "qty_due_to_transfer------------",qty_due_to_transfer
-	    #SUR_ADD added reporte qty due to transfer
+        #SUR_ADD added reporte qty due to transfer
 	    report_qty_due_to_transfer = 0
 	    if qty_due_to_transfer > 0:
 	      report_qty_due_to_transfer = qty_due_to_transfer
 	    else:
 	      report_qty_due_to_transfer = 0
 	    #SUR_ADD
-
-
 
 	    qty_can_be_transfered = report_qty_due_to_transfer - quantities_are_covered
 
@@ -882,13 +880,12 @@ def get_report_data(project_filter,swh_filter):
 	    if mt_qty < 0:
 	      mt_qty = 0
 
-	    to_be_order =  float(rows[6]) -float(quantities_are_covered) -  float(mt_qty)
+	    to_be_order = rows[6] -float(quantities_are_covered) -  float(mt_qty)
 	    need_to_be_order = 0
 	    if to_be_order > 0:
-    			need_to_be_order = to_be_order
-    			need_to_be_order = round(need_to_be_order , 2)
+	      need_to_be_order = to_be_order
 	    else:
-	      	need_to_be_order = 0
+	      need_to_be_order = 0
 	    qty_in_poum = need_to_be_order / rows[10]
 	    qty_in_poum = round(qty_in_poum , 4)
 	    #print "qty_in_poum-------------------",qty_in_poum
@@ -923,6 +920,7 @@ def get_report_data(project_filter,swh_filter):
 	            "sreq_qty":sreq_qty
 	            }
 	  report_data.append(details)
+	return report_data
 
 def get_columns():
 	"""return columns"""
