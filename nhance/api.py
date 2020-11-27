@@ -1926,7 +1926,7 @@ def get_revision_no_stock(item_code,parent):
 
 #jyoti
 @frappe.whitelist()
-def get_merge_file_url(attached_to_name):
+def get_merge_file_url_before(attached_to_name):
     #print "coming inside get_merge_file_url_list---"
     get_merge_file_url_list = frappe.db.sql("""select File_url from `tabFile` where attached_to_name=%s""",attached_to_name)
     #print get_merge_file_url_list
