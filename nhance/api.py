@@ -1814,8 +1814,8 @@ def get_merge_file_url(attached_to_name):
     #print "get_combined_file_url",get_combined_file_url
     if get_combined_file_url==[]:
         name1=attached_to_name+".pdf"
-        path = '/home/frappe/frappe-bench/sites/site1.local/public/files/'
-        path_url = '/home/frappe/frappe-bench/sites/site1.local/public'
+        path = '/home/mdpy27/frappe-bench/sites/site1.local/public/files/'
+        path_url = '/home/mdpy27/frappe-bench/sites/site1.local/public'
         data=[]
          
         # using list comprehension 
