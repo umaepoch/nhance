@@ -19,6 +19,10 @@ import base64
 import ast
 import urllib.request
 import urllib.parse
+import PyPDF2
+from PyPDF2 import PdfFileWriter, PdfFileReader,PdfFileMerger
+from shutil import copyfile
+
 
 parent_list = []
 @frappe.whitelist()
@@ -1810,8 +1814,8 @@ def get_merge_file_url(attached_to_name):
     #print "get_combined_file_url",get_combined_file_url
     if get_combined_file_url==[]:
         name1=attached_to_name+".pdf"
-        path = '/home/frappe1/frappe-bench/sites/site1.local/public/files/'
-        path_url = '/home/frappe1/frappe-bench/sites/site1.local/public'
+        path = '/home/frappe/frappe-bench/sites/site1.local/public/files/'
+        path_url = '/home/frappe/frappe-bench/sites/site1.local/public'
         data=[]
          
         # using list comprehension 
