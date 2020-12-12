@@ -1820,10 +1820,10 @@ def get_merge_file_url(attached_to_name):
         pdfs=[] 
         # using list comprehension 
         for ele in get_merge_file_url_list:
-		    path_url = '/home/mdpy27/frappe-bench/sites/site1.local/public'
-		    res =path_url+str(ele)     
-    		data.append(res)
-	
+	    path_url = '/home/mdpy27/frappe-bench/sites/site1.local/public'
+            res =path_url+str(ele)     
+    	    data.append(res)
+	    #print "ele",ele
         #print "data",data
         #pdf_files = ['Build_sheet1.pdf','COC1.pdf','pressure_test.pdf']
         #path = '/home/frappe1/frappe-bench/sites/site1.local/public/files/'
