@@ -1808,7 +1808,7 @@ def get_file_url_EU_Declaration(attached_to_name):
 def get_merge_file_url(attached_to_name):
     #print "coming inside get_merge_file_url_list---"
     get_merge_file_url_list = frappe.db.sql("""select File_url from `tabFile` where attached_to_name=%s""",attached_to_name)
-    print "get_merge_file_url_list",get_merge_file_url_list
+    #print "get_merge_file_url_list",get_merge_file_url_list
     combined = 'combined'+attached_to_name
     get_combined_file_url = frappe.db.sql("""select File_url from `tabFile` where attached_to_name LIKE '"""+combined+"%""'""" , as_dict=1)
     #print "get_combined_file_url",get_combined_file_url
@@ -1820,17 +1820,17 @@ def get_merge_file_url(attached_to_name):
          
         # using list comprehension 
         for ele in get_merge_file_url_list:
-            res =path_url+str(ele).replace('(', '') 
-            print "res",res
-            data.append(str(res).translate(str.maketrans({"(": '', ")": '',"'": '',",": ''})))
+            res =path_url+str(ele) 
+            #print "res",res
+            data.append(res)
       
-        print "data",data
+        #print "data",data
         #pdf_files = ['Build_sheet1.pdf','COC1.pdf','pressure_test.pdf']
         #path = '/home/frappe1/frappe-bench/sites/site1.local/public/files/'
         #pdfs = ['/home/frappe1/frappe-bench/sites/site1.local/public/files/Build_sheet1.pdf', '/home/frappe1/frappe-bench/sites/site1.local/public/files/COC1.pdf', '/home/frappe1/frappe-bench/sites/site1.local/public/files/pressure_test.pdf']
         pdfs=data
         merger = PdfFileMerger()
-        print "pdfs",pdfs
+        #print "pdfs",pdfs
         for pdf in pdfs:
             merger.append(pdf,import_bookmarks=False)
         fname = attached_to_name
