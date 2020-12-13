@@ -1819,7 +1819,8 @@ def get_merge_file_url(attached_to_name):
 		pdfs=data
 		merger = PdfFileMerger()
 		for pdf in pdfs:
-			merger.append(pdf,import_bookmarks=False)
+			with open(pdf, 'rb') as f:
+				merger.append(f,import_bookmarks=False)
 		fname = attached_to_name
 		save_path = 'site1.local/public/files'
 		file_name = os.path.join(save_path, fname)
