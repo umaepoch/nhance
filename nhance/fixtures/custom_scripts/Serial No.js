@@ -33,14 +33,12 @@ frappe.ui.form.on("Serial No", {
          callback: function(r) {
              if (r.message) {
                  file_url_list = r.message;
-                 console.log("checking--------------" + build_sheet);
-                 console.log("readings-----------" + JSON.stringify(r.message));
- 
- 
+                 //console.log("checking--------------" + build_sheet);
+                 //console.log("readings-----------" + JSON.stringify(r.message));
              }
          }
  
     });
-     console.log("file_url_list.............", file_url_list);
+     //console.log("file_url_list.............", file_url_list);
      return file_url_list
  }
