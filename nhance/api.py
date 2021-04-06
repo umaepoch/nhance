@@ -1957,3 +1957,20 @@ def get_leave_details(employee, date):
 		list_temp.append(allocation)
 		date = allocation.to_date
 	return list_temp
+
+@frappe.whitelist()
+def qr_code_path_to_public(name):
+    file_name=frappe.db.sql("""select file_name from `tabFile`  where name='"""+name+"""' """)
+    #print("+++++++++",file_name)
+    public_path=""
+    for file in file_name:
+        public_path="/files/"+file[0]
+        #print("----------------------------------",public_path);
+    doc = frappe.get_doc("File",name)
+    #change value
+    doc.is_private = 0
+    doc.file_url=public_path
+    #save value
+    frappe.db.commit()
+    doc.save()
+    return 1
