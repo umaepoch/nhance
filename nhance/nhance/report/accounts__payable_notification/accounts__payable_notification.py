@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from erpnext.accounts.report.accounts_receivable_notification.accounts_receivable_notification import ReceivablePayableReport
+from nhance.nhance.report.accounts_receivable_notification.accounts_receivable_notification import ReceivablePayableReport
 
 def execute(filters=None):
 	args = {
