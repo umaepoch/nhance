@@ -158,15 +158,26 @@ frappe.ui.form.on("RARB Warehouse","onload", function(frm, cdt, cdn){
 		rarb_type: function(frm ,cdt ,cdn){
 			var d = locals[cdt][cdn];
 			if(d.rarb_type == "Specific Item"){
-				 cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_item", true)
+				 //cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_item", true)
 				}
 			else if(d.rarb_type == "Any Item"){
 				//console.log("rarb type is not specific item");
-				 cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_item", false)
+				 //cur_frm.fields_dict.rarbs.grid.toggle_reqd("rarb_item", false)
 			}
 		}
 	});
 });
+
+frappe.ui.form.on("RARB Warehouse", "validate", function(frm, cdt, cdn) { 
+	$.each(frm.doc.rarbs || [], function(i, d) {
+		if(d.rarb_type == "Specific Item" && (d.rarb_item=="" || d.rarb_item==null || d.rarb_item==undefined)) {
+			
+			frappe.msgprint("Row"+ '"'+d.idx+'"'+" Rarb type is Mandatory ")
+			frappe.validated = false;
+		}
+	})
+});
+
 function get_higher_date(warehouse,start_date,name){
 	var supplier_criticality = "";
 	  frappe.call({
