@@ -70,7 +70,7 @@ frappe.query_reports["PMRT 2021"] = {
 
 								var onclick_project = frappe.query_report.get_filter_value("project");
 
-								var reporter = frappe.query_reports["Project Material Requisition Tool"];
+								var reporter = frappe.query_reports["PMRT 2021"];
 								//console.log("Button Clicked...");
 								frappe.call({
 										method: "nhance.nhance.report.pmrt_2021.pmrt_2021.get_col_data",
