@@ -323,14 +323,16 @@ def get_sle_data_weighted_average(sle_data ,rate_field) :
     sum_down_price_temp = 0
 
     for sle_dic in sle_data:
-        price_temp = sle_dic.get("actual_qty") * sle_dic.get(rate_field)
-        sum_up_price_temp += price_temp
-        sum_down_price_temp += sle_dic.get(rate_field)
+        if sle_dic.get(rate_field) > 0 : #not considering transaction have rate field as 0 in weighted  average calculation
+            price_temp = sle_dic.get("actual_qty") * sle_dic.get(rate_field)
+            sum_up_price_temp += price_temp
+            sum_down_price_temp += sle_dic.get(rate_field)
 
-    weighted_average_price = sum_up_price_temp / sum_down_price_temp
+    if sum_up_price_temp > 0 and  sum_down_price_temp > 0 :
+        weighted_average_price = sum_up_price_temp / sum_down_price_temp
+    else:
+        weighted_average_price = 0
     return weighted_average_price
-
-
 
 def get_purchase_transaction_sle_data(item_code, warehouse):
     sle_data = frappe.db.sql("""select
