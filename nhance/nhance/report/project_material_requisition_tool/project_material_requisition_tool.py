@@ -253,9 +253,21 @@ def get_col_data(onclick_project):
             sreq_sub_not_ordered = get_sreq_sub_not_ordered(item_code,project_name) # have to create project custom field and add to query condition
             po_total_qty = get_po_total_qty(item_code,project_name) # have to create project custom field and add to query condition
 
-            qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty
-            tot_qty_covered =  qty_planned_nrec +  rw_pb_cons_qty
+            submitted_po = get_submitted_po(item_code,project_name)
 
+            draft_po = get_draft_po(item_code,project_name)
+            draft_po = round(float(draft_po),2)
+            submitted_po = round(float(submitted_po),2)
+            #print "submitted_po----------------",submitted_po
+            project_being = get_project_being_order(item_code,project_name)
+            required_qty = project_being[0]['required_qty']
+            recommended_qty = project_being[0]['recommended_qty']
+            approved_qty = project_being[0]['approved_qty']
+            # qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + po_total_qty         ####### old requirment
+            qty_planned_nrec = sreq_sub_not_approved + sreq_sub_not_ordered + draft_po + submitted_po    ####### new Requirement
+            if qty_planned_nrec < 0:
+              qty_planned_nrec = 0
+            tot_qty_covered =  qty_planned_nrec +  rw_pb_cons_qty
             short_qty =  bom_item_qty - tot_qty_covered
 
             if short_qty < 0:
