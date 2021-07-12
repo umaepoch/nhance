@@ -87,7 +87,7 @@ def get_sum_data_dic (item_code,bom_item_qty,master_bom,project_name,company,pro
     budgeted_unit_rate = get_budgeted_unit_rate(item_code, project_name ,reserve_warehouse)
     current_val_rate = get_current_val_rate(item_code, project_name ,reserve_warehouse)
     purchase_price = get_purchase_price(item_code, project_name ,reserve_warehouse)
-    fullfilled_rate = get_fullfilled_rate(item_code, project_name ,reserve_warehouse)
+    fullfilled_rate = get_fullfilled_rate(item_code, project_name ,project_warehouse)
 
     #new pmrt_2021 changs_end
 
@@ -119,11 +119,11 @@ def get_sum_data_dic (item_code,bom_item_qty,master_bom,project_name,company,pro
     sum_data_dic["purchase_price"] = str(purchase_price)
     sum_data_dic["fullfilled_rate"] = str(fullfilled_rate)
     sum_data_dic["budgetted_cost"] =  bom_item_qty *  budgeted_unit_rate #Budgeted Cost = BOM Item Qty *  Budgeted Unit Rate for Item (Stock UOM)
-    sum_data_dic["valuation_cost"] = bom_item_qty * fullfilled_rate #Valuation Cost Fulfilled or Expected =BOM Item Qty *   Fulfilled Rate of Item
-
-
+    sum_data_dic["valuation_cost"] = get_valuation_cost(bom_item_qty,fullfilled_rate,purchase_price,current_val_rate)  #Valuation Cost Fulfilled or Expected =BOM Item Qty *   Fulfilled Rate of Item
 
     return sum_data_dic
+
+
 
 def get_columns():
 	columns = [
@@ -157,7 +157,6 @@ def get_columns():
 
 	return columns
 
-
 def get__bom_items(master_bom):
      return frappe.db.sql("""select bo.name as bom_name, bo.company, bo.item as bo_item, bo.quantity as bo_qty, bo.project, bi.item_code, bi.stock_qty as bi_qty from `tabBOM` bo, `tabBOM Explosion Item` bi where bo.name = bi.parent and bo.is_active=1 and bo.docstatus = "1"and bi.parent = '%s' order by bo.name, bi.item_code""" % master_bom, as_dict=1)
 
@@ -185,7 +184,6 @@ def get_stock_entry_quantities(warehouse,item_code):
         else:
           qty = float(entries['qty'])
         total_qty = total_qty + qty
-
     return total_qty
 
 def get_sreq_sub_not_approved(item_code,project_name):
@@ -208,83 +206,82 @@ def get_sreq_sub_not_approved(item_code,project_name):
 
     return total_not_appr_qty
 
-#approve_price of sreq
+#approved_buying_price_rate of sreq
 #Valuation Rate at the Generic Stores
 #Valuation Rate in the Reserve Warehouse for the Project
 #if none of above not exists return 0 for now
-"""
-tested data
-itemAproA - 
-proA6 project
-"""
+
+def  get_valuation_cost(bom_item_qty,fullfilled_rate,purchase_price,current_val_rate) :
+    valuation_cost = 0
+    if fullfilled_rate > 0 :
+        valuation_cost = bom_item_qty * fullfilled_rate
+        return valuation_cost
+    elif purchase_price > 0 :
+        valuation_cost = bom_item_qty * purchase_price
+        return valuation_cost
+    elif current_val_rate > 0 :
+        valuation_cost = bom_item_qty * current_val_rate
+        return valuation_cost
+    else:
+        return valuation_cost
+
+def get_sreq_item_data(item_code, project_name) :
+    sreq_datas = frappe.db.sql("""select
+                                               budgeted__rate,approved_buying_price_rate
+                                          from
+                                                `tabStock Requisition Item` sri,`tabStock Requisition` sr
+                                          where
+                                                sri.item_code=%s  and sri.parent=sr.name 
+                                                and sr.docstatus= 1 and sri.project=%s""",
+                               (item_code, project_name), as_dict=1)
+    return sreq_datas
+
 def get_budgeted_unit_rate(item_code, project_name,reserve_warehouse):
 
     avg_approved_buying_price = 0
+    sreq_datas = get_sreq_item_data(item_code, project_name)
 
-    sreq_datas = frappe.db.sql("""select
-                                           AVG(approved_buying_price) as avg_approved_buying_price
-                                      from
-                                            `tabStock Requisition Item` sri,`tabStock Requisition` sr
-                                      where
-                                            sri.item_code=%s  and sri.parent=sr.name and sri.approved_buying_price > 0
-                                            and sr.docstatus= 1 and sri.project=%s""",
-                               (item_code, project_name),as_dict=1)
-
-    if sreq_datas[0]["avg_approved_buying_price"]:
+    if sreq_datas and sreq_datas[0]["approved_buying_price_rate"] > 0:
         avg_approved_buying_price = sreq_datas[0]["avg_approved_buying_price"]
         return avg_approved_buying_price
-    else : #if approve_price of sreq not exists
-        generic_price_wh  =  frappe.db.get_single_value("Nhance Settings", "pmrt_generic_wh")
-        generic_wh_sle_data = get_inward_stock_ledger_entry_data(item_code, generic_price_wh)
 
-        if generic_wh_sle_data:
-            avg_approved_buying_price = get_sle_data_weighted_average(generic_wh_sle_data, "valuation_rate")
-            return avg_approved_buying_price
-
-        else: #if approve_price of sreq and sle_data for reserve wh  not exists
-            reserve_wh_sle_data = get_inward_stock_ledger_entry_data(item_code, reserve_warehouse)
-            if reserve_wh_sle_data:
-                avg_approved_buying_price = get_sle_data_weighted_average(reserve_wh_sle_data, "valuation_rate")
-                #print "pmrt_sur resevr wh exist :",avg_approved_buying_price
-                return avg_approved_buying_price
-            else: #if none of above not exists return 0 for now
-                return avg_approved_buying_price
+    elif  sreq_datas and  sreq_datas[0]["budgeted__rate"] > 0 : #if approve_price of sreq not exists
+        avg_approved_buying_price = sreq_datas[0]["budgeted__rate"]
+        return avg_approved_buying_price
+    else:
+        return avg_approved_buying_price
 
 """
 Valuation Rate at the Generic Stores
 Valuation Rate in the Reserve Warehouse for the Project
 Stock Requisition (Approved Buying Price)
 """
+
+def  get_wh_val_rate(item_code, warehouse) :
+    sle_data = frappe.db.sql("""select
+                                               item_code,valuation_rate,warehouse
+                                          from
+                                                `tabStock Ledger Entry` sl
+                                          where
+                                                sl.item_code=%s  and sl.warehouse =%s and sl.actual_qty >= 0  order by creation desc limit 1
+                                               """,
+                             (item_code, warehouse), as_dict=1)
+
+    return sle_data[0]["valuation_rate"] if sle_data else None
+
 def get_current_val_rate(item_code, project_name ,reserve_warehouse):
     cur_val_rate = 0
-
     generic_price_wh = frappe.db.get_single_value("Nhance Settings", "pmrt_generic_wh")
-    generic_wh_sle_data = get_inward_stock_ledger_entry_data(item_code, generic_price_wh)
 
-    if generic_wh_sle_data:
-        cur_val_rate = get_sle_data_weighted_average(generic_wh_sle_data, "valuation_rate")
+    if get_wh_val_rate(item_code, generic_price_wh) :
+        cur_val_rate = get_wh_val_rate(item_code, generic_price_wh)
+        return cur_val_rate
+    elif  get_wh_val_rate(item_code, reserve_warehouse) :
+        cur_val_rate = get_wh_val_rate(item_code, reserve_warehouse)
+        return cur_val_rate
+    else:
         return cur_val_rate
 
-    else:  # if approve_price of sreq and sle_data for reserve wh  not exists
-        reserve_wh_sle_data = get_inward_stock_ledger_entry_data(item_code, reserve_warehouse)
-        if reserve_wh_sle_data:
-            cur_val_rate = get_sle_data_weighted_average(reserve_wh_sle_data,"valuation_rate")
-            return cur_val_rate
-        else:
-            sreq_datas = frappe.db.sql("""select
-                                                       AVG(approved_buying_price) as avg_approved_buying_price
-                                                  from
-                                                        `tabStock Requisition Item` sri,`tabStock Requisition` sr
-                                                  where
-                                                        sri.item_code=%s  and sri.parent=sr.name and sri.approved_buying_price > 0
-                                                        and sr.docstatus= 1 and sri.project=%s""",
-                                       (item_code, project_name), as_dict=1)
-
-            if sreq_datas[0]["avg_approved_buying_price"]:
-                cur_val_rate = sreq_datas[0]["avg_approved_buying_price"]
-                return cur_val_rate
-            else:
-                return cur_val_rate
 """
 Incoming Rate For Purchase Transactions (Purchase Receipt or Purchase Invoice) for Reserve Warehouse
 Incoming Rate For Purchase Transactions (Purchase Receipt or Purchase Invoice) for Generic Warehouse
@@ -307,11 +304,11 @@ def get_purchase_price(item_code, project_name ,reserve_warehouse):
 """
 Incoming Rate for +ve Actual Qty for Reserve Warehouse
 """
-def get_fullfilled_rate(item_code, project_name ,reserve_warehouse) :
+def get_fullfilled_rate(item_code, project_name ,project_warehouse) :
     fullfilled_rate = 0
-    reserve_wh_sle_data = get_inward_stock_ledger_entry_data(item_code, reserve_warehouse)
-    if reserve_wh_sle_data:
-        cur_val_rate = get_sle_data_weighted_average(reserve_wh_sle_data, "incoming_rate")
+    project_wh_sle_data = get_inward_stock_ledger_entry_data(item_code, project_warehouse)
+    if project_wh_sle_data:
+        fullfilled_rate = get_sle_data_weighted_average(project_wh_sle_data, "incoming_rate")
         return fullfilled_rate
     else:
         return fullfilled_rate
@@ -326,7 +323,7 @@ def get_sle_data_weighted_average(sle_data ,rate_field) :
         if sle_dic.get(rate_field) > 0 : #not considering transaction have rate field as 0 in weighted  average calculation
             price_temp = sle_dic.get("actual_qty") * sle_dic.get(rate_field)
             sum_up_price_temp += price_temp
-            sum_down_price_temp += sle_dic.get(rate_field)
+            sum_down_price_temp += sle_dic.get("actual_qty")
 
     if sum_up_price_temp > 0 and  sum_down_price_temp > 0 :
         weighted_average_price = sum_up_price_temp / sum_down_price_temp
@@ -344,9 +341,6 @@ def get_purchase_transaction_sle_data(item_code, warehouse):
                                            """,
                                (item_code, warehouse),as_dict=1)
     return sle_data
-
-
-
 
 def get_inward_stock_ledger_entry_data(item_code, warehouse):
     sle_data = frappe.db.sql("""select
