@@ -242,7 +242,7 @@ def get_budgeted_unit_rate(item_code, project_name,reserve_warehouse):
     sreq_datas = get_sreq_item_data(item_code, project_name)
 
     if sreq_datas and sreq_datas[0]["approved_buying_price_rate"] > 0:
-        avg_approved_buying_price = sreq_datas[0]["avg_approved_buying_price"]
+        avg_approved_buying_price = sreq_datas[0]["approved_buying_price_rate"]
         return avg_approved_buying_price
 
     elif  sreq_datas and  sreq_datas[0]["budgeted__rate"] > 0 : #if approve_price of sreq not exists
