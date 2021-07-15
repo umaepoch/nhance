@@ -87,7 +87,6 @@ def get_sum_data_dic (item_code,bom_item_qty,master_bom,project_name,company,pro
     budgeted_unit_rate = get_budgeted_unit_rate(item_code, project_name ,reserve_warehouse)
     current_val_rate = get_current_val_rate(item_code, project_name ,reserve_warehouse)
     purchase_price = get_purchase_price(item_code, project_name ,reserve_warehouse)
-    print "purchase_price",purchase_price
     fullfilled_rate = get_fullfilled_rate(item_code, project_name ,project_warehouse)
 
     #new pmrt_2021 changs_end
@@ -288,7 +287,6 @@ Incoming Rate For Purchase Transactions (Purchase Receipt or Purchase Invoice) f
 Incoming Rate For Purchase Transactions (Purchase Receipt or Purchase Invoice) for Generic Warehouse
 """
 def get_purchase_price(item_code, project_name ,reserve_warehouse):
-    print "came inside get_purchase_price"
     purchase_price = 0
     generic_price_wh = frappe.db.get_single_value("Nhance Settings", "pmrt_generic_wh")
     reserve_wh_purchase_transaction_sle_data = get_purchase_transaction_sle_data(item_code, reserve_warehouse)
